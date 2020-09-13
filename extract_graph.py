@@ -114,7 +114,7 @@ def from_sparse_to_graph(doc_skel):
             edges[right_branch]['pixel_list'][0].append(pixel)
     for branch in edges:
         if len(edges[branch]['origin'])>0 and len(edges[branch]['end'])>0:
-            graph=graph.append(pd.DataFrame(edges[branch]))
+            graph=graph.append(pd.DataFrame(edges[branch]),ignore_index=True)
     for index, row in graph.iterrows():
         row['pixel_list']=order_pixel(row['origin'],row['end'],row['pixel_list'])
     return(graph)
@@ -140,7 +140,7 @@ def generate_nx_graph(graph_tab):
     return(G,pos)
 
 def generate_skeleton(nx_graph,dim=(3000,4096)):
-    skel = sparse.dok_matrix((3000,4096), dtype=bool)
+    skel = sparse.dok_matrix(dim, dtype=bool)
     for edge in nx_graph.edges.data('pixel_list'):
         for pixel in edge[2]:
             skel[pixel]=True
@@ -160,5 +160,13 @@ def clean(skeleton):
     nx_graph=prune_graph(nx_graph)
     return(generate_skeleton(nx_graph).todense())
 
+def generate_graph_tab_from_skeleton(skelet):
+    dok_skel = sparse.dok_matrix(skelet)
+    graph_tab = from_sparse_to_graph(dok_skel)
+    return(graph_tab)
 
 
+def generate_nx_graph_from_skeleton(skelet):
+    dok_skel = sparse.dok_matrix(skelet)
+    graph_tab = from_sparse_to_graph(dok_skel)
+    return(generate_nx_graph(graph_tab))
