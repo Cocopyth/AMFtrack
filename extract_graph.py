@@ -6,7 +6,7 @@ import numpy as np
 from scipy import sparse
 from pymatreader import read_mat
 import networkx as nx
-
+import pandas as pd
 def dic_to_sparse(dico):
     indptr=dico['jc']
     indices=dico['ir']
@@ -85,7 +85,13 @@ def extract_branches(doc_skel):
                 pixel_branch_dic[pixel]={new_index}
         is_node[pixel]=num_neighbours in [0,1,3,4]
         pixel_set.discard(pixel)
+        #!!! This is to solve the two neighbours nodes problem
         if is_node[pixel]:
+            for neighbour in actual_neighbours:
+                if is_node[neighbour]:
+                    new_index+=1
+                    pixel_branch_dic[pixel].add(new_index)
+                    pixel_branch_dic[neighbour].add(new_index)
             continue
         else:
             for neighbour in actual_neighbours:
@@ -95,7 +101,6 @@ def extract_branches(doc_skel):
     return(pixel_branch_dic,is_node,new_index)  
 
 def from_sparse_to_graph(doc_skel):
-    import pandas as pd
     column_names = ["origin", "end", "pixel_list"]
     graph = pd.DataFrame(columns=column_names)
     pixel_branch_dic,is_node,new_index = extract_branches(doc_skel)
@@ -151,6 +156,12 @@ def prune_graph(nx_graph,threshold=150):
     for s in S:
         if s.size(weight='weight')<threshold:
             nx_graph.remove_nodes_from(s.nodes)
+    to_remove=[]
+    for edge in nx_graph.edges:
+        if nx_graph.degree(edge[0])==1 and nx_graph.degree(edge[1])==1:
+            to_remove.append(edge[0])
+            to_remove.append(edge[1])
+    nx_graph.remove_nodes_from(to_remove)
     return(nx_graph)
 
 def clean(skeleton):
