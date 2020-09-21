@@ -12,3 +12,12 @@ def get_path(date,plate,skeleton,row=None,column=None):
     else:
         end='/Img'+f'/Img_r{get_number(row)}_c{get_number(column)}.tif'
     return (root_path+date_plate+plate+end)
+
+def shift_skeleton(skeleton,shift):
+    shifted_skeleton=sparse.dok_matrix(skeleton.shape, dtype=bool)
+    for pixel in skeleton.keys():
+#             print(pixel[0]+shift[0],pixel[1]+shift[1])
+            if (skeleton.shape[0]>np.ceil(pixel[0]+shift[0])>0 and skeleton.shape[1]>np.ceil(pixel[1]+shift[1])>0):
+                shifted_pixel = (np.round(pixel[0]+shift[0]),np.round(pixel[1]+shift[1]))
+                shifted_skeleton[shifted_pixel]=1
+    return(shifted_skeleton)
