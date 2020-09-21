@@ -13,20 +13,20 @@ from copy import deepcopy
 
 def node_dist(node1,node2,nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,show=False):
     #!!! assumed shape == 3000,4096
-    sparse_cross1=sparse.dok_matrix((3000,4096), dtype=bool)
-    sparse_cross2=sparse.dok_matrix((3000,4096), dtype=bool)
+    sparse_cross1=sparse.dok_matrix((100,100), dtype=bool)
+    sparse_cross2=sparse.dok_matrix((100,100), dtype=bool)
     for edge in nx_graph_tm1.edges(node1):
         list_pixel=nx_graph_tm1.get_edge_data(*edge)['pixel_list']
         if (pos_tm1[node1]!=list_pixel[0]).any():
             list_pixel=list(reversed(list_pixel))
         for pixel in list_pixel[:20]:
-            sparse_cross1[pixel]=1
+            sparse_cross1[np.array(pixel)-np.array(pos_tm1[node1])+np.array((50,50))]=1
     for edge in nx_graph_t.edges(node2):
         list_pixel=nx_graph_t.get_edge_data(*edge)['pixel_list']
         if (pos_t[node2]!=list_pixel[0]).any():
             list_pixel=list(reversed(list_pixel))
         for pixel in list_pixel[:20]:
-            sparse_cross2[pixel]=1
+            sparse_cross2[pixel-np.array(pos_tm1[node1])+np.array((50,50))]=1
     kernel = np.ones((3,3),np.uint8)
     dilation1 = cv2.dilate(sparse_cross1.todense().astype(np.uint8),kernel,iterations = 3)
     dilation2 = cv2.dilate(sparse_cross2.todense().astype(np.uint8),kernel,iterations = 3)
@@ -178,6 +178,7 @@ def orient(pixel_list,root_pos):
         return list(reversed(pixel_list))
     
 def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50):
+    reconnect_degree_2(nx_graph_t,pos_t)
     corresp,to_remove=first_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t)
     nx_graph_tm1=clean_nodes(nx_graph_tm1,to_remove,pos_tm1)
     pos_t,nx_graph_t=relabel_nodes(corresp,nx_graph_t,pos_t)
@@ -188,10 +189,11 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50):
         mini=np.inf
         for edge in nx_graph_t.edges:
             pixel_list=nx_graph_t.get_edge_data(*edge)['pixel_list']
-            distance=np.min(np.linalg.norm(np.array(pixel_list)-np.array(pos_tm1[tip]),axis=1))
-            if distance<mini:
-                mini=distance
-                right_edge = edge
+            if np.linalg.norm(np.array(pixel_list[0])-np.array(pos_tm1[tip]))<=5000:
+                distance=np.min(np.linalg.norm(np.array(pixel_list)-np.array(pos_tm1[tip]),axis=1))
+                if distance<mini:
+                    mini=distance
+                    right_edge = edge
         origin = np.array(orient(nx_graph_tm1.get_edge_data(*list(nx_graph_tm1.edges(tip))[0])['pixel_list'],pos_tm1[tip]))
         origin_vector = origin[0]-origin[-1]
         branch=np.array(orient(nx_graph_t.get_edge_data(*right_edge)['pixel_list'],pos_t[right_edge[0]]))
@@ -275,3 +277,30 @@ def whole_movement_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_i
                             label_node_recursive(current_node,neighbour_t,corresp_label)
         label_node_recursive(last_node,current_node,tip_origin)
     return(tip_origin)
+
+def shift(skeleton1,skeleton2):
+    skeleton1_dilated = dilate(dilate(skeleton1)).astype(np.float)
+    skeleton2_dilated = dilate(dilate(skeleton2)).astype(np.float)
+    def distance(shift):
+        distance=0
+#         print(shift)
+        for pixel in skeleton1_dilated.keys():
+#             print(pixel[0]+shift[0],pixel[1]+shift[1])
+            if (skeleton2_dilated.shape[0]>np.ceil(pixel[0]+shift[0])>=0 and skeleton2_dilated.shape[1]>np.ceil(pixel[1]+shift[1])>=0):
+                shifted_pixel = (int(pixel[0]+shift[0]),int(pixel[1]+shift[1]))
+                shifted_pixel_next = (np.ceil(pixel[0]+shift[0]),np.ceil(pixel[1]+shift[1]))
+#                 print(shifted_pixel)
+                prop=1/2*(pixel[0]+shift[0]-int(pixel[0]+shift[0])+pixel[1]+shift[1]-int(pixel[1]+shift[1]))
+                float_value=(1-prop)*skeleton2_dilated[shifted_pixel[0],shifted_pixel[1]]+prop*(skeleton2_dilated[shifted_pixel_next[0],shifted_pixel_next[1]])
+                distance+=abs(skeleton1_dilated[pixel]-float_value)
+            else:
+                distance+=1
+#         for pixel in skeleton2_dilated.keys():
+#             if (skeleton2_dilated.shape[0]>pixel[0]-shift[0]>=0 and skeleton2_dilated.shape[1]>pixel[1]-shift[1]>=0):
+#                 shifted_pixel = (int(pixel[0]-shift[0]),int(pixel[1]-shift[1]))
+#                 distance+=abs(skeleton1_dilated[shifted_pixel[0],shifted_pixel[1]]^skeleton2_dilated[pixel])
+#             else:
+#                 distance+=1
+#         print(distance)
+        return distance
+    return(minimize(distance,np.array([10,10]), method='nelder-mead',options={'xatol': 1, 'disp': True,'fatol':0.1}))
