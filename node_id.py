@@ -10,6 +10,8 @@ from plotutil import show_im,overlap, show_im_rgb
 from extract_graph import generate_graph_tab_from_skeleton,generate_nx_graph_from_skeleton,generate_skeleton
 import networkx as nx
 from copy import deepcopy
+from sparse_util import dilate
+from scipy.optimize import minimize
 
 def node_dist(node1,node2,nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,show=False):
     #!!! assumed shape == 3000,4096
