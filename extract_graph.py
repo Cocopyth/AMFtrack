@@ -124,6 +124,19 @@ def from_sparse_to_graph(doc_skel):
         row['pixel_list']=order_pixel(row['origin'],row['end'],row['pixel_list'])
     return(graph)
 
+def from_nx_to_tab(nx_graph,pos):
+    column_names = ["origin_label","end_label","origin_pos", "end_pos", "pixel_list"]
+    tab = pd.DataFrame(columns=column_names)
+    for edge in nx_graph.edges:
+        origin_label=edge[0]
+        end_label=edge[1]
+        origin_pos=pos[origin_label]
+        end_pos = pos[end_label]
+        pixel_list=orient(nx_graph.get_edge_data(*edge)['pixel_list'],origin_pos)
+        new_line=pd.DataFrame({"origin_label":[origin_label],"end_label" : [end_label], "origin_pos":[origin_pos], "end_pos" : [end_pos], "pixel_list" : [pixel_list]})
+        tab=tab.append(new_line,ignore_index=True)
+    return(tab)
+
 def generate_set_node(graph_tab):
     nodes=set()
     for index, row in graph_tab.iterrows():
@@ -131,15 +144,22 @@ def generate_set_node(graph_tab):
         nodes.add(row['end'])
     return(sorted(nodes))
 
-def generate_nx_graph(graph_tab):
+def generate_nx_graph(graph_tab,labeled=False):
     G = nx.Graph()
     pos={}
-    nodes=generate_set_node(graph_tab)
+    if not labeled:
+        nodes=generate_set_node(graph_tab)
     for index, row in graph_tab.iterrows():
-        identifier1=nodes.index(row['origin'])
-        identifier2=nodes.index(row['end'])
-        pos[identifier1]=np.array(row['origin'])
-        pos[identifier2]=np.array(row['end'])
+        if labeled:
+            identifier1 = row['origin_label']
+            identifier2 = row['end_label']
+            pos[identifier1]=np.array(row['origin_pos']).astype(np.int)
+            pos[identifier2]=np.array(row['end_pos']).astype(np.int)
+        else:
+            identifier1=nodes.index(row['origin'])
+            identifier2=nodes.index(row['end'])
+            pos[identifier1]=np.array(row['origin']).astype(np.int)
+            pos[identifier2]=np.array(row['end']).astype(np.int)
         info={'weight':len(row['pixel_list']),'pixel_list':row['pixel_list']}
         G.add_edges_from([(identifier1,identifier2,info)])
     return(G,pos)
@@ -181,3 +201,7 @@ def generate_nx_graph_from_skeleton(skelet):
     dok_skel = sparse.dok_matrix(skelet)
     graph_tab = from_sparse_to_graph(dok_skel)
     return(generate_nx_graph(graph_tab))
+
+def transform_list(position):
+    c=position[1:-1].split()
+    return(np.array(c).astype(np.int))

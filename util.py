@@ -1,4 +1,7 @@
-def get_path(date,plate,skeleton,row=None,column=None):
+from scipy import sparse
+import numpy as np
+
+def get_path(date,plate,skeleton,row=None,column=None,extension=".mat"):
     def get_number(number):
         if number<10:
             return(f'0{number}')
@@ -8,7 +11,7 @@ def get_path(date,plate,skeleton,row=None,column=None):
     date_plate = f'/2020{date}'
     plate = f'_Plate{plate}'
     if skeleton:
-        end='/Analysis/Skeleton.mat'
+        end='/Analysis/Skeleton'+extension
     else:
         end='/Img'+f'/Img_r{get_number(row)}_c{get_number(column)}.tif'
     return (root_path+date_plate+plate+end)
@@ -21,3 +24,4 @@ def shift_skeleton(skeleton,shift):
                 shifted_pixel = (np.round(pixel[0]+shift[0]),np.round(pixel[1]+shift[1]))
                 shifted_skeleton[shifted_pixel]=1
     return(shifted_skeleton)
+
