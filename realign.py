@@ -62,6 +62,11 @@ def realign(skeleton1,skeleton2):
     skeleton_transformed=zhangSuen(skeleton_transformed)
     return(skeleton_transformed)
 
+def reconnect(skeleton):
+    skeleton_transformed=dilate(skeleton)
+    skeleton_transformed=zhangSuen(skeleton_transformed)
+    return(skeleton_transformed)
+
 
 def shift(skeleton1,skeleton2):
     skeleton1_dilated = dilate(dilate(skeleton1)).astype(np.float)
