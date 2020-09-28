@@ -97,6 +97,24 @@ def relabel_nodes(corresp,nx_graph_t,pos_t):
     new_graph=nx.relabel_nodes(nx_graph_t,mapping)
     return(new_pos,new_graph)
 
+
+def reduce_labels(nx_graph1,nx_graph2,pos1,pos2):
+    all_node_labels=set(nx_graph1.nodes).union(nx_graph2.nodes)
+    all_node_labels=sorted(all_node_labels)
+    new_pos1={}
+    new_pos2={}
+    def mapping(node):
+        return(all_node_labels.index(node))
+    for node in nx_graph1.nodes:
+        pos=pos1[node]
+        new_pos1[mapping(node)]=pos
+    for node in nx_graph2.nodes:
+        pos=pos2[node]
+        new_pos2[mapping(node)]=pos
+    new_graph1=nx.relabel_nodes(nx_graph1,mapping)
+    new_graph2=nx.relabel_nodes(nx_graph2,mapping)
+    return(new_graph1,new_graph2,new_pos1,new_pos2,mapping)
+
 def reconnect_degree_2(nx_graph,pos):
     degree_2_nodes = [node for node in nx_graph.nodes if nx_graph.degree(node)==2]
     while len(degree_2_nodes)>0:
@@ -184,7 +202,7 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50):
     corresp,to_remove=first_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t)
     nx_graph_tm1=clean_nodes(nx_graph_tm1,to_remove,pos_tm1)
     pos_t,nx_graph_t=relabel_nodes(corresp,nx_graph_t,pos_t)
-    corresp_tips={node:node for node in corresp.keys()}
+    corresp_tips={node : node for node in corresp.keys()}
     tips = [node for node in nx_graph_tm1.nodes if nx_graph_tm1.degree(node)==1]
     for tip in tips:
 #         print('tip',pos_tm1[tip],tip)
@@ -240,7 +258,8 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50):
                 break
         corresp_tips[tip]=current_node
     pos_t,nx_graph_t=relabel_nodes(corresp_tips,nx_graph_t,pos_t)
-    return(pos_t,nx_graph_t,nx_graph_tm1,corresp_tips)
+    nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,mapping=reduce_labels(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t)
+    return(pos_t,nx_graph_t,pos_tm1,nx_graph_tm1,corresp_tips)
                 
 
 def whole_movement_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50):
