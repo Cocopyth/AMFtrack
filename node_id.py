@@ -246,39 +246,51 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50):
 def whole_movement_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50):
     tips = [node for node in nx_graph_tm1.nodes if nx_graph_tm1.degree(node)==1]
     tip_origin={tip : tip  for tip in tips}
-    for tip in tips:
+    pixels_from_tip={tip : [] for tip in tips}
+    for number,tip in enumerate(tips):
 #         print('tip',pos_tm1[tip],tip)
+        if number%100==0:
+            print(number/len(tips))
         mini=np.inf
         for edge in nx_graph_t.edges:
             pixel_list=nx_graph_t.get_edge_data(*edge)['pixel_list']
-            distance=np.min(np.linalg.norm(np.array(pixel_list)-np.array(pos_tm1[tip]),axis=1))
-            if distance<mini:
-                mini=distance
-                right_edge = edge
+            if np.linalg.norm(np.array(pixel_list[0])-np.array(pos_tm1[tip]))<=5000:
+                distance=np.min(np.linalg.norm(np.array(pixel_list)-np.array(pos_tm1[tip]),axis=1))
+                if distance<mini:
+                    mini=distance
+                    right_edge = edge
         origin = np.array(orient(nx_graph_tm1.get_edge_data(*list(nx_graph_tm1.edges(tip))[0])['pixel_list'],pos_tm1[tip]))
         origin_vector = origin[0]-origin[-1]
         branch=np.array(orient(nx_graph_t.get_edge_data(*right_edge)['pixel_list'],pos_t[right_edge[0]]))
+        index_nearest_pixel=np.argmin(np.linalg.norm(branch-np.array(pos_tm1[tip]),axis=1))
         candidate_vector = branch[-1]-branch[0]
         dot_product = np.dot(origin_vector,candidate_vector)
+#         if tip==5260:
+#             print(list(branch[index_nearest_pixel:]))
+#             print(list(branch[:index_nearest_pixel]))
         if dot_product>=0:
             root=right_edge[0]
             next_node=right_edge[1]
+            pixels_from_tip[tip]+=list(branch[index_nearest_pixel:])
         else:
             root=right_edge[1]
             next_node=right_edge[0]
+            pixels_from_tip[tip]+=list(reversed(list(branch[:index_nearest_pixel])))
         #Could improve the candidate vector by chosing pixel around the forme tip but this identification should be rather unambiguous
         last_node=root
         current_node=next_node
         last_branch=np.array(orient(nx_graph_t.get_edge_data(root,next_node)['pixel_list'],pos_t[current_node]))
         def label_node_recursive(last_node,current_node,corresp_label):
-            if not current_node in corresp_label.keys():
+            if not current_node in corresp_label.keys() and not current_node in nx_graph_tm1.nodes:
                 corresp_label[current_node]=tip
+                pixel_list=nx_graph_t.get_edge_data(last_node,current_node)['pixel_list']
+                pixels_from_tip[tip]+=pixel_list
                 if nx_graph_t.degree(current_node)>=3:
                     for neighbour_t in nx_graph_t.neighbors(current_node): 
                         if neighbour_t!=last_node:
                             label_node_recursive(current_node,neighbour_t,corresp_label)
         label_node_recursive(last_node,current_node,tip_origin)
-    return(tip_origin)
+    return(tip_origin,pixels_from_tip)
 
 def shift(skeleton1,skeleton2):
     skeleton1_dilated = dilate(dilate(skeleton1)).astype(np.float)

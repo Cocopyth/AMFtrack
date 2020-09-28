@@ -7,6 +7,7 @@ from scipy import sparse
 from pymatreader import read_mat
 import networkx as nx
 import pandas as pd
+
 def dic_to_sparse(dico):
     indptr=dico['jc']
     indices=dico['ir']
