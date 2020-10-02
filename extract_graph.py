@@ -8,6 +8,12 @@ from pymatreader import read_mat
 import networkx as nx
 import pandas as pd
 
+def orient(pixel_list,root_pos):
+    if np.all(root_pos==pixel_list[0]):
+        return(pixel_list)
+    else:
+        return list(reversed(pixel_list))
+    
 def dic_to_sparse(dico):
     indptr=dico['jc']
     indices=dico['ir']
