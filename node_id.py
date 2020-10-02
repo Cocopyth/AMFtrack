@@ -13,22 +13,26 @@ from copy import deepcopy
 from sparse_util import dilate
 from scipy.optimize import minimize
 
-def node_dist(node1,node2,nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,show=False):
+def node_dist(node1,node2,nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,tolerance,show=False,):
     #!!! assumed shape == 3000,4096
-    sparse_cross1=sparse.dok_matrix((100,100), dtype=bool)
-    sparse_cross2=sparse.dok_matrix((100,100), dtype=bool)
+    sparse_cross1=sparse.dok_matrix((4*tolerance,4*tolerance), dtype=bool)
+    sparse_cross2=sparse.dok_matrix((4*tolerance,4*tolerance), dtype=bool)
     for edge in nx_graph_tm1.edges(node1):
         list_pixel=nx_graph_tm1.get_edge_data(*edge)['pixel_list']
         if (pos_tm1[node1]!=list_pixel[0]).any():
             list_pixel=list(reversed(list_pixel))
+#         print(list_pixel[0],pos_tm1[node1],list_pixel[-1])
         for pixel in list_pixel[:20]:
             sparse_cross1[np.array(pixel)-np.array(pos_tm1[node1])+np.array((50,50))]=1
     for edge in nx_graph_t.edges(node2):
         list_pixel=nx_graph_t.get_edge_data(*edge)['pixel_list']
         if (pos_t[node2]!=list_pixel[0]).any():
             list_pixel=list(reversed(list_pixel))
+#         print(list_pixel[0],pos_t[node2],list_pixel[-1])
         for pixel in list_pixel[:20]:
-            sparse_cross2[pixel-np.array(pos_tm1[node1])+np.array((50,50))]=1
+#             if np.any(np.array(pixel)-np.array(pos_tm1[node1])+np.array((50,50))>=100):
+#                 print(list_pixel[0],pos_t[node2],list_pixel[-1])
+            sparse_cross2[np.array(pixel)-np.array(pos_tm1[node1])+np.array((50,50))]=1
     kernel = np.ones((3,3),np.uint8)
     dilation1 = cv2.dilate(sparse_cross1.todense().astype(np.uint8),kernel,iterations = 3)
     dilation2 = cv2.dilate(sparse_cross2.todense().astype(np.uint8),kernel,iterations = 3)
@@ -38,7 +42,7 @@ def node_dist(node1,node2,nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,show=False):
         plt.show()
     return(np.linalg.norm(dilation1-dilation2))
 
-def first_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t):
+def first_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,tolerance):
     corresp={}
     ambiguous=set()
     to_remove=set()
@@ -51,25 +55,22 @@ def first_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t):
             if distance<mini:
                 mini=distance
                 identifier=node2
-        if mini<30:
+        if mini<tolerance:
             if identifier in corresp.values():
                 ambiguous.add(node1)
-#                     print(node1,'node_dientified_two_times')
             corresp[node1]=identifier
         else:
             to_remove.add(node1)
-#                 print(node1,mini,'node_none_iden')
     while len(ambiguous)>0:
         node=ambiguous.pop()
         identifier=corresp[node]
         candidates = [nod for nod in corresp.keys() if corresp[nod]==identifier]
         mini=np.inf
         for candidate in candidates:
-            distance=node_dist(candidate,identifier,nx_graph_tm1,nx_graph_t,pos_tm1,pos_t)
+            distance=node_dist(candidate,identifier,nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,tolerance)
             if distance < mini:
                 right_candidate=candidate
                 mini=distance
-#         print(mini,right_candidate)
         for candidate in candidates:
             if candidate!= right_candidate:
                 corresp.pop(candidate)
@@ -97,23 +98,51 @@ def relabel_nodes(corresp,nx_graph_t,pos_t):
     new_graph=nx.relabel_nodes(nx_graph_t,mapping)
     return(new_pos,new_graph)
 
+def relabel_nodes_downstream(corresp,nx_graph_list,pos_list):
+    invert_corresp={}
+    new_poss = [{} for i in range(len(nx_graph_list))]
+    new_graphs=[]
+    all_nodes = set()
+    for nx_graph in nx_graph_list:
+        all_nodes=all_nodes.union(set(nx_graph.nodes))
+    all_nodes=all_nodes.union(set(corresp.keys()))
+    all_nodes=all_nodes.union(set(corresp.values()))
+    maxi=max(all_nodes)+1
+    for key in corresp.keys():
+        invert_corresp[corresp[key]]=key
+    def mapping(node):
+        if node in invert_corresp.keys():
+            return(invert_corresp[node])
+        else:
+            return (maxi+node)
+    for i,nx_graph in enumerate(nx_graph_list):
+        for node in nx_graph.nodes:
+            pos=pos_list[i][node]
+            new_poss[i][mapping(node)]=pos
+        new_graphs.append(nx.relabel_nodes(nx_graph,mapping,copy=True))
+    return(new_graphs,new_poss)
 
-def reduce_labels(nx_graph1,nx_graph2,pos1,pos2):
-    all_node_labels=set(nx_graph1.nodes).union(nx_graph2.nodes)
-    all_node_labels=sorted(all_node_labels)
-    new_pos1={}
-    new_pos2={}
+
+def reduce_labels(nx_graph_list,pos_list):
+    new_poss = [{} for i in range(len(nx_graph_list))] 
+    new_graphs=[]
+    all_node_labels = set()
+    node=[node for node in nx_graph_list[0].nodes if node in nx_graph_list[1]][0]
+    for nx_graph in nx_graph_list:
+        all_node_labels=all_node_labels.union(set(nx_graph.nodes))
+    all_node_labels = sorted(all_node_labels)
     def mapping(node):
         return(all_node_labels.index(node))
-    for node in nx_graph1.nodes:
-        pos=pos1[node]
-        new_pos1[mapping(node)]=pos
-    for node in nx_graph2.nodes:
-        pos=pos2[node]
-        new_pos2[mapping(node)]=pos
-    new_graph1=nx.relabel_nodes(nx_graph1,mapping)
-    new_graph2=nx.relabel_nodes(nx_graph2,mapping)
-    return(new_graph1,new_graph2,new_pos1,new_pos2,mapping)
+    for i,nx_graph in enumerate(nx_graph_list):
+        for node in nx_graph.nodes:
+            pos=pos_list[i][node]
+            new_poss[i][mapping(node)]=pos
+        new_graphs.append(nx.relabel_nodes(nx_graph,mapping,copy=True))
+    node=[node for node in new_graphs[0].nodes if new_graphs[0].degree(node)==3][0]
+    for i,nx_graph in enumerate(nx_graph_list):
+        if node in new_poss[i].keys():
+            print(node,i,new_poss[i][node])
+    return(new_graphs,new_poss)
 
 def reconnect_degree_2(nx_graph,pos):
     degree_2_nodes = [node for node in nx_graph.nodes if nx_graph.degree(node)==2]
@@ -140,9 +169,9 @@ def reconnect_degree_2(nx_graph,pos):
         degree_2_nodes = [node for node in nx_graph.nodes if nx_graph.degree(node)==2]
             
 def clean_nodes(nx_graph,to_remove,pos):
-    print(to_remove)
     nx_graph=deepcopy(nx_graph) #could be removed to speed up
     is_hair = True
+    i=0
     while is_hair:
         is_hair=False
         to_remove_possibly=list(to_remove)
@@ -158,8 +187,10 @@ def clean_nodes(nx_graph,to_remove,pos):
             if len(candidate_to_remove)>0:
                 node_to_remove=candidate_to_remove[np.argmin(weight_candidate)]
                 nx_graph.remove_node(node_to_remove)
+                i+=1
                 if nx_graph.degree(node)==2:
                     to_remove.discard(node)
+    print('number removed first phase',i)
     reconnect_degree_2(nx_graph,pos) #could possibly be done faster
     for node in to_remove:
         if node in nx_graph:
@@ -188,6 +219,8 @@ def clean_nodes(nx_graph,to_remove,pos):
                             nx_graph.remove_edge(right_n,left_n)
                         nx_graph.add_edges_from([(right_n,left_n,info)])
             nx_graph.remove_node(node)
+            i+=1
+    print('number removed second phase',i)
     reconnect_degree_2(nx_graph,pos)
     return(nx_graph)
 
@@ -197,15 +230,20 @@ def orient(pixel_list,root_pos):
     else:
         return list(reversed(pixel_list))
     
-def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50):
+def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,downstream_graphs=[],downstream_pos=[],tolerance=50):
     reconnect_degree_2(nx_graph_t,pos_t)
-    corresp,to_remove=first_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t)
+    corresp,to_remove=first_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,tolerance)
     nx_graph_tm1=clean_nodes(nx_graph_tm1,to_remove,pos_tm1)
-    pos_t,nx_graph_t=relabel_nodes(corresp,nx_graph_t,pos_t)
+    downstream_graphs=[nx_graph_t]+downstream_graphs
+    downstream_pos=[pos_t]+downstream_pos
+    new_graphs,new_poss=relabel_nodes_downstream(corresp,downstream_graphs,downstream_pos)
+    pos_t = new_poss[0]
+    nx_graph_t = new_graphs[0]
+    downstream_pos=new_poss
+    downstream_graphs=new_graphs
     corresp_tips={node : node for node in corresp.keys()}
     tips = [node for node in nx_graph_tm1.nodes if nx_graph_tm1.degree(node)==1]
     for tip in tips:
-#         print('tip',pos_tm1[tip],tip)
         mini=np.inf
         for edge in nx_graph_t.edges:
             pixel_list=nx_graph_t.get_edge_data(*edge)['pixel_list']
@@ -228,7 +266,12 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50):
         last_node=root
         current_node=next_node
         last_branch=np.array(orient(nx_graph_t.get_edge_data(root,next_node)['pixel_list'],pos_t[current_node]))
-        while nx_graph_t.degree(current_node)!=1: #Careful : if there is a cycle with low angle this might loop indefinitely but unprobable
+        i=0
+        loop=[]
+        while nx_graph_t.degree(current_node)!=1 and not current_node in nx_graph_tm1.nodes: #Careful : if there is a cycle with low angle this might loop indefinitely but unprobable
+            i+=1
+            if i>=100:
+                print(i,tip,current_node,pos_t[current_node])
             mini=np.inf
             origin_vector = last_branch[0]-last_branch[min(length_id,len(last_branch)-1)]
             unit_vector_origin = origin_vector / np.linalg.norm(origin_vector)
@@ -247,19 +290,30 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50):
 #                     print('angle',dot_product,pos_t[last_node],pos_t[current_node],pos_t[neighbours_t],angle/(2*np.pi)*360)
 #!!!bug may happen here if two nodes are direct neighbours : I would nee to check further why it the case, optimal segmentation should avoid this issue.
 # This is especially a problem for degree 4 nodes. Maybe fuse nodes that are closer than 3 pixels.
+            if i>=100:
+                print(mini/(2*np.pi)*360, pos_t[next_node])
+                if next_node in loop:
+                    break
+                else:
+                    loop.append(next_node)
             if len(candidate_vectors)<2:
-                print(nx_graph_t.degree(current_node),pos_t[current_node],[node for node in nx_graph_t.nodes if nx_graph_t.degree(node)==2])
+                print("candidate_vectors < 2",nx_graph_t.degree(current_node),pos_t[current_node],[node for node in nx_graph_t.nodes if nx_graph_t.degree(node)==2])
             competitor = np.arccos(np.dot(candidate_vectors[0],-candidate_vectors[1]))
-#             print('competitor',competitor/(2*np.pi)*360)
             if mini<competitor:
                 current_node,last_node=next_node,current_node
             else:
                 corresp_tips[tip]=current_node
                 break
         corresp_tips[tip]=current_node
-    pos_t,nx_graph_t=relabel_nodes(corresp_tips,nx_graph_t,pos_t)
-    nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,mapping=reduce_labels(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t)
-    return(pos_t,nx_graph_t,pos_tm1,nx_graph_tm1,corresp_tips)
+    new_graphs,new_poss=relabel_nodes_downstream(corresp_tips,downstream_graphs,downstream_pos)
+    downstream_pos=new_poss
+    downstream_graphs=new_graphs
+#     print("second relabeling")
+#     print(len(nx_graph_tm1.nodes),len(new_graphs[0].nodes))
+    new_graphs,new_poss=reduce_labels([nx_graph_tm1]+downstream_graphs,[pos_tm1]+downstream_pos)
+#     print("third relabeling")
+#     print(len(new_graphs[0].nodes),len(new_graphs[1].nodes))
+    return(new_graphs,new_poss)
                 
 
 def whole_movement_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50):
@@ -337,4 +391,3 @@ def shift(skeleton1,skeleton2):
 #         print(distance)
         return distance
     return(minimize(distance,np.array([10,10]), method='nelder-mead',options={'xatol': 1, 'disp': True,'fatol':0.1}))
-
