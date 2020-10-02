@@ -49,16 +49,23 @@ def transform_skeleton(skeleton_doc,Rot,trans):
             print(i)
     return(transformed_skeleton)
 
-def realign(skeleton1,skeleton2):
+def realign(skeleton1,skeleton2,convergence_threshold):
+    converged=False
     nx_graphA,posA=generate_nx_graph_from_skeleton(skeleton1) 
-    nx_graphB,posB=generate_nx_graph_from_skeleton(skeleton2) 
-    listeA,listeB = find_common_group_nodes(nx_graphA,nx_graphB,posA,posB,maxdist=30)
-    H=np.dot(np.transpose(np.array(listeA)-np.mean(listeA,axis=0)),np.array(listeB)-np.mean(listeB,axis=0))
-    U,S,V=np.linalg.svd(H)
-    R=np.dot(V,np.transpose(U))
-    t=np.mean(listeB,axis=0)-np.dot(R,np.mean(listeA,axis=0))
-    skeleton_transformed=transform_skeleton(skeleton1,R,t)
-    skeleton_transformed=dilate(skeleton_transformed)
+    nx_graphB,posB=generate_nx_graph_from_skeleton(skeleton2)
+    while not converged:
+        listeA,listeB = find_common_group_nodes(nx_graphA,nx_graphB,posA,posB,maxdist=30)
+        H=np.dot(np.transpose(np.array(listeA)-np.mean(listeA,axis=0)),np.array(listeB)-np.mean(listeB,axis=0))
+        U,S,V=np.linalg.svd(H)
+        R=np.dot(V,np.transpose(U))
+        t=np.mean(listeB,axis=0)-np.dot(R,np.mean(listeA,axis=0))
+        print("number_common_nodes_found :",len(listeA),R,t)
+        skeleton_transformed=transform_skeleton(skeleton1,R,t)
+        if np.linalg.norm(t)<=convergence_threshold:
+            converged=True
+        nx_graphA,posA=generate_nx_graph_from_skeleton(skeleton_transformed) 
+        skeleton1 = skeleton_transformed
+    skeleton_transformed=dilate(skeleton1)
     skeleton_transformed=zhangSuen(skeleton_transformed)
     return(skeleton_transformed)
 

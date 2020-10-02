@@ -337,3 +337,4 @@ def shift(skeleton1,skeleton2):
 #         print(distance)
         return distance
     return(minimize(distance,np.array([10,10]), method='nelder-mead',options={'xatol': 1, 'disp': True,'fatol':0.1}))
+
