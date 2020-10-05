@@ -36,15 +36,12 @@ def find_common_group_nodes(nx_grapha,nx_graphb,posa,posb,window=500,maxdist=50)
     return(common_centroida,common_centroidb)
 
 def transform_skeleton(skeleton_doc,Rot,trans):
-    transformed_skeleton=sparse.dok_matrix(skeleton_doc.shape, dtype=bool)
+    transformed_skeleton={}
     transformed_keys = np.round(np.transpose(np.dot(Rot,np.transpose(np.array(list(skeleton_doc.keys())))))+trans).astype(np.int)
-    maxx=skeleton_doc.shape[0]
-    maxy = skeleton_doc.shape[1]
     i=0
     for pixel in list(transformed_keys):
         i+=1
-        if maxx>pixel[0]>0 and maxy>pixel[1]>0:
-            transformed_skeleton[(pixel[0],pixel[1])]=1
+        transformed_skeleton[(pixel[0],pixel[1])]=1
         if i%100000==0:
             print(i)
     return(transformed_skeleton)

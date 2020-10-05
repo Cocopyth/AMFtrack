@@ -1,11 +1,10 @@
 from scipy import sparse
 def dilate(sparse_matrix_doc):
-    dilated = sparse.dok_matrix(sparse_matrix_doc.shape, dtype=bool)
+    dilated = {}
     for pos in sparse_matrix_doc.keys():
         positions=[pos,(pos[0],pos[1]+1),(pos[0],pos[1]-1),(pos[0]-1,pos[1]-1),(pos[0]+1,pos[1]-1),(pos[0]+1,pos[1]+1),(pos[0]-1,pos[1]+1),(pos[0]-1,pos[1]),(pos[0]+1,pos[1])]
         for position in positions:
-            if position[0]<sparse_matrix_doc.shape[0] and position[1]<sparse_matrix_doc.shape[1] and position[0]>=0 and position[0]>=0:
-                dilated[position]=1
+            dilated[position]=1
     return(dilated)
 
 
@@ -124,8 +123,9 @@ def neighbours(x,y,image):
     "Return 8-neighbours of image point P1(x,y), in a clockwise order"
     img = image
     x_1, y_1, x1, y1 = x-1, y-1, x+1, y+1
-    return [ img[x_1,y], img[x_1,y1], img[x,y1], img[x1,y1],     # P2,P3,P4,P5
-                img[x1,y], img[x1,y_1], img[x,y_1], img[x_1,y_1] ]    # P6,P7,P8,P9
+    keys = image.keys()
+    return [ (x_1,y) in keys, (x_1,y1) in keys, (x,y1) in keys, (x1,y1) in keys,     # P2,P3,P4,P5
+                (x1,y) in keys, (x1,y_1) in keys, (x,y_1) in keys, (x_1,y_1) in keys ]    # P6,P7,P8,P9
 
 def transitions(neighbours):
     "No. of 0,1 patterns (transitions from 0 to 1) in the ordered sequence"
@@ -134,9 +134,7 @@ def transitions(neighbours):
 
 def zhangSuen(image):
     "the Zhang-Suen Thinning Algorithm"
-    Image_Thinned=sparse.dok_matrix((image.shape[0]+2,image.shape[1]+2), dtype=bool)
-    for pos in  image.keys():
-        Image_Thinned[pos[0]+1,pos[1]+1]=image[pos[0],pos[1]]
+    Image_Thinned={key : image[key] for key in image.keys()}
     changing1 = changing2 = 1        #  the points to be removed (set as 0)
     while changing1 or changing2:   #  iterates until no further changes occur in the image
         # Step 1
@@ -152,7 +150,7 @@ def zhangSuen(image):
                 P4 * P6 * P8 == 0):         # Condition 4
                 changing1.append((x,y))
         for x, y in changing1: 
-            Image_Thinned[x,y] = 0
+            Image_Thinned.pop((x,y),None)
         # Step 2
         changing2 = []
         for pos in  Image_Thinned.keys():
@@ -166,6 +164,6 @@ def zhangSuen(image):
                 P2 * P6 * P8 == 0):            # Condition 4
                 changing2.append((x,y))    
         for x, y in changing2: 
-            Image_Thinned[x,y] = 0
+            Image_Thinned.pop((x,y),None)
         print(len(changing1),len(changing2))
     return Image_Thinned
