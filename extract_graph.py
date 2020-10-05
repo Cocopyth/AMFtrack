@@ -20,6 +20,13 @@ def dic_to_sparse(dico):
     datar=dico['data']
     return(sparse.csc_matrix((datar,indices,indptr))) 
 
+def sparse_to_doc(sparse_mat):
+    doc_mat={}
+    nonzeros=sparse_mat.nonzero()
+    for i,x in enumerate(nonzeros[0]):
+        doc_mat[x,nonzeros[1][i]]=1
+    return(doc_mat)
+
 def order_pixel(pixel_begin,pixel_end,pixel_list):
     def get_neighbours(pixel):
         x=pixel[0]
@@ -144,6 +151,24 @@ def from_nx_to_tab(nx_graph,pos):
         tab=tab.append(new_line,ignore_index=True)
     return(tab)
 
+
+def from_nx_to_tab_matlab(nx_graph,pos):
+    column_names = ["origin_label","end_label","origin_posx", "origin_posy", "end_posx","end_posy", "pixel_list"]
+    tab = pd.DataFrame(columns=column_names)
+    for edge in nx_graph.edges:
+        origin_label=edge[0]
+        end_label=edge[1]
+        origin_posx=pos[origin_label][0]
+        origin_posy=pos[origin_label][1]
+        end_posx = pos[end_label][0]
+        end_posy = pos[end_label][1]
+        pixel_list=orient(nx_graph.get_edge_data(*edge)['pixel_list'],pos[origin_label])
+        new_line=pd.DataFrame({"origin_label":[origin_label],"end_label" : [end_label], 
+                               "origin_posx":[origin_posx],"origin_posy":[origin_posy], "end_posx" : [end_posx],"end_posy" : [end_posy],
+                               "pixel_list" : [','.join([f'{pixel[0]},{pixel[1]}' for pixel in pixel_list])]})
+        tab=tab.append(new_line,ignore_index=True)
+    return(tab)
+
 def generate_set_node(graph_tab):
     nodes=set()
     for index, row in graph_tab.iterrows():
@@ -205,10 +230,25 @@ def generate_graph_tab_from_skeleton(skelet):
 
 
 def generate_nx_graph_from_skeleton(skelet):
-    dok_skel = sparse.dok_matrix(skelet)
+#     dok_skel = sparse.dok_matrix(skelet)
+    dok_skel = skelet
     graph_tab = from_sparse_to_graph(dok_skel)
     return(generate_nx_graph(graph_tab))
 
 def transform_list(position):
     c=position[1:-1].split()
     return(np.array(c).astype(np.int))
+
+def sub_graph(nx_graph,pos,xbegin,xend,ybegin,yend):
+    sub_nx_graph=nx.Graph.copy(nx_graph)
+    for node in nx_graph.nodes:
+        if (pos[node][0]>=xend or pos[node][0]<=xbegin or pos[node][1]>=yend or pos[node][1]<=ybegin):
+            sub_nx_graph.remove_node(node)
+    return(sub_nx_graph)
+
+def generate_skeleton(nx_graph,dim,shift=(0,0)):
+    skel = sparse.dok_matrix(dim, dtype=bool)
+    for edge in nx_graph.edges.data('pixel_list'):
+        for pixel in edge[2]:
+            skel[(pixel[0]-shift[0],pixel[1]-shift[1])]=True
+    return(skel)
