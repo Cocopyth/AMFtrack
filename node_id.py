@@ -318,10 +318,11 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,dow
 
 def whole_movement_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50):
     tips = [node for node in nx_graph_tm1.nodes if nx_graph_tm1.degree(node)==1]
-    tip_origin={tip : tip  for tip in tips}
+    tip_origin={tip : [tip]  for tip in tips}
     pixels_from_tip={tip : [] for tip in tips}
     for number,tip in enumerate(tips):
 #         print('tip',pos_tm1[tip],tip)
+        labeled=[]
         if number%100==0:
             print(number/len(tips))
         mini=np.inf
@@ -344,25 +345,26 @@ def whole_movement_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_i
         if dot_product>=0:
             root=right_edge[0]
             next_node=right_edge[1]
-            pixels_from_tip[tip]+=list(branch[index_nearest_pixel:])
+            pixels_from_tip[tip].append(list(branch[index_nearest_pixel:]))
         else:
             root=right_edge[1]
             next_node=right_edge[0]
-            pixels_from_tip[tip]+=list(reversed(list(branch[:index_nearest_pixel])))
+            pixels_from_tip[tip].append(list(reversed(list(branch[:index_nearest_pixel]))))
         #Could improve the candidate vector by chosing pixel around the forme tip but this identification should be rather unambiguous
         last_node=root
         current_node=next_node
         last_branch=np.array(orient(nx_graph_t.get_edge_data(root,next_node)['pixel_list'],pos_t[current_node]))
-        def label_node_recursive(last_node,current_node,corresp_label):
-            if not current_node in corresp_label.keys() and not current_node in nx_graph_tm1.nodes:
-                corresp_label[current_node]=tip
+        def label_node_recursive(last_node,current_node,corresp_label,labeled):
+            if not current_node in labeled and not current_node in nx_graph_tm1.nodes:
+                corresp_label[tip].append(current_node)
+                labeled.append(current_node)
                 pixel_list=nx_graph_t.get_edge_data(last_node,current_node)['pixel_list']
-                pixels_from_tip[tip]+=pixel_list
+                pixels_from_tip[tip].append(pixel_list)
                 if nx_graph_t.degree(current_node)>=3:
                     for neighbour_t in nx_graph_t.neighbors(current_node): 
                         if neighbour_t!=last_node:
-                            label_node_recursive(current_node,neighbour_t,corresp_label)
-        label_node_recursive(last_node,current_node,tip_origin)
+                            label_node_recursive(current_node,neighbour_t,corresp_label,labeled)
+        label_node_recursive(last_node,current_node,tip_origin,labeled)
     return(tip_origin,pixels_from_tip)
 
 def shift(skeleton1,skeleton2):

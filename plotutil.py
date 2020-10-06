@@ -78,24 +78,39 @@ def plot_nodes_from_list(node_list,pos,im):
                     bbox=bbox_props)
     plt.show()
     
-def plot_t_tp1(node_list_t,node_list_tp1,pos_t,pos_tp1,imt,imtp1,relabel_t=lambda x:x,relabel_tp1=lambda x:x, shift=(0,0),compress=1):
-    fig = plt.figure()
+def plot_t_tp1(node_list_t,node_list_tp1,pos_t,pos_tp1,imt,imtp1,relabel_t=lambda x:x,relabel_tp1=lambda x:x, shift=(0,0),compress=1,save='',time=None):
+    right = 0.90
+    top = 0.90
+    if len(save)>=1:
+        fig=plt.figure(figsize=(14,12))
+        size = 10
+    else:
+        fig = plt.figure()
+        size = 5
     ax = fig.add_subplot(111)
     ax.imshow(imtp1, cmap='gray',interpolation='none')
     ax.imshow(imt, cmap='jet', alpha=0.5,interpolation='none')
     bbox_props1 = dict(boxstyle="circle", fc="grey")
     bbox_props2 = dict(boxstyle="circle", fc="white")
+    ax.text(right, top, time,
+        horizontalalignment='right',
+        verticalalignment='bottom',
+        transform=ax.transAxes,color='white')
     for node in node_list_t:
         t = ax.text((pos_t[node][1]-shift[1])//compress, (pos_t[node][0]-shift[0])//compress, str(relabel_t(node)), ha="center", va="center",
-                    size=5,
+                    size=size,
                     bbox=bbox_props1)
     for node in node_list_tp1:
         if node in pos_tp1.keys():
             t = ax.text((pos_tp1[node][1]-shift[1])//compress, (pos_tp1[node][0]-shift[0])//compress, str(relabel_tp1(node)), ha="center", va="center",
-                        size=5,
+                        size=size,
                         bbox=bbox_props2)
-    plt.show()
-    
+    if len(save)>=1:
+        plt.savefig(save)
+        plt.close(fig)
+    else:
+        plt.show()
+        
 def compress_skeleton(skeleton_doc,factor):
     shape=skeleton_doc.shape
     final_picture = np.zeros(shape=(shape[0]//factor,shape[1]//factor))
