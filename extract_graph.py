@@ -7,6 +7,7 @@ from scipy import sparse
 from pymatreader import read_mat
 import networkx as nx
 import pandas as pd
+import csv
 
 def orient(pixel_list,root_pos):
     if np.all(root_pos==pixel_list[0]):
@@ -252,3 +253,30 @@ def generate_skeleton(nx_graph,dim,shift=(0,0)):
         for pixel in edge[2]:
             skel[(pixel[0]-shift[0],pixel[1]-shift[1])]=True
     return(skel)
+
+def from_nx_to_simple_csv(nx_graph,pos,path,suffix):
+    array=[]
+    for edge in nx_graph.edges:
+        origin_label=edge[0]
+        end_label=edge[1]
+        origin_posx=pos[origin_label][0]
+        origin_posy=pos[origin_label][1]
+        end_posx = pos[end_label][0]
+        end_posy = pos[end_label][1]
+        pixel_list=orient(nx_graph.get_edge_data(*edge)['pixel_list'],pos[origin_label])
+        new_line = [origin_label] + [end_label]+[int(origin_posx)]+[int(origin_posy)]+[int(end_posx)]+[int(end_posy)]+[int(coordinate) for pixel in pixel_list for coordinate in pixel]
+        array.append(new_line)
+#     print(type(array[0][0]),type(array[0][1]),type(array[0][2]),type(array[0][10]))
+#     array=np.asarray(array,dtype=np.int)
+#         print(type(new_line))
+    with open(path+suffix, 'w+') as myfile:
+        wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+        wr.writerows(array)
+        
+def connections_pixel_list_to_tab(origin_tips,pattern_growth):
+    column_names = ['tip_origin',"nodes_from_tip", "growth_pattern"]
+    tab = pd.DataFrame(columns=column_names)
+    for tip in origin_tips.keys():
+        new_line=pd.DataFrame({"tip_origin" : [tip],"nodes_from_tip" :[origin_tips[tip]], "growth_pattern" : [pattern_growth[tip]]})
+        tab=tab.append(new_line,ignore_index=True)
+    return(tab)
