@@ -8,6 +8,7 @@ from pymatreader import read_mat
 import networkx as nx
 import pandas as pd
 import csv
+import ast
 
 def orient(pixel_list,root_pos):
     if np.all(root_pos==pixel_list[0]):
@@ -276,7 +277,17 @@ def from_nx_to_simple_csv(nx_graph,pos,path,suffix):
 def connections_pixel_list_to_tab(origin_tips,pattern_growth):
     column_names = ['tip_origin',"nodes_from_tip", "growth_pattern"]
     tab = pd.DataFrame(columns=column_names)
+    pattern_growth={tip : [[(pixel[0],pixel[1]) for pixel in branch] for branch in pattern_growth[tip]] for tip in pattern_growth.keys()}
     for tip in origin_tips.keys():
         new_line=pd.DataFrame({"tip_origin" : [tip],"nodes_from_tip" :[origin_tips[tip]], "growth_pattern" : [pattern_growth[tip]]})
         tab=tab.append(new_line,ignore_index=True)
     return(tab)
+
+def from_connection_tab(connect_tab):
+    from_tip={}
+    growth_pattern={}
+    for i in range (len(connect_tab['tip_origin'])):
+        tip=connect_tab['tip_origin'][i]
+        growth_pattern[tip] = ast.literal_eval(connect_tab['growth_pattern'][i])
+        from_tip[tip] = ast.literal_eval(connect_tab['nodes_from_tip'][i])
+    return(from_tip,growth_pattern)
