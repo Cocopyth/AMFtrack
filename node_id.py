@@ -304,7 +304,10 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,dow
             else:
                 corresp_tips[tip]=current_node
                 break
-        corresp_tips[tip]=current_node
+        if current_node in nx_graph_tm1.nodes and last_node not in nx_graph_tm1.nodes:
+            corresp_tips[tip]=last_node
+        else:
+            corresp_tips[tip]=current_node
     new_graphs,new_poss=relabel_nodes_downstream(corresp_tips,downstream_graphs,downstream_pos)
     downstream_pos=new_poss
     downstream_graphs=new_graphs
