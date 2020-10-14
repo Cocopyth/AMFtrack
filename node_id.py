@@ -243,6 +243,7 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,dow
     downstream_graphs=new_graphs
     corresp_tips={node : node for node in corresp.keys()}
     tips = [node for node in nx_graph_tm1.nodes if nx_graph_tm1.degree(node)==1]
+    ambiguous=set()
     for tip in tips:
         mini=np.inf
         for edge in nx_graph_t.edges:
@@ -302,12 +303,31 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,dow
             if mini<competitor:
                 current_node,last_node=next_node,current_node
             else:
-                corresp_tips[tip]=current_node
                 break
-        if current_node in nx_graph_tm1.nodes and last_node not in nx_graph_tm1.nodes:
-            corresp_tips[tip]=last_node
+        if current_node in nx_graph_tm1.nodes:
+            if last_node not in nx_graph_tm1.nodes:
+                if last_node in corresp_tips.values():
+                    ambiguous.add(tip)
+                corresp_tips[tip]=last_node
         else:
+            if current_node in corresp_tips.values():
+                ambiguous.add(tip)
             corresp_tips[tip]=current_node
+    while len(ambiguous)>0:
+        node=ambiguous.pop()
+        identifier=corresp_tips[node]
+        candidates = [nod for nod in corresp_tips.keys() if corresp_tips[nod]==identifier]
+        mini=np.inf
+        for candidate in candidates:
+            distance=np.linalg.norm(pos_tm1[candidate]-pos_t[identifier])
+            print(identifier,distance)
+            if distance < mini:
+                right_candidate=candidate
+                mini=distance
+        for candidate in candidates:
+            if candidate!= right_candidate:
+                corresp_tips.pop(candidate)
+                ambiguous.discard(candidate)
     new_graphs,new_poss=relabel_nodes_downstream(corresp_tips,downstream_graphs,downstream_pos)
     downstream_pos=new_poss
     downstream_graphs=new_graphs
