@@ -7,26 +7,26 @@ import ast
 from plotutil import plot_t_tp1
 from scipy import sparse
 from sparse_util import dilate, zhangSuen
-from sparse_util import dilate
 from scipy.optimize import minimize
 
-def find_common_group_nodes(nx_grapha,nx_graphb,posa,posb,window=500,maxdist=50):
+def find_common_group_nodes(nx_grapha,nx_graphb,posa,posb,R0,t0,window=500,maxdist=50):
     degree3_nodesa = [node for node in nx_grapha if nx_grapha.degree(node)==3]
     degree3_nodesb = [node for node in nx_graphb if nx_graphb.degree(node)==3]
     common_nodes_a = []
     common_nodes_b = []
     common_centroida = []
     common_centroidb = []
+    posarottrans = {key : np.round(np.transpose(np.dot(R0,np.transpose(np.array(posa[key])))+t0)).astype(np.int) for key in degree3_nodesa}
     for node in degree3_nodesa:
-        posanchor=posa[node]
-        surrounding_nodesa=[node for node in nx_grapha.nodes if 
-                            (posanchor[0]-window<posa[node][0]<posanchor[0]+window and posanchor[1]-window<posa[node][1]<posanchor[1]+window 
-                             and nx_grapha.degree(node)>=3)]
-        surrounding_nodesb=[node for node in nx_graphb.nodes if 
+        posanchor=posarottrans[node]
+        surrounding_nodesa=[node for node in degree3_nodesa if 
+                            (posanchor[0]-window<posarottrans[node][0]<posanchor[0]+window and posanchor[1]-window<posarottrans[node][1]<posanchor[1]+window 
+                             )]
+        surrounding_nodesb=[node for node in degree3_nodesb if 
                     (posanchor[0]-window<posb[node][0]<posanchor[0]+window and posanchor[1]-window<posb[node][1]<posanchor[1]+window 
-                     and nx_graphb.degree(node)>=3)]
+                    )]
         if len(surrounding_nodesa)==len(surrounding_nodesb):
-            possurroundinga=[posa[node] for node in surrounding_nodesa]
+            possurroundinga=[posarottrans[node] for node in surrounding_nodesa]
             possurroundingb=[posb[node] for node in surrounding_nodesb]
             centroida= np.mean(possurroundinga,axis=0)
             centroidb= np.mean(possurroundingb,axis=0)
@@ -42,28 +42,33 @@ def transform_skeleton(skeleton_doc,Rot,trans):
     for pixel in list(transformed_keys):
         i+=1
         transformed_skeleton[(pixel[0],pixel[1])]=1
-        if i%100000==0:
-            print(i)
     return(transformed_skeleton)
 
-def realign(skeleton1,skeleton2,convergence_threshold):
+def realign(skeleton1,nx_graphB,posB,convergence_threshold,window=500,maxdist=30,save=''):
     converged=False
     nx_graphA,posA=generate_nx_graph_from_skeleton(skeleton1) 
-    nx_graphB,posB=generate_nx_graph_from_skeleton(skeleton2)
+    t0=np.array([0,0])
+    R0=np.identity(2)
     while not converged:
-        listeA,listeB = find_common_group_nodes(nx_graphA,nx_graphB,posA,posB,maxdist=30)
+        listeA,listeB = find_common_group_nodes(nx_graphA,nx_graphB,posA,posB,R0,t0,maxdist=maxdist,window=window)
         H=np.dot(np.transpose(np.array(listeA)-np.mean(listeA,axis=0)),np.array(listeB)-np.mean(listeB,axis=0))
         U,S,V=np.linalg.svd(H)
         R=np.dot(V,np.transpose(U))
         t=np.mean(listeB,axis=0)-np.dot(R,np.mean(listeA,axis=0))
-        print("number_common_nodes_found :",len(listeA),R,t)
-        skeleton_transformed=transform_skeleton(skeleton1,R,t)
+        print("number_common_nodes_found :",len(listeA))
         if np.linalg.norm(t)<=convergence_threshold:
             converged=True
-        nx_graphA,posA=generate_nx_graph_from_skeleton(skeleton_transformed) 
-        skeleton1 = skeleton_transformed
-    skeleton_transformed=dilate(skeleton1)
+        R0=np.dot(R,R0)
+        t0=t+t0
+    skeleton_transformed=transform_skeleton(skeleton1,R0,t0)
+    skeleton_transformed=dilate(skeleton_transformed)
+    skeleton_transformed=dilate(skeleton_transformed)
     skeleton_transformed=zhangSuen(skeleton_transformed)
+    if len(save)>=0:
+        from_nx_to_tab(*generate_nx_graph_from_skeleton(skeleton_transformed)).to_csv(save+'_raw_aligned_skeleton.csv')
+        np.savetxt(save+'rot.txt',R0)
+        np.savetxt(save+'trans.txt',t0)
+    print("R0=",R0,'t0=',t0)
     return(skeleton_transformed)
 
 def reconnect(skeleton):
