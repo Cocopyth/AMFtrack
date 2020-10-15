@@ -1,7 +1,7 @@
 import pandas as pd
 import networkx as nx
 import numpy as np
-from extract_graph import generate_nx_graph, transform_list, generate_skeleton, generate_nx_graph_from_skeleton
+from extract_graph import generate_nx_graph, transform_list, generate_skeleton, generate_nx_graph_from_skeleton, from_nx_to_tab
 from node_id import whole_movement_identification
 import ast
 from plotutil import plot_t_tp1
@@ -47,6 +47,34 @@ def transform_skeleton(skeleton_doc,Rot,trans):
 def realign(skeleton1,nx_graphB,posB,convergence_threshold,window=500,maxdist=50,save=''):
     converged=False
     nx_graphA,posA=generate_nx_graph_from_skeleton(skeleton1) 
+    t0=np.array([0,0])
+    R0=np.identity(2)
+    while not converged:
+        listeA,listeB = find_common_group_nodes(nx_graphA,nx_graphB,posA,posB,R0,t0,maxdist=maxdist,window=window)
+        H=np.dot(np.transpose(np.array(listeA)-np.mean(listeA,axis=0)),np.array(listeB)-np.mean(listeB,axis=0))
+        U,S,V=np.linalg.svd(H)
+        R=np.dot(V,np.transpose(U))
+        t=np.mean(listeB,axis=0)-np.dot(R,np.mean(listeA,axis=0))
+        print("number_common_nodes_found :",len(listeA))
+        if np.linalg.norm(t)<=convergence_threshold:
+            converged=True
+        R0=np.dot(R,R0)
+        t0=t+t0
+    skeleton_transformed=transform_skeleton(skeleton1,R0,t0)
+    skeleton_transformed=dilate(skeleton_transformed)
+    skeleton_transformed=dilate(skeleton_transformed)
+    skeleton_transformed=zhangSuen(skeleton_transformed)
+    if len(save)>=0:
+        from_nx_to_tab(*generate_nx_graph_from_skeleton(skeleton_transformed)).to_csv(save+'_raw_aligned_skeleton.csv')
+        np.savetxt(save+'rot.txt',R0)
+        np.savetxt(save+'trans.txt',t0)
+    print("R0=",R0,'t0=',t0)
+    return(skeleton_transformed)
+
+def realign2(skeleton1,skeleton2,convergence_threshold,window=500,maxdist=50,save=''):
+    converged=False
+    nx_graphA,posA=generate_nx_graph_from_skeleton(skeleton1)
+    nx_graphB,posB=generate_nx_graph_from_skeleton(skeleton2) 
     t0=np.array([0,0])
     R0=np.identity(2)
     while not converged:
