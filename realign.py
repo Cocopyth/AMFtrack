@@ -44,7 +44,7 @@ def transform_skeleton(skeleton_doc,Rot,trans):
         transformed_skeleton[(pixel[0],pixel[1])]=1
     return(transformed_skeleton)
 
-def realign(skeleton1,nx_graphB,posB,convergence_threshold,window=500,maxdist=30,save=''):
+def realign(skeleton1,nx_graphB,posB,convergence_threshold,window=500,maxdist=50,save=''):
     converged=False
     nx_graphA,posA=generate_nx_graph_from_skeleton(skeleton1) 
     t0=np.array([0,0])
