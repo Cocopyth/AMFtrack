@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import cv2 
 import numpy as np
+
+
 def show_im(matrix,alpha=None,cmap='gray',interpolation='none'):
     fig = plt.figure()
     ax = fig.add_subplot(111)

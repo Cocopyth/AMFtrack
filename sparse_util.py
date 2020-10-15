@@ -165,5 +165,4 @@ def zhangSuen(image):
                 changing2.append((x,y))    
         for x, y in changing2: 
             Image_Thinned.pop((x,y),None)
-        print(len(changing1),len(changing2))
     return Image_Thinned
