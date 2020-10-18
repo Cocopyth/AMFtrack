@@ -207,16 +207,8 @@ def generate_skeleton(nx_graph,dim=(3000,4096)):
 
 def prune_graph(nx_graph,threshold=150):
     S = [nx_graph.subgraph(c).copy() for c in nx.connected_components(nx_graph)]
-    for s in S:
-        if s.size(weight='weight')<threshold:
-            nx_graph.remove_nodes_from(s.nodes)
-    to_remove=[]
-    for edge in nx_graph.edges:
-        if nx_graph.degree(edge[0])==1 and nx_graph.degree(edge[1])==1:
-            to_remove.append(edge[0])
-            to_remove.append(edge[1])
-    nx_graph.remove_nodes_from(to_remove)
-    return(nx_graph)
+    len_connected=[len(nx_graph.nodes) for nx_graph in S]
+    return(S[np.argmax(len_connected)])
 
 def clean(skeleton):
     skeleton_doc=sparse.dok_matrix(skeleton)
