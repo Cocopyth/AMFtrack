@@ -12,6 +12,7 @@ import networkx as nx
 from copy import deepcopy
 from sparse_util import dilate
 from scipy.optimize import minimize
+from time import time
 
 def node_dist(node1,node2,nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,tolerance,show=False,):
     #!!! assumed shape == 3000,4096
@@ -48,9 +49,18 @@ def first_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,tolerance):
     to_remove=set()
     degree_3sup_nodes_tm1 = [node for node in nx_graph_tm1.nodes if nx_graph_tm1.degree(node)>=3]
     degree_3sup_nodes_t = [node for node in nx_graph_t.nodes if nx_graph_t.degree(node)>=3]
+    Stm1=sparse.csr_matrix((22000, 46000))
+    St=sparse.csr_matrix((22000, 46000))
+    for node in degree_3sup_nodes_tm1:
+        Stm1[pos_tm1[node][0],pos_tm1[node][1]]=node
+    for node in degree_3sup_nodes_t:
+        St[pos_t[node][0],pos_t[node][1]]=node
     for node1 in degree_3sup_nodes_tm1:
         mini=np.inf
-        for node2 in degree_3sup_nodes_t:
+        posanchor=pos_tm1[node1]
+        window=150
+        potential_surrounding_t=St[max(0,posanchor[0]-2*window):posanchor[0]+2*window,max(0,posanchor[1]-2*window):posanchor[1]+2*window]
+        for node2 in potential_surrounding_t.data:
             distance=np.linalg.norm(pos_tm1[node1]-pos_t[node2])
             if distance<mini:
                 mini=distance
@@ -235,11 +245,18 @@ def orient(pixel_list,root_pos):
     
 def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,downstream_graphs=[],downstream_pos=[],tolerance=50):
     reconnect_degree_2(nx_graph_t,pos_t)
+    t=time()
     corresp,to_remove=first_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,tolerance)
+    print("first_id",time()-t)
+    t=time()
     nx_graph_tm1=clean_nodes(nx_graph_tm1,to_remove,pos_tm1)
+    print("clean_node",time()-t)
+    t=time()
     downstream_graphs=[nx_graph_t]+downstream_graphs
     downstream_pos=[pos_t]+downstream_pos
     new_graphs,new_poss=relabel_nodes_downstream(corresp,downstream_graphs,downstream_pos)
+    print("relabel",time()-t)
+    t=time()
     pos_t = new_poss[0]
     nx_graph_t = new_graphs[0]
     downstream_pos=new_poss
@@ -247,15 +264,40 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,dow
     corresp_tips={node : node for node in corresp.keys()}
     tips = [node for node in nx_graph_tm1.nodes if nx_graph_tm1.degree(node)==1]
     ambiguous=set()
+    Sedge=sparse.csr_matrix((22000, 46000))
+    for edge in nx_graph_t.edges:
+        pixel_list=nx_graph_t.get_edge_data(*edge)['pixel_list']
+        pixela=pixel_list[0]
+        pixelb=pixel_list[-1]
+        Sedge[pixela[0],pixela[1]]=edge[0]
+        Sedge[pixelb[0],pixelb[1]]=edge[1]
     for tip in tips:
+        mini1=np.inf
+        posanchor=pos_tm1[tip]
+        window=1000
+        potential_surrounding_t=Sedge[max(0,posanchor[0]-2*window):posanchor[0]+2*window,max(0,posanchor[1]-2*window):posanchor[1]+2*window]
+#         potential_surrounding_t=Sedge
+#         for edge in nx_graph_t.edges:
+#             pixel_list=nx_graph_t.get_edge_data(*edge)['pixel_list']
+#             if np.linalg.norm(np.array(pixel_list[0])-np.array(pos_tm1[tip]))<=5000:
+#                 distance=np.min(np.linalg.norm(np.array(pixel_list)-np.array(pos_tm1[tip]),axis=1))
+#                 if distance<mini1:
+#                     mini1=distance
+#                     right_edge1 = edge
+#         print('t1 re',right_edge)
         mini=np.inf
-        for edge in nx_graph_t.edges:
-            pixel_list=nx_graph_t.get_edge_data(*edge)['pixel_list']
-            if np.linalg.norm(np.array(pixel_list[0])-np.array(pos_tm1[tip]))<=5000:
-                distance=np.min(np.linalg.norm(np.array(pixel_list)-np.array(pos_tm1[tip]),axis=1))
-                if distance<mini:
-                    mini=distance
-                    right_edge = edge
+        for node_root in potential_surrounding_t.data:
+            for edge in nx_graph_t.edges(int(node_root)):
+                pixel_list=nx_graph_t.get_edge_data(*edge)['pixel_list']
+                if np.linalg.norm(np.array(pixel_list[0])-np.array(pos_tm1[tip]))<=5000:
+                    distance=np.min(np.linalg.norm(np.array(pixel_list)-np.array(pos_tm1[tip]),axis=1))
+                    if distance<mini:
+                        mini=distance
+                        right_edge = edge
+#         print('t2 re',right_edge)
+#         if right_edge!=right_edge1:
+#             print('alaba',right_edge,right_edge1)
+#             print('len(surrounding)',len(potential_surrounding_t.data))
         origin = np.array(orient(nx_graph_tm1.get_edge_data(*list(nx_graph_tm1.edges(tip))[0])['pixel_list'],pos_tm1[tip]))
         origin_vector = origin[0]-origin[-1]
         branch=np.array(orient(nx_graph_t.get_edge_data(*right_edge)['pixel_list'],pos_t[right_edge[0]]))
@@ -316,6 +358,8 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,dow
             if current_node in corresp_tips.values():
                 ambiguous.add(tip)
             corresp_tips[tip]=current_node
+    print("tip_id",time()-t)
+    t=time()
     while len(ambiguous)>0:
         node=ambiguous.pop()
         identifier=corresp_tips[node]
@@ -323,7 +367,7 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,dow
         mini=np.inf
         for candidate in candidates:
             distance=np.linalg.norm(pos_tm1[candidate]-pos_t[identifier])
-            print(identifier,distance)
+#             print(identifier,distance)
             if distance < mini:
                 right_candidate=candidate
                 mini=distance
