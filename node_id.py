@@ -201,6 +201,9 @@ def clean_nodes(nx_graph,to_remove,pos):
                 candidate_to_fuse.append(neighbour)
                 weight_candidate.append(len(nx_graph.get_edge_data(node,neighbour)['pixel_list']))
             node_to_fuse=candidate_to_fuse[np.argmin(weight_candidate)]
+            if nx_graph.degree(node)==1 and node_to_fuse not in to_remove:
+                print(pos[node])
+                continue
             for neighbour in neighbours:
                 right_n = node_to_fuse
                 left_n = neighbour
