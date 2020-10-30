@@ -9,6 +9,7 @@ import networkx as nx
 import pandas as pd
 import csv
 import ast
+from collections import Counter
 
 def orient(pixel_list,root_pos):
     if np.all(root_pos==pixel_list[0]):
@@ -197,6 +198,55 @@ def generate_nx_graph(graph_tab,labeled=False):
         info={'weight':len(row['pixel_list']),'pixel_list':row['pixel_list']}
         G.add_edges_from([(identifier1,identifier2,info)])
     return(G,pos)
+
+def clean_degree_4(nx_graph,pos,thresh=30):
+    nx_graph_clean = nx.Graph.copy(nx_graph)
+    remaining_to_fuse=True
+    print(len(nx_graph_clean.nodes))
+    while remaining_to_fuse:
+        remaining_to_fuse=False
+        to_fuse=[]
+        for edge in nx_graph_clean.edges:
+            if nx_graph_clean.get_edge_data(*edge)['weight']<=thresh and nx_graph_clean.degree(edge[0])==3 and nx_graph_clean.degree(edge[1])==3:
+                to_fuse.append(edge)
+        nodes_to_fuse = [edge[0] for edge in to_fuse]+[edge[1] for edge in to_fuse]
+        occurence_count = Counter(nodes_to_fuse) 
+        difficult_cases=[]
+        for edge in to_fuse:
+            node1=edge[0]
+            node2=edge[1]
+            if occurence_count[node1]!=1 and occurence_count[node2]!=1:
+                difficult_cases.append(edge)
+            else:
+                remaining_to_fuse=True
+                if occurence_count[node1]==1:
+                    pivot = node2
+                    fuser = node1
+                else:
+                    pivot = node1
+                    fuser = node2
+                neighbours = list(nx_graph_clean.neighbors(fuser))
+                for neighbour in neighbours:
+                    right_n = pivot
+                    left_n = neighbour
+                    right_edge = nx_graph_clean.get_edge_data(fuser,right_n)['pixel_list']
+                    left_edge = nx_graph_clean.get_edge_data(fuser,left_n)['pixel_list']
+                    if np.any(right_edge[0]!=pos[fuser]):
+                        right_edge = list(reversed(right_edge))
+                    if np.any(left_edge[-1]!=pos[fuser]):
+                        left_edge = list(reversed(left_edge))
+                    pixel_list = left_edge+right_edge[1:]
+                    info={'weight':len(pixel_list),'pixel_list':pixel_list}
+                    if right_n!=left_n:
+                        connection_data=nx_graph_clean.get_edge_data(right_n,left_n)
+                        if connection_data is None or connection_data['weight']>=info['weight']:
+                            if not connection_data is None:
+                                nx_graph_clean.remove_edge(right_n,left_n)
+                            nx_graph_clean.add_edges_from([(right_n,left_n,info)])
+                nx_graph_clean.remove_node(fuser)
+        print(len(difficult_cases))
+    print(len(nx_graph_clean.nodes))
+    return(nx_graph_clean,difficult_cases)
 
 def generate_skeleton(nx_graph,dim=(3000,4096)):
     skel = sparse.dok_matrix(dim, dtype=bool)

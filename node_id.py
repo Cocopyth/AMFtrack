@@ -179,7 +179,7 @@ def reconnect_degree_2(nx_graph,pos):
         degree_2_nodes = [node for node in nx_graph.nodes if nx_graph.degree(node)==2]
             
 def clean_nodes(nx_graph,to_remove,pos):
-    nx_graph=deepcopy(nx_graph) #could be removed to speed up
+    nx_graph=[deepcopy(nx_graph)] #could be removed to speed up
     is_hair = True
     i=0
     while is_hair:
@@ -249,9 +249,9 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,dow
     corresp,to_remove=first_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,tolerance)
     print("first_id",time()-t)
     t=time()
-    nx_graph_tm1=clean_nodes(nx_graph_tm1,to_remove,pos_tm1)
-    print("clean_node",time()-t)
-    t=time()
+#     nx_graph_tm1=clean_nodes(nx_graph_tm1,to_remove,pos_tm1)
+#     print("clean_node",time()-t)
+#     t=time()
     downstream_graphs=[nx_graph_t]+downstream_graphs
     downstream_pos=[pos_t]+downstream_pos
     new_graphs,new_poss=relabel_nodes_downstream(corresp,downstream_graphs,downstream_pos)
