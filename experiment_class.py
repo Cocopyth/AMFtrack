@@ -358,6 +358,8 @@ class Hyphae():
         self.end = tip
         self.root = None
         self.mother = None
+    def __eq__(self, other): 
+        return(self.endlabel==other.end.label)
     def __repr__(self):
         return (f'Hyphae({self.end},{self.root})')
     def __str__(self):
@@ -443,7 +445,7 @@ class Hyphae():
         self.ts = sorted(set(self.end.ts()).intersection(set(self.root.ts())))
 
 def get_hyphae(experiment):
-    tips = [node for node in experiment.nodes if node.degree(node.ts()[0])==1]
+    tips = [node for node in experiment.nodes if node.degree(node.ts()[0])==1 and node.pos(node.ts()[0])[0]<=19500]
     problems=[]
     hyphaes=[]
 #     for i in range(20):
