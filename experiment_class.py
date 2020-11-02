@@ -359,7 +359,7 @@ class Hyphae():
         self.root = None
         self.mother = None
     def __eq__(self, other): 
-        return(self.endlabel==other.end.label)
+        return(self.end.label==other.end.label)
     def __repr__(self):
         return (f'Hyphae({self.end},{self.root})')
     def __str__(self):
