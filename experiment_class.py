@@ -29,10 +29,8 @@ class Experiment():
         self.raw=raw
         if local:
             paths=[f'Data/graph_{date}_{self.plate}_full_labeled.csv' for date in dates]
-            paths_connection = [f'Data/connection_{date}_{self.plate}.csv' for date in dates[:-1]]
         else:
             paths = [get_path(date,self.plate,True,extension='_full_labeled.csv') for date in dates]
-            paths_connection = [get_path(date,self.plate,True,extension='_connection.csv') for date in dates[:-1]]
         if raw:
             nx_graph_poss=[]
             for date in dates:
@@ -44,9 +42,6 @@ class Experiment():
                 nx_graph_poss.append(generate_nx_graph(pd.read_csv(path,
                                     converters={'origin_pos' : transform_list,'end_pos' : transform_list,
                                                 'pixel_list' : ast.literal_eval}),labeled=True))
-        from_tip_growth_pattern=[]
-        for path in paths_connection:
-            from_tip_growth_pattern.append(from_connection_tab(pd.read_csv(path)))
         nx_graphs=[nx_graph_pos[0] for nx_graph_pos in nx_graph_poss]
         poss = [nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
         nx_graph_clean=[]
@@ -81,16 +76,9 @@ class Experiment():
         self.nodes = None
         self.hyphaes=None
     def save(self,path=f'Data/'):
-        from_tip_growth_pattern_tab=[]
-        for date in self.dates[:-1]:
-            from_tip_growth_pattern_tab.append(pd.read_csv(get_path(date,self.plate,True,extension='_connection.csv')))
-        for i, date in enumerate(self.dates[:-1]):
-            from_tip_growth_pattern_tab[i].to_csv(path+f'connection_{date}_{self.plate}.csv')
         tabs_labeled=[]
-        for date in self.dates:
-            tabs_labeled.append(pd.read_csv(get_path(date,self.plate,True,extension='_full_labeled.csv'),
-                                        converters={'origin_pos' : transform_list,
-                                                    'end_pos' : transform_list,'pixel_list' : ast.literal_eval}))
+        for i,date in enumerate(self.dates):
+            tabs_labeled.append(from_nx_to_tab(self.nx_graph[i],self.positions[i]))
         for i, date in enumerate(self.dates):
             tabs_labeled[i].to_csv(path+f'graph_{date}_{self.plate}_full_labeled.csv')
             sio.savemat(path+f'graph_{date}_{self.plate}_full_labeled.mat', {name: col.values for name, col in tabs_labeled[i].items()})
@@ -308,6 +296,8 @@ class Edge():
         self.begin=begin
         self.end = end
         self.experiment = experiment
+    def __eq__(self, other): 
+        return(self.begin==other.begin and self.end == other.end)
     def __repr__(self):
         return (f'Edge({self.begin},{self.end})')
     def __str__(self):
@@ -374,7 +364,13 @@ class Hyphae():
         moving_on_hyphae = True
         edges = [current_edge]
         nodes = [last_node,current_node]
+        i=0
         while moving_on_hyphae:
+            i+=1
+            if i>=100:
+                print(t,self.end,current_node)
+            if i>=110:
+                break
 #                 print ('moving',current_node)
             if current_node.degree(t)<2:
 #                     print(current_node.degree(t),current_node)

@@ -202,7 +202,7 @@ def generate_nx_graph(graph_tab,labeled=False):
 def clean_degree_4(nx_graph,pos,thresh=30):
     nx_graph_clean = nx.Graph.copy(nx_graph)
     remaining_to_fuse=True
-    print(len(nx_graph_clean.nodes))
+    print("cleaning, number of nodes before",len(nx_graph_clean.nodes))
     while remaining_to_fuse:
         remaining_to_fuse=False
         to_fuse=[]
@@ -244,8 +244,8 @@ def clean_degree_4(nx_graph,pos,thresh=30):
                                 nx_graph_clean.remove_edge(right_n,left_n)
                             nx_graph_clean.add_edges_from([(right_n,left_n,info)])
                 nx_graph_clean.remove_node(fuser)
-        print(len(difficult_cases))
-    print(len(nx_graph_clean.nodes))
+        print("number of unsolved cases",len(difficult_cases))
+    print("end cleaning, number of nodes after",len(nx_graph_clean.nodes))
     return(nx_graph_clean,difficult_cases)
 
 def generate_skeleton(nx_graph,dim=(3000,4096)):
