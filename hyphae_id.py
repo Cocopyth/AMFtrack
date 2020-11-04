@@ -144,7 +144,7 @@ def get_mother(hyphaes):
                     mothers.append(hyph)
         hyphae.mother = mothers
         
-def get_pixel_growth_and_new_nodes(hyphae,t1,t2):
+def get_pixel_growth_and_new_children(hyphae,t1,t2):
     assert t1<t2, "t1 should be strictly inferior to t2"
     edges = hyphae.get_nodes_within(t2)[1]
     mini = np.inf
@@ -152,10 +152,13 @@ def get_pixel_growth_and_new_nodes(hyphae,t1,t2):
         pixels = []
         nodes = [hyphae.root]
         for edge in edges:
-            pixels+=edge.pixel_list(t2)
+            pixels.append(edge.pixel_list(t2))
             nodes.append(edge.end)
         return(pixels,nodes)
     else : 
+        if len(edges)==0:
+            print(hyphae.root,hyphae.end)
+            return([],[])
         for i,edge in enumerate(edges):
             distance = np.min(np.linalg.norm(hyphae.end.pos(t1)-np.array(edge.pixel_list(t2)),axis=1))
             if distance < mini :
@@ -163,12 +166,14 @@ def get_pixel_growth_and_new_nodes(hyphae,t1,t2):
                 mini = distance
                 last_edge = edge
                 index_nearest_pixel=np.argmin(np.linalg.norm(hyphae.end.pos(t1)-np.array(edge.pixel_list(t2)),axis=1))
-        pixels = last_edge.pixel_list(t2)[index_nearest_pixel:]
+        pixels = [last_edge.pixel_list(t2)[index_nearest_pixel:]]
         nodes=[-1,last_edge.end]
         for edge in edges[index+1:]:
-            pixels+=edge.pixel_list(t2)
+            pixels.append(edge.pixel_list(t2))
             nodes.append(edge.end)
         return(pixels,nodes)
+    
+    
     
 def save_hyphaes(exp,path = 'Data/'):
     column_names_hyphaes = ['end','root', 'ts','mother']
@@ -186,8 +191,8 @@ def save_hyphaes(exp,path = 'Data/'):
             new_line_growth=pd.DataFrame({'hyphae' : [hyph.end],'t' : [t],'t+1' : [tp1],'nodes_in_hyphae' :[hyph.get_nodes_within(t)], 'segment_of_growth_t_t+1' : [pixels],'node_list_t_t+1':[nodes]})
             growth_info.append(new_line_growth,ignore_index = True)
     path='Data/'
-    hyphs.to_csv(path + f'hyphaes_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.csv')
-    gr_inf.to_csv(path + f'growth_info_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.csv')
-    sio.savemat(path+f'hyphaes_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.mat', {name: col.values for name, col in hyphs.items()})
-    sio.savemat(path+f'growth_info_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.mat', {name: col.values for name, col in gr_inf.items()})
+    hyphaes.to_csv(path + f'hyphaes_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.csv')
+    growth_info.to_csv(path + f'growth_info_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.csv')
+    sio.savemat(path+f'hyphaes_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.mat', {name: col.values for name, col in hyphaes.items()})
+    sio.savemat(path+f'growth_info_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.mat', {name: col.values for name, col in growth_info.items()})
     return(hyphaes,growth_info)
