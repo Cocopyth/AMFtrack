@@ -3,7 +3,7 @@ import pandas as pd
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
-from extract_graph import generate_nx_graph, transform_list, generate_skeleton, generate_nx_graph_from_skeleton, from_connection_tab
+from extract_graph import generate_nx_graph, transform_list, generate_skeleton, generate_nx_graph_from_skeleton, from_connection_tab, from_nx_to_tab
 from node_id import whole_movement_identification, second_identification
 import ast
 from plotutil import plot_t_tp1, compress_skeleton
@@ -52,29 +52,33 @@ class Experiment():
         skeletons=[]
         for nx_graph in nx_graph_clean:
             skeletons.append(generate_skeleton(nx_graph,dim=(20800, 46000)))
-        connections = [c[0] for c in from_tip_growth_pattern]
-        growth_patterns = [c[1] for c in from_tip_growth_pattern]
         self.positions=poss
         self.nx_graph=nx_graph_clean
-        self.connections = connections
-        self.growth_patterns = growth_patterns
         self.skeletons=skeletons
         self.hyphaes=None
         labels = {node for g in self.nx_graph for node in g}
         self.nodes=[]
         for label in labels:
             self.nodes.append(Node(label,self))
-        
+        xpos = [pos[0] for poss in self.positions for pos in poss.values()]
+        ypos = [pos[1] for poss in self.positions for pos in poss.values()]
+        self.boundaries_x = np.min(xpos), np.max(xpos)
+        self.boundaries_y = np.min(ypos), np.max(ypos)
+        compressed_images=[]
+        for t in range(len(self.dates)):
+            compressed_images.append(self.compress_skeleton(t,5))
+        self.compressed = compressed_images
     def copy(self,experiment):
         self.positions=experiment.positions
         self.nx_graph=experiment.nx_graph
-        self.connections = experiment.connections
-        self.growth_patterns = experiment.growth_patterns
         self.skeletons=experiment.skeletons
         self.dates=experiment.dates
         self.plate=experiment.plate
         self.nodes = None
         self.hyphaes=None
+        self.boundaries_x = experiment.boundaries_x
+        self.boundaries_y = experiment.boundaries_y
+        self.compressed = experiment.compressed
     def save(self,path=f'Data/'):
         tabs_labeled=[]
         for i,date in enumerate(self.dates):
@@ -217,9 +221,14 @@ class Experiment():
         ax = fig.add_subplot(111)
         scale=1/len(ts)
         power=len(ts)
-        compressed_images=[]
-        for i,t in enumerate(ts):
-            compressed_images.append(self.compress_skeleton(t,compress))
+        if compress !=5:
+            compressed_images=[]
+            for i,t in enumerate(ts):
+                compressed_images.append(self.compress_skeleton(t,compress))
+        else:
+            compressed_images=[]
+            for i,t in enumerate(ts):
+                compressed_images.append(self.compressed[t])
         visibility = [True for t in ts]
         final_image=scale*compressed_images[0]*visibility[0]
         for i,compressed_image in enumerate(compressed_images[1:]):
@@ -356,7 +365,7 @@ class Hyphae():
         return str((self.end,self.root))
     def __hash__(self):
         return self.end.label
-    def get_edges(self,t,length=20):
+    def get_edges(self,t,length=100):
         first_neighbour = self.end.neighbours(t)[0]
         last_node = self.end
         current_node = first_neighbour
@@ -440,8 +449,8 @@ class Hyphae():
     def update_ts(self):
         self.ts = sorted(set(self.end.ts()).intersection(set(self.root.ts())))
 
-def get_hyphae(experiment):
-    tips = [node for node in experiment.nodes if node.degree(node.ts()[0])==1 and node.pos(node.ts()[0])[0]<=19500]
+def get_hyphae(experiment,exclude_bottom_factor=0.98):
+    tips = [node for node in experiment.nodes if node.degree(node.ts()[0])==1 and node.pos(node.ts()[0])[0]<=experiment.boundaries_x[1]*exclude_bottom_factor]
     problems=[]
     hyphaes=[]
 #     for i in range(20):
@@ -454,7 +463,7 @@ def get_hyphae(experiment):
         for t in tip.ts():
 #             print(t,tip)
             if tip.degree(t)==1:
-                root,edges,nodes = hyphae.get_edges(t,50)
+                root,edges,nodes = hyphae.get_edges(t,100)
                 roots.append(root)
         occurence_count = Counter(roots)
         if len(occurence_count.values())>=2 and occurence_count.most_common(2)[0][0]!=roots[0] and occurence_count.most_common(2)[1][1]/occurence_count.most_common(2)[0][1]>=0.75:
@@ -503,9 +512,7 @@ def clean_exp_with_hyphaes(experiment):
         for t in range(len(nx_graph_cleans)):
             if node.is_in(t):
                 ts[node.label].append(t)
-    print('before getting hyphaes',3 in exp_clean.get_node(1354).ts())
     hyphaes,problems = get_hyphae(exp_clean)
-    print('after getting hyphaes', 3 in exp_clean.get_node(1354).ts())
     to_remove=[]
     safe_nodes = set()
     roots=set()
@@ -523,7 +530,6 @@ def clean_exp_with_hyphaes(experiment):
             to_remove.append(node.label)
 #     return(to_remove)
     print('removing ',len(to_remove),' nodes')
-    print('removing', 1354 in to_remove)
     for node in to_remove:
         t= ts[node][0]
         pos = exp_clean.positions[t]
@@ -572,19 +578,15 @@ def clean_exp_with_hyphaes(experiment):
     for t,nx_graph in enumerate(nx_graph_cleans):
         pos = exp_clean.positions[t]
         reconnect_degree_2(nx_graph,pos)
-    print('before pruning', 1354 in nx_graph_cleans[3])
     nx_graph_pruned=[]
     for graph in nx_graph_cleans:
         S = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
         len_connected=[len(nx_graph.nodes) for nx_graph in S]
         nx_graph_pruned.append(S[np.argmax(len_connected)])
-    print('after pruning', 1354 in nx_graph_pruned[3])
     skeletons=[]
     for nx_graph in nx_graph_pruned:
         skeletons.append(generate_skeleton(nx_graph,dim=(20800, 46000)))
-    print('before changing nx_graph',3 in exp_clean.get_node(1354).ts())
     exp_clean.nx_graph=nx_graph_pruned
-    print('after changing nx_graph',3 in exp_clean.get_node(1354).ts())
     exp_clean.skeletons=skeletons
     labels = {node for g in exp_clean.nx_graph for node in g}
     exp_clean.nodes=[]
