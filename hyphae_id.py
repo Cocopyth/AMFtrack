@@ -3,8 +3,8 @@ import pandas as pd
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
-from extract_graph import generate_nx_graph, transform_list, generate_skeleton, generate_nx_graph_from_skeleton, from_connection_tab
-from node_id import whole_movement_identification, second_identification
+from extract_graph import generate_nx_graph, transform_list, generate_skeleton, generate_nx_graph_from_skeleton, from_connection_tab, prune_graph
+from node_id import reconnect_degree_2
 import ast
 from plotutil import plot_t_tp1, compress_skeleton
 from scipy import sparse
@@ -21,6 +21,7 @@ import os
 from matplotlib import colors
 from random import choice
 from experiment_class import Experiment,clean_exp_with_hyphaes, Node
+from experiment_class import Node
 
 def resolve_ambiguity(hyphaes):
 #     problems=[]
@@ -196,3 +197,165 @@ def save_hyphaes(exp,path = 'Data/'):
     sio.savemat(path+f'hyphaes_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.mat', {name: col.values for name, col in hyphaes.items()})
     sio.savemat(path+f'growth_info_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.mat', {name: col.values for name, col in growth_info.items()})
     return(hyphaes,growth_info)
+
+def resolve_ambiguity_two_ends(hyphaes,bottom_threshold=0.98):
+    root_hyph={}
+    hyphae_two_ends=[hyph for hyph in hyphaes if hyph.root.degree(hyph.ts[0])==1]
+    print(len(hyphae_two_ends))
+    to_remove = []
+    x_boundaries = hyphaes[0].experiment.boundaries_x
+    y_boundaries = hyphaes[0].experiment.boundaries_y
+    for hyph in hyphae_two_ends:
+        t0 = hyph.ts[0]
+        if not hyph.root.pos(t0)[0]>=bottom_threshold*x_boundaries[1]:
+            nodes,edges  = hyph.get_nodes_within(t0)
+            mini = np.inf
+            found = False
+            for i,edge in enumerate(edges):
+                if edge.end.degree(t0) >=4:
+                    if edge.end.degree(t0)>=5:
+                        print(hyph,edge.end, hyph.ts)
+                    else:
+                        next_edge = edges[i+1]
+                        angle = np.cos((edge.orientation_end(t0,50)-next_edge.orientation_begin(t0,50))/360*2*np.pi)
+                        if angle<mini:
+                            found= True
+                            maxi=angle
+                            root_candidate = edge.end
+            if found:
+                root_hyph[hyph] = root_candidate
+    ends = {hyph.end : hyph for hyph in hyphaes}
+    for hyph in root_hyph.keys():
+        if hyph.root in ends:
+            ends[hyph.root].root = root_hyph[hyph]
+        hyph.root = root_hyph[hyph]
+    for hyph in hyphaes[0].experiment.hyphaes:
+        hyph.update_ts()
+    return(root_hyph)
+
+
+def solve_degree4(exp):
+    hyphae_with_degree4 = {}
+#     exp_clean= clean_exp_with_hyphaes(exp)
+    exp_clean= exp #better to modify in place
+    articulation_points =[list(nx.articulation_points(nx_g)) for nx_g in exp_clean.nx_graph]
+    nx_graph_cleans = [nx.Graph.copy(nx_g) for nx_g in exp.nx_graph]
+    exp_clean.nx_graph = nx_graph_cleans
+    for hyph in exp.hyphaes:
+        t0 = hyph.ts[-1]
+        nodes,edges = hyph.get_nodes_within(t0)
+        hyphae_with_degree4[hyph]=[]
+        for node in nodes:
+            if exp.get_node(node).degree(t0)>=4:
+                hyphae_with_degree4[hyph].append(exp.get_node(node))
+    roots = [hyph.root for hyph in exp.hyphaes]
+    ends = [hyph.end for hyph in exp.hyphaes]
+    solved_node = []
+    solved = []
+    iis = {t : 2 for t in range(len(exp_clean.nx_graph))}
+    for hyph in hyphae_with_degree4.keys():
+        for node in hyphae_with_degree4[hyph]:
+            can_be_removed = True
+            if 0 in node.ts():
+                can_be_removed= False
+            else:
+                for t in node.ts():
+                    if node.degree(t)==4:
+                        pairs = []
+                        for edge in node.edges(t):
+                            mini=np.inf
+                            for edge_candidate in node.edges(t):
+                                angle=np.cos((edge.orientation_begin(t,100)-edge_candidate.orientation_begin(t,100))/360*2*np.pi)
+                                if angle<mini:
+                                    winner = edge_candidate
+                                    mini=angle
+                            if (edge,winner) not in pairs and (winner, edge) not in pairs:
+                                pairs.append((edge,winner))
+                        for pair in pairs:
+                            can_be_removed *= (pair[0].end.degree(t) != 1 or  pair[1].end.degree(t) !=1)
+                            can_be_removed *= (pair[0].end.label not in articulation_points[t] or pair[1].end.label not in articulation_points[t])
+                        if len(pairs)>2:
+                            can_be_removed *= False
+            if node not in roots and node not in ends and node not in solved_node and can_be_removed:
+                for t in node.ts():
+                    solved_node.append(node)
+                    if node.degree(t)==4:
+                        solved.append((t,node.neighbours(t)))
+                        pairs = []
+                        for edge in node.edges(t):
+                            mini=np.inf
+                            for edge_candidate in node.edges(t):
+                                angle=np.cos((edge.orientation_begin(t,100)-edge_candidate.orientation_begin(t,100))/360*2*np.pi)
+                                if angle<mini:
+                                    winner = edge_candidate
+                                    mini=angle
+                            if (edge,winner) not in pairs and (winner, edge) not in pairs:
+                                pairs.append((edge,winner))
+                        for pair in pairs:
+                            right_n = pair[0].end
+                            left_n = pair[1].end
+                            right_edge = pair[0].pixel_list(t)
+                            left_edge = list(reversed(pair[1].pixel_list(t)))
+                            pixel_list = left_edge+right_edge[1:]
+                            info={'weight':len(pixel_list),'pixel_list':pixel_list}
+                            if right_n!=left_n:
+                                exp_clean.nx_graph[t].add_edges_from([(left_n.label,right_n.label,info)])
+                        exp_clean.nx_graph[t].remove_node(node.label)
+                        if len(list(nx.connected_components(exp_clean.nx_graph[t])))>=iis[t]:
+                            iis[t]+=1
+                            S = [list(c) for c in nx.connected_components(exp_clean.nx_graph[t])]
+                            len_connected=[len(c) for c in S]
+                            print(S[np.argmin(len_connected)])
+                            print(t,node,pairs,len(list(nx.connected_components(exp_clean.nx_graph[t]))))
+    exp_clean.nx_graph=[prune_graph(g) for g in exp_clean.nx_graph]
+    exp_clean.nodes = []
+    labels = {int(node) for g in exp_clean.nx_graph for node in g}
+    for label in labels:
+        exp_clean.nodes.append(Node(label,exp_clean))
+#     exp_clean_relabeled= clean_exp_with_hyphaes(exp_clean)
+#     print(len(solved))
+    return(solved)
+
+def clean_obvious_fake_tips(exp):
+    exp_clean= exp #better to modify in place
+    for hyph in exp_clean.hyphaes:
+        hyph.update_ts()
+    hyphae_with_degree4 = {}
+    hyph_anas_tip_hyph = [hyphat for hyphat in exp_clean.hyphaes if len(hyphat.ts)>=1 and hyphat.end.degree(hyphat.ts[-1])>=3 and hyphat.end.degree(hyphat.ts[-2])>=3]
+    hyph_anas_tip_tip = []
+    hyph_anas_tip_hyph = [hyphat for hyphat in exp_clean.hyphaes if len(hyphat.ts)>=1 and hyphat.end.degree(hyphat.ts[-1])>=3 and hyphat.end.degree(hyphat.ts[-2])>=3]
+    potential = []
+    for hyph in exp_clean.hyphaes:
+        if len(hyph.ts)>=2 and hyph.end.degree(hyph.ts[-1])==1 and hyph.end.ts()[-1]!=len(exp_clean.nx_graph)-1 and not np.all([hyph.get_length_pixel(t)<=20 for t in hyph.ts]):
+            potential.append(hyph)
+    for hyph in potential:
+        t0 = hyph.ts[-1]
+        for hyph2 in potential:
+            if hyph2.ts[-1] == t0 and hyph!=hyph2:
+                vector = (hyph2.end.pos(t0)-hyph.end.pos(t0))/np.linalg.norm(hyph2.end.pos(t0)-hyph.end.pos(t0))
+                vertical_vector=np.array([-1,0])
+                dot_product = np.dot(vertical_vector,vector)
+                if vertical_vector[1]*vector[0]-vertical_vector[0]*vector[1]>=0: #determinant
+                    angle = np.arccos(dot_product)/(2*np.pi)*360
+                else:
+                    angle = -np.arccos(dot_product)/(2*np.pi)*360
+                score = np.cos((angle-(180+hyph.end.edges(t0)[0].orientation_begin(t0,30)))/360*2*np.pi)+np.cos((360+angle-hyph2.end.edges(t0)[0].orientation_begin(t0,30))/360*2*np.pi)
+                if np.linalg.norm(hyph2.end.pos(t0)-hyph.end.pos(t0))<=500 and score>=0.5:
+                    hyph_anas_tip_tip.append((hyph,hyph2,t0))
+#     exp_clean= clean_exp_with_hyphaes(exp)
+    hyph_tiptip_set = {c[0] for c in hyph_anas_tip_tip}
+    disapearing_hyph_len1 = [hyph for hyph in exp_clean.hyphaes if len(hyph.end.ts())==1 and hyph.ts[-1]!=22 and hyph not in hyph_tiptip_set]    
+    nx_graph_cleans = [nx.Graph.copy(nx_g) for nx_g in exp.nx_graph]
+    exp_clean.nx_graph = nx_graph_cleans
+    for hyph in disapearing_hyph_len1:
+        exp_clean.nx_graph[hyph.ts[0]].remove_node(hyph.end.label)
+        exp_clean.hyphaes.remove(hyph)
+    exp_clean.nx_graph=[prune_graph(g) for g in exp_clean.nx_graph]
+    for i,g in enumerate(exp_clean.nx_graph):
+        reconnect_degree_2(g,exp_clean.positions[i])
+    exp_clean.nodes = []
+    labels = {int(node) for g in exp_clean.nx_graph for node in g}
+    for label in labels:
+        exp_clean.nodes.append(Node(label,exp_clean))
+#     exp_clean_relabeled= clean_exp_with_hyphaes(exp_clean)
+    return(exp_clean)
