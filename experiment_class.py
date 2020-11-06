@@ -439,6 +439,12 @@ class Hyphae():
         nodes = nx.shortest_path(self.experiment.nx_graph[t],source=self.root.label,target=self.end.label,weight="weight")
         edges = [Edge(self.experiment.get_node(nodes[i]),self.experiment.get_node(nodes[i+1]),self.experiment) for i in range(len(nodes)-1)]
         return(nodes,edges)
+    def get_length_pixel(self,t):
+        nodes,edges = self.get_nodes_within(t)
+        length=0
+        for edge in edges:
+            length+=len(edge.pixel_list(t))
+        return(length)
     def get_mother(self):
         candidate_mother=[]
         for hyphae in self.experiment.hyphaes:
