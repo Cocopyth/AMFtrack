@@ -31,6 +31,13 @@ def resolve_ambiguity(hyphaes):
 #             problems.append(hyph)
 #         else:
 #             safe.append(hyph)
+    to_remove = []
+    for hyph in hyphaes:
+        hyph.update_ts()
+        if len(hyph.ts)==0:
+            to_remove.append(hyph)
+    for hyph in to_remove:
+        hyphaes.remove(hyph)
     safe=hyphaes
     ambiguities=[]
     connection={hyph : [] for hyph in safe}
@@ -178,7 +185,7 @@ def get_pixel_growth_and_new_children(hyphae,t1,t2):
     
 def save_hyphaes(exp,path = 'Data/'):
     column_names_hyphaes = ['end','root', 'ts','mother']
-    column_names_growth_info = ['hyphae','t','t+1','nodes_in_hyphae', 'segment_of_growth_t_t+1','node_list_t_t+1']
+    column_names_growth_info = ['hyphae','t','tp1','nodes_in_hyphae', 'segment_of_growth_t_tp1','node_list_t_tp1']
     hyphaes = pd.DataFrame(columns=column_names_hyphaes)
     growth_info = pd.DataFrame(columns = column_names_growth_info)
     for hyph in exp.hyphaes:
@@ -189,7 +196,7 @@ def save_hyphaes(exp,path = 'Data/'):
             t = hyph.ts[index]
             tp1 = hyph.ts[index+1]
             pixels,nodes = get_pixel_growth_and_new_children(hyph,t,tp1)
-            new_line_growth=pd.DataFrame({'hyphae' : [hyph.end],'t' : [t],'t+1' : [tp1],'nodes_in_hyphae' :[hyph.get_nodes_within(t)], 'segment_of_growth_t_t+1' : [pixels],'node_list_t_t+1':[nodes]})
+            new_line_growth=pd.DataFrame({'hyphae' : [hyph.end],'t' : [t],'tp1' : [tp1],'nodes_in_hyphae' :[hyph.get_nodes_within(t)], 'segment_of_growth_t_tp1' : [pixels],'node_list_t_tp1':[nodes]})
             growth_info.append(new_line_growth,ignore_index = True)
     path='Data/'
     hyphaes.to_csv(path + f'hyphaes_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.csv')
@@ -214,7 +221,8 @@ def resolve_ambiguity_two_ends(hyphaes,bottom_threshold=0.98):
             for i,edge in enumerate(edges):
                 if edge.end.degree(t0) >=4:
                     if edge.end.degree(t0)>=5:
-                        print(hyph,edge.end, hyph.ts)
+# #                         print(hyph,edge.end, hyph.ts)
+                        355+3
                     else:
                         next_edge = edges[i+1]
                         angle = np.cos((edge.orientation_end(t0,50)-next_edge.orientation_begin(t0,50))/360*2*np.pi)
@@ -258,6 +266,8 @@ def solve_degree4(exp):
             can_be_removed = True
             if 0 in node.ts():
                 can_be_removed= False
+            if len(node.ts())<=1:
+                can_be_removed = False
             else:
                 for t in node.ts():
                     if node.degree(t)==4:
@@ -277,8 +287,8 @@ def solve_degree4(exp):
                         if len(pairs)>2:
                             can_be_removed *= False
             if node not in roots and node not in ends and node not in solved_node and can_be_removed:
+                solved_node.append(node)
                 for t in node.ts():
-                    solved_node.append(node)
                     if node.degree(t)==4:
                         solved.append((t,node.neighbours(t)))
                         pairs = []
@@ -313,15 +323,14 @@ def solve_degree4(exp):
     for label in labels:
         exp_clean.nodes.append(Node(label,exp_clean))
 #     exp_clean_relabeled= clean_exp_with_hyphaes(exp_clean)
-#     print(len(solved))
-    return(solved)
+    print(len(solved_node))
+    return(solved,solved_node)
 
 def clean_obvious_fake_tips(exp):
     exp_clean= exp #better to modify in place
     for hyph in exp_clean.hyphaes:
         hyph.update_ts()
     hyphae_with_degree4 = {}
-    hyph_anas_tip_hyph = [hyphat for hyphat in exp_clean.hyphaes if len(hyphat.ts)>=1 and hyphat.end.degree(hyphat.ts[-1])>=3 and hyphat.end.degree(hyphat.ts[-2])>=3]
     hyph_anas_tip_tip = []
     hyph_anas_tip_hyph = [hyphat for hyphat in exp_clean.hyphaes if len(hyphat.ts)>=1 and hyphat.end.degree(hyphat.ts[-1])>=3 and hyphat.end.degree(hyphat.ts[-2])>=3]
     potential = []
@@ -357,5 +366,7 @@ def clean_obvious_fake_tips(exp):
     labels = {int(node) for g in exp_clean.nx_graph for node in g}
     for label in labels:
         exp_clean.nodes.append(Node(label,exp_clean))
+    for hyph in exp_clean.hyphaes:
+        hyph.update_ts()
 #     exp_clean_relabeled= clean_exp_with_hyphaes(exp_clean)
     return(exp_clean)

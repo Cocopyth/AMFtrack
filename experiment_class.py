@@ -20,6 +20,7 @@ from pymatreader import read_mat
 from matplotlib import colors
 from copy import deepcopy,copy
 from collections import Counter
+
 class Experiment():
     def __init__(self,plate):
         self.plate = plate
@@ -68,6 +69,7 @@ class Experiment():
         for t in range(len(self.dates)):
             compressed_images.append(self.compress_skeleton(t,5))
         self.compressed = compressed_images
+        self.ts = len(self.dates)
     def copy(self,experiment):
         self.positions=experiment.positions
         self.nx_graph=experiment.nx_graph
@@ -154,7 +156,7 @@ class Experiment():
                 origins.append(tip)
                 number_anastomosis+=1/2
         return(anastomosis,origins,number_anastomosis)
-    def find_image_pos(self,ys,xs,t,local=False):
+    def find_image_pos(self,xs,ys,t,local=False):
         params=read_mat(self.path_param)
         x1=params['x1']
         x2=params['x2']
@@ -167,6 +169,11 @@ class Experiment():
         findingbaits = read_mat('//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'+date_plate+plate_str+'/Analysis/FindingBaits.mat')
         Rcenter=findingbaits['Rcenter']
         Rradii = findingbaits['Rradii']
+        Rot= np.loadtxt('//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'+date_plate+plate_str+'/Analysis/Skeletonrot.txt')
+        trans= np.loadtxt('//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'+date_plate+plate_str+'/Analysis/Skeletontrans.txt')
+        rottrans=np.dot(np.linalg.inv(Rot),np.array([xs,ys]))-trans
+        ys,xs=round(rottrans[0]),round(rottrans[1])
+#         xs,ys=ys,xs
         Lcenter = findingbaits['Lcenter']
         t = findingbaits['t']
         Lradii = findingbaits['Lradii']
@@ -293,12 +300,19 @@ class Node():
         return(self.experiment.positions[t][self.label])
     def ts(self):
         return([t for t in range(len(self.experiment.nx_graph)) if self.is_in(t)])
-    def show_source_image(self,t):
+    def show_source_image(self,t,tp1):
         pos = self.pos(t)
         x,y=pos[0],pos[1]
         ims,posimg=self.experiment.find_image_pos(x,y,t)
         i=np.argmax([np.mean(im) for im in ims])
-        plot_t_tp1([0],[],{0 : (posimg[1][i],posimg[0][i])},None,ims[i],ims[i])
+        if t!=tp1:
+            posp1 = self.pos(tp1)
+            xp1,yp1=posp1[0],posp1[1]
+            imsp1,posimgp1=self.experiment.find_image_pos(xp1,yp1,tp1)
+            ip1=np.argmax([np.mean(im) for im in imsp1])
+            plot_t_tp1([self.label],[self.label],{self.label : (posimg[1][i],posimg[0][i])},{self.label : (posimgp1[1][ip1],posimgp1[0][ip1])},ims[i],imsp1[ip1])
+        else:
+            plot_t_tp1([self.label],[],{self.label : (posimg[1][i],posimg[0][i])},None,ims[i],ims[i])
 
 class Edge():
     def __init__(self,begin,end,experiment):
@@ -445,6 +459,18 @@ class Hyphae():
         for edge in edges:
             length+=len(edge.pixel_list(t))
         return(length)
+    def get_length_um(self,t):
+        nodes,edges = self.get_nodes_within(t)
+        length=0
+        for edge in edges:
+            length_edge = 0
+            pixels = edge.pixel_list(t)
+            for i in range(len(pixels)//10+1):
+                if i*10<=len(pixels)-1:
+                    length_edge+=np.linalg.norm(np.array(pixels[i*10])-np.array(pixels[min((i+1)*10,len(pixels)-1)]))
+    #         length_edge+=np.linalg.norm(np.array(pixels[len(pixels)//10-1*10-1])-np.array(pixels[-1]))
+            length+=length_edge
+        return(length*pixel_conversion_factor)
     def get_mother(self):
         candidate_mother=[]
         for hyphae in self.experiment.hyphaes:
