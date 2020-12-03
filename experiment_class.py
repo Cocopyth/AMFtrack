@@ -460,6 +460,7 @@ class Hyphae():
             length+=len(edge.pixel_list(t))
         return(length)
     def get_length_um(self,t):
+        pixel_conversion_factor = 1.725
         nodes,edges = self.get_nodes_within(t)
         length=0
         for edge in edges:

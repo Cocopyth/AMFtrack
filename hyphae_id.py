@@ -196,8 +196,13 @@ def save_hyphaes(exp,path = 'Data/'):
             t = hyph.ts[index]
             tp1 = hyph.ts[index+1]
             pixels,nodes = get_pixel_growth_and_new_children(hyph,t,tp1)
-            new_line_growth=pd.DataFrame({'hyphae' : [hyph.end],'t' : [t],'tp1' : [tp1],'nodes_in_hyphae' :[hyph.get_nodes_within(t)], 'segment_of_growth_t_tp1' : [pixels],'node_list_t_tp1':[nodes]})
-            growth_info.append(new_line_growth,ignore_index = True)
+            if len(nodes)>=1 and nodes[0]==-1:
+                nodes=[-1]+[node.label for node in nodes[1:]]
+            else:
+                print('exactly on it')
+                nodes = [node.label for node in nodes]
+            new_line_growth=pd.DataFrame({'hyphae' : [hyph.end.label],'t' : [t],'tp1' : [tp1],'nodes_in_hyphae' :[hyph.get_nodes_within(t)[0]], 'segment_of_growth_t_tp1' : [pixels],'node_list_t_tp1':[nodes]})
+            growth_info=growth_info.append(new_line_growth,ignore_index = True)
     path='Data/'
     hyphaes.to_csv(path + f'hyphaes_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.csv')
     growth_info.to_csv(path + f'growth_info_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.csv')
@@ -332,7 +337,7 @@ def clean_obvious_fake_tips(exp):
         hyph.update_ts()
     hyphae_with_degree4 = {}
     hyph_anas_tip_tip = []
-    hyph_anas_tip_hyph = [hyphat for hyphat in exp_clean.hyphaes if len(hyphat.ts)>=1 and hyphat.end.degree(hyphat.ts[-1])>=3 and hyphat.end.degree(hyphat.ts[-2])>=3]
+    hyph_anas_tip_hyph = [hyphat for hyphat in exp_clean.hyphaes if len(hyphat.ts)>=2 and hyphat.end.degree(hyphat.ts[-1])>=3 and hyphat.end.degree(hyphat.ts[-2])>=3]
     potential = []
     for hyph in exp_clean.hyphaes:
         if len(hyph.ts)>=2 and hyph.end.degree(hyph.ts[-1])==1 and hyph.end.ts()[-1]!=len(exp_clean.nx_graph)-1 and not np.all([hyph.get_length_pixel(t)<=20 for t in hyph.ts]):
