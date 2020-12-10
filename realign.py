@@ -47,6 +47,8 @@ def realign(skeleton1,nx_graphB,posB,convergence_threshold,window=500,maxdist=50
     print("R0=",R0,'t0=',t0)
     return(skeleton_transformed)
 
+
+
 def find_common_group_nodes(Sa,Sb,degree3_nodesa,degree3_nodesb,posa,posb,R0,t0,window=500,maxdist=50):
     common_nodes_a = []
     common_nodes_b = []
@@ -93,8 +95,8 @@ def realign2(skeleton1,skeleton2,convergence_threshold,window=500,maxdist=50,sav
     degree3_nodesa = [node for node in nx_graphA if nx_graphA.degree(node)==3]
     degree3_nodesb = [node for node in nx_graphB if nx_graphB.degree(node)==3]
     print("lennodes=",len(degree3_nodesa))
-    Sa=sparse.csr_matrix((22000, 46000))
-    Sb=sparse.csr_matrix((22000, 46000))
+    Sa=sparse.csr_matrix((26296, 49559))
+    Sb=sparse.csr_matrix((26296, 49559))
     for node in degree3_nodesa:
         Sa[posA[node][0],posA[node][1]]=node
     for node in degree3_nodesb:
@@ -156,3 +158,46 @@ def shift(skeleton1,skeleton2):
 #         print(distance)
         return distance
     return(minimize(distance,np.array([10,10]), method='nelder-mead',options={'xatol': 1, 'disp': True,'fatol':0.1}))
+
+
+def realign_final(skeleton1,skeleton2):
+    nx_graph1,pos1 = generate_nx_graph(from_sparse_to_graph(skeleton1))
+    nx_graph2,pos2 = generate_nx_graph(from_sparse_to_graph(skeleton2))
+    pruned1 = prune_graph(nx_graph1)
+    pruned2 = prune_graph(nx_graph2)
+    X = np.transpose(np.array([pos1[node] for node in pruned1 if pruned1.degree(node)==3]))
+    Y = np.transpose(np.array([pos2[node] for node in pruned2 if pruned2.degree(node)==3]))
+    fig=plt.figure(figsize=(10,9))
+
+    ax = fig.add_subplot(111)
+    ax.scatter(X[0,:],X[1,:])
+    ax.scatter(Y[0,:],Y[1,:])
+    X = np.insert(X, 2, values=0, axis=0) 
+    Y = np.insert(Y, 2, values=0, axis=0) 
+    print(X.shape,Y.shape)
+    vectorX = o3d.utility.Vector3dVector(np.transpose(X))
+    vectorY = o3d.utility.Vector3dVector(np.transpose(Y))
+    source = o3d.geometry.PointCloud(vectorX)
+    target = o3d.geometry.PointCloud(vectorY)
+    threshold = 20
+    trans_init = np.asarray([[1, 0, 0, 0],
+                             [0, 1, 0, 0],
+                             [0, 0, 1, 0], [0.0, 0.0, 0.0, 1.0]])
+    reg_p2p = o3d.registration.registration_icp(
+        source, target, threshold, trans_init,
+        o3d.registration.TransformationEstimationPointToPoint())
+    print(reg_p2p)
+    Rfound = reg_p2p.transformation[0:2,0:2]
+    tfound = reg_p2p.transformation[0:2,3]
+    print(Rfound,tfound)
+    X,Y=X[0:2,:],Y[0:2,:]
+    Yrep=np.transpose(np.transpose(np.dot(Rfound,X))+tfound)
+    fig=plt.figure(figsize=(10,9))
+    ax = fig.add_subplot(111)
+    ax.scatter(np.transpose(Y)[:,0],np.transpose(Y)[:,1])
+    ax.scatter(np.transpose(Yrep)[:,0],np.transpose(Yrep)[:,1])
+    skel_transformed = transform_skeleton(skeleton1,Rfound,tfound)
+    skel_mat = np.zeros((26322, 49527),dtype=np.uint8)
+    for pixel in skel_transformed.keys():
+        skel_mat[pixel]=1
+    return(skel_mat,Rfound,tfound)

@@ -1,1 +1,5 @@
+core.31495
+__pycache__/
+.ipynb_checkpoints
+*.out
 Temp/
