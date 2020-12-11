@@ -25,24 +25,16 @@ class Experiment():
     def __init__(self,plate):
         self.plate = plate
         self.path_param = '//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE/Plate13_20200627/InitialParameters.mat'
-    def load(self,dates,local=False,pickle=False,raw=False):
+    def load(self,dates,local=False,raw=False):
         self.dates=dates
         self.raw=raw
-        if local:
-            paths=[f'Data/graph_{date}_{self.plate}_full_labeled.csv' for date in dates]
-        else:
-            paths = [get_path(date,self.plate,True,extension='_full_labeled.csv') for date in dates]
-        if raw:
-            nx_graph_poss=[]
-            for date in dates:
-                nx_graph_poss.append(generate_nx_graph(pd.read_csv(get_path(date,self.plate,True,extension='_raw_aligned_skeleton.csv'),
-                                                converters={'origin_pos' : transform_list,'end_pos' : transform_list,'pixel_list' : ast.literal_eval}),labeled=True))
-        else:
-            nx_graph_poss=[]
-            for path in paths:
-                nx_graph_poss.append(generate_nx_graph(pd.read_csv(path,
-                                    converters={'origin_pos' : transform_list,'end_pos' : transform_list,
-                                                'pixel_list' : ast.literal_eval}),labeled=True))
+        nx_graph_poss=[]
+        for date in dates:
+            directory_name=f'2020{date}_Plate{0 if self.plate<10 else ""}{self.plate}'
+            path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
+            path_save = path_snap +'/Analysis/nx_graph_pruned.p'
+            (g,pos) = pickle.load(open( path_save, "rb" ))
+            nx_graph_poss.append((g,pos))
         nx_graphs=[nx_graph_pos[0] for nx_graph_pos in nx_graph_poss]
         poss = [nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
         nx_graph_clean=[]
@@ -52,7 +44,7 @@ class Experiment():
             nx_graph_clean.append(S[np.argmax(len_connected)])
         skeletons=[]
         for nx_graph in nx_graph_clean:
-            skeletons.append(generate_skeleton(nx_graph,dim=(20800, 46000)))
+            skeletons.append(generate_skeleton(nx_graph,dim=(26309, 49814)))
         self.positions=poss
         self.nx_graph=nx_graph_clean
         self.skeletons=skeletons
@@ -618,7 +610,7 @@ def clean_exp_with_hyphaes(experiment):
         nx_graph_pruned.append(S[np.argmax(len_connected)])
     skeletons=[]
     for nx_graph in nx_graph_pruned:
-        skeletons.append(generate_skeleton(nx_graph,dim=(20800, 46000)))
+        skeletons.append(generate_skeleton(nx_graph,dim=(26309, 49814)))
     exp_clean.nx_graph=nx_graph_pruned
     exp_clean.skeletons=skeletons
     labels = {node for g in exp_clean.nx_graph for node in g}
