@@ -9,6 +9,8 @@ from scipy import sparse
 from sparse_util import dilate, zhangSuen
 from scipy.optimize import minimize
 from time import time
+from extract_graph import dic_to_sparse, from_sparse_to_graph, generate_nx_graph, prune_graph, from_nx_to_tab, from_nx_to_tab_matlab,sparse_to_doc, connections_pixel_list_to_tab, transform_list, clean_degree_4
+import open3d as o3d
 
 
 def transform_skeleton(skeleton_doc,Rot,trans):
@@ -167,11 +169,10 @@ def realign_final(skeleton1,skeleton2):
     pruned2 = prune_graph(nx_graph2)
     X = np.transpose(np.array([pos1[node] for node in pruned1 if pruned1.degree(node)==3]))
     Y = np.transpose(np.array([pos2[node] for node in pruned2 if pruned2.degree(node)==3]))
-    fig=plt.figure(figsize=(10,9))
-
-    ax = fig.add_subplot(111)
-    ax.scatter(X[0,:],X[1,:])
-    ax.scatter(Y[0,:],Y[1,:])
+#     fig=plt.figure(figsize=(10,9))
+#     ax = fig.add_subplot(111)
+#     ax.scatter(X[0,:],X[1,:])
+#     ax.scatter(Y[0,:],Y[1,:])
     X = np.insert(X, 2, values=0, axis=0) 
     Y = np.insert(Y, 2, values=0, axis=0) 
     print(X.shape,Y.shape)
@@ -179,7 +180,7 @@ def realign_final(skeleton1,skeleton2):
     vectorY = o3d.utility.Vector3dVector(np.transpose(Y))
     source = o3d.geometry.PointCloud(vectorX)
     target = o3d.geometry.PointCloud(vectorY)
-    threshold = 20
+    threshold = 200
     trans_init = np.asarray([[1, 0, 0, 0],
                              [0, 1, 0, 0],
                              [0, 0, 1, 0], [0.0, 0.0, 0.0, 1.0]])
@@ -192,12 +193,12 @@ def realign_final(skeleton1,skeleton2):
     print(Rfound,tfound)
     X,Y=X[0:2,:],Y[0:2,:]
     Yrep=np.transpose(np.transpose(np.dot(Rfound,X))+tfound)
-    fig=plt.figure(figsize=(10,9))
-    ax = fig.add_subplot(111)
-    ax.scatter(np.transpose(Y)[:,0],np.transpose(Y)[:,1])
-    ax.scatter(np.transpose(Yrep)[:,0],np.transpose(Yrep)[:,1])
+#     fig=plt.figure(figsize=(10,9))
+#     ax = fig.add_subplot(111)
+#     ax.scatter(np.transpose(Y)[:,0],np.transpose(Y)[:,1])
+#     ax.scatter(np.transpose(Yrep)[:,0],np.transpose(Yrep)[:,1])
     skel_transformed = transform_skeleton(skeleton1,Rfound,tfound)
     skel_mat = np.zeros((26322, 49527),dtype=np.uint8)
     for pixel in skel_transformed.keys():
         skel_mat[pixel]=1
-    return(skel_mat,Rfound,tfound)
+    return(skel_mat,skel_transformed,Rfound,tfound)

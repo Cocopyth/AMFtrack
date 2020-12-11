@@ -53,7 +53,12 @@ date =dates [i]
 directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
 path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
 path_tile=path_snap+'/Img/TileConfiguration.txt.registered'
-tileconfig = pd.read_table(path_tile,sep=';',skiprows=4,header=None,converters={2 : ast.literal_eval},skipinitialspace=True)
+try:
+    tileconfig = pd.read_table(path_tile,sep=';',skiprows=4,header=None,converters={2 : ast.literal_eval},skipinitialspace=True)
+except:
+    print('error_name')
+    path_tile=path_snap+'/Img/TileConfiguration.registered.txt'
+    tileconfig = pd.read_table(path_tile,sep=';',skiprows=4,header=None,converters={2 : ast.literal_eval},skipinitialspace=True)
 dirName = path_snap+'/Analysis'
 shape = (3000,4096)
 try:
@@ -104,5 +109,5 @@ skeletonized = cv2.ximgproc.thinning(np.array(255*(skel>0),dtype=np.uint8))
 # skeletonized = cv2.ximgproc.thinning(np.array(255*(skel>0),dtype=np.uint8))
 # skeletonized = zhangSuen(skelet)
 sio.savemat(path_snap+'/Analysis/dilated.mat',{'dilated' : skel})
-sio.savemat(path_snap+'/Analysis/skeleton.mat',{'skeleton' : skeletonized})
+sio.savemat(path_snap+'/Analysis/skeleton.mat',{'skeleton' : scipy.sparse.csc_matrix(skeletonized)})
 print('time=',time()-t)

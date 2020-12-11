@@ -24,25 +24,16 @@ from collections import Counter
 class Experiment():
     def __init__(self,plate):
         self.plate = plate
-        self.path_param = '//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE/Plate13_20200627/InitialParameters.mat'
-    def load(self,dates,local=False,pickle=False,raw=False):
+    def load(self,dates,local=False,raw=False):
         self.dates=dates
         self.raw=raw
-        if local:
-            paths=[f'Data/graph_{date}_{self.plate}_full_labeled.csv' for date in dates]
-        else:
-            paths = [get_path(date,self.plate,True,extension='_full_labeled.csv') for date in dates]
-        if raw:
-            nx_graph_poss=[]
-            for date in dates:
-                nx_graph_poss.append(generate_nx_graph(pd.read_csv(get_path(date,self.plate,True,extension='_raw_aligned_skeleton.csv'),
-                                                converters={'origin_pos' : transform_list,'end_pos' : transform_list,'pixel_list' : ast.literal_eval}),labeled=True))
-        else:
-            nx_graph_poss=[]
-            for path in paths:
-                nx_graph_poss.append(generate_nx_graph(pd.read_csv(path,
-                                    converters={'origin_pos' : transform_list,'end_pos' : transform_list,
-                                                'pixel_list' : ast.literal_eval}),labeled=True))
+        nx_graph_poss=[]
+        for date in dates:
+            directory_name=f'2020{date}_Plate{0 if self.plate<10 else ""}{self.plate}'
+            path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
+            path_save = path_snap +'/Analysis/nx_graph_pruned.p'
+            (g,pos) = pickle.load(open( path_save, "rb" ))
+            nx_graph_poss.append((g,pos))
         nx_graphs=[nx_graph_pos[0] for nx_graph_pos in nx_graph_poss]
         poss = [nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
         nx_graph_clean=[]
@@ -52,7 +43,7 @@ class Experiment():
             nx_graph_clean.append(S[np.argmax(len_connected)])
         skeletons=[]
         for nx_graph in nx_graph_clean:
-            skeletons.append(generate_skeleton(nx_graph,dim=(20800, 46000)))
+            skeletons.append(generate_skeleton(nx_graph,dim=(26309, 49814)))
         self.positions=poss
         self.nx_graph=nx_graph_clean
         self.skeletons=skeletons
@@ -157,27 +148,17 @@ class Experiment():
                 number_anastomosis+=1/2
         return(anastomosis,origins,number_anastomosis)
     def find_image_pos(self,xs,ys,t,local=False):
-        params=read_mat(self.path_param)
-        x1=params['x1']
-        x2=params['x2']
-        y0=params['y0']
-        Sf=params['Sf']
-        L0center=params['L0center']
         date = self.dates[t]
         date_plate = f'/2020{date}'
         plate_str = f'_Plate{self.plate}'
-        findingbaits = read_mat('//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'+date_plate+plate_str+'/Analysis/FindingBaits.mat')
-        Rcenter=findingbaits['Rcenter']
-        Rradii = findingbaits['Rradii']
-        Rot= np.loadtxt('//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'+date_plate+plate_str+'/Analysis/Skeletonrot.txt')
-        trans= np.loadtxt('//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'+date_plate+plate_str+'/Analysis/Skeletontrans.txt')
-        rottrans=np.dot(np.linalg.inv(Rot),np.array([xs,ys]))-trans
+        directory_name=f'2020{date}_Plate{0 if self.plate<10 else ""}{self.plate}'
+        path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
+        path_tile=path_snap+'/Img/TileConfiguration.txt.registered'
+        skel = read_mat(path_snap+'/Analysis/skeleton_realigned.mat')
+        Rot= skel['R']
+        trans = skel['t']
+        rottrans=np.dot(np.linalg.inv(Rot),np.array([xs,ys]-trans))
         ys,xs=round(rottrans[0]),round(rottrans[1])
-#         xs,ys=ys,xs
-        Lcenter = findingbaits['Lcenter']
-        t = findingbaits['t']
-        Lradii = findingbaits['Lradii']
-        path_tile='//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'+date_plate+plate_str+'/Img/TileConfiguration.registered.txt'
         tileconfig = pd.read_table(path_tile,sep=';',skiprows=4,header=None,converters={2 : ast.literal_eval},skipinitialspace=True)
         xs_yss=list(tileconfig[2])
         xes= [xs_ys[0] for xs_ys in xs_yss]
@@ -186,16 +167,8 @@ class Experiment():
         cmax=np.max(xes)
         rmin = np.min(yes)
         rmax = np.max(yes)
-        S0     = [rmax+3000+abs(rmin),cmax+4096+abs(cmin)]
-        theta  = np.arctan((Rcenter[1]-Lcenter[1])/(Rcenter[0]-Lcenter[0]))
-        Sry    =  S0[0]*np.cos(abs(theta))+S0[1]*np.sin(abs(theta))
-        C = np.tan(-np.arctan((ys + y0 - 1 - L0center[1] - np.sqrt(Lcenter[0]**2+(S0[0]-Lcenter[1])**2)
-                               *np.sin(np.arctan((S0[0]-Lcenter[1])/Lcenter[0])+theta))/
-                              (xs + (x2+x1)/2 - (Sf[0]-y0) - 1 - L0center[0] + np.sqrt(Lcenter[0]**2+(S0[0]-Lcenter[1])**2)
-                               *np.cos(np.arctan((S0[0]-Lcenter[1])/Lcenter[0])+theta))) - theta)
-        ximg = - (ys + y0 - 1 - L0center[1] - np.sqrt(Lcenter[0]**2+(S0[0]-Lcenter[1])**2)
-                  *np.sin(np.arctan((S0[0]-Lcenter[1])/Lcenter[0])+theta))/(np.sqrt(1+C**2)*np.sin(np.arctan(C)+theta)) 
-        yimg = S0[0] - C*ximg
+        ximg = xs
+        yimg = ys
         def find(xsub,ysub,x,y):
             indexes=[]
             for i in range(len(xsub)):
@@ -206,14 +179,8 @@ class Experiment():
         possImg  = [ximg-np.array(xes)[indsImg]+cmin+1, yimg-np.array(yes)[indsImg]+rmin+1]
         paths=[]
         for index in indsImg:
-            if local:
-                paths.append('Temp/'+tileconfig[0][index]+'.npy')
-            else:
-                paths.append('//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'+date_plate+plate_str+'/Img/'+tileconfig[0][index])
-        if local:
-             ims = [np.load(path) for path in paths]
-        else:
-            ims = [imageio.imread(path) for path in paths]
+                paths.append(tileconfig[0][index])
+        ims = [imageio.imread(path) for path in paths]
         return(ims,possImg)
     def plot(self,ts,node_lists=[], shift=(0,0),compress=5,save='',time=None):
         global check
@@ -618,7 +585,7 @@ def clean_exp_with_hyphaes(experiment):
         nx_graph_pruned.append(S[np.argmax(len_connected)])
     skeletons=[]
     for nx_graph in nx_graph_pruned:
-        skeletons.append(generate_skeleton(nx_graph,dim=(20800, 46000)))
+        skeletons.append(generate_skeleton(nx_graph,dim=(26309, 49814)))
     exp_clean.nx_graph=nx_graph_pruned
     exp_clean.skeletons=skeletons
     labels = {node for g in exp_clean.nx_graph for node in g}
