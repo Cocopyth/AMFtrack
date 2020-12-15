@@ -75,6 +75,8 @@ for name in tileconfig[0]:
 #     ims.append(imageio.imread('//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'+date_plate+plate_str+'/Img/'+name))
     ims.append(imageio.imread(f'{name}'))
 skel = np.zeros(dim,dtype=np.uint8)
+contour = scipy.sparse.lil_matrix(dim,dtype=np.uint8)
+half_circle = scipy.sparse.lil_matrix(dim,dtype=np.uint8)
 for index,im in enumerate(ims):
     print(index)
     im_cropped = im
@@ -98,10 +100,14 @@ for index,im in enumerate(ims):
         dilation = cv2.dilate(dilation.astype(np.uint8) * 255,kernel,iterations = 1)
     dilated = dilation>0
     print('number threshold : ', np.sum(dilated))
-
+    laplacian = cv2.Laplacian((im_cropped<=15).astype(np.uint8),cv2.CV_64F)
+    points = laplacian>=4
 #     np.save(f'Temp\dilated{tileconfig[0][i]}',dilated)
     boundaries = int(tileconfig[2][index][0]-np.min(xs)),int(tileconfig[2][index][1]-np.min(ys))
     skel[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += dilated
+    contour[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += points
+    if index<=80:
+        half_circle[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += points
 # print(len(skel.nonzero()[0]))
 # skelet = sparse_to_doc(skel)
 print("number to reduce : ", np.sum(skel>0),np.sum(skel<=0))
@@ -109,5 +115,5 @@ skeletonized = cv2.ximgproc.thinning(np.array(255*(skel>0),dtype=np.uint8))
 # skeletonized = cv2.ximgproc.thinning(np.array(255*(skel>0),dtype=np.uint8))
 # skeletonized = zhangSuen(skelet)
 sio.savemat(path_snap+'/Analysis/dilated.mat',{'dilated' : skel})
-sio.savemat(path_snap+'/Analysis/skeleton.mat',{'skeleton' : scipy.sparse.csc_matrix(skeletonized)})
+sio.savemat(path_snap+'/Analysis/skeleton.mat',{'skeleton' : scipy.sparse.csc_matrix(skeletonized),'contour' : scipy.sparse.csc_matrix(contour),'half_circle' : half_circle})
 print('time=',time()-t)
