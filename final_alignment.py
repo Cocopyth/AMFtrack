@@ -40,7 +40,8 @@ import sys
 
 
 i = int(sys.argv[1])
-plate = 9
+plate = int(sys.argv[2])
+
 directory = "/scratch/shared/mrozemul/Fiji.app/" 
 listdir=os.listdir(directory) 
 list_dir_interest=[name for name in listdir if name.split('_')[-1]==f'Plate{0 if plate<10 else ""}{plate}']
@@ -49,6 +50,9 @@ ff=[name.split('_')[1] for name in list_dir_interest]
 dates_datetime=[datetime(year=int(ss[i][:4]),month=int(ss[i][4:6]),day=int(ss[i][6:8]),hour=int(ff[i][0:2]),minute=int(ff[i][2:4])) for i in range(len(list_dir_interest))]
 dates_datetime.sort()
 dates_datetime_chosen=dates_datetime[i:i+2]
+print("========")
+print(f'Matching plate {plate} at dates {dates_datetime_chosen}')
+print("========")
 dates = [f'{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}' for date in dates_datetime_chosen]
 dilateds=[]
 skels = []
@@ -61,56 +65,59 @@ for date in dates:
     skels.append(skel)
     skel_doc = sparse_to_doc(skel)
     skel_docs.append(skel_doc)
-skeleton1,skeleton2 = skel_docs[0],skel_docs[1]
-skelet_pos = np.array(list(skeleton1.keys()))
-samples = np.random.choice(skelet_pos.shape[0],len(skeleton2.keys())//100)
-X = np.transpose(skelet_pos[samples,:])
-skelet_pos = np.array(list(skeleton2.keys()))
-samples = np.random.choice(skelet_pos.shape[0],len(skeleton2.keys())//100)
-Y = np.transpose(skelet_pos[samples,:])
-reg = rigid_registration(**{'X': np.transpose(X.astype(float)), 'Y': np.transpose(Y.astype(float)),'scale': False})
-out = reg.register()
-Rfound = reg.R[0:2,0:2]
-tfound= np.dot(Rfound,reg.t[0:2])
-nx_graph1,pos1 = generate_nx_graph(from_sparse_to_graph(skeleton1))
-nx_graph2,pos2 = generate_nx_graph(from_sparse_to_graph(skeleton2))
-pruned1 = prune_graph(nx_graph1)
-pruned2 = prune_graph(nx_graph2)
-t_init=-tfound
-Rot_init= Rfound
-X = np.transpose(np.array([pos1[node] for node in pruned1 if pruned1.degree(node)==3]))
-Y = np.transpose(np.array([pos2[node] for node in pruned2 if pruned2.degree(node)==3]))
-# fig=plt.figure(figsize=(10,9))
-# ax = fig.add_subplot(111)
-# ax.scatter(X[0,:],X[1,:])
-# ax.scatter(Y[0,:],Y[1,:])
-Xex = np.transpose(np.transpose(np.dot(Rot_init,X))+t_init)
-# fig=plt.figure(figsize=(10,9))
-# ax = fig.add_subplot(111)
-# ax.scatter(Xex[0,:],Xex[1,:])
-# ax.scatter(Y[0,:],Y[1,:])
-X = np.insert(X, 2, values=0, axis=0) 
-Y = np.insert(Y, 2, values=0, axis=0) 
-print(X.shape,Y.shape)
-vectorX = o3d.utility.Vector3dVector(np.transpose(X))
-vectorY = o3d.utility.Vector3dVector(np.transpose(Y))
-source = o3d.geometry.PointCloud(vectorX)
-target = o3d.geometry.PointCloud(vectorY)
-threshold = 200
-trans_init = np.asarray([[Rot_init[0,0], Rot_init[0,1], 0, t_init[0]],
-                         [Rot_init[1,0], Rot_init[1,1], 0, t_init[1]],
-                         [0, 0, 1, 0], [0.0, 0.0, 0.0, 1.0]])
-reg_p2p = o3d.registration.registration_icp(
-    source, target, threshold, trans_init,
-    o3d.registration.TransformationEstimationPointToPoint())
-print(reg_p2p)
-Rfound = reg_p2p.transformation[0:2,0:2]
-tfound = reg_p2p.transformation[0:2,3]
-print(Rfound,tfound)
-X,Y=X[0:2,:],Y[0:2,:]
-Yrep=np.transpose(np.transpose(np.dot(Rfound,X))+tfound)
-# fig=plt.figure(figsize=(10,9))
-# ax = fig.add_subplot(111)
-# ax.scatter(np.transpose(Yrep)[:,0],np.transpose(Yrep)[:,1])
-# ax.scatter(np.transpose(Y)[:,0],np.transpose(Y)[:,1])
+isnan=True
+while isnan:
+    skeleton1,skeleton2 = skel_docs[0],skel_docs[1]
+    skelet_pos = np.array(list(skeleton1.keys()))
+    samples = np.random.choice(skelet_pos.shape[0],len(skeleton2.keys())//100)
+    X = np.transpose(skelet_pos[samples,:])
+    skelet_pos = np.array(list(skeleton2.keys()))
+    samples = np.random.choice(skelet_pos.shape[0],len(skeleton2.keys())//100)
+    Y = np.transpose(skelet_pos[samples,:])
+    reg = rigid_registration(**{'X': np.transpose(X.astype(float)), 'Y': np.transpose(Y.astype(float)),'scale': False})
+    out = reg.register()
+    Rfound = reg.R[0:2,0:2]
+    tfound= np.dot(Rfound,reg.t[0:2])
+    nx_graph1,pos1 = generate_nx_graph(from_sparse_to_graph(skeleton1))
+    nx_graph2,pos2 = generate_nx_graph(from_sparse_to_graph(skeleton2))
+    pruned1 = prune_graph(nx_graph1)
+    pruned2 = prune_graph(nx_graph2)
+    t_init=-tfound
+    Rot_init= Rfound
+    X = np.transpose(np.array([pos1[node] for node in pruned1 if pruned1.degree(node)==3]))
+    Y = np.transpose(np.array([pos2[node] for node in pruned2 if pruned2.degree(node)==3]))
+    # fig=plt.figure(figsize=(10,9))
+    # ax = fig.add_subplot(111)
+    # ax.scatter(X[0,:],X[1,:])
+    # ax.scatter(Y[0,:],Y[1,:])
+    Xex = np.transpose(np.transpose(np.dot(Rot_init,X))+t_init)
+    # fig=plt.figure(figsize=(10,9))
+    # ax = fig.add_subplot(111)
+    # ax.scatter(Xex[0,:],Xex[1,:])
+    # ax.scatter(Y[0,:],Y[1,:])
+    X = np.insert(X, 2, values=0, axis=0) 
+    Y = np.insert(Y, 2, values=0, axis=0) 
+    print(X.shape,Y.shape)
+    vectorX = o3d.utility.Vector3dVector(np.transpose(X))
+    vectorY = o3d.utility.Vector3dVector(np.transpose(Y))
+    source = o3d.geometry.PointCloud(vectorX)
+    target = o3d.geometry.PointCloud(vectorY)
+    threshold = 200
+    trans_init = np.asarray([[Rot_init[0,0], Rot_init[0,1], 0, t_init[0]],
+                             [Rot_init[1,0], Rot_init[1,1], 0, t_init[1]],
+                             [0, 0, 1, 0], [0.0, 0.0, 0.0, 1.0]])
+    reg_p2p = o3d.registration.registration_icp(
+        source, target, threshold, trans_init,
+        o3d.registration.TransformationEstimationPointToPoint())
+    print(reg_p2p)
+    Rfound = reg_p2p.transformation[0:2,0:2]
+    tfound = reg_p2p.transformation[0:2,3]
+    print(Rfound,tfound)
+    X,Y=X[0:2,:],Y[0:2,:]
+    Yrep=np.transpose(np.transpose(np.dot(Rfound,X))+tfound)
+    # fig=plt.figure(figsize=(10,9))
+    # ax = fig.add_subplot(111)
+    # ax.scatter(np.transpose(Yrep)[:,0],np.transpose(Yrep)[:,1])
+    # ax.scatter(np.transpose(Y)[:,0],np.transpose(Y)[:,1])
+    isnan = np.isnan(tfound[0])
 sio.savemat(path_snap+'/Analysis/transform.mat',{'R' : Rfound,'t' : tfound})
