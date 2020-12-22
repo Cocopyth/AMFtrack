@@ -202,3 +202,18 @@ def realign_final(skeleton1,skeleton2):
     for pixel in skel_transformed.keys():
         skel_mat[pixel]=1
     return(skel_mat,skel_transformed,Rfound,tfound)
+
+def transform_skeleton_final(skeleton_doc,Rot,trans):
+    skeleton_transformed={}
+    transformed_keys = np.round(np.transpose(np.dot(Rot,np.transpose(np.array(list(skeleton_doc.keys())))))+trans).astype(np.int)
+    i=0
+    for pixel in list(transformed_keys):
+        i+=1
+        skeleton_transformed[(pixel[0],pixel[1])]=1
+    skeleton_transformed=dilate(skeleton_transformed)
+    skeleton_transformed=zhangSuen(skeleton_transformed)
+    skeleton_transformed_sparse=sparse.lil_matrix((26322, 49527))
+    for pixel in list(skeleton_transformed.keys()):
+        i+=1
+        skeleton_transformed_sparse[(pixel[0],pixel[1])]=1
+    return(skeleton_transformed_sparse)
