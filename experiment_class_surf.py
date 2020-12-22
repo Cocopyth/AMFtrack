@@ -31,21 +31,21 @@ class Experiment():
         for date in dates:
             directory_name=f'2020{date}_Plate{0 if self.plate<10 else ""}{self.plate}'
             path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
-            path_save = path_snap +'/Analysis/nx_graph_pruned.p'
+            path_save = path_snap +'/Analysis/nx_graph_pruned_labeled.p'
             (g,pos) = pickle.load(open( path_save, "rb" ))
             nx_graph_poss.append((g,pos))
         nx_graphs=[nx_graph_pos[0] for nx_graph_pos in nx_graph_poss]
         poss = [nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
-        nx_graph_clean=[]
-        for graph in nx_graphs:
-            S = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
-            len_connected=[len(nx_graph.nodes) for nx_graph in S]
-            nx_graph_clean.append(S[np.argmax(len_connected)])
+#         nx_graph_clean=[]
+#         for graph in nx_graphs:
+#             S = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
+#             len_connected=[len(nx_graph.nodes) for nx_graph in S]
+#             nx_graph_clean.append(S[np.argmax(len_connected)])
         skeletons=[]
-        for nx_graph in nx_graph_clean:
+        for nx_graph in nx_graphs:
             skeletons.append(generate_skeleton(nx_graph,dim=(26309, 49814)))
         self.positions=poss
-        self.nx_graph=nx_graph_clean
+        self.nx_graph=nx_graphs
         self.skeletons=skeletons
         self.hyphaes=None
         labels = {node for g in self.nx_graph for node in g}

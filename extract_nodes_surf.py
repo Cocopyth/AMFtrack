@@ -36,18 +36,14 @@ dates_datetime=[datetime(year=int(ss[i][:4]),month=int(ss[i][4:6]),day=int(ss[i]
 dates_datetime.sort()
 dates_datetime_chosen=dates_datetime[begin:end]
 dates = [f'{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}' for date in dates_datetime_chosen]
-skels_aligned = []
+nx_graph_pos = []
 for date in dates:
     directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
     path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
-    skel = read_mat(path_snap+'/Analysis/skeleton_realigned.mat')['skeleton']
-    skels_aligned.append(scipy.sparse.dok_matrix(skel))
-    print(date)
-    
-nx_graph_poss=[generate_nx_graph(from_sparse_to_graph(skeleton)) for skeleton in skels_aligned]
-nx_graphs_aligned=[nx_graph_pos[0] for nx_graph_pos in nx_graph_poss]
-poss_aligned=[nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
-nx_graph_pruned=[clean_degree_4(prune_graph(nx_graph),poss_aligned[i])[0] for i,nx_graph in enumerate(nx_graphs_aligned)]
+    path_save = path_snap +'/Analysis/nx_graph_pruned.p'
+    nx_graph_pos.append(pickle.load(open( path_save, "rb" )))
+nx_graph_pruned=[c[0] for c in nx_graph_pos]
+poss_aligned = [c[1] for c in nx_graph_pos]
 downstream_graphs = []
 downstream_pos = []
 begin=len(dates)-1
@@ -64,7 +60,7 @@ poss_aligned=downstream_poss
 for i,g in enumerate(nx_graph_pruned):
     directory_name=f'2020{dates[i]}_Plate{0 if plate<10 else ""}{plate}'
     path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
-    path_save = path_snap +'/Analysis/nx_graph_pruned.p'
+    path_save = path_snap +'/Analysis/nx_graph_pruned_labeled.p'
     pos = poss_aligned[i]
     pickle.dump((g,pos),open( path_save, "wb" ))
     
