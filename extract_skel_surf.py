@@ -89,7 +89,7 @@ for index,im in enumerate(ims):
     hessian = hessian_matrix_det(im_back_rem,sigma = 20)
     transformed = (frangised+cv2.normalize(abs(hessian), None, 0, 255, cv2.NORM_MINMAX)-im_back_rem+120)*(im_blurred>=35)
     low = 20
-    high = 200
+    high = 100
     lowt = (transformed > low).astype(int)
     hight = (transformed > high).astype(int)
     hyst = filters.apply_hysteresis_threshold(transformed, low, high)
