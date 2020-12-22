@@ -79,10 +79,10 @@ class Experiment():
         for i, date in enumerate(self.dates):
             tabs_labeled[i].to_csv(path+f'graph_{date}_{self.plate}_full_labeled.csv')
             sio.savemat(path+f'graph_{date}_{self.plate}_full_labeled.mat', {name: col.values for name, col in tabs_labeled[i].items()})
-    def pickle_save(self):
-        pickle.dump(self,open( f'Data/'+f"experiment_{self.plate}.pick", "wb" ))
-    def pickle_load(self):
-        self = pickle.load( open( f'Data/'+f"experiment_{self.plate}.pick", "rb" ) )
+    def pickle_save(self,path):
+        pickle.dump(self,open( path+f"experiment_{self.plate}.pick", "wb" ))
+    def pickle_load(self,path):
+        self = pickle.load( open(path+f"experiment_{self.plate}.pick", "rb" ) )
     def get_node(self,label):
         return(Node(label,self))
     def get_edge(self,begin,end):
@@ -472,6 +472,7 @@ def get_hyphae(experiment,exclude_bottom_factor=0.98):
             hyphae.root = occurence_count.most_common(2)[0][0]
             hyphae.ts = sorted(set(hyphae.ts).intersection(set(hyphae.root.ts())))
             hyphaes.append(hyphae)
+    print(f'Detected problems during hyphae detection, {len(problems)} hyphaes have inconsistent root over time')
     return(hyphaes,problems)
 
 def reconnect_degree_2(nx_graph,pos):
@@ -529,7 +530,7 @@ def clean_exp_with_hyphaes(experiment):
         if len(ts[node.label])==1 and ts[node.label][0]!=len(exp_clean.nx_graph)-1 and node.label not in safe_nodes:
             to_remove.append(node.label)
 #     return(to_remove)
-    print('removing ',len(to_remove),' nodes')
+    print('removing ',len(to_remove),f' nodes out of {len(exp_clean.nodes)} because they appear only in one timestep and are not within an identified hypha')
     for node in to_remove:
         t= ts[node][0]
         pos = exp_clean.positions[t]
@@ -569,11 +570,7 @@ def clean_exp_with_hyphaes(experiment):
                     if not connection_data is None:
                         nx_graph_clean.remove_edge(right_n,left_n)
                     nx_graph_clean.add_edges_from([(right_n,left_n,info)])
-#         if t ==3:
-#             print('before removinb node',node,node_to_fuse,1354 in nx_graph_clean)
         nx_graph_clean.remove_node(node)
-#         if t ==3:
-#             print('after removinb node',node,node_to_fuse,1354 in nx_graph_clean)
         nx_graph_cleans[t]=nx_graph_clean
     for t,nx_graph in enumerate(nx_graph_cleans):
         pos = exp_clean.positions[t]

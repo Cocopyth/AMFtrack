@@ -151,6 +151,11 @@ def get_mother(hyphaes):
                 if hyphae.root.label in nodes_within_hyph:
                     mothers.append(hyph)
         hyphae.mother = mothers
+    counter=0
+    for hyphae in hyphaes:
+        if len(hyphae.mother)>=2:
+            counter+=1
+    print(f'{counter} hyphae have multiple mothers')
         
 def get_pixel_growth_and_new_children(hyphae,t1,t2):
     assert t1<t2, "t1 should be strictly inferior to t2"
@@ -199,11 +204,9 @@ def save_hyphaes(exp,path = 'Data/'):
             if len(nodes)>=1 and nodes[0]==-1:
                 nodes=[-1]+[node.label for node in nodes[1:]]
             else:
-                print('exactly on it')
                 nodes = [node.label for node in nodes]
             new_line_growth=pd.DataFrame({'hyphae' : [hyph.end.label],'t' : [t],'tp1' : [tp1],'nodes_in_hyphae' :[hyph.get_nodes_within(t)[0]], 'segment_of_growth_t_tp1' : [pixels],'node_list_t_tp1':[nodes]})
             growth_info=growth_info.append(new_line_growth,ignore_index = True)
-    path='Data/'
     hyphaes.to_csv(path + f'hyphaes_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.csv')
     growth_info.to_csv(path + f'growth_info_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.csv')
     sio.savemat(path+f'hyphaes_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.mat', {name: col.values for name, col in hyphaes.items()})
@@ -213,30 +216,31 @@ def save_hyphaes(exp,path = 'Data/'):
 def resolve_ambiguity_two_ends(hyphaes,bottom_threshold=0.98):
     root_hyph={}
     hyphae_two_ends=[hyph for hyph in hyphaes if hyph.root.degree(hyph.ts[0])==1]
-    print(len(hyphae_two_ends))
+    print(f'{len(hyphae_two_ends)} hyphae with two ends have been detected')
     to_remove = []
     x_boundaries = hyphaes[0].experiment.boundaries_x
     y_boundaries = hyphaes[0].experiment.boundaries_y
+    counter_problem = 0
+    counter_problem_solved = 0
     for hyph in hyphae_two_ends:
         t0 = hyph.ts[0]
         if not hyph.root.pos(t0)[0]>=bottom_threshold*x_boundaries[1]:
+            counter_problem+=1
             nodes,edges  = hyph.get_nodes_within(t0)
             mini = np.inf
             found = False
             for i,edge in enumerate(edges):
-                if edge.end.degree(t0) >=4:
-                    if edge.end.degree(t0)>=5:
-# #                         print(hyph,edge.end, hyph.ts)
-                        355+3
-                    else:
-                        next_edge = edges[i+1]
-                        angle = np.cos((edge.orientation_end(t0,50)-next_edge.orientation_begin(t0,50))/360*2*np.pi)
-                        if angle<mini:
-                            found= True
-                            maxi=angle
-                            root_candidate = edge.end
+                if edge.end.degree(t0) ==4:
+                    next_edge = edges[i+1]
+                    angle = np.cos((edge.orientation_end(t0,50)-next_edge.orientation_begin(t0,50))/360*2*np.pi)
+                    if angle<mini:
+                        found= True
+                        maxi=angle
+                        root_candidate = edge.end
             if found:
+                counter_problem_solved+=1
                 root_hyph[hyph] = root_candidate
+    print(f'Among the {len(hyphaes)}, {counter_problem} hyphaes had two real ends, {counter_problem_solved} ambiguity were solved by finding a degree 4 node')
     ends = {hyph.end : hyph for hyph in hyphaes}
     for hyph in root_hyph.keys():
         if hyph.root in ends:
@@ -249,7 +253,6 @@ def resolve_ambiguity_two_ends(hyphaes,bottom_threshold=0.98):
 
 def solve_degree4(exp):
     hyphae_with_degree4 = {}
-#     exp_clean= clean_exp_with_hyphaes(exp)
     exp_clean= exp #better to modify in place
     articulation_points =[list(nx.articulation_points(nx_g)) for nx_g in exp_clean.nx_graph]
     nx_graph_cleans = [nx.Graph.copy(nx_g) for nx_g in exp.nx_graph]
@@ -356,9 +359,9 @@ def clean_obvious_fake_tips(exp):
                 score = np.cos((angle-(180+hyph.end.edges(t0)[0].orientation_begin(t0,30)))/360*2*np.pi)+np.cos((360+angle-hyph2.end.edges(t0)[0].orientation_begin(t0,30))/360*2*np.pi)
                 if np.linalg.norm(hyph2.end.pos(t0)-hyph.end.pos(t0))<=500 and score>=0.5:
                     hyph_anas_tip_tip.append((hyph,hyph2,t0))
-#     exp_clean= clean_exp_with_hyphaes(exp)
     hyph_tiptip_set = {c[0] for c in hyph_anas_tip_tip}
-    disapearing_hyph_len1 = [hyph for hyph in exp_clean.hyphaes if len(hyph.end.ts())==1 and hyph.ts[-1]!=22 and hyph not in hyph_tiptip_set]    
+    disapearing_hyph_len1 = [hyph for hyph in exp_clean.hyphaes if len(hyph.end.ts())==1 and hyph.ts[-1]!=len(exp_clean.nx_graph)-1 and hyph not in hyph_tiptip_set]
+    print(f'Found {len(hyph_tiptip_set)} tip-tip anastomosis, found {len(disapearing_hyph_len1)} tips that appear at only one timestep and then disapear and are not anastomosing')
     nx_graph_cleans = [nx.Graph.copy(nx_g) for nx_g in exp.nx_graph]
     exp_clean.nx_graph = nx_graph_cleans
     for hyph in disapearing_hyph_len1:
