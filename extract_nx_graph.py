@@ -50,4 +50,5 @@ directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
 path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
 path_save = path_snap +'/Analysis/nx_graph_pruned.p'
 pickle.dump((nx_graph_pruned,pos),open( path_save, "wb" ))
-    
+skeleton = generate_skeleton(nx_graph_pruned,(26322, 49527))
+sio.savemat(path_snap+'/Analysis/skeleton_realigned_pruned.mat',{'skeleton' : scipy.sparse.csc_matrix(skeleton)})

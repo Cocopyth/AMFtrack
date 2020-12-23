@@ -338,6 +338,7 @@ def clean_obvious_fake_tips(exp):
     exp_clean= exp #better to modify in place
     for hyph in exp_clean.hyphaes:
         hyph.update_ts()
+    print(f'There is {len(exp_clean.hyphaes)} hyphae')
     hyphae_with_degree4 = {}
     hyph_anas_tip_tip = []
     hyph_anas_tip_hyph = [hyphat for hyphat in exp_clean.hyphaes if len(hyphat.ts)>=2 and hyphat.end.degree(hyphat.ts[-1])>=3 and hyphat.end.degree(hyphat.ts[-2])>=3]

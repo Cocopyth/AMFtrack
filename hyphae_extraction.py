@@ -56,5 +56,5 @@ try:
     print("Directory " , dirName ,  " Created ")
 except FileExistsError:
     print("Directory " , dirName ,  " already exists")  
-hyphs,gr_inf = save_hyphaes(exp_clean,f'/scratch/shared/mrozemul/Fiji.app/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}')
-exp_clean.pickle_save(f'/scratch/shared/mrozemul/Fiji.app/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}')
+hyphs,gr_inf = save_hyphaes(exp_clean,f'/scratch/shared/mrozemul/Fiji.app/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/')
+exp_clean.pickle_save(f'/scratch/shared/mrozemul/Fiji.app/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/')
