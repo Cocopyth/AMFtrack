@@ -298,6 +298,9 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,dow
 #         if right_edge!=right_edge1:
 #             print('alaba',right_edge,right_edge1)
 #             print('len(surrounding)',len(potential_surrounding_t.data))
+        if mini == np.inf:
+            print(f'didnt find a tip to match tip in pos {posanchor}')
+            continue
         origin = np.array(orient(nx_graph_tm1.get_edge_data(*list(nx_graph_tm1.edges(tip))[0])['pixel_list'],pos_tm1[tip]))
         origin_vector = origin[0]-origin[-1]
         branch=np.array(orient(nx_graph_t.get_edge_data(*right_edge)['pixel_list'],pos_t[right_edge[0]]))
