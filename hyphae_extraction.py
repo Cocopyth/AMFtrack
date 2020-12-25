@@ -50,9 +50,9 @@ get_mother(exp_clean.hyphaes)
 solve_two_ends = resolve_ambiguity_two_ends(exp_clean.hyphaes)
 # solved = solve_degree4(exp_clean)
 clean_obvious_fake_tips(exp_clean)
-dirName = '/scratch/shared/mrozemul/Fiji.app/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}'
+dirName = f'/scratch/shared/mrozemul/Fiji.app/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}'
 try:
-    os.mkdir('/scratch/shared/mrozemul/Fiji.app/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}') 
+    os.mkdir(f'/scratch/shared/mrozemul/Fiji.app/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}') 
     print("Directory " , dirName ,  " Created ")
 except FileExistsError:
     print("Directory " , dirName ,  " already exists")  

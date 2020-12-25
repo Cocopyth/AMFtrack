@@ -53,23 +53,23 @@ dates_datetime.sort()
 dates_datetime_chosen=dates_datetime[begin:end]
 dates = [f'{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}' for date in dates_datetime_chosen]
 dilateds=[]
-skels = []
+# skels = []
 skel_docs = []
 directory_name=f'2020{dates[0]}_Plate{0 if plate<10 else ""}{plate}'
 path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
 skel_info = read_mat(path_snap+'/Analysis/skeleton.mat')
 skel = skel_info['skeleton']
-skels.append(skel)
+# skels.append(skel)
 skel_doc = sparse_to_doc(skel)
 skel_docs.append(skel_doc)
-Rs=[]
-ts=[]
+Rs=[np.array([[1,0],[0,1]])]
+ts=[np.array([0,0])]
 for date in dates[1:]:
     directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
     path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
     skel_info = read_mat(path_snap+'/Analysis/skeleton.mat')
     skel = skel_info['skeleton']
-    skels.append(skel)
+#     skels.append(skel)
     skel_doc = sparse_to_doc(skel)
     skel_docs.append(skel_doc)
     transform = sio.loadmat(path_snap+'/Analysis/transform.mat')
@@ -77,15 +77,17 @@ for date in dates[1:]:
     Rs.append(R)
     ts.append(t)
 
-skel_doc = skel_docs[0]
-skel_aligned_t = skels[0]
-skel_sparse = scipy.sparse.csc_matrix(skels[0])
-directory_name=f'2020{dates[0]}_Plate{0 if plate<10 else ""}{plate}'
-path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
-sio.savemat(path_snap+'/Analysis/skeleton_realigned.mat',{'skeleton' : skel_sparse,'R' : np.array([[1,0],[0,1]]),'t' : np.array([0,0])})
+# skel_doc = skel_docs[0]
+# skel_aligned_t = skels[0]
+# skel_sparse = scipy.sparse.csc_matrix(skels[0])
+# directory_name=f'2020{dates[0]}_Plate{0 if plate<10 else ""}{plate}'
+# path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
+# sio.savemat(path_snap+'/Analysis/skeleton_realigned.mat',{'skeleton' : skel_sparse,'R' : np.array([[1,0],[0,1]]),'t' : np.array([0,0])})
 R0 = np.array([[1,0],[0,1]])
 t0 = np.array([0,0])
 for i,skel in enumerate(skel_docs):
+    R0 = np.dot(np.transpose(Rs[i]),R0)
+    t0 = -np.dot(ts[i],np.transpose(Rs[i]))+np.dot(t0,np.transpose(Rs[i]))
     print('treatin',i)
     directory_name=f'2020{dates[i]}_Plate{0 if plate<10 else ""}{plate}'
     path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
@@ -93,5 +95,3 @@ for i,skel in enumerate(skel_docs):
         skel_aligned = transform_skeleton_final(skel,R0,t0)
         skel_sparse = scipy.sparse.csc_matrix(skel_aligned)
         sio.savemat(path_snap+'/Analysis/skeleton_realigned.mat',{'skeleton' : skel_sparse,'R' : R0,'t' : t0})
-    R0 = np.dot(np.transpose(Rs[i]),R0)
-    t0 = -np.dot(ts[i],np.transpose(Rs[i]))+np.dot(t0,np.transpose(Rs[i]))
