@@ -26,6 +26,7 @@ import sys
 
 plate = int(sys.argv[1])
 i = int(sys.argv[2])
+threshold = int(sys.argv[3])
 directory = "/scratch/shared/mrozemul/Fiji.app/" 
 listdir=os.listdir(directory) 
 list_dir_interest=[name for name in listdir if name.split('_')[-1]==f'Plate{0 if plate<10 else ""}{plate}']
@@ -45,7 +46,7 @@ skeleton = scipy.sparse.dok_matrix(skel)
 # poss_aligned=[nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
 # nx_graph_pruned=[clean_degree_4(prune_graph(nx_graph),poss_aligned[i])[0] for i,nx_graph in enumerate(nx_graphs_aligned)]
 nx_graph,pos = generate_nx_graph(from_sparse_to_graph(skeleton))
-nx_graph_pruned = clean_degree_4(prune_graph(nx_graph),pos)[0]
+nx_graph_pruned = clean_degree_4(prune_graph(nx_graph,threshold),pos)[0]
 directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
 path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
 path_save = path_snap +'/Analysis/nx_graph_pruned.p'

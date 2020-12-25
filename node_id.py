@@ -320,7 +320,8 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,dow
         while nx_graph_t.degree(current_node)!=1 and not current_node in nx_graph_tm1.nodes: #Careful : if there is a cycle with low angle this might loop indefinitely but unprobable
             i+=1
             if i>=100:
-                print(i,tip,current_node,pos_t[current_node])
+                print('identified infinite loop',i,tip,current_node,pos_t[current_node])
+                break
             mini=np.inf
             origin_vector = last_branch[0]-last_branch[min(length_id,len(last_branch)-1)]
             unit_vector_origin = origin_vector / np.linalg.norm(origin_vector)
