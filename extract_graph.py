@@ -255,7 +255,7 @@ def generate_skeleton(nx_graph,dim=(3000,4096)):
             skel[pixel]=True
     return(skel)
 
-def prune_graph(nx_graph,threshold=100):
+def prune_graph(nx_graph,threshold=1):
     #should implement threshold!
     S = [nx_graph.subgraph(c).copy() for c in nx.connected_components(nx_graph)]
     selected = [g for g in S if g.size(weight="weight")*len(g.nodes)/10**6>=threshold]
