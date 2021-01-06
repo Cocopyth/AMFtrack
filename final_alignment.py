@@ -80,10 +80,10 @@ while isnan:
     tfound= np.dot(Rfound,reg.t[0:2])
     nx_graph1,pos1 = generate_nx_graph(from_sparse_to_graph(skeleton1))
     nx_graph2,pos2 = generate_nx_graph(from_sparse_to_graph(skeleton2))
-#     pruned1 = prune_graph(nx_graph1)
-#     pruned2 = prune_graph(nx_graph2)
-    pruned1 = nx_graph1
-    pruned2 = nx_graph2
+    pruned1 = prune_graph(nx_graph1)
+    pruned2 = prune_graph(nx_graph2)
+#     pruned1 = nx_graph1
+#     pruned2 = nx_graph2
     t_init=-tfound
     Rot_init= Rfound
     X = np.transpose(np.array([pos1[node] for node in pruned1 if pruned1.degree(node)==3]))

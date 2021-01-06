@@ -271,7 +271,8 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,dow
         pixelb=pixel_list[-1]
         Sedge[pixela[0],pixela[1]]=edge[0]
         Sedge[pixelb[0],pixelb[1]]=edge[1]
-    for tip in tips:
+    for i,tip in enumerate(tips):
+#         print(i/len(tips))
         mini1=np.inf
         posanchor=pos_tm1[tip]
         window=1000
@@ -365,6 +366,7 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,dow
     print("tip_id",time()-t)
     t=time()
     while len(ambiguous)>0:
+        print(len(ambiguous))
         node=ambiguous.pop()
         identifier=corresp_tips[node]
         candidates = [nod for nod in corresp_tips.keys() if corresp_tips[nod]==identifier]
