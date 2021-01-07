@@ -35,13 +35,10 @@ from skimage.feature import hessian_matrix_det
 import sys
 from extract_graph import dic_to_sparse, from_sparse_to_graph, generate_nx_graph, prune_graph, from_nx_to_tab, from_nx_to_tab_matlab,sparse_to_doc, connections_pixel_list_to_tab, transform_list, clean_degree_4
 from sparse_util import dilate, zhangSuen
-import scipy.sparse
-from realign import transform_skeleton_final
 
-plate = int(sys.argv[1])
-begin = int(sys.argv[2])
-end = int(sys.argv[3])
-j = int(sys.argv[4])
+
+i = int(sys.argv[1])
+plate = int(sys.argv[2])
 directory = "/scratch/shared/mrozemul/Fiji.app/" 
 listdir=os.listdir(directory) 
 list_dir_interest=[name for name in listdir if name.split('_')[-1]==f'Plate{0 if plate<10 else ""}{plate}']
@@ -49,49 +46,48 @@ ss=[name.split('_')[0] for name in list_dir_interest]
 ff=[name.split('_')[1] for name in list_dir_interest]
 dates_datetime=[datetime(year=int(ss[i][:4]),month=int(ss[i][4:6]),day=int(ss[i][6:8]),hour=int(ff[i][0:2]),minute=int(ff[i][2:4])) for i in range(len(list_dir_interest))]
 dates_datetime.sort()
-
-dates_datetime_chosen=dates_datetime[begin:end]
+dates_datetime_chosen=dates_datetime
 dates = [f'{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}' for date in dates_datetime_chosen]
-dilateds=[]
-# skels = []
-skel_docs = []
-directory_name=f'2020{dates[0]}_Plate{0 if plate<10 else ""}{plate}'
+date =dates [i]
+directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
 path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
+path_tile=path_snap+'/Img/TileConfiguration.txt.registered'
+try:
+    tileconfig = pd.read_table(path_tile,sep=';',skiprows=4,header=None,converters={2 : ast.literal_eval},skipinitialspace=True)
+except:
+    print('error_name')
+    path_tile=path_snap+'/Img/TileConfiguration.registered.txt'
+    tileconfig = pd.read_table(path_tile,sep=';',skiprows=4,header=None,converters={2 : ast.literal_eval},skipinitialspace=True)
+dirName = path_snap+'/Analysis'
+shape = (3000,4096)
+try:
+    os.mkdir(path_snap+'/Analysis') 
+    print("Directory " , dirName ,  " Created ")
+except FileExistsError:
+    print("Directory " , dirName ,  " already exists")  
+t=time()
+xs =[c[0] for c in tileconfig[2]]
+ys =[c[1] for c in tileconfig[2]]
+dim = (int(np.max(ys)-np.min(ys))+4096,int(np.max(xs)-np.min(xs))+4096)
+ims = []
+for name in tileconfig[0]:
+#     ims.append(imageio.imread('//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'+date_plate+plate_str+'/Img/'+name))
+    ims.append(imageio.imread(f'{name}'))
+mask = np.zeros(dim,dtype=np.uint8)
+for index,im in enumerate(ims):
+    im_cropped = im
+    im_blurred =cv2.blur(im_cropped, (100, 100))
+    boundaries = int(tileconfig[2][index][0]-np.min(xs)),int(tileconfig[2][index][1]-np.min(ys))
+    mask[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += im_blurred>70
+    
 skel_info = read_mat(path_snap+'/Analysis/skeleton.mat')
 skel = skel_info['skeleton']
-# skels.append(skel)
-skel_doc = sparse_to_doc(skel)
-skel_docs.append(skel_doc)
-Rs=[np.array([[1,0],[0,1]])]
-ts=[np.array([0,0])]
-for date in dates[1:]:
-    directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
-    path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
-    skel_info = read_mat(path_snap+'/Analysis/skeleton_masked.mat')
-    skel = skel_info['skeleton']
-#     skels.append(skel)
-    skel_doc = sparse_to_doc(skel)
-    skel_docs.append(skel_doc)
-    transform = sio.loadmat(path_snap+'/Analysis/transform.mat')
-    R,t = transform['R'],transform['t']
-    Rs.append(R)
-    ts.append(t)
+masker = mask>0
+kernel = np.ones((100,100),np.uint8)
+output = 1-cv2.dilate(1-masker.astype(np.uint8),kernel,iterations = 1)
+result = output*np.array(skel.todense())
+sio.savemat(path_snap+'/Analysis/skeleton_masked.mat',{'skeleton' : scipy.sparse.csc_matrix(result)})
+mask_compressed= cv2.resize(output,(dim[1]//5,dim[0]//5))
+sio.savemat(path_snap+'/Analysis/mask.mat',{'mask' : mask_compressed})
 
-# skel_doc = skel_docs[0]
-# skel_aligned_t = skels[0]
-# skel_sparse = scipy.sparse.csc_matrix(skels[0])
-# directory_name=f'2020{dates[0]}_Plate{0 if plate<10 else ""}{plate}'
-# path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
-# sio.savemat(path_snap+'/Analysis/skeleton_realigned.mat',{'skeleton' : skel_sparse,'R' : np.array([[1,0],[0,1]]),'t' : np.array([0,0])})
-R0 = np.array([[1,0],[0,1]])
-t0 = np.array([0,0])
-for i,skel in enumerate(skel_docs):
-    R0 = np.dot(np.transpose(Rs[i]),R0)
-    t0 = -np.dot(ts[i],np.transpose(Rs[i]))+np.dot(t0,np.transpose(Rs[i]))
-    print('treatin',i)
-    directory_name=f'2020{dates[i]}_Plate{0 if plate<10 else ""}{plate}'
-    path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
-    if i==j:
-        skel_aligned = transform_skeleton_final(skel,R0,t0)
-        skel_sparse = scipy.sparse.csc_matrix(skel_aligned)
-        sio.savemat(path_snap+'/Analysis/skeleton_realigned.mat',{'skeleton' : skel_sparse,'R' : R0,'t' : t0})
+          
