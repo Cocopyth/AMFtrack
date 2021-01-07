@@ -37,7 +37,6 @@ from extract_graph import dic_to_sparse, from_sparse_to_graph, generate_nx_graph
 from sparse_util import dilate, zhangSuen
 
 
-arg = sys.argv[1]
 i = int(sys.argv[1])
 plate = int(sys.argv[2])
 directory = "/scratch/shared/mrozemul/Fiji.app/" 
@@ -88,8 +87,9 @@ for index,im in enumerate(ims):
     # # frangised = cv2.normalize(frangised, None, 0, 255, cv2.NORM_MINMAX)
     hessian = hessian_matrix_det(im_back_rem,sigma = 20)
     blur_hessian = cv2.blur(abs(hessian), (20, 20))
-    transformed = (frangised+cv2.normalize(blur_hessian, None, 0, 255, cv2.NORM_MINMAX)-im_back_rem+120)*(im_blurred>=35)
+#     transformed = (frangised+cv2.normalize(blur_hessian, None, 0, 255, cv2.NORM_MINMAX)-im_back_rem+120)*(im_blurred>=35)
 #     transformed = (frangised+cv2.normalize(abs(hessian), None, 0, 255, cv2.NORM_MINMAX)-im_back_rem+120)*(im_blurred>=35)
+    transformed = (frangised-im_back_rem+120)*(im_blurred>=35)
     low = 20
     high = 100
     lowt = (transformed > low).astype(int)
@@ -108,6 +108,7 @@ for index,im in enumerate(ims):
     boundaries = int(tileconfig[2][index][0]-np.min(xs)),int(tileconfig[2][index][1]-np.min(ys))
     skel[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += dilated
     contour[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += points
+    mask[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += im_blurred>30
     if index<=80:
         half_circle[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += points
 # print(len(skel.nonzero()[0]))
