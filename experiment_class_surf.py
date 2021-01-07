@@ -523,8 +523,11 @@ def clean_exp_with_hyphaes(experiment):
         tips.add(hyphae.end.label)
         for t in hyphae.end.ts():
             if t in hyphae.root.ts():
-                for node in hyphae.get_nodes_within(t)[0]:
-                    safe_nodes.add(node)
+                try:
+                    for node in hyphae.get_nodes_within(t)[0]:
+                        safe_nodes.add(node)
+                except:
+                    print(f'error for hyphae {hyphae} on position {hyphae.end.pos(t),hyphae.root.pos(t)}')
     for node in experiment.nodes:
         posit = node.pos(ts[node.label][0])
         if len(ts[node.label])==1 and ts[node.label][0]!=len(exp_clean.nx_graph)-1 and node.label not in safe_nodes:

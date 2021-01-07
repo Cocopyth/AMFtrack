@@ -148,10 +148,10 @@ def reduce_labels(nx_graph_list,pos_list):
             pos=pos_list[i][node]
             new_poss[i][mapping(node)]=pos
         new_graphs.append(nx.relabel_nodes(nx_graph,mapping,copy=True))
-    node=[node for node in new_graphs[0].nodes if new_graphs[0].degree(node)==3][0]
-    for i,nx_graph in enumerate(nx_graph_list):
-        if node in new_poss[i].keys():
-            print(node,i,new_poss[i][node])
+#     node=choice([node for node in new_graphs[0].nodes if new_graphs[0].degree(node)==3])
+#     for i,nx_graph in enumerate(nx_graph_list):
+#         if node in new_poss[i].keys():
+#             print(node,i,new_poss[i][node])
     return(new_graphs,new_poss)
 
 def reconnect_degree_2(nx_graph,pos):
@@ -366,7 +366,6 @@ def second_identification(nx_graph_tm1,nx_graph_t,pos_tm1,pos_t,length_id=50,dow
     print("tip_id",time()-t)
     t=time()
     while len(ambiguous)>0:
-        print(len(ambiguous))
         node=ambiguous.pop()
         identifier=corresp_tips[node]
         candidates = [nod for nod in corresp_tips.keys() if corresp_tips[nod]==identifier]

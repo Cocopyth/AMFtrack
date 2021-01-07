@@ -113,8 +113,9 @@ def plot_t_tp1(node_list_t,node_list_tp1,pos_t,pos_tp1,imt,imtp1,relabel_t=lambd
     else:
         plt.show()
         
-def compress_skeleton(skeleton_doc,factor):
-    shape=skeleton_doc.shape
+def compress_skeleton(skeleton_doc,factor,shape = None):
+    if shape is None:
+        shape=skeleton_doc.shape
     final_picture = np.zeros(shape=(shape[0]//factor,shape[1]//factor))
     for pixel in skeleton_doc.keys():
         x=min(round(pixel[0]/factor),shape[0]//factor-1)

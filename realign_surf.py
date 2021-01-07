@@ -57,7 +57,7 @@ dilateds=[]
 skel_docs = []
 directory_name=f'2020{dates[0]}_Plate{0 if plate<10 else ""}{plate}'
 path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
-skel_info = read_mat(path_snap+'/Analysis/skeleton.mat')
+skel_info = read_mat(path_snap+'/Analysis/skeleton_masked.mat')
 skel = skel_info['skeleton']
 # skels.append(skel)
 skel_doc = sparse_to_doc(skel)
