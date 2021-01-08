@@ -50,7 +50,7 @@ dates_datetime_chosen=dates_datetime
 dates = [f'{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}' for date in dates_datetime_chosen]
 date =dates [i]
 directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
-path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
+path_snap=directory+directory_name
 path_tile=path_snap+'/Img/TileConfiguration.txt.registered'
 try:
     tileconfig = pd.read_table(path_tile,sep=';',skiprows=4,header=None,converters={2 : ast.literal_eval},skipinitialspace=True)
@@ -101,14 +101,37 @@ for index,im in enumerate(ims):
         dilation=cv2.erode(dilation.astype(np.uint8) * 255,kernel,iterations = 1)
         dilation = cv2.dilate(dilation.astype(np.uint8) * 255,kernel,iterations = 1)
     dilated = dilation>0
-    print('number threshold : ', np.sum(dilated))
+    skeletonized = cv2.ximgproc.thinning(np.array(255*dilated,dtype=np.uint8))
+    nx_g = generate_nx_graph(from_sparse_to_graph(scipy.sparse.dok_matrix(skeletonized)))
+    g,pos= nx_g
+    tips = [node for node in g.nodes if g.degree(node)==1]
+    dilated_bis = np.copy(dilated)
+    for tip in tips:
+        branch = np.array(orient(g.get_edge_data(*list(g.edges(tip))[0])['pixel_list'],pos[tip]))
+        orientation = branch[0]-branch[min(branch.shape[0]-1,20)]
+        orientation = orientation/(np.linalg.norm(orientation))
+        window = 20
+        x,y = pos[tip][0],pos[tip][1]
+        if x-window>=0 and x+window< dilated.shape[0] and y-window>=0 and y+window< dilated.shape[1]:
+            shape_tip = dilated[x-window:x+window,y-window:y+window]
+            dist = 30
+            for i in range(dist):
+                pixel = (pos[tip]+orientation*i).astype(int)
+                xp,yp = pixel[0],pixel[1]
+                if xp-window>=0 and xp+window< dilated.shape[0] and yp-window>=0 and yp+window< dilated.shape[1]:
+                    dilated_bis[xp-window:xp+window,yp-window:yp+window]+=shape_tip
+#     hessian = hessian_matrix_det(dilated,sigma = 10)
+#     hessian = cv2.normalize(-hessian, None, 0, 255, cv2.NORM_MINMAX)
+#     kernel = np.ones((5,5),np.uint8)
+#     junction_connecter = hessian>165
+#     junction_connecter =  cv2.dilate(junction_connecter.astype(np.uint8) * 255,kernel,iterations = 4)
+    print('number threshold : ', np.sum(dilated_bis))
     laplacian = cv2.Laplacian((im_cropped<=15).astype(np.uint8),cv2.CV_64F)
     points = laplacian>=4
 #     np.save(f'Temp\dilated{tileconfig[0][i]}',dilated)
     boundaries = int(tileconfig[2][index][0]-np.min(xs)),int(tileconfig[2][index][1]-np.min(ys))
-    skel[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += dilated
+    skel[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += dilated_bis
     contour[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += points
-    mask[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += im_blurred>30
     if index<=80:
         half_circle[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += points
 # print(len(skel.nonzero()[0]))
@@ -120,4 +143,6 @@ skeletonized = cv2.ximgproc.thinning(np.array(255*(skel>0),dtype=np.uint8))
 sio.savemat(path_snap+'/Analysis/dilated.mat',{'dilated' : skel})
 # sio.savemat(path_snap+'/Analysis/skeleton.mat',{'skeleton' : scipy.sparse.csc_matrix(skeletonized),'contour' : scipy.sparse.csc_matrix(contour),'half_circle' : half_circle})
 sio.savemat(path_snap+'/Analysis/skeleton.mat',{'skeleton' : scipy.sparse.csc_matrix(skeletonized)})
+compressed = cv2.resize(skeletonized,(dim[1]//5,dim[0]//5))
+sio.savemat(path_snap+'/Analysis/skeleton_compressed.mat',{'skeleton' : compressed})
 print('time=',time()-t)
