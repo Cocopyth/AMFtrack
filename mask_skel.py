@@ -37,8 +37,8 @@ from extract_graph import dic_to_sparse, from_sparse_to_graph, generate_nx_graph
 from sparse_util import dilate, zhangSuen
 
 
-i = int(sys.argv[1])
-plate = int(sys.argv[2])
+i = int(sys.argv[-1])
+plate = int(sys.argv[1])
 directory = "/scratch/shared/mrozemul/Fiji.app/" 
 listdir=os.listdir(directory) 
 list_dir_interest=[name for name in listdir if name.split('_')[-1]==f'Plate{0 if plate<10 else ""}{plate}']
@@ -87,6 +87,8 @@ kernel = np.ones((100,100),np.uint8)
 output = 1-cv2.dilate(1-masker.astype(np.uint8),kernel,iterations = 1)
 result = output*np.array(skel.todense())
 sio.savemat(path_snap+'/Analysis/skeleton_masked.mat',{'skeleton' : scipy.sparse.csc_matrix(result)})
+compressed = cv2.resize(result,(dim[1]//5,dim[0]//5))
+sio.savemat(path_snap+'/Analysis/skeleton_masked_compressed.mat',{'skeleton' : compressed})
 mask_compressed= cv2.resize(output,(dim[1]//5,dim[0]//5))
 sio.savemat(path_snap+'/Analysis/mask.mat',{'mask' : mask_compressed})
 
