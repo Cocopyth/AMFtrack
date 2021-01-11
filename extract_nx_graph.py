@@ -25,8 +25,8 @@ import pickle
 import sys
 
 plate = int(sys.argv[1])
-i = int(sys.argv[2])
-threshold = int(sys.argv[3])
+i = int(sys.argv[-1])
+threshold = int(sys.argv[2])
 directory = "/scratch/shared/mrozemul/Fiji.app/" 
 listdir=os.listdir(directory) 
 list_dir_interest=[name for name in listdir if name.split('_')[-1]==f'Plate{0 if plate<10 else ""}{plate}']

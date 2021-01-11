@@ -37,9 +37,9 @@ from extract_graph import dic_to_sparse, from_sparse_to_graph, generate_nx_graph
 from sparse_util import dilate, zhangSuen
 
 
-i = int(sys.argv[1])
-plate = int(sys.argv[2])
-directory = "/scratch/shared/mrozemul/Fiji.app/" 
+i = int(sys.argv[-1])
+plate = int(sys.argv[1])
+from directory import directory
 listdir=os.listdir(directory) 
 list_dir_interest=[name for name in listdir if name.split('_')[-1]==f'Plate{0 if plate<10 else ""}{plate}']
 ss=[name.split('_')[0] for name in list_dir_interest]
