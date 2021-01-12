@@ -3,6 +3,7 @@ __pycache__/
 .ipynb_checkpoints/
 *.out
 Data/
+Figure/
 Temp/
 core.*
 core.12631
