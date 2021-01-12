@@ -27,22 +27,23 @@ from pymatreader import read_mat
 from matplotlib import colors
 from copy import deepcopy, copy
 from collections import Counter
+from directory import directory
 
 
 class Experiment:
     def __init__(self, plate):
         self.plate = plate
 
-    def load(self, dates, local=False, raw=False):
+    def load(self, dates, local=False):
         self.dates = dates
-        self.raw = raw
         nx_graph_poss = []
         for date in dates:
             directory_name = f'2020{date}_Plate{0 if self.plate<10 else ""}{self.plate}'
-            path_snap = "/scratch/shared/mrozemul/Fiji.app/" + directory_name
+            path_snap = directory + directory_name
             path_save = path_snap + "/Analysis/nx_graph_pruned_labeled.p"
             (g, pos) = pickle.load(open(path_save, "rb"))
             nx_graph_poss.append((g, pos))
+
         nx_graphs = [nx_graph_pos[0] for nx_graph_pos in nx_graph_poss]
         poss = [nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
         #         nx_graph_clean=[]
@@ -120,7 +121,7 @@ class Experiment:
         date_plate = f"/2020{date}"
         plate_str = f"_Plate{self.plate}"
         path_tile = (
-            "//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE"
+            directory
             + date_plate
             + plate_str
             + "/Img/TileConfiguration.registered.txt"
@@ -135,7 +136,7 @@ class Experiment:
         )
         for name in tileconfig[0]:
             im = imageio.imread(
-                "//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE"
+                directory
                 + date_plate
                 + plate_str
                 + "/Img/"
@@ -217,9 +218,9 @@ class Experiment:
         date_plate = f"/2020{date}"
         plate_str = f"_Plate{self.plate}"
         directory_name = f'2020{date}_Plate{0 if self.plate<10 else ""}{self.plate}'
-        path_snap = "/scratch/shared/mrozemul/Fiji.app/" + directory_name
+        path_snap = directory + directory_name
         path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
-        skel = read_mat(path_snap + "/Analysis/skeleton_realigned.mat")
+        skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
         Rot = skel["R"]
         trans = skel["t"]
         rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
@@ -264,7 +265,17 @@ class Experiment:
             paths.append(tileconfig[0][index])
         ims = [imageio.imread(path) for path in paths]
         return (ims, possImg)
-
+    def plot_raw(self, t):
+        date = self.dates[t]
+        directory_name = f'2020{date}_Plate{0 if self.plate<10 else ""}{self.plate}'
+        path_snap = directory + directory_name
+        path_save = path_snap + "/Analysis/nx_graph_pruned_labeled.p"
+        (g, pos) = pickle.load(open(path_save, "rb"))
+        nx_graph_poss.append((g, pos))
+        im = read_mat(path_snap+'/Analysis/raw_image.mat')['raw']
+        fig=plt.figure(figsize=(10,9))
+        ax = fig.add_subplot(111)
+        ax.imshow(im)
     def plot(self, ts, node_lists=[], shift=(0, 0), compress=5, save="", time=None):
         global check
         right = 0.90
