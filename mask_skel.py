@@ -39,6 +39,7 @@ from sparse_util import dilate, zhangSuen
 
 i = int(sys.argv[-1])
 plate = int(sys.argv[1])
+thresh = int(sys.argv[2])
 from directory import directory
 listdir=os.listdir(directory) 
 list_dir_interest=[name for name in listdir if name.split('_')[-1]==f'Plate{0 if plate<10 else ""}{plate}']
@@ -79,7 +80,7 @@ for index,im in enumerate(ims):
     im_cropped = im
     im_blurred =cv2.blur(im_cropped, (100, 100))
     boundaries = int(tileconfig[2][index][0]-np.min(xs)),int(tileconfig[2][index][1]-np.min(ys))
-    mask[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += im_blurred>70
+    mask[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += im_blurred>thresh
     
 skel_info = read_mat(path_snap+'/Analysis/skeleton.mat')
 skel = skel_info['skeleton']
