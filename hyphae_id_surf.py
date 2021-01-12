@@ -190,7 +190,7 @@ def get_pixel_growth_and_new_children(hyphae, t1, t2):
         return (pixels, nodes)
     else:
         if len(edges) == 0:
-            print(hyphae.root, hyphae.end)
+#             print(hyphae.root, hyphae.end)
             return ([], [])
         for i, edge in enumerate(edges):
             distance = np.min(
@@ -209,7 +209,7 @@ def get_pixel_growth_and_new_children(hyphae, t1, t2):
                 )
         pixels = [last_edge.pixel_list(t2)[index_nearest_pixel:]]
         nodes = [-1, last_edge.end]
-        for edge in edges[index + 1 :]:
+        for edge in edges[index + 1:]:
             pixels.append(edge.pixel_list(t2))
             nodes.append(edge.end)
         return (pixels, nodes)
