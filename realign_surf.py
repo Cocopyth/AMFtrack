@@ -42,7 +42,7 @@ plate = int(sys.argv[1])
 begin = int(sys.argv[2])
 end = int(sys.argv[3])
 j = int(sys.argv[4])
-directory = "/scratch/shared/mrozemul/Fiji.app/" 
+from directory import directory
 listdir=os.listdir(directory) 
 list_dir_interest=[name for name in listdir if name.split('_')[-1]==f'Plate{0 if plate<10 else ""}{plate}']
 ss=[name.split('_')[0] for name in list_dir_interest]
@@ -56,8 +56,8 @@ dilateds=[]
 # skels = []
 skel_docs = []
 directory_name=f'2020{dates[0]}_Plate{0 if plate<10 else ""}{plate}'
-path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
-skel_info = read_mat(path_snap+'/Analysis/skeleton_masked.mat')
+path_snap=directory+directory_name
+skel_info = read_mat(path_snap+'/Analysis/skeleton_pruned.mat')
 skel = skel_info['skeleton']
 # skels.append(skel)
 skel_doc = sparse_to_doc(skel)
@@ -66,8 +66,8 @@ Rs=[np.array([[1,0],[0,1]])]
 ts=[np.array([0,0])]
 for date in dates[1:]:
     directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
-    path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
-    skel_info = read_mat(path_snap+'/Analysis/skeleton_masked.mat')
+    path_snap=directory+directory_name
+    skel_info = read_mat(path_snap+'/Analysis/skeleton_pruned.mat')
     skel = skel_info['skeleton']
 #     skels.append(skel)
     skel_doc = sparse_to_doc(skel)
@@ -90,8 +90,14 @@ for i,skel in enumerate(skel_docs):
     t0 = -np.dot(ts[i],np.transpose(Rs[i]))+np.dot(t0,np.transpose(Rs[i]))
     print('treatin',i)
     directory_name=f'2020{dates[i]}_Plate{0 if plate<10 else ""}{plate}'
-    path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
+    path_snap=directory+directory_name
     if i==j:
-        skel_aligned = transform_skeleton_final(skel,R0,t0)
+        skel_aligned = transform_skeleton_final(skel,R0,t0).astype(np.uint8)
         skel_sparse = scipy.sparse.csc_matrix(skel_aligned)
-        sio.savemat(path_snap+'/Analysis/skeleton_realigned.mat',{'skeleton' : skel_sparse,'R' : R0,'t' : t0})
+        sio.savemat(path_snap+'/Analysis/skeleton_pruned_realigned.mat',{'skeleton' : skel_sparse,'R' : R0,'t' : t0})
+        dim = skel_sparse.shape
+        kernel = np.ones((5,5),np.uint8)
+        itera = 1
+        skel
+        compressed = cv2.resize(cv2.dilate(skel_sparse.todense(),kernel,iterations = itera),(dim[1]//5,dim[0]//5))
+        sio.savemat(path_snap+'/Analysis/skeleton_realigned_compressed.mat',{'skeleton' : compressed})

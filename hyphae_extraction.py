@@ -27,14 +27,14 @@ import sys
 plate = int(sys.argv[1])
 begin = int(sys.argv[2])
 end = int(sys.argv[3])
-directory = "/scratch/shared/mrozemul/Fiji.app/" 
+from directory import directory
 listdir=os.listdir(directory) 
 list_dir_interest=[name for name in listdir if name.split('_')[-1]==f'Plate{0 if plate<10 else ""}{plate}']
 ss=[name.split('_')[0] for name in list_dir_interest]
 ff=[name.split('_')[1] for name in list_dir_interest]
 dates_datetime=[datetime(year=int(ss[i][:4]),month=int(ss[i][4:6]),day=int(ss[i][6:8]),hour=int(ff[i][0:2]),minute=int(ff[i][2:4])) for i in range(len(list_dir_interest))]
 dates_datetime.sort()
-dates_datetime_chosen=dates_datetime[begin:end]
+dates_datetime_chosen=dates_datetime[begin:end+1]
 dates = [f'{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}' for date in dates_datetime_chosen]
 exp= Experiment(plate)
 exp.load(dates)
@@ -50,12 +50,12 @@ get_mother(exp_clean.hyphaes)
 solve_two_ends = resolve_ambiguity_two_ends(exp_clean.hyphaes)
 # solved = solve_degree4(exp_clean)
 clean_obvious_fake_tips(exp_clean)
-dirName = f'/scratch/shared/mrozemul/Fiji.app/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}'
+dirName = f'{directory}Analysis_Plate{plate}_{dates[0]}_{dates[-1]}'
 try:
-    os.mkdir(f'/scratch/shared/mrozemul/Fiji.app/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}') 
+    os.mkdir(f'{directory}Analysis_Plate{plate}_{dates[0]}_{dates[-1]}') 
     print("Directory " , dirName ,  " Created ")
 except FileExistsError:
     print("Directory " , dirName ,  " already exists")  
-hyphs,gr_inf = save_hyphaes(exp_clean,f'/scratch/shared/mrozemul/Fiji.app/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/')
-exp_clean.save(f'/scratch/shared/mrozemul/Fiji.app/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/')
-exp_clean.pickle_save(f'/scratch/shared/mrozemul/Fiji.app/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/')
+hyphs,gr_inf = save_hyphaes(exp_clean,f'{directory}Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/')
+exp_clean.save(f'{directory}Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/')
+exp_clean.pickle_save(f'{directory}Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/')

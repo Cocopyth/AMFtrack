@@ -39,7 +39,7 @@ from sparse_util import dilate, zhangSuen
 
 i = int(sys.argv[-1])
 plate = int(sys.argv[1])
-directory = "/scratch/shared/mrozemul/Fiji.app/" 
+from directory import directory
 listdir=os.listdir(directory) 
 list_dir_interest=[name for name in listdir if name.split('_')[-1]==f'Plate{0 if plate<10 else ""}{plate}']
 ss=[name.split('_')[0] for name in list_dir_interest]
@@ -50,7 +50,7 @@ dates_datetime_chosen=dates_datetime
 dates = [f'{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}' for date in dates_datetime_chosen]
 date =dates [i]
 directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
-path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
+path_snap=directory+directory_name
 path_tile=path_snap+'/Img/TileConfiguration.txt.registered'
 try:
     tileconfig = pd.read_table(path_tile,sep=';',skiprows=4,header=None,converters={2 : ast.literal_eval},skipinitialspace=True)
@@ -71,8 +71,9 @@ ys =[c[1] for c in tileconfig[2]]
 dim = (int(np.max(ys)-np.min(ys))+4096,int(np.max(xs)-np.min(xs))+4096)
 ims = []
 for name in tileconfig[0]:
+    imname = '/Img/'+name.split('/')[-1]
 #     ims.append(imageio.imread('//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'+date_plate+plate_str+'/Img/'+name))
-    ims.append(imageio.imread(f'{name}'))
+    ims.append(imageio.imread(directory+directory_name+imname))
 mask = np.zeros(dim,dtype=np.uint8)
 for index,im in enumerate(ims):
     im_cropped = im
