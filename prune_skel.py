@@ -38,7 +38,7 @@ date_datetime=dates_datetime[i]
 date = f'{0 if date_datetime.month<10 else ""}{date_datetime.month}{0 if date_datetime.day<10 else ""}{date_datetime.day}_{0 if date_datetime.hour<10 else ""}{date_datetime.hour}{0 if date_datetime.minute<10 else ""}{date_datetime.minute}'
 directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
 path_snap=directory+directory_name
-skel = read_mat(path_snap+'/Analysis/skeleton_pruned_realigned.mat')['skeleton']
+skel = read_mat(path_snap+'/Analysis/skeleton_masked.mat')['skeleton']
 skeleton = scipy.sparse.dok_matrix(skel)
     
 # nx_graph_poss=[generate_nx_graph(from_sparse_to_graph(skeleton)) for skeleton in skels_aligned]
@@ -49,5 +49,10 @@ nx_graph,pos = generate_nx_graph(from_sparse_to_graph(skeleton))
 nx_graph_pruned = clean_degree_4(prune_graph(nx_graph,threshold),pos)[0]
 directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
 path_snap=directory+directory_name
-path_save = path_snap +'/Analysis/nx_graph_pruned.p'
-pickle.dump((nx_graph_pruned,pos),open( path_save, "wb" ))
+skeleton = generate_skeleton(nx_graph_pruned,(26322, 49527))
+skel = scipy.sparse.csc_matrix(skeleton,dtype=np.uint8)
+sio.savemat(path_snap+'/Analysis/skeleton_pruned.mat',{'skeleton' : skel})
+dim = skel.shape
+kernel = np.ones((5,5),np.uint8)
+itera = 1
+sio.savemat(path_snap+'/Analysis/skeleton_pruned_compressed.mat',{'skeleton' : cv2.resize(cv2.dilate(skel.todense(),kernel,iterations = itera),(dim[1]//5,dim[0]//5))})

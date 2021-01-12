@@ -27,7 +27,7 @@ import sys
 plate = int(sys.argv[1])
 begin = int(sys.argv[2])
 end = int(sys.argv[3])
-directory = "/scratch/shared/mrozemul/Fiji.app/" 
+from directory import directory
 listdir=os.listdir(directory) 
 list_dir_interest=[name for name in listdir if name.split('_')[-1]==f'Plate{0 if plate<10 else ""}{plate}']
 ss=[name.split('_')[0] for name in list_dir_interest]
@@ -39,7 +39,7 @@ dates = [f'{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{da
 nx_graph_pos = []
 for date in dates:
     directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
-    path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
+    path_snap=directory+directory_name
     path_save = path_snap +'/Analysis/nx_graph_pruned.p'
     nx_graph_pos.append(pickle.load(open( path_save, "rb" )))
 nx_graph_pruned=[c[0] for c in nx_graph_pos]
@@ -59,7 +59,7 @@ nx_graph_pruned=downstream_graphs
 poss_aligned=downstream_poss
 for i,g in enumerate(nx_graph_pruned):
     directory_name=f'2020{dates[i]}_Plate{0 if plate<10 else ""}{plate}'
-    path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
+    path_snap=directory+directory_name
     path_save = path_snap +'/Analysis/nx_graph_pruned_labeled.p'
     pos = poss_aligned[i]
     pickle.dump((g,pos),open( path_save, "wb" ))
@@ -67,6 +67,6 @@ for i,g in enumerate(nx_graph_pruned):
 for i, date in enumerate(dates):
     tab = from_nx_to_tab(nx_graph_pruned[i],poss_aligned[i])
     directory_name=f'2020{dates[i]}_Plate{0 if plate<10 else ""}{plate}'
-    path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
+    path_snap=directory+directory_name
     path_save = path_snap +'/Analysis/graph_full_labeled.mat'
     sio.savemat(path_save, {name: col.values for name, col in tab.items()})

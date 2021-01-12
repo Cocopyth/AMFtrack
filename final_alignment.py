@@ -39,10 +39,10 @@ from cycpd import rigid_registration
 import sys
 
 
-i = int(sys.argv[1])
-plate = int(sys.argv[2])
+i = int(sys.argv[2])
+plate = int(sys.argv[1])
 
-directory = "/scratch/shared/mrozemul/Fiji.app/" 
+from directory import directory
 listdir=os.listdir(directory) 
 list_dir_interest=[name for name in listdir if name.split('_')[-1]==f'Plate{0 if plate<10 else ""}{plate}']
 ss=[name.split('_')[0] for name in list_dir_interest]
@@ -59,8 +59,8 @@ skels = []
 skel_docs = []
 for date in dates:
     directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
-    path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
-    skel_info = read_mat(path_snap+'/Analysis/skeleton_masked.mat')
+    path_snap=directory+directory_name
+    skel_info = read_mat(path_snap+'/Analysis/skeleton_pruned.mat')
     skel = skel_info['skeleton']
     skels.append(skel)
     skel_doc = sparse_to_doc(skel)
