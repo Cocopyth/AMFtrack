@@ -1,4 +1,4 @@
-from util import get_path
+from util import get_path, get_dates_datetime, get_dirname
 import pandas as pd
 import networkx as nx
 import numpy as np
@@ -42,30 +42,10 @@ begin = int(sys.argv[2])
 end = int(sys.argv[3])
 from directory import directory
 
-listdir = os.listdir(directory)
-list_dir_interest = [
-    name
-    for name in listdir
-    if name.split("_")[-1] == f'Plate{0 if plate<10 else ""}{plate}'
-]
-ss = [name.split("_")[0] for name in list_dir_interest]
-ff = [name.split("_")[1] for name in list_dir_interest]
-dates_datetime = [
-    datetime(
-        year=int(ss[i][:4]),
-        month=int(ss[i][4:6]),
-        day=int(ss[i][6:8]),
-        hour=int(ff[i][0:2]),
-        minute=int(ff[i][2:4]),
-    )
-    for i in range(len(list_dir_interest))
-]
+dates_datetime = get_dates_datetime(directory,plate)
 dates_datetime.sort()
 dates_datetime_chosen = dates_datetime[begin : end + 1]
-dates = [
-    f'{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}'
-    for date in dates_datetime_chosen
-]
+dates = dates_datetime_chosen
 exp = Experiment(plate)
 exp.load(dates)
 exp_clean = clean_and_relabel(exp)

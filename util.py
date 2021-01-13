@@ -45,6 +45,9 @@ def get_dates_datetime(directory, plate):
     dates_datetime.sort()
     return dates_datetime
 
+def get_dirname(date,plate):
+    return(f'{date.year}{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}_Plate{0 if plate<10 else ""}{plate}')
+
 
 def shift_skeleton(skeleton, shift):
     shifted_skeleton = sparse.dok_matrix(skeleton.shape, dtype=bool)

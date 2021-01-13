@@ -7,7 +7,7 @@ import cv2
 from pymatreader import read_mat
 
 # from extract_graph import dic_to_sparse
-from util import get_path, shift_skeleton
+from util import get_path, get_dates_datetime, get_dirname
 from plotutil import (
     show_im,
     overlap,
@@ -60,28 +60,11 @@ i = int(sys.argv[-1])
 threshold = int(sys.argv[2])
 from directory import directory
 
-listdir = os.listdir(directory)
-list_dir_interest = [
-    name
-    for name in listdir
-    if name.split("_")[-1] == f'Plate{0 if plate<10 else ""}{plate}'
-]
-ss = [name.split("_")[0] for name in list_dir_interest]
-ff = [name.split("_")[1] for name in list_dir_interest]
-dates_datetime = [
-    datetime(
-        year=int(ss[i][:4]),
-        month=int(ss[i][4:6]),
-        day=int(ss[i][6:8]),
-        hour=int(ff[i][0:2]),
-        minute=int(ff[i][2:4]),
-    )
-    for i in range(len(list_dir_interest))
-]
+dates_datetime = get_dates_datetime(directory,plate)
 dates_datetime.sort()
 date_datetime = dates_datetime[i]
-date = f'{0 if date_datetime.month<10 else ""}{date_datetime.month}{0 if date_datetime.day<10 else ""}{date_datetime.day}_{0 if date_datetime.hour<10 else ""}{date_datetime.hour}{0 if date_datetime.minute<10 else ""}{date_datetime.minute}'
-directory_name = f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
+date = date_datetime
+directory_name = get_dirname(date, plate)
 path_snap = directory + directory_name
 skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")["skeleton"]
 skeleton = scipy.sparse.dok_matrix(skel)
