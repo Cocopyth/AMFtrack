@@ -1,4 +1,4 @@
-from util import get_path
+from util import get_path, get_dates_datetime, get_dirname
 import pandas as pd
 import networkx as nx
 import numpy as np
@@ -62,38 +62,19 @@ plate = int(sys.argv[1])
 
 from directory import directory
 
-listdir = os.listdir(directory)
-list_dir_interest = [
-    name
-    for name in listdir
-    if name.split("_")[-1] == f'Plate{0 if plate<10 else ""}{plate}'
-]
-ss = [name.split("_")[0] for name in list_dir_interest]
-ff = [name.split("_")[1] for name in list_dir_interest]
-dates_datetime = [
-    datetime(
-        year=int(ss[i][:4]),
-        month=int(ss[i][4:6]),
-        day=int(ss[i][6:8]),
-        hour=int(ff[i][0:2]),
-        minute=int(ff[i][2:4]),
-    )
-    for i in range(len(list_dir_interest))
-]
+dates_datetime = get_dates_datetime(directory,plate)
 dates_datetime.sort()
 dates_datetime_chosen = dates_datetime[i : i + 2]
 print("========")
 print(f"Matching plate {plate} at dates {dates_datetime_chosen}")
 print("========")
-dates = [
-    f'{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}'
-    for date in dates_datetime_chosen
-]
+dates = dates_datetime_chosen
+
 dilateds = []
 skels = []
 skel_docs = []
 for date in dates:
-    directory_name = f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
+    directory_name = get_dirname(date, plate)
     path_snap = directory + directory_name
     skel_info = read_mat(path_snap + "/Analysis/skeleton_pruned.mat")
     skel = skel_info["skeleton"]

@@ -1,4 +1,4 @@
-from util import get_path
+from util import get_path, get_dates_datetime, get_dirname
 import pandas as pd
 import networkx as nx
 import numpy as np
@@ -38,7 +38,7 @@ class Experiment:
         self.dates = dates
         nx_graph_poss = []
         for date in dates:
-            directory_name = f'2020{date}_Plate{0 if self.plate<10 else ""}{self.plate}'
+            directory_name = get_dirname(date,self.plate)
             path_snap = directory + directory_name
             path_save = path_snap + "/Analysis/nx_graph_pruned_labeled.p"
             (g, pos) = pickle.load(open(path_save, "rb"))
@@ -116,34 +116,6 @@ class Experiment:
             final_picture[x, y] += 1
         return final_picture >= 1
 
-    def load_images(self, t):
-        date = self.dates[t]
-        date_plate = f"/2020{date}"
-        plate_str = f"_Plate{self.plate}"
-        path_tile = (
-            directory
-            + date_plate
-            + plate_str
-            + "/Img/TileConfiguration.registered.txt"
-        )
-        tileconfig = pd.read_table(
-            path_tile,
-            sep=";",
-            skiprows=4,
-            header=None,
-            converters={2: ast.literal_eval},
-            skipinitialspace=True,
-        )
-        for name in tileconfig[0]:
-            im = imageio.imread(
-                directory
-                + date_plate
-                + plate_str
-                + "/Img/"
-                + name
-            )
-            np.save("Temp/" + name, im)
-
     def get_growing_tips(self, t, threshold=80):
         growths = {
             tip: sum([len(branch) for branch in self.growth_patterns[t][tip]])
@@ -215,9 +187,7 @@ class Experiment:
 
     def find_image_pos(self, xs, ys, t, local=False):
         date = self.dates[t]
-        date_plate = f"/2020{date}"
-        plate_str = f"_Plate{self.plate}"
-        directory_name = f'2020{date}_Plate{0 if self.plate<10 else ""}{self.plate}'
+        directory_name = get_dirname(date, self.plate)
         path_snap = directory + directory_name
         path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
         skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
@@ -262,18 +232,19 @@ class Experiment:
         ]
         paths = []
         for index in indsImg:
-            paths.append(tileconfig[0][index])
+            name = tileconfig[0][index]
+            imname = '/Img/'+name.split('/')[-1]
+            directory_name = get_dirname(date, self.plate)
+            path  = directory + directory_name + imname
+            paths.append(path)
         ims = [imageio.imread(path) for path in paths]
         return (ims, possImg)
     def plot_raw(self, t):
         date = self.dates[t]
-        directory_name = f'2020{date}_Plate{0 if self.plate<10 else ""}{self.plate}'
+        directory_name = get_dirname(date,self.plate)
         path_snap = directory + directory_name
-        path_save = path_snap + "/Analysis/nx_graph_pruned_labeled.p"
-        (g, pos) = pickle.load(open(path_save, "rb"))
-        nx_graph_poss.append((g, pos))
         im = read_mat(path_snap+'/Analysis/raw_image.mat')['raw']
-        fig=plt.figure(figsize=(10,9))
+        fig = plt.figure(figsize=(10,9))
         ax = fig.add_subplot(111)
         ax.imshow(im)
     def plot(self, ts, node_lists=[], shift=(0, 0), compress=5, save="", time=None):

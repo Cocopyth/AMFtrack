@@ -7,7 +7,7 @@ import cv2
 from pymatreader import read_mat
 
 # from extract_graph import dic_to_sparse
-from util import get_path, shift_skeleton
+from util import get_path, get_dates_datetime, get_dirname
 from plotutil import (
     show_im,
     overlap,
@@ -60,33 +60,14 @@ begin = int(sys.argv[2])
 end = int(sys.argv[3])
 from directory import directory
 
-listdir = os.listdir(directory)
-list_dir_interest = [
-    name
-    for name in listdir
-    if name.split("_")[-1] == f'Plate{0 if plate<10 else ""}{plate}'
-]
-ss = [name.split("_")[0] for name in list_dir_interest]
-ff = [name.split("_")[1] for name in list_dir_interest]
-dates_datetime = [
-    datetime(
-        year=int(ss[i][:4]),
-        month=int(ss[i][4:6]),
-        day=int(ss[i][6:8]),
-        hour=int(ff[i][0:2]),
-        minute=int(ff[i][2:4]),
-    )
-    for i in range(len(list_dir_interest))
-]
+dates_datetime = get_dates_datetime(directory,plate)
 dates_datetime.sort()
 dates_datetime_chosen = dates_datetime[begin : end + 1]
-dates = [
-    f'{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}'
-    for date in dates_datetime_chosen
-]
+dates = dates_datetime_chosen
+
 nx_graph_pos = []
 for date in dates:
-    directory_name = f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
+    directory_name = get_dirname(date, plate)
     path_snap = directory + directory_name
     path_save = path_snap + "/Analysis/nx_graph_pruned.p"
     nx_graph_pos.append(pickle.load(open(path_save, "rb")))
@@ -115,7 +96,7 @@ for i in range(begin - 1, -1, -1):
 nx_graph_pruned = downstream_graphs
 poss_aligned = downstream_poss
 for i, g in enumerate(nx_graph_pruned):
-    directory_name = f'2020{dates[i]}_Plate{0 if plate<10 else ""}{plate}'
+    directory_name = get_dirname(date, plate)
     path_snap = directory + directory_name
     path_save = path_snap + "/Analysis/nx_graph_pruned_labeled.p"
     pos = poss_aligned[i]
@@ -123,7 +104,7 @@ for i, g in enumerate(nx_graph_pruned):
 
 for i, date in enumerate(dates):
     tab = from_nx_to_tab(nx_graph_pruned[i], poss_aligned[i])
-    directory_name = f'2020{dates[i]}_Plate{0 if plate<10 else ""}{plate}'
+    directory_name = get_dirname(date, plate)
     path_snap = directory + directory_name
     path_save = path_snap + "/Analysis/graph_full_labeled.mat"
     sio.savemat(path_save, {name: col.values for name, col in tab.items()})
