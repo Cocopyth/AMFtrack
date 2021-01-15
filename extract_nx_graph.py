@@ -75,7 +75,7 @@ skeleton = scipy.sparse.dok_matrix(skel)
 # nx_graph_pruned=[clean_degree_4(prune_graph(nx_graph),poss_aligned[i])[0] for i,nx_graph in enumerate(nx_graphs_aligned)]
 nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
 nx_graph_pruned = clean_degree_4(prune_graph(nx_graph, threshold), pos)[0]
-directory_name = f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
+directory_name = get_dirname(date,plate)
 path_snap = directory + directory_name
 path_save = path_snap + "/Analysis/nx_graph_pruned.p"
 pickle.dump((nx_graph_pruned, pos), open(path_save, "wb"))

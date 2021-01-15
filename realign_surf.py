@@ -105,7 +105,7 @@ for i, skel in enumerate(skel_docs):
     R0 = np.dot(np.transpose(Rs[i]), R0)
     t0 = -np.dot(ts[i], np.transpose(Rs[i])) + np.dot(t0, np.transpose(Rs[i]))
     print("treatin", i)
-    directory_name = f'2020{dates[i]}_Plate{0 if plate<10 else ""}{plate}'
+    directory_name = get_dirname(date, plate)
     path_snap = directory + directory_name
     if i == j:
         skel_aligned = transform_skeleton_final(skel, R0, t0).astype(np.uint8)
