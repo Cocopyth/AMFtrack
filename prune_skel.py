@@ -76,7 +76,7 @@ nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
 nx_graph_pruned = clean_degree_4(prune_graph(nx_graph, threshold), pos)[0]
 directory_name = get_dirname(date, plate)
 path_snap = directory + directory_name
-skeleton = generate_skeleton(nx_graph_pruned, (27000, 50000))
+skeleton = generate_skeleton(nx_graph_pruned, (30000, 60000))
 skel = scipy.sparse.csc_matrix(skeleton, dtype=np.uint8)
 sio.savemat(path_snap + "/Analysis/skeleton_pruned.mat", {"skeleton": skel})
 dim = skel.shape
