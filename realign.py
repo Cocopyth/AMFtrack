@@ -328,7 +328,7 @@ def transform_skeleton_final(skeleton_doc, Rot, trans):
         skeleton_transformed[(pixel[0], pixel[1])] = 1
     skeleton_transformed = dilate(skeleton_transformed)
     skeleton_transformed = zhangSuen(skeleton_transformed)
-    skeleton_transformed_sparse = sparse.lil_matrix((26322, 49527)).astype(np.uint8)
+    skeleton_transformed_sparse = sparse.lil_matrix((30000, 60000)).astype(np.uint8)
     for pixel in list(skeleton_transformed.keys()):
         i += 1
         skeleton_transformed_sparse[(pixel[0], pixel[1])] = 1
