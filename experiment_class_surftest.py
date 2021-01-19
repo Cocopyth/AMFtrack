@@ -481,7 +481,7 @@ class Hyphae:
     def __hash__(self):
         return self.end.label
 
-    def get_edges(self, t, length=100):
+    def get_edges(self, t, length=150):
         first_neighbour = self.end.neighbours(t)[0]
         last_node = self.end
         current_node = first_neighbour
@@ -501,7 +501,7 @@ class Hyphae:
                 #                     print(current_node.degree(t),current_node)
                 moving_on_hyphae = False
             else:
-                maxi = -np.inf
+                mini = np.inf
                 orientation = current_edge.orientation_end(t, length)
                 for neighbours_t in current_node.neighbours(t):
                     #                     print (neighbours_t)
@@ -510,15 +510,17 @@ class Hyphae:
                     angle = np.cos(
                         (orientation - orientation_candidate) / 360 * 2 * np.pi
                     )
-                    if angle > maxi:
-                        maxi = angle
+                    angle = np.arccos(angle)
+                    score = angle/min(len(candidate_edge.pixel_list(t)),length)
+                    if score < mini:
+                        mini = angle
                         next_node_candidate = neighbours_t
                 #                     print(maxi,next_node_candidate)
                 candidate_edge = Edge(
                     current_node, next_node_candidate, self.experiment
                 )
                 orientation_candidate = candidate_edge.orientation_begin(t, length)
-                maxi_compet = -np.inf
+                mini_compet = np.inf
                 #                     print('compet')
                 for neighbours_t in current_node.neighbours(t):
                     if neighbours_t != last_node:
@@ -534,12 +536,14 @@ class Hyphae:
                             * 2
                             * np.pi
                         )
-                        if angle > maxi_compet:
-                            maxi_compet = angle
+                        angle = np.arccos(angle)
+                        score = angle/min(len(competitor_edge.pixel_list(t)),length)
+                        if score < mini_compet:
+                            mini_compet = angle
                             competitor = neighbours_t
                 #                             print(neighbours_t,angle)
                 #                     print(maxi_compet,competitor)
-                if maxi_compet > maxi:
+                if mini_compet < mini:
                     moving_on_hyphae = False
                 else:
                     last_node, current_node = current_node, next_node_candidate

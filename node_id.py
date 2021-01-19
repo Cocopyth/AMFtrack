@@ -305,7 +305,7 @@ def second_identification(
     nx_graph_t,
     pos_tm1,
     pos_t,
-    length_id=50,
+    length_id=150,
     downstream_graphs=[],
     downstream_pos=[],
     tolerance=50,
@@ -476,6 +476,229 @@ def second_identification(
                 )
             competitor = np.arccos(np.dot(candidate_vectors[0], -candidate_vectors[1]))
             if mini < competitor:
+                current_node, last_node = next_node, current_node
+            else:
+                break
+        if current_node in nx_graph_tm1.nodes:
+            if last_node not in nx_graph_tm1.nodes:
+                if last_node in corresp_tips.values():
+                    ambiguous.add(tip)
+                corresp_tips[tip] = last_node
+        else:
+            if current_node in corresp_tips.values():
+                ambiguous.add(tip)
+            corresp_tips[tip] = current_node
+    print("tip_id", time() - t)
+    t = time()
+    while len(ambiguous) > 0:
+        node = ambiguous.pop()
+        identifier = corresp_tips[node]
+        candidates = [
+            nod for nod in corresp_tips.keys() if corresp_tips[nod] == identifier
+        ]
+        mini = np.inf
+        for candidate in candidates:
+            distance = np.linalg.norm(pos_tm1[candidate] - pos_t[identifier])
+            #             print(identifier,distance)
+            if distance < mini:
+                right_candidate = candidate
+                mini = distance
+        for candidate in candidates:
+            if candidate != right_candidate:
+                corresp_tips.pop(candidate)
+                ambiguous.discard(candidate)
+    new_graphs, new_poss = relabel_nodes_downstream(
+        corresp_tips, downstream_graphs, downstream_pos
+    )
+    downstream_pos = new_poss
+    downstream_graphs = new_graphs
+    #     print("second relabeling")
+    #     print(len(nx_graph_tm1.nodes),len(new_graphs[0].nodes))
+    new_graphs, new_poss = reduce_labels(
+        [nx_graph_tm1] + downstream_graphs, [pos_tm1] + downstream_pos
+    )
+    #     print("third relabeling")
+    #     print(len(new_graphs[0].nodes),len(new_graphs[1].nodes))
+    return (new_graphs, new_poss)
+
+def second_identification2(
+    nx_graph_tm1,
+    nx_graph_t,
+    pos_tm1,
+    pos_t,
+    length_id=150,
+    downstream_graphs=[],
+    downstream_pos=[],
+    tolerance=50,
+):
+    reconnect_degree_2(nx_graph_t, pos_t)
+    t = time()
+    corresp, to_remove = first_identification(
+        nx_graph_tm1, nx_graph_t, pos_tm1, pos_t, tolerance
+    )
+    print("first_id", time() - t)
+    t = time()
+    #     nx_graph_tm1=clean_nodes(nx_graph_tm1,to_remove,pos_tm1)
+    #     print("clean_node",time()-t)
+    #     t=time()
+    downstream_graphs = [nx_graph_t] + downstream_graphs
+    downstream_pos = [pos_t] + downstream_pos
+    new_graphs, new_poss = relabel_nodes_downstream(
+        corresp, downstream_graphs, downstream_pos
+    )
+    print("relabel", time() - t)
+    t = time()
+    pos_t = new_poss[0]
+    nx_graph_t = new_graphs[0]
+    downstream_pos = new_poss
+    downstream_graphs = new_graphs
+    corresp_tips = {node: node for node in corresp.keys()}
+    tips = [node for node in nx_graph_tm1.nodes if nx_graph_tm1.degree(node) == 1]
+    ambiguous = set()
+    Sedge = sparse.csr_matrix((26309, 49814))
+    for edge in nx_graph_t.edges:
+        pixel_list = nx_graph_t.get_edge_data(*edge)["pixel_list"]
+        pixela = pixel_list[0]
+        pixelb = pixel_list[-1]
+        Sedge[pixela[0], pixela[1]] = edge[0]
+        Sedge[pixelb[0], pixelb[1]] = edge[1]
+    for i, tip in enumerate(tips):
+        #         print(i/len(tips))
+        mini1 = np.inf
+        posanchor = pos_tm1[tip]
+        window = 1000
+        potential_surrounding_t = Sedge[
+            max(0, posanchor[0] - 2 * window) : posanchor[0] + 2 * window,
+            max(0, posanchor[1] - 2 * window) : posanchor[1] + 2 * window,
+        ]
+        #         potential_surrounding_t=Sedge
+        #         for edge in nx_graph_t.edges:
+        #             pixel_list=nx_graph_t.get_edge_data(*edge)['pixel_list']
+        #             if np.linalg.norm(np.array(pixel_list[0])-np.array(pos_tm1[tip]))<=5000:
+        #                 distance=np.min(np.linalg.norm(np.array(pixel_list)-np.array(pos_tm1[tip]),axis=1))
+        #                 if distance<mini1:
+        #                     mini1=distance
+        #                     right_edge1 = edge
+        #         print('t1 re',right_edge)
+        mini = np.inf
+        for node_root in potential_surrounding_t.data:
+            for edge in nx_graph_t.edges(int(node_root)):
+                pixel_list = nx_graph_t.get_edge_data(*edge)["pixel_list"]
+                if (
+                    np.linalg.norm(np.array(pixel_list[0]) - np.array(pos_tm1[tip]))
+                    <= 5000
+                ):
+                    distance = np.min(
+                        np.linalg.norm(
+                            np.array(pixel_list) - np.array(pos_tm1[tip]), axis=1
+                        )
+                    )
+                    if distance < mini:
+                        mini = distance
+                        right_edge = edge
+        #         print('t2 re',right_edge)
+        #         if right_edge!=right_edge1:
+        #             print('alaba',right_edge,right_edge1)
+        #             print('len(surrounding)',len(potential_surrounding_t.data))
+        if mini == np.inf:
+            print(f"didnt find a tip to match tip in pos {posanchor}")
+            continue
+        origin = np.array(
+            orient(
+                nx_graph_tm1.get_edge_data(*list(nx_graph_tm1.edges(tip))[0])[
+                    "pixel_list"
+                ],
+                pos_tm1[tip],
+            )
+        )
+        origin_vector = origin[0] - origin[-1]
+        branch = np.array(
+            orient(
+                nx_graph_t.get_edge_data(*right_edge)["pixel_list"],
+                pos_t[right_edge[0]],
+            )
+        )
+        candidate_vector = branch[-1] - branch[0]
+        dot_product = np.dot(origin_vector, candidate_vector)
+        if dot_product >= 0:
+            root = right_edge[0]
+            next_node = right_edge[1]
+        else:
+            root = right_edge[1]
+            next_node = right_edge[0]
+        last_node = root
+        current_node = next_node
+        last_branch = np.array(
+            orient(
+                nx_graph_t.get_edge_data(root, next_node)["pixel_list"],
+                pos_t[current_node],
+            )
+        )
+        i = 0
+        loop = []
+        while (
+            nx_graph_t.degree(current_node) != 1
+            and not current_node in nx_graph_tm1.nodes
+        ):  # Careful : if there is a cycle with low angle this might loop indefinitely but unprobable
+            i += 1
+            if i >= 100:
+                print(
+                    "identified infinite loop",
+                    i,
+                    tip,
+                    current_node,
+                    pos_t[current_node],
+                )
+                break
+            mini = np.inf
+            origin_vector = (
+                last_branch[0] - last_branch[min(length_id, len(last_branch) - 1)]
+            )
+            unit_vector_origin = origin_vector / np.linalg.norm(origin_vector)
+            candidate_vectors = []
+            for neighbours_t in nx_graph_t.neighbors(current_node):
+                if neighbours_t != last_node:
+                    branch_candidate = np.array(
+                        orient(
+                            nx_graph_t.get_edge_data(current_node, neighbours_t)[
+                                "pixel_list"
+                            ],
+                            pos_t[current_node],
+                        )
+                    )
+                    candidate_vector = (
+                        branch_candidate[min(length_id, len(branch_candidate) - 1)]
+                        - branch_candidate[0]
+                    )
+                    unit_vector_candidate = candidate_vector / np.linalg.norm(
+                        candidate_vector
+                    )
+                    candidate_vectors.append((unit_vector_candidate,branch_candidate.shape[0]))
+                    dot_product = np.dot(unit_vector_origin, unit_vector_candidate)
+                    angle = np.arccos(dot_product)
+                    score = angle/min(branch_candidate.shape[0],length_id)
+                    if score < mini:
+                        mini = score
+                        next_node = neighbours_t
+            #                     print('angle',dot_product,pos_t[last_node],pos_t[current_node],pos_t[neighbours_t],angle/(2*np.pi)*360)
+            #!!!bug may happen here if two nodes are direct neighbours : I would nee to check further why it the case, optimal segmentation should avoid this issue.
+            # This is especially a problem for degree 4 nodes. Maybe fuse nodes that are closer than 3 pixels.
+            if i >= 100:
+                print(mini / (2 * np.pi) * 360, pos_t[next_node])
+                if next_node in loop:
+                    break
+                else:
+                    loop.append(next_node)
+            if len(candidate_vectors) < 2:
+                print(
+                    "candidate_vectors < 2",
+                    nx_graph_t.degree(current_node),
+                    pos_t[current_node],
+                    [node for node in nx_graph_t.nodes if nx_graph_t.degree(node) == 2],
+                )
+            competitor_angle = np.arccos(np.dot(candidate_vectors[0][0], -candidate_vectors[1][0]))
+            competitor_score = competitor_angle/min(candidate_vectors[0][1],candidate_vectors[1][1],length_id)
+            if mini < competitor_score:
                 current_node, last_node = next_node, current_node
             else:
                 break

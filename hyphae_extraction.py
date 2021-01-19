@@ -27,6 +27,7 @@ import os
 from matplotlib import colors
 from random import choice
 from experiment_class_surf import Experiment, clean_exp_with_hyphaes
+# from experiment_class_surftest import Experiment, clean_exp_with_hyphaes
 from hyphae_id_surf import (
     clean_and_relabel,
     get_mother,
@@ -35,6 +36,14 @@ from hyphae_id_surf import (
     solve_degree4,
     clean_obvious_fake_tips,
 )
+# from hyphae_id_surftest import (
+#     clean_and_relabel,
+#     get_mother,
+#     save_hyphaes,
+#     resolve_ambiguity_two_ends,
+#     solve_degree4,
+#     clean_obvious_fake_tips,
+# )
 import sys
 
 plate = int(sys.argv[1])

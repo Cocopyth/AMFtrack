@@ -56,6 +56,11 @@ def find_state(plate,begin,end):
     for file in files:
         if file == '/Analysis/transform.mat':
             not_present = check_state(plate,begin+1,end,file)
+            not_present2 = check_state(plate,begin+1,end,'/Analysis/transform_corrupt.mat')
+            for path in not_present:
+                if path not in not_present2:
+                    print(path,'alignment failed')
+                    not_present.remove(path)
         else:
             not_present = check_state(plate,begin,end,file)
         if len(not_present)>0:

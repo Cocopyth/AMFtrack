@@ -80,15 +80,21 @@ skel_doc = sparse_to_doc(skel)
 skel_docs.append(skel_doc)
 Rs = [np.array([[1, 0], [0, 1]])]
 ts = [np.array([0, 0])]
-for date in dates[1:]:
+for i,date in enumerate(dates[1:]):
     directory_name = get_dirname(date, plate)
     path_snap = directory + directory_name
     skel_info = read_mat(path_snap + "/Analysis/skeleton_pruned.mat")
     skel = skel_info["skeleton"]
     #     skels.append(skel)
-    skel_doc = sparse_to_doc(skel)
-    skel_docs.append(skel_doc)
-    transform = sio.loadmat(path_snap + "/Analysis/transform.mat")
+    if i+1+begin==j:
+        skel_doc = sparse_to_doc(skel)
+        skel_docs.append(skel_doc)
+    else:
+        skel_docs.append(0)
+    try:
+        transform = sio.loadmat(path_snap + "/Analysis/transform.mat")
+    except:
+        transform = sio.loadmat(path_snap + "/Analysis/transform_corrupt.mat")
     R, t = transform["R"], transform["t"]
     Rs.append(R)
     ts.append(t)
@@ -102,12 +108,14 @@ for date in dates[1:]:
 R0 = np.array([[1, 0], [0, 1]])
 t0 = np.array([0, 0])
 for i, skel in enumerate(skel_docs):
+#     print(i+begin,j)
     R0 = np.dot(np.transpose(Rs[i]), R0)
     t0 = -np.dot(ts[i], np.transpose(Rs[i])) + np.dot(t0, np.transpose(Rs[i]))
-    print("treatin", i)
+    date = dates[i]
     directory_name = get_dirname(date, plate)
     path_snap = directory + directory_name
-    if i == j:
+    if i+begin == j:
+        print(f'saving {i+begin} {path_snap}')
         skel_aligned = transform_skeleton_final(skel, R0, t0).astype(np.uint8)
         skel_sparse = scipy.sparse.csc_matrix(skel_aligned)
         sio.savemat(
