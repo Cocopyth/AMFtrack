@@ -49,6 +49,7 @@ from extract_graph import (
     connections_pixel_list_to_tab,
     transform_list,
     clean_degree_4,
+    get_degree3_nodes,
 )
 from time import sleep
 from pycpd import RigidRegistration, DeformableRegistration
@@ -57,8 +58,9 @@ from cycpd import rigid_registration
 import sys
 
 
-i = int(sys.argv[2])
+i = int(sys.argv[3])
 plate = int(sys.argv[1])
+thresh = int(sys.argv[2])
 
 from directory import directory
 
@@ -100,25 +102,40 @@ while isnan:
     out = reg.register()
     Rfound = reg.R[0:2, 0:2]
     tfound = np.dot(Rfound, reg.t[0:2])
-    nx_graph1, pos1 = generate_nx_graph(from_sparse_to_graph(skeleton1))
-    nx_graph2, pos2 = generate_nx_graph(from_sparse_to_graph(skeleton2))
-    pruned1 = prune_graph(nx_graph1)
-    pruned2 = prune_graph(nx_graph2)
+#     nx_graph1, pos1 = generate_nx_graph(from_sparse_to_graph(skeleton1))
+#     nx_graph2, pos2 = generate_nx_graph(from_sparse_to_graph(skeleton2))
+#     pruned1 = prune_graph(nx_graph1)
+#     pruned2 = prune_graph(nx_graph2)
     #     pruned1 = nx_graph1
     #     pruned2 = nx_graph2
     t_init = -tfound
     Rot_init = Rfound
+    sigma2 = reg.sigma2
+    if sigma2>=thresh:
+        print("========")
+        print(f"Failed to match plate {plate} at dates {dates_datetime_chosen}")
+        print("========")
+        break
+    isnan = np.isnan(tfound[0])
+    if isnan:
+        continue
+#     X = np.transpose(
+#         np.array([pos1[node] for node in pruned1 if pruned1.degree(node) == 3])
+#     )
+#     Y = np.transpose(
+#         np.array([pos2[node] for node in pruned2 if pruned2.degree(node) == 3])
+#     )
     X = np.transpose(
-        np.array([pos1[node] for node in pruned1 if pruned1.degree(node) == 3])
+        np.array(get_degree3_nodes(skeleton1))
     )
     Y = np.transpose(
-        np.array([pos2[node] for node in pruned2 if pruned2.degree(node) == 3])
+        np.array(get_degree3_nodes(skeleton2))
     )
     # fig=plt.figure(figsize=(10,9))
     # ax = fig.add_subplot(111)
     # ax.scatter(X[0,:],X[1,:])
     # ax.scatter(Y[0,:],Y[1,:])
-    Xex = np.transpose(np.transpose(np.dot(Rot_init, X)) + t_init)
+#     Xex = np.transpose(np.transpose(np.dot(Rot_init, X)) + t_init)
     # fig=plt.figure(figsize=(10,9))
     # ax = fig.add_subplot(111)
     # ax.scatter(Xex[0,:],Xex[1,:])
@@ -156,5 +173,8 @@ while isnan:
     # ax = fig.add_subplot(111)
     # ax.scatter(np.transpose(Yrep)[:,0],np.transpose(Yrep)[:,1])
     # ax.scatter(np.transpose(Y)[:,0],np.transpose(Y)[:,1])
-    isnan = np.isnan(tfound[0])
-sio.savemat(path_snap + "/Analysis/transform.mat", {"R": Rfound, "t": tfound})
+
+if not isnan:    
+    sio.savemat(path_snap + "/Analysis/transform.mat", {"R": Rfound, "t": tfound})
+else :    
+    sio.savemat(path_snap + "/Analysis/transform_corrupt.mat", {"R": np.array([[1,0],[0,1]]), "t": np.array([0,0])})

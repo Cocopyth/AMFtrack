@@ -30,6 +30,7 @@ from node_id import (
     relabel_nodes,
     clean_nodes,
     orient,
+    second_identification2,
 )
 from extract_graph import (
     dic_to_sparse,
@@ -96,6 +97,7 @@ for i in range(begin - 1, -1, -1):
 nx_graph_pruned = downstream_graphs
 poss_aligned = downstream_poss
 for i, g in enumerate(nx_graph_pruned):
+    date = dates[i]
     directory_name = get_dirname(date, plate)
     path_snap = directory + directory_name
     path_save = path_snap + "/Analysis/nx_graph_pruned_labeled.p"

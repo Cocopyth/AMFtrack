@@ -453,3 +453,35 @@ def from_connection_tab(connect_tab):
         growth_pattern[tip] = ast.literal_eval(connect_tab["growth_pattern"][i])
         from_tip[tip] = ast.literal_eval(connect_tab["nodes_from_tip"][i])
     return (from_tip, growth_pattern)
+
+
+def get_neighbours(pixel,non_zero_pixel):
+    x=pixel[0]
+    y=pixel[1]
+    primary_neighbours = {(x+1,y),(x-1,y),(x,y+1),(x,y-1)}
+    secondary_neighbours = {(x+1,y-1),(x+1,y+1),(x-1,y+1),(x-1,y-1)}
+    num_neighbours = 0
+    actual_neighbours = []
+    for neighbour in primary_neighbours:
+        if neighbour in non_zero_pixel:
+            num_neighbours +=1
+            xp=neighbour[0]
+            yp=neighbour[1]
+            primary_neighboursp = {(xp+1,yp),(xp-1,yp),(xp,yp+1),(xp,yp-1)}
+            for neighbourp in primary_neighboursp:
+                secondary_neighbours.discard(neighbourp)
+            actual_neighbours.append(neighbour)
+    for neighbour in secondary_neighbours:
+        if neighbour in non_zero_pixel:
+            num_neighbours +=1
+            actual_neighbours.append(neighbour)
+    return(actual_neighbours,num_neighbours)
+
+def get_degree3_nodes(skel):
+    deg_3=[]
+    non_zero= skel.keys()
+    for pixel in non_zero:
+        n, num = get_neighbours(pixel,non_zero)
+        if num ==3:
+            deg_3.append(pixel)
+    return(deg_3)
