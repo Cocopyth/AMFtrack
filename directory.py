@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from subprocess import call
 from util import get_path, get_dates_datetime, get_dirname
 import os
+from copy import copy
 
 # directory = "/scratch/shared/AMF914/old/from_cartesius/"
 # directory = "/scratch/shared/mrozemul/Fiji.app/"
@@ -53,14 +54,15 @@ def find_state(plate,begin,end):
     files = ['/Img/TileConfiguration.txt.registered', '/Analysis/skeleton_compressed.mat', '/Analysis/skeleton_masked_compressed.mat',
              '/Analysis/skeleton_pruned_compressed.mat', '/Analysis/transform.mat',
              '/Analysis/skeleton_realigned_compressed.mat']
+    not_present2 = check_state(plate,begin+1,end,'/Analysis/transform_corrupt.mat')
     for file in files:
         if file == '/Analysis/transform.mat':
             not_present = check_state(plate,begin+1,end,file)
-            not_present2 = check_state(plate,begin+1,end,'/Analysis/transform_corrupt.mat')
-            for path in not_present:
-                if path not in not_present2:
-                    print(path,'alignment failed')
-                    not_present.remove(path)
+            to_check = copy(not_present)
+            for datetme in to_check:
+                if datetme not in not_present2:
+                    print(datetme,'alignment failed')
+                    not_present.remove(datetme)
         else:
             not_present = check_state(plate,begin,end,file)
         if len(not_present)>0:
