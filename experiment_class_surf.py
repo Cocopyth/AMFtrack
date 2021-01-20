@@ -83,13 +83,15 @@ class Experiment:
         self.boundaries_x = experiment.boundaries_x
         self.boundaries_y = experiment.boundaries_y
         self.compressed = experiment.compressed
+        self.ts = experiment.ts
+
 
     def save(self, path=f"Data/"):
         tabs_labeled = []
         for i, date in enumerate(self.dates):
             tabs_labeled.append(from_nx_to_tab(self.nx_graph[i], self.positions[i]))
         for i, date in enumerate(self.dates):
-            tabs_labeled[i].to_csv(path + f"graph_{date}_{self.plate}_full_labeled.csv")
+#             tabs_labeled[i].to_csv(path + f"graph_{date}_{self.plate}_full_labeled.csv")
             sio.savemat(
                 path + f"graph_{date}_{self.plate}_full_labeled.mat",
                 {name: col.values for name, col in tabs_labeled[i].items()},
