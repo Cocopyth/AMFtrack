@@ -10,6 +10,7 @@ from extract_graph import (
     generate_nx_graph_from_skeleton,
     from_connection_tab,
     from_nx_to_tab,
+    prune_graph
 )
 from node_id import whole_movement_identification, second_identification
 import ast
@@ -783,12 +784,10 @@ def clean_exp_with_hyphaes(experiment):
         reconnect_degree_2(nx_graph, pos)
     nx_graph_pruned = []
     for graph in nx_graph_cleans:
-        S = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
-        len_connected = [len(nx_graph.nodes) for nx_graph in S]
-        nx_graph_pruned.append(S[np.argmax(len_connected)])
+        nx_graph_pruned.append(prune_graph(graph, 0.1))
     skeletons = []
     for nx_graph in nx_graph_pruned:
-        skeletons.append(generate_skeleton(nx_graph, dim=(26309, 49814)))
+        skeletons.append(generate_skeleton(nx_graph, dim=(30000, 60000)))
     exp_clean.nx_graph = nx_graph_pruned
     exp_clean.skeletons = skeletons
     labels = {node for g in exp_clean.nx_graph for node in g}

@@ -7,6 +7,8 @@ from copy import copy
 # directory = "/scratch/shared/AMF914/old/from_cartesius/"
 # directory = "/scratch/shared/mrozemul/Fiji.app/"
 directory = "/scratch/shared/AMF914/Fiji.app/"
+#directory = "/projects/0/einf914/data/"
+
 
 
 path_job = "/home/cbisot/bash/job.sh"

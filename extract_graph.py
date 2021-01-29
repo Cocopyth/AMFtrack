@@ -330,7 +330,7 @@ def generate_skeleton(nx_graph, dim=(3000, 4096)):
     return skel
 
 
-def prune_graph(nx_graph, threshold=1):
+def prune_graph(nx_graph,threshold):
     # should implement threshold!
     S = [nx_graph.subgraph(c).copy() for c in nx.connected_components(nx_graph)]
     selected = [
