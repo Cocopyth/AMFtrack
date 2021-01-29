@@ -28,7 +28,6 @@ import os
 from matplotlib import colors
 from random import choice
 from experiment_class_surf import Experiment, clean_exp_with_hyphaes, Node
-from experiment_class_surf import Node
 
 
 def resolve_ambiguity(hyphaes):
@@ -90,7 +89,11 @@ def resolve_ambiguity(hyphaes):
         if not hyph in put_in_class:
             equ = {hyph}
             full_equ_class = False
+            i=0
             while not full_equ_class:
+                i+=1
+                if i>=100:
+                    print(i)
                 full_equ_class = True
                 for hypha in list(equ):
                     for hyph2 in connection[hypha]:
@@ -443,7 +446,7 @@ def solve_degree4(exp):
                                     list(nx.connected_components(exp_clean.nx_graph[t]))
                                 ),
                             )
-    exp_clean.nx_graph = [prune_graph(g) for g in exp_clean.nx_graph]
+    exp_clean.nx_graph = [prune_graph(g,0.1) for g in exp_clean.nx_graph]
     exp_clean.nodes = []
     labels = {int(node) for g in exp_clean.nx_graph for node in g}
     for label in labels:
@@ -523,7 +526,7 @@ def clean_obvious_fake_tips(exp):
     for hyph in disapearing_hyph_len1:
         exp_clean.nx_graph[hyph.ts[0]].remove_node(hyph.end.label)
         exp_clean.hyphaes.remove(hyph)
-    exp_clean.nx_graph = [prune_graph(g) for g in exp_clean.nx_graph]
+    exp_clean.nx_graph = [prune_graph(g,0.1) for g in exp_clean.nx_graph]
     for i, g in enumerate(exp_clean.nx_graph):
         reconnect_degree_2(g, exp_clean.positions[i])
     exp_clean.nodes = []
