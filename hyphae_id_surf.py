@@ -27,7 +27,7 @@ from pymatreader import read_mat
 import os
 from matplotlib import colors
 from random import choice
-from experiment_class_surf import Experiment, clean_exp_with_hyphaes, Node
+from experiment_class_surf import clean_exp_with_hyphaes, Node
 
 
 def resolve_ambiguity(hyphaes):

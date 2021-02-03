@@ -28,19 +28,19 @@ from pymatreader import read_mat
 from matplotlib import colors
 from copy import deepcopy, copy
 from collections import Counter
-from directory import directory
 
 
 class Experiment:
-    def __init__(self, plate):
+    def __init__(self, plate, directory):
         self.plate = plate
+        self.directory = directory
 
     def load(self, dates, local=False):
         self.dates = dates
         nx_graph_poss = []
         for date in dates:
             directory_name = get_dirname(date,self.plate)
-            path_snap = directory + directory_name
+            path_snap = self.directory + directory_name
             path_save = path_snap + "/Analysis/nx_graph_pruned_labeled.p"
             (g, pos) = pickle.load(open(path_save, "rb"))
             nx_graph_poss.append((g, pos))
@@ -191,7 +191,7 @@ class Experiment:
     def find_image_pos(self, xs, ys, t, local=False):
         date = self.dates[t]
         directory_name = get_dirname(date, self.plate)
-        path_snap = directory + directory_name
+        path_snap = self.directory + directory_name
         path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
         skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
         Rot = skel["R"]
@@ -238,14 +238,14 @@ class Experiment:
             name = tileconfig[0][index]
             imname = '/Img/'+name.split('/')[-1]
             directory_name = get_dirname(date, self.plate)
-            path  = directory + directory_name + imname
+            path  = self.directory + directory_name + imname
             paths.append(path)
         ims = [imageio.imread(path) for path in paths]
         return (ims, possImg)
     def plot_raw(self, t):
         date = self.dates[t]
         directory_name = get_dirname(date,self.plate)
-        path_snap = directory + directory_name
+        path_snap = self.directory + directory_name
         im = read_mat(path_snap+'/Analysis/raw_image.mat')['raw']
         fig = plt.figure(figsize=(10,9))
         ax = fig.add_subplot(111)
@@ -689,7 +689,7 @@ def reconnect_degree_2(nx_graph, pos):
 def clean_exp_with_hyphaes(experiment):
     ts = {}
     nx_graph_cleans = [nx.Graph.copy(nx_g) for nx_g in experiment.nx_graph]
-    exp_clean = Experiment(experiment.plate)
+    exp_clean = Experiment(experiment.plate, experiment.directory)
     exp_clean.copy(experiment)
     labels = {node for g in exp_clean.nx_graph for node in g}
     exp_clean.nodes = []

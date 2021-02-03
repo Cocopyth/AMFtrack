@@ -55,7 +55,7 @@ dates_datetime = get_dates_datetime(directory,plate)
 dates_datetime.sort()
 dates_datetime_chosen = dates_datetime[begin : end + 1]
 dates = dates_datetime_chosen
-exp = Experiment(plate)
+exp = Experiment(plate, directory)
 exp.load(dates)
 exp_clean = clean_and_relabel(exp)
 to_remove = []

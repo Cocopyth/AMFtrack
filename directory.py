@@ -39,7 +39,7 @@ def run_parallel(code, args, begin, end, num_parallel, time, name):
         my_file.close()
         call(f"sbatch {path_job}", shell=True)
         
-def check_state(plate,begin,end,file):
+def check_state(plate,begin,end,file,directory):
     not_exist=[]
     dates_datetime = get_dates_datetime(directory,plate)
     dates_datetime_chosen = dates_datetime[begin:end+1]
@@ -52,21 +52,21 @@ def check_state(plate,begin,end,file):
             not_exist.append((date,i+begin))
     return(not_exist)
 
-def find_state(plate,begin,end):
+def find_state(plate,begin,end,directory):
     files = ['/Img/TileConfiguration.txt.registered', '/Analysis/skeleton_compressed.mat', '/Analysis/skeleton_masked_compressed.mat',
              '/Analysis/skeleton_pruned_compressed.mat', '/Analysis/transform.mat',
              '/Analysis/skeleton_realigned_compressed.mat']
-    not_present2 = check_state(plate,begin+1,end,'/Analysis/transform_corrupt.mat')
+    not_present2 = check_state(plate,begin+1,end,'/Analysis/transform_corrupt.mat', directory)
     for file in files:
         if file == '/Analysis/transform.mat':
-            not_present = check_state(plate,begin+1,end,file)
+            not_present = check_state(plate,begin+1,end,file,directory)
             to_check = copy(not_present)
             for datetme in to_check:
                 if datetme not in not_present2:
                     print(datetme,'alignment failed')
                     not_present.remove(datetme)
         else:
-            not_present = check_state(plate,begin,end,file)
+            not_present = check_state(plate,begin,end,file,directory)
         if len(not_present)>0:
             return(not_present,file)
     return("skeletonization is complete")
