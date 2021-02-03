@@ -58,11 +58,10 @@ from cycpd import rigid_registration
 import sys
 
 
-i = int(sys.argv[3])
+i = int(sys.argv[-1])
 plate = int(sys.argv[1])
 thresh = int(sys.argv[2])
-
-from directory import directory
+directory = str(sys.argv[3])
 
 dates_datetime = get_dates_datetime(directory,plate)
 dates_datetime.sort()

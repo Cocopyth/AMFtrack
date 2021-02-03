@@ -59,8 +59,8 @@ from realign import transform_skeleton_final
 plate = int(sys.argv[1])
 begin = int(sys.argv[2])
 end = int(sys.argv[3])
-j = int(sys.argv[4])
-from directory import directory
+j = int(sys.argv[-1])
+directory = str(sys.argv[4])
 
 dates_datetime = get_dates_datetime(directory,plate)
 dates_datetime.sort()

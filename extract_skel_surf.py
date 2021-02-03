@@ -42,8 +42,8 @@ plate = int(sys.argv[1])
 low = int(sys.argv[2])
 high = int(sys.argv[3])
 dist = int(sys.argv[4])
+directory = str(sys.argv[5])
 
-from directory import directory
 listdir=os.listdir(directory) 
 list_dir_interest=[name for name in listdir if name.split('_')[-1]==f'Plate{0 if plate<10 else ""}{plate}']
 ss=[name.split('_')[0] for name in list_dir_interest]

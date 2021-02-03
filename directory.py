@@ -7,7 +7,7 @@ from copy import copy
 # directory = "/scratch/shared/AMF914/old/from_cartesius/"
 # directory = "/scratch/shared/mrozemul/Fiji.app/"
 directory = "/scratch/shared/AMF914/Fiji.app/"
-#directory = "/projects/0/einf914/data/"
+# directory = "/projects/0/einf914/data/"
 
 
 
@@ -20,7 +20,7 @@ def run_parallel(code, args, begin, end, num_parallel, time, name):
     end_skel = (end) // num_parallel + 1
     args_str = [str(arg) for arg in args]
     arg_str = " ".join(args_str)
-    arg_str_out = "_".join(args_str)
+    arg_str_out = "_".join([str(arg) for arg in args if type(arg)!=str])
     for j in range(begin_skel, end_skel):
         start = num_parallel * j + begin % num_parallel
         stop = num_parallel * j + num_parallel - 1 + begin % num_parallel
