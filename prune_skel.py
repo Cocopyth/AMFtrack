@@ -57,7 +57,7 @@ import sys
 plate = int(sys.argv[1])
 i = int(sys.argv[-1])
 threshold = float(sys.argv[2])
-from directory import directory
+directory = str(sys.argv[3])
 
 dates_datetime = get_dates_datetime(directory,plate)
 dates_datetime.sort()

@@ -56,8 +56,9 @@ import pickle
 import sys
 
 plate = int(sys.argv[1])
+directory = str(sys.argv[2])
+
 i = int(sys.argv[-1])
-from directory import directory
 
 dates_datetime = get_dates_datetime(directory,plate)
 dates_datetime.sort()

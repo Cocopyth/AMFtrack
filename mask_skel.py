@@ -40,7 +40,7 @@ from sparse_util import dilate, zhangSuen
 i = int(sys.argv[-1])
 plate = int(sys.argv[1])
 thresh = int(sys.argv[2])
-from directory import directory
+directory = str(sys.argv[3])
 
 dates_datetime = get_dates_datetime(directory,plate)
 dates_datetime.sort()
