@@ -83,8 +83,8 @@ for date in dates:
     skel_doc = sparse_to_doc(skel)
     skel_docs.append(skel_doc)
 isnan = True
-while isnan:
-    skeleton1, skeleton2 = skel_docs[0], skel_docs[1]
+for order in [(0,1),(1,0)]:
+    skeleton1, skeleton2 = skel_docs[order[0]], skel_docs[order[1]]
     skelet_pos = np.array(list(skeleton1.keys()))
     samples = np.random.choice(skelet_pos.shape[0], len(skeleton2.keys()) // 100)
     X = np.transpose(skelet_pos[samples, :])
@@ -101,20 +101,17 @@ while isnan:
     out = reg.register()
     Rfound = reg.R[0:2, 0:2]
     tfound = np.dot(Rfound, reg.t[0:2])
-#     nx_graph1, pos1 = generate_nx_graph(from_sparse_to_graph(skeleton1))
-#     nx_graph2, pos2 = generate_nx_graph(from_sparse_to_graph(skeleton2))
-#     pruned1 = prune_graph(nx_graph1)
-#     pruned2 = prune_graph(nx_graph2)
-    #     pruned1 = nx_graph1
-    #     pruned2 = nx_graph2
-    t_init = -tfound
-    Rot_init = Rfound
+    if order == (0,1):
+        t_init = -tfound
+        Rot_init = Rfound
+    else:
+        Rot_init,t_init = np.linalg.inv(Rfound), np.dot(np.linalg.inv(Rfound),tfound)
     sigma2 = reg.sigma2
     if sigma2>=thresh:
         print("========")
         print(f"Failed to match plate {plate} at dates {dates_datetime_chosen}")
         print("========")
-        break
+        continue
     isnan = np.isnan(tfound[0])
     if isnan:
         continue
@@ -124,6 +121,7 @@ while isnan:
 #     Y = np.transpose(
 #         np.array([pos2[node] for node in pruned2 if pruned2.degree(node) == 3])
 #     )
+    skeleton1, skeleton2 = skel_docs[0], skel_docs[1]
     X = np.transpose(
         np.array(get_degree3_nodes(skeleton1))
     )
@@ -172,6 +170,7 @@ while isnan:
     # ax = fig.add_subplot(111)
     # ax.scatter(np.transpose(Yrep)[:,0],np.transpose(Yrep)[:,1])
     # ax.scatter(np.transpose(Y)[:,0],np.transpose(Y)[:,1])
+    break
 
 if not isnan:    
     sio.savemat(path_snap + "/Analysis/transform.mat", {"R": Rfound, "t": tfound})
