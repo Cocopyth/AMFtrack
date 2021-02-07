@@ -68,5 +68,5 @@ def find_state(plate,begin,end,directory):
         else:
             not_present = check_state(plate,begin,end,file,directory)
         if len(not_present)>0:
-            return(not_present,file)
+            return(file,not_present)
     return("skeletonization is complete")

@@ -95,7 +95,7 @@ for order in [(0,1),(1,0)]:
         **{
             "X": np.transpose(X.astype(float)),
             "Y": np.transpose(Y.astype(float)),
-            "scale": False,
+            "scale": False, 'tolerance' : 1e-5, 'w' : 1e-5
         }
     )
     out = reg.register()
