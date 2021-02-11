@@ -4,7 +4,7 @@ import os
 from datetime import datetime, timedelta
 import pandas
 path_code = "/home/cbisot/pycode/"
-plate_info = pandas.read_excel(path_code + 'MscThesis/plate_info/SummaryAnalizedPlates.xlsx',engine='openpyxl',header=3,parse_dates=[4,5],)
+plate_info = pandas.read_excel(path_code + 'MscThesis/plate_info/SummaryAnalizedPlates.xlsx',engine='openpyxl',header=3,)
 
 
 def get_path(date, plate, skeleton, row=None, column=None, extension=".mat"):
@@ -52,10 +52,13 @@ def get_dirname(date,plate):
     return(f'{date.year}{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}_Plate{0 if plate<10 else ""}{plate}')
 
 def get_plate_number(position_number,date):
-    plate_info = pandas.read_excel(path_code + 'MscThesis/plate_info/SummaryAnalizedPlates.xlsx',engine='openpyxl',header=3,parse_dates=[4,5],)
     for index,row in plate_info.loc[plate_info['Position #']==position_number].iterrows():
-        date_crossed = datetime.strptime(row['crossed date'], "%d.%m.%Y")
-        date_harvest = datetime.strptime(row['harvest date'], "%d.%m.%Y")+timedelta(days=1)
+        if type(row['crossed date'])==datetime:
+            date_crossed = row['crossed date']
+            date_harvest = row['harvest date']+timedelta(days=1)
+        else:
+            date_crossed = datetime.strptime(row['crossed date'], "%d.%m.%Y")
+            date_harvest = datetime.strptime(row['harvest date'], "%d.%m.%Y")+timedelta(days=1)
         if date>= date_crossed and date<= date_harvest:
             return(row['Plate #'])
         
