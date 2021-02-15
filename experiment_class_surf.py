@@ -52,12 +52,8 @@ class Experiment:
         #             S = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
         #             len_connected=[len(nx_graph.nodes) for nx_graph in S]
         #             nx_graph_clean.append(S[np.argmax(len_connected)])
-        skeletons = []
-        for nx_graph in nx_graphs:
-            skeletons.append(generate_skeleton(nx_graph, dim=(30000, 60000)))
         self.positions = poss
         self.nx_graph = nx_graphs
-        self.skeletons = skeletons
         self.hyphaes = None
         labels = {node for g in self.nx_graph for node in g}
         self.nodes = []
@@ -67,11 +63,16 @@ class Experiment:
         ypos = [pos[1] for poss in self.positions for pos in poss.values()]
         self.boundaries_x = np.min(xpos), np.max(xpos)
         self.boundaries_y = np.min(ypos), np.max(ypos)
+        self.ts = len(self.dates)
+    def load_compressed_skel(self):
+        skeletons = []
+        for nx_graph in self.nx_graph:
+            skeletons.append(generate_skeleton(nx_graph, dim=(30000, 60000)))
+        self.skeletons = skeletons
         compressed_images = []
         for t in range(len(self.dates)):
             compressed_images.append(self.compress_skeleton(t, 5))
         self.compressed = compressed_images
-        self.ts = len(self.dates)
 
     def copy(self, experiment):
         self.positions = experiment.positions

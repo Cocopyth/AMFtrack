@@ -49,7 +49,7 @@ def get_length_um_node_list(node_list,exp,t):
         total_length += get_length_um_edge(edge_obj,t)
     return(total_length)
 
-def get_exp(inst):
+def get_exp(inst,directory=directory):
     plate = inst[0]
     begin = inst[1]
     end = inst[2]
