@@ -70,7 +70,7 @@ nx_graph_pos = []
 for date in dates:
     directory_name = get_dirname(date, plate)
     path_snap = directory + directory_name
-    path_save = path_snap + "/Analysis/nx_graph_pruned.p"
+    path_save = path_snap + "/Analysis/nx_graph_pruned_width.p"
     nx_graph_pos.append(pickle.load(open(path_save, "rb")))
 nx_graph_pruned = [c[0] for c in nx_graph_pos]
 poss_aligned = [c[1] for c in nx_graph_pos]

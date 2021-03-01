@@ -71,6 +71,13 @@ def get_hyph_infos(exp):
             select_hyph[hyph].append((t,hyph.ts[i+1],speed,pixels))
     return(select_hyph)
 
+def get_width_hypha(hypha,t):
+    nodes, edges = hypha.get_nodes_within(t)
+    widths = [edge.width(t) for edge in edges]
+    lengths = [len(edge.pixel_list(t)) for edge in edges]
+    weighted = [widths[i]*lengths[i] for i in range(len(widths))]
+    return(np.sum(weighted)/np.sum(lengths))
+
 def get_rh_bas(exp,criter):
     select_hyph = get_hyph_infos(exp)
     max_speeds = []
@@ -80,6 +87,7 @@ def get_rh_bas(exp,criter):
     hyph_l = []
     RH=[]
     BAS=[]
+    widths=[]
     for hyph in exp.hyphaes:
         speeds = [c[2] for c in select_hyph[hyph]]
         ts = [c[0] for c in select_hyph[hyph]]
@@ -98,9 +106,10 @@ def get_rh_bas(exp,criter):
             total_growths.append(total_growth)
             branch_frequ.append((len(nodes)-1)/(length+1))
             hyph_l.append(hyph)
+            widths.append(get_width_hypha(hyph,hyph.ts[-1]))
         else:
             BAS.append(hyph)            
-    return(RH, BAS, max_speeds, total_growths, lengths, branch_frequ,select_hyph)
+    return(RH, BAS, max_speeds, total_growths, widths, lengths, branch_frequ,select_hyph)
 a= 0.0005
 b= 0.01
 thresh = 2

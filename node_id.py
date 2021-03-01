@@ -210,12 +210,15 @@ def reconnect_degree_2(nx_graph, pos):
         left_n = neighbours[1]
         right_edge = nx_graph.get_edge_data(node, right_n)["pixel_list"]
         left_edge = nx_graph.get_edge_data(node, left_n)["pixel_list"]
+        right_edge_width = nx_graph.get_edge_data(node, right_n)["width"]
+        left_edge_width = nx_graph.get_edge_data(node, left_n)["width"]
         if np.any(right_edge[0] != pos[node]):
             right_edge = list(reversed(right_edge))
         if np.any(left_edge[-1] != pos[node]):
             left_edge = list(reversed(left_edge))
         pixel_list = left_edge + right_edge[1:]
-        info = {"weight": len(pixel_list), "pixel_list": pixel_list}
+        width_new = (right_edge_width*len(right_edge)+left_edge_width*len(left_edge))/(len(right_edge)+len(left_edge))
+        info = {"weight": len(pixel_list), "pixel_list": pixel_list, "width" : width_new}
         if right_n != left_n:
             connection_data = nx_graph.get_edge_data(right_n, left_n)
             if connection_data is None or connection_data["weight"] >= info["weight"]:
@@ -305,7 +308,7 @@ def second_identification(
     nx_graph_t,
     pos_tm1,
     pos_t,
-    length_id=150,
+    length_id=200,
     downstream_graphs=[],
     downstream_pos=[],
     tolerance=50,
