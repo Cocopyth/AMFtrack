@@ -420,8 +420,10 @@ def solve_degree4(exp):
                             left_n = pair[1].end
                             right_edge = pair[0].pixel_list(t)
                             left_edge = list(reversed(pair[1].pixel_list(t)))
+                            right_edge_width = pair[0].width(t)
+                            left_edge_width = pair[1].width(t)
                             pixel_list = left_edge + right_edge[1:]
-                            info = {"weight": len(pixel_list), "pixel_list": pixel_list}
+                            info = {"weight": len(pixel_list), "pixel_list": pixel_list, "width" : ((len(right_edge)*right_edge_width)+(len(left_edge)*left_edge_width))/(left_edge_width+right_edge_width)}
                             if right_n != left_n:
                                 exp_clean.nx_graph[t].add_edges_from(
                                     [(left_n.label, right_n.label, info)]

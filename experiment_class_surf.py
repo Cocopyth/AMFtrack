@@ -12,7 +12,7 @@ from extract_graph import (
     from_nx_to_tab,
     prune_graph
 )
-from node_id import whole_movement_identification, second_identification
+from node_id import whole_movement_identification, second_identification, reconnect_degree_2
 import ast
 from plotutil import plot_t_tp1, compress_skeleton
 from scipy import sparse
@@ -35,13 +35,17 @@ class Experiment:
         self.plate = plate
         self.directory = directory
 
-    def load(self, dates, local=False):
+    def load(self, dates, labeled=True):
         self.dates = dates
         nx_graph_poss = []
         for date in dates:
             directory_name = get_dirname(date,self.plate)
             path_snap = self.directory + directory_name
-            path_save = path_snap + "/Analysis/nx_graph_pruned_labeled.p"
+            if labeled:
+                suffix = "/Analysis/nx_graph_pruned_labeled.p"
+            else:
+                suffix = "/Analysis/nx_graph_pruned.p"
+            path_save = path_snap + suffix
             (g, pos) = pickle.load(open(path_save, "rb"))
             nx_graph_poss.append((g, pos))
 
@@ -403,16 +407,22 @@ class Edge:
         self.experiment = experiment
 
     def __eq__(self, other):
-        return self.begin == other.begin and self.end == other.end
+        return (self.begin == other.begin and self.end == other.end)
 
     def __repr__(self):
         return f"Edge({self.begin},{self.end})"
 
     def __str__(self):
         return str((self.begin, self.end))
+    
+    def __hash__(self):
+        return (self.begin, self.end).__hash__()
 
     def is_in(self, t):
         return (self.begin.label, self.end.label) in self.experiment.nx_graph[t].edges
+    
+    def ts(self):
+        return [t for t in range(self.experiment.ts) if self.is_in(t)]
 
     def pixel_list(self, t):
         return orient(
@@ -421,6 +431,11 @@ class Edge:
             ],
             self.begin.pos(t),
         )
+    def width(self, t):
+        return (self.experiment.nx_graph[t].get_edge_data(self.begin.label, self.end.label)[
+                "width"
+            ])
+
 
     def orientation_whole(self, t):
         pixel_list = np.array(self.pixel_list(t))
@@ -641,7 +656,7 @@ def get_hyphae(experiment, exclude_bottom_factor=0.98):
         for t in tip.ts():
             #             print(t,tip)
             if tip.degree(t) == 1:
-                root, edges, nodes = hyphae.get_edges(t, 100)
+                root, edges, nodes = hyphae.get_edges(t, 200)
                 roots.append(root)
         occurence_count = Counter(roots)
         if (
@@ -662,36 +677,13 @@ def get_hyphae(experiment, exclude_bottom_factor=0.98):
     return (hyphaes, problems)
 
 
-def reconnect_degree_2(nx_graph, pos):
-    degree_2_nodes = [node for node in nx_graph.nodes if nx_graph.degree(node) == 2]
-    while len(degree_2_nodes) > 0:
-        node = degree_2_nodes.pop()
-        neighbours = list(nx_graph.neighbors(node))
-        right_n = neighbours[0]
-        left_n = neighbours[1]
-        right_edge = nx_graph.get_edge_data(node, right_n)["pixel_list"]
-        left_edge = nx_graph.get_edge_data(node, left_n)["pixel_list"]
-        if np.any(right_edge[0] != pos[node]):
-            right_edge = list(reversed(right_edge))
-        if np.any(left_edge[-1] != pos[node]):
-            left_edge = list(reversed(left_edge))
-        pixel_list = left_edge + right_edge[1:]
-        info = {"weight": len(pixel_list), "pixel_list": pixel_list}
-        if right_n != left_n:
-            connection_data = nx_graph.get_edge_data(right_n, left_n)
-            if connection_data is None or connection_data["weight"] >= info["weight"]:
-                if not connection_data is None:
-                    nx_graph.remove_edge(right_n, left_n)
-                nx_graph.add_edges_from([(right_n, left_n, info)])
-        nx_graph.remove_node(node)
-        degree_2_nodes = [node for node in nx_graph.nodes if nx_graph.degree(node) == 2]
-
 
 def clean_exp_with_hyphaes(experiment):
     ts = {}
     nx_graph_cleans = [nx.Graph.copy(nx_g) for nx_g in experiment.nx_graph]
-    exp_clean = Experiment(experiment.plate, experiment.directory)
-    exp_clean.copy(experiment)
+#     exp_clean = Experiment(experiment.plate, experiment.directory)
+#     exp_clean.copy(experiment)
+    exp_clean = experiment
     labels = {node for g in exp_clean.nx_graph for node in g}
     exp_clean.nodes = []
     for label in labels:
@@ -763,12 +755,16 @@ def clean_exp_with_hyphaes(experiment):
             left_n = neighbour
             right_edge = nx_graph_clean.get_edge_data(node, right_n)["pixel_list"]
             left_edge = nx_graph_clean.get_edge_data(node, left_n)["pixel_list"]
+            right_edge_width = nx_graph_clean.get_edge_data(node, right_n)["width"]
+            left_edge_width = nx_graph_clean.get_edge_data(node, left_n)["width"]
             if np.any(right_edge[0] != pos[node]):
                 right_edge = list(reversed(right_edge))
             if np.any(left_edge[-1] != pos[node]):
                 left_edge = list(reversed(left_edge))
             pixel_list = left_edge + right_edge[1:]
-            info = {"weight": len(pixel_list), "pixel_list": pixel_list}
+            width_new = (right_edge_width*len(right_edge)+left_edge_width*len(left_edge))/(len(right_edge)+len(left_edge))
+            print(width_new)
+            info = {"weight": len(pixel_list), "pixel_list": pixel_list, "width" : width_new}
             if right_n != left_n:
                 connection_data = nx_graph_clean.get_edge_data(right_n, left_n)
                 if (
