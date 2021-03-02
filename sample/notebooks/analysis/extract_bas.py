@@ -1,8 +1,8 @@
 import sys  
 sys.path.insert(0, '/home/cbisot/pycode/MscThesis/')
-from Analysis.util import *
+from sample.notebooks.analysis.util import *
 from sample.paths.directory import path_code
-from Analysis.data_info import *
+from sample.notebooks.analysis.data_info import *
 
 for treatment in treatments.keys():
     insts = treatments[treatment]
