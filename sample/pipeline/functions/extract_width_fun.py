@@ -1,5 +1,5 @@
 from skimage.measure import profile_line
-from Analysis.util import *
+from sample.notebooks.analysis.util import *
 
 
 def get_source_image(experiment,pos,t,local,force_selection = None):
