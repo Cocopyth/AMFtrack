@@ -1,4 +1,4 @@
-from util import get_dates_datetime, get_dirname
+from sample.util import get_dates_datetime, get_dirname
 import scipy.io as sio
 from pymatreader import read_mat
 import numpy as np

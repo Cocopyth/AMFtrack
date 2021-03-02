@@ -1,5 +1,5 @@
-from extract_width_fun import *
-from util import get_path, get_dates_datetime, get_dirname
+from sample.pipeline.functions.extract_width_fun import *
+from sample.util import get_dates_datetime, get_dirname
 import pickle
 import networkx as nx
 import sys

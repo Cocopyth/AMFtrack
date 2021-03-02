@@ -1,6 +1,6 @@
 # from extract_graph import dic_to_sparse
-from util import get_dates_datetime, get_dirname
-from node_id import (
+from sample.util import get_dates_datetime, get_dirname
+from sample.pipeline.functions.node_id import (
     second_identification,
 )
 from sample.pipeline.scripts.extract_graph import (

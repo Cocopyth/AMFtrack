@@ -1,14 +1,12 @@
 import numpy as np
-from util import get_path, get_dates_datetime
+from util import get_dates_datetime
 import pickle
-from directory import directory
-from hyphae_id_surf import clean_and_relabel, get_mother, save_hyphaes, resolve_ambiguity_two_ends,solve_degree4, clean_obvious_fake_tips, get_pixel_growth_and_new_children
-from experiment_class_surf import Edge,Node
+from sample.pipeline.functions.experiment_class_surf import Edge,Node
 from random import choice
 import networkx as nx
-from directory import directory, path_code
+from sample.paths.directory import directory_scratch, path_code
 from scipy import sparse
-from hyphae_id_surf import clean_and_relabel, get_mother, save_hyphaes, resolve_ambiguity_two_ends,solve_degree4, clean_obvious_fake_tips, get_pixel_growth_and_new_children
+from sample.pipeline.functions.hyphae_id_surf import get_pixel_growth_and_new_children
 
 def get_time(exp,t,tp1):
     seconds = (exp.dates[tp1]-exp.dates[t]).total_seconds()
@@ -49,7 +47,7 @@ def get_length_um_node_list(node_list,exp,t):
         total_length += get_length_um_edge(edge_obj,t)
     return(total_length)
 
-def get_exp(inst,directory=directory):
+def get_exp(inst, directory=directory_scratch):
     plate = inst[0]
     begin = inst[1]
     end = inst[2]
