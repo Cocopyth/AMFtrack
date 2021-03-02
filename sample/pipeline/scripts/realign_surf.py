@@ -1,4 +1,4 @@
-from util import get_dates_datetime, get_dirname
+from sample.util import get_dates_datetime, get_dirname
 from scipy import sparse
 import scipy.io as sio
 from pymatreader import read_mat
@@ -9,7 +9,7 @@ from sample.pipeline.scripts.extract_graph import (
     sparse_to_doc,
 )
 import scipy.sparse
-from realign import transform_skeleton_final
+from sample.pipeline.functions.realign import transform_skeleton_final
 
 plate = int(sys.argv[1])
 begin = int(sys.argv[2])

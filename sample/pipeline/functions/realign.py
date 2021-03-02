@@ -3,7 +3,7 @@ from sample.pipeline.scripts.extract_graph import (
     generate_nx_graph_from_skeleton,
 )
 from scipy import sparse
-from sparse_util import dilate, zhangSuen
+from sample.sparse_util import dilate, zhangSuen
 from scipy.optimize import minimize
 from time import time
 from sample.pipeline.scripts.extract_graph import (

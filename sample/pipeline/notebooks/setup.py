@@ -1,13 +1,13 @@
 % %
 
 import pandas as pd
-from util import get_dates_datetime, get_dirname, get_plate_number, get_postion_number
+from sample.util import get_dates_datetime, get_dirname, get_plate_number, get_postion_number
 
 import ast
-from plotutil import plot_t_tp1
+from sample.plotutil import plot_t_tp1
 from scipy import sparse
 from datetime import datetime
-from node_id import orient
+from sample.pipeline.functions.node_id import orient
 import pickle
 import scipy.io as sio
 from pymatreader import read_mat
@@ -21,7 +21,7 @@ from skimage import filters
 from random import choice
 import scipy.sparse
 import os
-from extract_graph import from_sparse_to_graph, generate_nx_graph, sparse_to_doc
+from sample.pipeline.scripts.extract_graph import from_sparse_to_graph, generate_nx_graph, sparse_to_doc
 from skimage.feature import hessian_matrix_det
 from sample.pipeline.functions.experiment_class_surf import Experiment
 

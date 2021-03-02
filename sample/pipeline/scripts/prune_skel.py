@@ -13,7 +13,7 @@ from sample.pipeline.scripts.extract_graph import (
     prune_graph,
     clean_degree_4,
 )
-from util import get_dates_datetime, get_dirname
+from sample.util import get_dates_datetime, get_dirname
 import scipy.sparse
 import scipy.io as sio
 import sys

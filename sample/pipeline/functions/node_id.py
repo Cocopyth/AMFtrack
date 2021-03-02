@@ -4,7 +4,7 @@ from scipy import sparse
 import cv2
 import networkx as nx
 from copy import deepcopy
-from sparse_util import dilate
+from sample.sparse_util import dilate
 from scipy.optimize import minimize
 from time import time
 
