@@ -1,8 +1,10 @@
+from path import path_code_dir
+import sys  
+sys.path.insert(0, path_code_dir)
 from sample.pipeline.functions.extract_width_fun import *
 from sample.util import get_dates_datetime, get_dirname
 import pickle
 import networkx as nx
-import sys
 
 plate = int(sys.argv[1])
 directory = str(sys.argv[2])

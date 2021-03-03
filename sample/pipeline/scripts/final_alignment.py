@@ -1,3 +1,6 @@
+from path import path_code_dir
+import sys  
+sys.path.insert(0, path_code_dir)
 from sample.util import get_dates_datetime, get_dirname
 import scipy.io as sio
 from pymatreader import read_mat
@@ -8,7 +11,6 @@ from sample.pipeline.scripts.extract_graph import (
 )
 import open3d as o3d
 from cycpd import rigid_registration
-import sys
 
 
 i = int(sys.argv[-1])

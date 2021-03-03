@@ -1,3 +1,6 @@
+from path import path_code_dir
+import sys  
+sys.path.insert(0, path_code_dir)
 from sample.util import get_dates_datetime, get_dirname
 import pandas as pd
 import ast
@@ -7,7 +10,6 @@ import imageio
 import numpy as np
 import os
 from time import time
-import sys
 
 i = int(sys.argv[-1])
 plate = int(sys.argv[1])

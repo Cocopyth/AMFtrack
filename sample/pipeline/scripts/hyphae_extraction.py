@@ -1,3 +1,6 @@
+from path import path_code_dir
+import sys  
+sys.path.insert(0, path_code_dir)
 from sample.util import get_dates_datetime
 import os
 from sample.pipeline.functions.experiment_class_surf import Experiment
@@ -17,7 +20,6 @@ from sample.pipeline.functions.hyphae_id_surf import (
 #     solve_degree4,
 #     clean_obvious_fake_tips,
 # )
-import sys
 
 plate = int(sys.argv[1])
 begin = int(sys.argv[2])

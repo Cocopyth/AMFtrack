@@ -1,8 +1,10 @@
+from path import path_code_dir
+import sys  
+sys.path.insert(0, path_code_dir)
 from sample.util import get_dates_datetime, get_dirname
 import pandas as pd
 import ast
 import os
-import sys
 from subprocess import call
 
 
