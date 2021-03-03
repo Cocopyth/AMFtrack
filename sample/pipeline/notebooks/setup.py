@@ -21,7 +21,7 @@ from skimage import filters
 from random import choice
 import scipy.sparse
 import os
-from sample.pipeline.scripts.extract_graph import from_sparse_to_graph, generate_nx_graph, sparse_to_doc
+from sample.pipeline.functions.extract_graph import from_sparse_to_graph, generate_nx_graph, sparse_to_doc
 from skimage.feature import hessian_matrix_det
 from sample.pipeline.functions.experiment_class_surf import Experiment
 

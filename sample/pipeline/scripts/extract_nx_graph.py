@@ -4,9 +4,8 @@ sys.path.insert(0, path_code_dir)
 from scipy import sparse
 from pymatreader import read_mat
 
-# from extract_graph import dic_to_sparse
 from sample.util import get_dates_datetime, get_dirname
-from sample.pipeline.scripts.extract_graph import (
+from sample.pipeline.functions.extract_graph import (
     from_sparse_to_graph,
     generate_nx_graph,
     clean_degree_4,

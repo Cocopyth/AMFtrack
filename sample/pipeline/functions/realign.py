@@ -1,12 +1,12 @@
 import numpy as np
-from sample.pipeline.scripts.extract_graph import (
+from sample.pipeline.functions.extract_graph import (
     generate_nx_graph_from_skeleton,
 )
 from scipy import sparse
 from sample.sparse_util import dilate, zhangSuen
 from scipy.optimize import minimize
 from time import time
-from sample.pipeline.scripts.extract_graph import (
+from sample.pipeline.functions.extract_graph import (
     from_sparse_to_graph,
     generate_nx_graph,
     prune_graph,

@@ -5,7 +5,7 @@ from sample.util import get_dates_datetime, get_dirname
 import scipy.io as sio
 from pymatreader import read_mat
 import numpy as np
-from sample.pipeline.scripts.extract_graph import (
+from sample.pipeline.functions.extract_graph import (
     sparse_to_doc,
     get_degree3_nodes,
 )
