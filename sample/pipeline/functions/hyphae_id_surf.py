@@ -1,7 +1,7 @@
 import pandas as pd
 import networkx as nx
 import numpy as np
-from sample.pipeline.scripts.extract_graph import (
+from sample.pipeline.functions.extract_graph import (
     prune_graph,
 )
 from node_id import reconnect_degree_2

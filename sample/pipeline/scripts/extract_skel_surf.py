@@ -17,7 +17,7 @@ import scipy.sparse
 import os
 from time import time
 from skimage.feature import hessian_matrix_det
-from sample.pipeline.scripts.extract_graph import from_sparse_to_graph, generate_nx_graph
+from sample.pipeline.functions.extract_graph import from_sparse_to_graph, generate_nx_graph
 
 i = int(sys.argv[-1])
 plate = int(sys.argv[1])

@@ -3,7 +3,7 @@ import pandas as pd
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
-from sample.pipeline.scripts.extract_graph import (
+from sample.pipeline.functions.extract_graph import (
     generate_skeleton,
     from_nx_to_tab,
     prune_graph

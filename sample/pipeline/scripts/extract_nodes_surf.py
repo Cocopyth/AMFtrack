@@ -1,4 +1,3 @@
-# from extract_graph import dic_to_sparse
 from path import path_code_dir
 import sys  
 sys.path.insert(0, path_code_dir)
@@ -6,7 +5,7 @@ from sample.util import get_dates_datetime, get_dirname
 from sample.pipeline.functions.node_id import (
     second_identification,
 )
-from sample.pipeline.scripts.extract_graph import (
+from sample.pipeline.functions.extract_graph import (
     from_nx_to_tab,
 )
 import scipy.io as sio

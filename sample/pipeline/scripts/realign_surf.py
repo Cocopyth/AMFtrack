@@ -7,7 +7,7 @@ import scipy.io as sio
 from pymatreader import read_mat
 import cv2
 import numpy as np
-from sample.pipeline.scripts.extract_graph import (
+from sample.pipeline.functions.extract_graph import (
     sparse_to_doc,
 )
 import scipy.sparse
