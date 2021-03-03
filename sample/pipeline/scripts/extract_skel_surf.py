@@ -1,3 +1,6 @@
+from path import path_code_dir
+import sys  
+sys.path.insert(0, path_code_dir)
 from sample.util import get_dirname
 import pandas as pd
 import ast
@@ -14,7 +17,6 @@ import scipy.sparse
 import os
 from time import time
 from skimage.feature import hessian_matrix_det
-import sys
 from sample.pipeline.scripts.extract_graph import from_sparse_to_graph, generate_nx_graph
 
 i = int(sys.argv[-1])

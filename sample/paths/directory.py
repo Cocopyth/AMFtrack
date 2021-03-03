@@ -33,7 +33,7 @@ def run_parallel(code, args, begin, end, num_parallel, time, name):
             f'#SBATCH -o "{path_code}MscThesis/slurm/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
-        my_file.write(f"\t python {path_code}MscThesis/sample/scripts/{code} {arg_str} $i &\n")
+        my_file.write(f"\t python {path_code}MscThesis/sample/pipeline/scripts/{code} {arg_str} $i &\n")
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()

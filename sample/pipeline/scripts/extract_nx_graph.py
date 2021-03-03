@@ -1,3 +1,6 @@
+from path import path_code_dir
+import sys  
+sys.path.insert(0, path_code_dir)
 from scipy import sparse
 from pymatreader import read_mat
 
@@ -10,7 +13,6 @@ from sample.pipeline.scripts.extract_graph import (
 )
 import scipy.sparse
 import pickle
-import sys
 
 plate = int(sys.argv[1])
 directory = str(sys.argv[2])

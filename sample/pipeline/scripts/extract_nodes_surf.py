@@ -1,4 +1,7 @@
 # from extract_graph import dic_to_sparse
+from path import path_code_dir
+import sys  
+sys.path.insert(0, path_code_dir)
 from sample.util import get_dates_datetime, get_dirname
 from sample.pipeline.functions.node_id import (
     second_identification,
@@ -8,7 +11,6 @@ from sample.pipeline.scripts.extract_graph import (
 )
 import scipy.io as sio
 import pickle
-import sys
 
 plate = int(sys.argv[1])
 begin = int(sys.argv[2])

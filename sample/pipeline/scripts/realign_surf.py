@@ -1,15 +1,18 @@
+from path import path_code_dir
+import sys  
+sys.path.insert(0, path_code_dir)
 from sample.util import get_dates_datetime, get_dirname
 from scipy import sparse
 import scipy.io as sio
 from pymatreader import read_mat
 import cv2
 import numpy as np
-import sys
 from sample.pipeline.scripts.extract_graph import (
     sparse_to_doc,
 )
 import scipy.sparse
 from sample.pipeline.functions.realign import transform_skeleton_final
+
 
 plate = int(sys.argv[1])
 begin = int(sys.argv[2])

@@ -1,3 +1,6 @@
+from path import path_code_dir
+import sys  
+sys.path.insert(0, path_code_dir)
 import numpy as np
 from scipy import sparse
 import cv2
@@ -16,7 +19,6 @@ from sample.pipeline.scripts.extract_graph import (
 from sample.util import get_dates_datetime, get_dirname
 import scipy.sparse
 import scipy.io as sio
-import sys
 
 plate = int(sys.argv[1])
 i = int(sys.argv[-1])
