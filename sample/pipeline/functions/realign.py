@@ -310,7 +310,10 @@ def transform_skeleton_final(skeleton_doc, Rot, trans):
     i = 0
     for pixel in list(transformed_keys):
         i += 1
-        skeleton_transformed[(pixel[0], pixel[1])] = 1
+        if pixel[0]>=0 and pixel[1]>=0:
+            skeleton_transformed[(pixel[0], pixel[1])] = 1
+        else:
+            print("some negative pixels")
     skeleton_transformed = dilate(skeleton_transformed)
     skeleton_transformed = zhangSuen(skeleton_transformed)
     skeleton_transformed_sparse = sparse.lil_matrix((30000, 60000)).astype(np.uint8)

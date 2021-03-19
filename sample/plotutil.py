@@ -113,6 +113,7 @@ def plot_t_tp1(
     compress=1,
     save="",
     time=None,
+    gray=False
 ):
     right = 0.90
     top = 0.90
@@ -124,7 +125,11 @@ def plot_t_tp1(
         size = 5
     ax = fig.add_subplot(111)
     ax.imshow(imtp1, cmap="gray", interpolation="none")
-    ax.imshow(imt, cmap="jet", alpha=0.5, interpolation="none")
+    if gray: 
+        ax.imshow(imt, cmap="gray", alpha=0.5, interpolation="none")
+    else:
+        ax.imshow(imt, cmap="jet", alpha=0.5, interpolation="none")
+
     bbox_props1 = dict(boxstyle="circle", fc="grey")
     bbox_props2 = dict(boxstyle="circle", fc="white")
     ax.text(

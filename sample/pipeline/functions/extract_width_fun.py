@@ -26,9 +26,15 @@ def get_width_pixel(edge,index,im,pivot,before,after,t,size = 20,width_factor = 
     point1=point1.astype(int)
     point2=point2.astype(int)
     p = profile_line(imtab, point1, point2,mode='constant')
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111)
-#     ax.plot(p)
+#     xdata = np.array(range(len(p)))
+#     ydata = np.array(p)
+# #     fig = plt.figure()
+# #     ax = fig.add_subplot(111)
+# #     ax.plot(xdata,ydata)
+#     p0=[165,100,165,45,10,10,10]
+#     popt, pcov = curve_fit(func, xdata, ydata,bounds = ([-np.inf,-np.inf,-np.inf,-np.inf,0,0,0],np.inf),p0=p0)
+#     width_pix = popt[-2]
+#     ax.plot(xdata, func(xdata, *popt), 'r-')
 #     derivative = [p[i+1]-p[i] for i in range(len(p)-1)]
 #     fig = plt.figure()
 #     ax = fig.add_subplot(111)
@@ -55,7 +61,7 @@ def get_width_pixel(edge,index,im,pivot,before,after,t,size = 20,width_factor = 
             break
         arg+=1
     end = arg
-#     print(end-begin,threshold)
+# #     print(end-begin,threshold)
     return(np.linalg.norm(point1-point2)*(end-begin)/len(p))
 
 def get_width_edge(edge,resolution,t,local=False, threshold_averaging = 10):
@@ -94,7 +100,7 @@ def get_width_edge(edge,resolution,t,local=False, threshold_averaging = 10):
 #         print(width*pixel_conversion_factor)
         widths[pixel_list[index]]=width*pixel_conversion_factor
     edge.experiment.nx_graph[t].get_edge_data(edge.begin.label,edge.end.label)['width'] = widths
-    return(widths)      
+    return(widths)   
 
 def get_width_info(experiment,t,resolution = 50):
     edge_width={}

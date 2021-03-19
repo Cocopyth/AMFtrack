@@ -1,5 +1,7 @@
+import sys  
+sys.path.insert(0, '/home/cbisot/pycode/MscThesis/')
 import numpy as np
-from util import get_dates_datetime
+from sample.util import get_dates_datetime
 import pickle
 from sample.pipeline.functions.experiment_class_surf import Edge,Node
 from random import choice
@@ -139,10 +141,10 @@ def estimate_bas_freq_mult(insts,samples,back,criter):
         bas_frequs.append(bas_frequ)
     return(bas_frequs)
 
-def get_curvature_density(inst,window):
-    exp = get_exp(inst)
+def get_curvature_density(inst,window, path):
+    exp = get_exp(inst,path)
     skeletons = [sparse.csr_matrix(skel) for skel in exp.skeletons]
-    RH, BAS, max_growths, total_growths, lengths, branch_frequ, select_hyph = get_rh_bas(exp,criter)
+    RH, BAS, max_speeds, total_growths, widths_sp, lengths, branch_frequ,select_hyph = get_rh_bas(exp,criter)
     angles = []
     curvatures = []
     densities = []

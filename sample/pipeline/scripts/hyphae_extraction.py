@@ -11,6 +11,7 @@ from sample.pipeline.functions.hyphae_id_surf import (
     save_hyphaes,
     resolve_ambiguity_two_ends,
     clean_obvious_fake_tips,
+    width_based_cleaning
 )
 # from hyphae_id_surftest import (
 #     clean_and_relabel,
@@ -32,6 +33,7 @@ dates_datetime_chosen = dates_datetime[begin : end + 1]
 dates = dates_datetime_chosen
 exp = Experiment(plate, directory)
 exp.load(dates)
+width_based_cleaning(exp)
 exp_clean = clean_and_relabel(exp)
 to_remove = []
 for hyph in exp_clean.hyphaes:
