@@ -2,6 +2,7 @@ from path import path_code_dir
 import sys  
 sys.path.insert(0, path_code_dir)
 from sample.pipeline.functions.extract_width_fun import *
+from sample.pipeline.functions.experiment_class_surf import Experiment
 from sample.util import get_dates_datetime, get_dirname
 import pickle
 import networkx as nx
@@ -28,6 +29,6 @@ edge_test = get_width_info(exp,0)
 nx.set_edge_attributes(G, edge_test, 'width')
 date = exp.dates[0]
 directory_name = get_dirname(date, exp.plate)
-path_snap = exp.directory_scratch + directory_name
+path_snap = directory + directory_name
 print(f'saving {path_snap}')
 pickle.dump((G,pos), open(f'{path_snap}/Analysis/nx_graph_pruned_width.p', "wb"))

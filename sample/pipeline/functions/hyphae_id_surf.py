@@ -4,9 +4,9 @@ import numpy as np
 from sample.pipeline.functions.extract_graph import (
     prune_graph,
 )
-from node_id import reconnect_degree_2
+from sample.pipeline.functions.node_id import reconnect_degree_2
 import scipy.io as sio
-from sample.pipeline.functions.experiment_class_surf import clean_exp_with_hyphaes, Node
+from sample.pipeline.functions.experiment_class_surf import clean_exp_with_hyphaes, Node, Edge
 
 
 def resolve_ambiguity(hyphaes):
@@ -94,7 +94,34 @@ def resolve_ambiguity(hyphaes):
             connect[hyph.end.label] = hyph.end.label
     return (equ_classes, ambiguities, connect)
 
-
+def width_based_cleaning(exp):
+    thresh = 0.1
+    thresh_up= 60
+    to_remove=[1]
+    while len(to_remove)>0:
+        to_remove = []
+        to_keep = []
+        for t in range(exp.ts):
+            for edge in exp.nx_graph[t].edges:
+                edge_obj = Edge(Node(edge[0],exp),Node(edge[1],exp),exp)
+                if (edge_obj.width(t) <= thresh or edge_obj.width(t)> thresh_up) and (edge_obj.begin.degree(t)==1 or edge_obj.end.degree(t)==1):
+                    to_remove.append(edge)
+                    exp.nx_graph[t].remove_edge(edge[0],edge[1])
+                else:
+                    to_keep.append(edge)
+        print(f'Removing {len(to_remove)} edges based on 0 width')
+    to_remove_node=[]
+    for t in range(exp.ts):
+        pos = exp.positions[t]
+        nx_graph = exp.nx_graph[t]
+        reconnect_degree_2(nx_graph, pos)
+        nodes = list(nx_graph.nodes)
+        for node in nodes:
+            if nx_graph.degree(node)==0:
+                nx_graph.remove_node(node)
+                to_remove_node.append(node)
+    print(f'Removing {len(to_remove_node)} nodes based on degree 0 ')
+                    
 def relabel_nodes_after_amb(corresp, nx_graph_list, pos_list):
     new_poss = [{} for i in range(len(nx_graph_list))]
     new_graphs = []

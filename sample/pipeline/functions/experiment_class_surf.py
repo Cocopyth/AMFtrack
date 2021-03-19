@@ -388,6 +388,7 @@ class Node:
                 None,
                 ims[i],
                 ims[i],
+                gray = True
             )
 
 
@@ -625,7 +626,25 @@ class Hyphae:
 
     def update_ts(self):
         self.ts = sorted(set(self.end.ts()).intersection(set(self.root.ts())))
-
+        
+    def get_orientation(self, t, start, length=50):
+        nodes, edges = self.get_nodes_within(t)
+        pixel_list_list = []
+    #     print(edges[start:])
+        for edge in edges[start:]:
+            pixel_list_list += edge.pixel_list(t)
+        pixel_list = np.array(pixel_list_list)
+        vector = pixel_list[min(length, len(pixel_list) - 1)] - pixel_list[0]
+        unit_vector = vector / np.linalg.norm(vector)
+        vertical_vector = np.array([-1, 0])
+        dot_product = np.dot(vertical_vector, unit_vector)
+        if (
+            vertical_vector[1] * vector[0] - vertical_vector[0] * vector[1] >= 0
+        ):  # determinant
+            angle = np.arccos(dot_product) / (2 * np.pi) * 360
+        else:
+            angle = -np.arccos(dot_product) / (2 * np.pi) * 360
+        return angle
 
 def get_hyphae(experiment, exclude_bottom_factor=0.98):
     tips = [
@@ -754,7 +773,7 @@ def clean_exp_with_hyphaes(experiment):
                 left_edge = list(reversed(left_edge))
             pixel_list = left_edge + right_edge[1:]
             width_new = (right_edge_width*len(right_edge)+left_edge_width*len(left_edge))/(len(right_edge)+len(left_edge))
-            print(width_new)
+#             print(width_new)
             info = {"weight": len(pixel_list), "pixel_list": pixel_list, "width" : width_new}
             if right_n != left_n:
                 connection_data = nx_graph_clean.get_edge_data(right_n, left_n)

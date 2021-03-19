@@ -52,10 +52,12 @@ def check_state(plate,begin,end,file,directory):
             not_exist.append((date,i+begin))
     return(not_exist)
 
-def find_state(plate,begin,end,directory):
-    files = ['/Img/TileConfiguration.txt.registered', '/Analysis/skeleton_compressed.mat', '/Analysis/skeleton_masked_compressed.mat',
+def find_state(plate,begin,end,directory,include_stitch=True):
+    files = [ '/Analysis/skeleton_compressed.mat', '/Analysis/skeleton_masked_compressed.mat',
              '/Analysis/skeleton_pruned_compressed.mat', '/Analysis/transform.mat',
              '/Analysis/skeleton_realigned_compressed.mat']
+    if include_stitch:
+        files = ['/Img/TileConfiguration.txt.registered'] + files
     not_present2 = check_state(plate,begin+1,end,'/Analysis/transform_corrupt.mat', directory)
     for file in files:
         if file == '/Analysis/transform.mat':
@@ -70,3 +72,11 @@ def find_state(plate,begin,end,directory):
         if len(not_present)>0:
             return(file,not_present)
     return("skeletonization is complete")
+
+def find_state_extract(plate,begin,end,directory):
+    files = [ '/Analysis/nx_graph_pruned.p', '/Analysis/nx_graph_pruned_width.p','/Analysis/nx_graph_pruned_labeled.p']
+    for file in files:
+        not_present = check_state(plate,begin,end,file,directory)
+        if len(not_present)>0:
+            return(file,not_present)
+    return("extration is complete")
