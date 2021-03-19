@@ -114,18 +114,18 @@ a= 0.0005
 b= 0.01
 thresh = 2
 
-def estimate_bas_freq_mult(insts,samples,back,criter):
+def estimate_bas_freq_mult(insts,samples,back,criter, path):
     bas_frequs=[]
     for inst in insts:
         bas_frequ=[]
         t0 = inst[2]-inst[1]-back
-        exp = get_exp(inst)
-        RH, BAS, max_growths, total_growths, lengths, branch_frequ, select_hyph = get_rh_bas(exp,criter)
+        exp = get_exp(inst,path)
+        RH, BAS, max_speeds, total_growths, widths, lengths, branch_frequ,select_hyph = get_rh_bas(exp,criter)
         bas_roots = [hyph.root for hyph in BAS]
         for k in range(samples):
             node1 = Node(choice(list(exp.nx_graph[t0].nodes)),exp)
             node2 = Node(choice(list(exp.nx_graph[t0].nodes)),exp)
-            if np.linalg.norm(node1.pos(t0)-node2.pos(t0))>=5000:
+            if np.linalg.norm(node1.pos(t0)-node2.pos(t0))>=5000 and nx.algorithms.shortest_paths.generic.has_path(exp.nx_graph[t0],node1.label,node2.label):
                 nodes = nx.shortest_path(exp.nx_graph[t0], source = node1.label, target = node2.label)
     #             exp.plot([t],[nodes])
                 bass=[]
@@ -193,11 +193,11 @@ def get_curvature_density(inst,window, path):
                     hyphs.append(hyph.end.label)
     return(angles, curvatures, densities,growths,speeds,tortuosities,ts,hyphs)
 
-def estimate_growth(inst,criter):
-    exp = get_exp(inst)
-    RH, BAS, max_growths, total_growths, lengths, branch_frequ, select_hyph = get_rh_bas(exp,criter)
+def estimate_growth(inst,criter,path):
+    exp = get_exp(inst, path)
+    RH, BAS, max_speeds, total_growths, widths, lengths, branch_frequ,select_hyph = get_rh_bas(exp,criter)
     print(inst,len(RH))
-    group = (max_growths,total_growths ,lengths)
+    group = (max_speeds, total_growths ,lengths)
     return(group)
 
 def criter(max_growth,length):
