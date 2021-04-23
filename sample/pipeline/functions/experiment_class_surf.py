@@ -708,6 +708,7 @@ def clean_exp_with_hyphaes(experiment):
     safe_nodes = set()
     roots = set()
     tips = set()
+    to_remove_hyphae = set()
     for hyphae in hyphaes:
         roots.add(hyphae.root.label)
         tips.add(hyphae.end.label)
@@ -716,10 +717,13 @@ def clean_exp_with_hyphaes(experiment):
                 try:
                     for node in hyphae.get_nodes_within(t)[0]:
                         safe_nodes.add(node)
-                except:
+                except nx.exception.NetworkXNoPath:
+                    to_remove_hyphae.add(hyphae)
                     print(
                         f"error for hyphae {hyphae} on position {hyphae.end.pos(t),hyphae.root.pos(t)}"
                     )
+    for hyphae in to_remove_hyphae:
+        hyphaes.remove(hyphae)
     for node in experiment.nodes:
         posit = node.pos(ts[node.label][0])
         if (
@@ -801,6 +805,19 @@ def clean_exp_with_hyphaes(experiment):
     exp_clean.nodes = []
     for hyphae in hyphaes:
         hyphae.update_ts()
+    to_remove_hyphae = set()
+    for hyphae in hyphaes:
+        for t in hyphae.end.ts():
+            if t in hyphae.root.ts():
+                try:
+                    hyphae.get_nodes_within(t)[0]
+                except nx.exception.NetworkXNoPath:
+                    to_remove_hyphae.add(hyphae)
+                    print(
+                        f"error for hyphae {hyphae} on position {hyphae.end.pos(t),hyphae.root.pos(t)}"
+                    )
+    for hyphae in to_remove_hyphae:
+        hyphaes.remove(hyphae)
     exp_clean.hyphaes = hyphaes
     for label in labels:
         exp_clean.nodes.append(Node(label, exp_clean))

@@ -1,5 +1,7 @@
 import sys  
 sys.path.insert(0, '/home/cbisot/pycode/MscThesis/')
+sys.path.append( '/home/cbisot/pycode/MscThesis/sample/pipeline/functions')
+
 from sample.notebooks.analysis.util import *
 from sample.paths.directory import path_code, directory_scratch, directory_project
 from sample.notebooks.analysis.data_info import *

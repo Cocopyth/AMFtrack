@@ -66,7 +66,18 @@ def get_postion_number(plate_number):
     for index,row in plate_info.loc[plate_info['Plate #']==plate_number].iterrows():
             return(row['Position #'])
 
-
+def get_begin_index(plate_number,directory):
+    plate = get_postion_number(plate_number)
+    dates_datetime = get_dates_datetime(directory,plate)
+    plate_number_found = get_plate_number(plate,dates_datetime[0])
+    print(0,plate_number)
+    for i in range(len(dates_datetime)):
+        new_plate_number = get_plate_number(plate,dates_datetime[i])
+        if plate_number_found!=new_plate_number:
+            plate_number_found=new_plate_number
+            print(i,plate_number_found)
+        if plate_number_found == plate_number:
+            return(i,dates_datetime[i])
 
 def shift_skeleton(skeleton, shift):
     shifted_skeleton = sparse.dok_matrix(skeleton.shape, dtype=bool)
@@ -82,3 +93,4 @@ def shift_skeleton(skeleton, shift):
             )
             shifted_skeleton[shifted_pixel] = 1
     return shifted_skeleton
+

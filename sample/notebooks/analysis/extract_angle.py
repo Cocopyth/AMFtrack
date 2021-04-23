@@ -9,5 +9,5 @@ from sample.notebooks.analysis.data_info import *
 for treatment in treatments.keys():
     insts = treatments[treatment]
     for inst in insts:
-        result = estimate_growth(inst, criter, directory_project)
-        pickle.dump(result, open(f'{path_code}/MscThesis/Results/maxgrowth_{inst}.pick', "wb"))
+        angles = estimate_angle(inst,criter, directory_project)
+        pickle.dump(angles, open(f'{path_code}/MscThesis/Results/angle_{inst}.pick', "wb"))
