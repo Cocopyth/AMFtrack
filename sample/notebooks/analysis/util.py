@@ -106,7 +106,9 @@ def get_rh_bas(exp,criter):
             total_growths.append(total_growth)
             branch_frequ.append((len(nodes)-1)/(length+1))
             hyph_l.append(hyph)
-            widths.append(get_width_hypha(hyph,hyph.ts[-1]))
+#             widths.append(get_width_hypha(hyph,hyph.ts[-1]))
+            widths.append(5)
+
         else:
             BAS.append(hyph)            
     return(RH, BAS, max_speeds, total_growths, widths, lengths, branch_frequ,select_hyph)
@@ -180,7 +182,7 @@ def get_curvature_density(inst,window, path):
                 else:
                     angle = np.arccos(dot_product) / (2 * np.pi) * 360
                 inv_tortuosity = (straight_distance*1.725)/total_growth
-                if  speed>=100 and speed <400 and hyph.end.degree(tp1)<3 and inv_tortuosity>0.8 and inv_tortuosity<1.1:
+                if hyph.end.degree(tp1)<3 and inv_tortuosity>0.8 and inv_tortuosity<1.1:
                     if np.isnan((angle/total_growth)):
                         print(angle,total_growth,dot_product)
                     angles.append(angle)
@@ -202,3 +204,58 @@ def estimate_growth(inst,criter,path):
 
 def criter(max_growth,length):
     return(a*length+b*max_growth>=thresh and max_growth>=50)
+
+def get_orientation(hypha,t,start,length=50):
+    nodes, edges = hypha.get_nodes_within(t)
+    pixel_list_list = []
+#     print(edges[start:])
+    for edge in edges[start:]:
+        pixel_list_list+=edge.pixel_list(t)
+    pixel_list = np.array(pixel_list_list)
+    vector = pixel_list[min(length, len(pixel_list) - 1)] - pixel_list[0]
+    unit_vector = vector / np.linalg.norm(vector)
+    vertical_vector = np.array([-1, 0])
+    dot_product = np.dot(vertical_vector, unit_vector)
+    if (
+        vertical_vector[1] * vector[0] - vertical_vector[0] * vector[1] >= 0
+    ):  # determinant
+        angle = np.arccos(dot_product) / (2 * np.pi) * 360
+    else:
+        angle = -np.arccos(dot_product) / (2 * np.pi) * 360
+    return angle
+
+def estimate_angle(inst,criter,path):
+    exp = get_exp(inst, path)
+    RH, BAS, max_speeds, total_growths, widths, lengths, branch_frequ,select_hyph = get_rh_bas(exp,criter)
+    branch_root = []
+    branch_anastomose = []
+    two_time = []
+    angles = []
+    for rh in RH:
+    #     rh = choice(RH)
+        t = rh.ts[-1]
+        nodes, edges = rh.get_nodes_within(t)
+        for i,node in enumerate(nodes[1:-1]):
+            found = False
+            for hyph in exp.hyphaes:
+                if hyph.root.label == node:
+                    if found:
+                        two_time.append(hyph.root)
+                    branch_root.append(hyph.root)
+                    if t in hyph.ts:
+                        nodes_h,edges_h = hyph.get_nodes_within(t)
+                        if len(edges_h)>0:
+                            edge_main = edges[i+1]
+                            edge_branch = edges_h[0]
+                            angle_main = get_orientation(rh,t,i+1,100)
+                            angle_branch = get_orientation(hyph,t,0,100)
+                            angles.append(((angle_main-angle_branch),(rh,hyph,t)))
+    #                         print(node,edges[i+1],edges_h[0],angle_main-angle_branch)
+    #                         exp.plot([t],[[node,edge_main.begin.label,edge_main.end.label,edge_branch.begin.label,edge_branch.end.label]])
+                            found = True
+            if not found:
+                branch_anastomose.append(Node(node,exp))
+    angles_180 = [(angle+180)%360-180  for angle,infos in angles]
+    angles_rh = [(c[0]+180)%360-180 for c in angles if c[1][1] in RH]
+    angles_bas = [(c[0]+180)%360-180 for c in angles if c[1][1] in BAS]
+    return(angles_rh,angles_bas)

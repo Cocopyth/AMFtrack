@@ -95,8 +95,8 @@ def resolve_ambiguity(hyphaes):
     return (equ_classes, ambiguities, connect)
 
 def width_based_cleaning(exp):
-    thresh = 0.1
-    thresh_up= 60
+    thresh = 1
+    thresh_up= 11
     to_remove=[1]
     while len(to_remove)>0:
         to_remove = []
@@ -468,6 +468,18 @@ def clean_obvious_fake_tips(exp):
     exp_clean = exp  # better to modify in place
     for hyph in exp_clean.hyphaes:
         hyph.update_ts()
+    to_remove_hyphae = set()
+    for hyphae in exp_clean.hyphaes:
+        for t in hyphae.ts:
+            try:
+                hyphae.get_nodes_within(t)
+            except nx.exception.NetworkXNoPath:
+                to_remove_hyphae.add(hyphae)
+                print(
+                    f"clean tips begin :error for hyphae {hyphae} on position {hyphae.end.pos(t),hyphae.root.pos(t)}"
+                )
+    for hyphae in to_remove_hyphae:
+        exp_clean.hyphaes.remove(hyphae)
     print(f"There is {len(exp_clean.hyphaes)} hyphae")
     hyphae_with_degree4 = {}
     hyph_anas_tip_tip = []
@@ -534,7 +546,7 @@ def clean_obvious_fake_tips(exp):
     for hyph in disapearing_hyph_len1:
         exp_clean.nx_graph[hyph.ts[0]].remove_node(hyph.end.label)
         exp_clean.hyphaes.remove(hyph)
-    exp_clean.nx_graph = [prune_graph(g,0.1) for g in exp_clean.nx_graph]
+    exp_clean.nx_graph = [prune_graph(g,0.01) for g in exp_clean.nx_graph]
     for i, g in enumerate(exp_clean.nx_graph):
         reconnect_degree_2(g, exp_clean.positions[i])
     exp_clean.nodes = []
@@ -544,4 +556,16 @@ def clean_obvious_fake_tips(exp):
     for hyph in exp_clean.hyphaes:
         hyph.update_ts()
     #     exp_clean_relabeled= clean_exp_with_hyphaes(exp_clean)
+    to_remove_hyphae = set()
+    for hyphae in exp_clean.hyphaes:
+        for t in hyphae.ts:
+            try:
+                hyphae.get_nodes_within(t)
+            except nx.exception.NetworkXNoPath:
+                to_remove_hyphae.add(hyphae)
+                print(
+                    f"clean tips end error for hyphae {hyphae} on position {hyphae.end.pos(t),hyphae.root.pos(t)}"
+                )
+    for hyphae in to_remove_hyphae:
+        exp_clean.hyphaes.remove(hyphae)
     return exp_clean
