@@ -148,13 +148,13 @@ def relabel_nodes_after_amb(corresp, nx_graph_list, pos_list):
 
 def clean_and_relabel(exp):
     exp_clean = clean_exp_with_hyphaes(exp)
-    equ_class, ambig, connection = resolve_ambiguity(exp_clean.hyphaes)
-    new_graph, newposs = relabel_nodes_after_amb(
-        connection, exp_clean.nx_graph, exp_clean.positions
-    )
-    exp_clean.nx_graph = new_graph
-    exp_clean.positions = newposs
-    exp_clean.nodes = []
+    #     equ_class, ambig, connection = resolve_ambiguity(exp_clean.hyphaes)
+    #     new_graph, newposs = relabel_nodes_after_amb(
+    #         connection, exp_clean.nx_graph, exp_clean.positions
+    #     )
+    #     exp_clean.nx_graph = new_graph
+    #     exp_clean.positions = newposs
+    #     exp_clean.nodes = []
     labels = {int(node) for g in exp_clean.nx_graph for node in g}
     for label in labels:
         exp_clean.nodes.append(Node(label, exp_clean))

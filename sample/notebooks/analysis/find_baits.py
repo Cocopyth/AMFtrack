@@ -89,10 +89,10 @@ def get_pos_baits_aligned(exp,t):
         xs,ys = x*compression,y*compression
         rottrans = np.dot(Rot, np.array([ys, xs])) + trans
 #         rottrans = np.array([xs, ys])
-        xs, ys = round(rottrans[1]), round(rottrans[0])
+        xs, ys = round(rottrans[0]), round(rottrans[1])
         real_pos.append((xs,ys))
     pos_real = {}
-    if real_pos[0][0]>=real_pos[1][0]:
+    if real_pos[0][1]>=real_pos[1][1]:
         pos_real['right'] = real_pos[0]
         pos_real['left'] = real_pos[1]
     else:

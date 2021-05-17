@@ -143,9 +143,17 @@ def estimate_bas_freq_mult(insts,samples,back,criter, path):
         bas_frequs.append(bas_frequ)
     return(bas_frequs)
 
+def get_length(exp,t):
+    length=0
+    for edge in exp.nx_graph[t].edges:
+        edge_obj= Edge(Node(edge[0],exp),Node(edge[1],exp),exp)
+        length+=get_length_um_edge(edge_obj,t)
+    return(length)
+
 def get_curvature_density(inst,window, path):
     exp = get_exp(inst,path)
     skeletons = [sparse.csr_matrix(skel) for skel in exp.skeletons]
+    length_network= [get_length(exp,t) for t in range(exp.ts)]
     RH, BAS, max_speeds, total_growths, widths_sp, lengths, branch_frequ,select_hyph = get_rh_bas(exp,criter)
     angles = []
     curvatures = []
@@ -154,6 +162,7 @@ def get_curvature_density(inst,window, path):
     speeds = []
     tortuosities = []
     hyphs = []
+    total_network=[]
     ts = []
     print(f'There is {len(RH)} RH')
     for hyph in RH:
@@ -193,7 +202,8 @@ def get_curvature_density(inst,window, path):
                     tortuosities.append(inv_tortuosity)
                     ts.append(get_time(exp,0,t))
                     hyphs.append(hyph.end.label)
-    return(angles, curvatures, densities,growths,speeds,tortuosities,ts,hyphs)
+                    total_network.append(length_network[t])
+    return(angles, curvatures, densities,growths,speeds,tortuosities,ts,hyphs,total_network)
 
 def estimate_growth(inst,criter,path):
     exp = get_exp(inst, path)

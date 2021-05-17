@@ -320,6 +320,40 @@ class Experiment:
         else:
             plt.show()
 
+def plot_raw_plus(exp,t0,node_list,shift=(0,0),compress=5):
+    date = exp.dates[t0]
+    directory_name = get_dirname(date,exp.plate)
+    path_snap = exp.directory + directory_name
+    skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
+    Rot = skel["R"]
+    trans = skel["t"]
+    im = read_mat(path_snap+'/Analysis/raw_image.mat')['raw']
+    fig = plt.figure()
+    size = 5
+    ax = fig.add_subplot(111)
+    grey = 1
+    ax.imshow(im)
+    bbox = dict(boxstyle="circle", fc=colors.rgb2hex((grey, grey, grey)))
+    #             ax.text(right, top, time,
+    #                 horizontalalignment='right',
+    #                 verticalalignment='bottom',
+    #                 transform=ax.transAxes,color='white')
+    for node in node_list:
+        #                     print(self.positions[ts[i]])
+        if node in exp.positions[t0].keys():
+            xs,ys = exp.positions[t0][node]
+            rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
+            ys, xs = round(rottrans[0]), round(rottrans[1])
+            t = ax.text(
+                (xs - shift[1]) // compress,
+                (ys - shift[0]) // compress,
+                str(node),
+                ha="center",
+                va="center",
+                size=size,
+                bbox=bbox,
+            )
+    plt.show()
 
 class Node:
     def __init__(self, label, experiment):
@@ -738,58 +772,58 @@ def clean_exp_with_hyphaes(experiment):
         len(to_remove),
         f" nodes out of {len(exp_clean.nodes)} because they appear only in one timestep and are not within an identified hypha",
     )
-    for node in to_remove:
-        t = ts[node][0]
-        pos = exp_clean.positions[t]
-        nx_graph_clean = nx_graph_cleans[t]
-        #         if t ==3:
-        #             print('before everythin',node,node_to_fuse,1354 in nx_graph_clean)
-        if nx_graph_clean.degree(node) <= 2:
-            continue
-        #         print('cleaning',node)
-        neighbours = list(nx_graph_clean.neighbors(node))
-        candidate_to_fuse = []
-        weight_candidate = []
-        for neighbour in neighbours:
-            if nx_graph_clean.degree(neighbour) >= 3:
-                candidate_to_fuse.append(neighbour)
-                weight_candidate.append(
-                    len(nx_graph_clean.get_edge_data(node, neighbour)["pixel_list"])
-                    - 100 * (neighbour in roots)
-                    - 100 * (neighbour in tips)
-                )
-        if len(weight_candidate) == 0:
-            continue
-        node_to_fuse = candidate_to_fuse[np.argmin(weight_candidate)]
-        if nx_graph_clean.degree(node) == 1 and node_to_fuse not in to_remove:
-            print(pos[node])
-            continue
-        for neighbour in neighbours:
-            right_n = node_to_fuse
-            left_n = neighbour
-            right_edge = nx_graph_clean.get_edge_data(node, right_n)["pixel_list"]
-            left_edge = nx_graph_clean.get_edge_data(node, left_n)["pixel_list"]
-            right_edge_width = nx_graph_clean.get_edge_data(node, right_n)["width"]
-            left_edge_width = nx_graph_clean.get_edge_data(node, left_n)["width"]
-            if np.any(right_edge[0] != pos[node]):
-                right_edge = list(reversed(right_edge))
-            if np.any(left_edge[-1] != pos[node]):
-                left_edge = list(reversed(left_edge))
-            pixel_list = left_edge + right_edge[1:]
-            width_new = (right_edge_width*len(right_edge)+left_edge_width*len(left_edge))/(len(right_edge)+len(left_edge))
-#             print(width_new)
-            info = {"weight": len(pixel_list), "pixel_list": pixel_list, "width" : width_new}
-            if right_n != left_n:
-                connection_data = nx_graph_clean.get_edge_data(right_n, left_n)
-                if (
-                    connection_data is None
-                    or connection_data["weight"] >= info["weight"]
-                ):
-                    if not connection_data is None:
-                        nx_graph_clean.remove_edge(right_n, left_n)
-                    nx_graph_clean.add_edges_from([(right_n, left_n, info)])
-        nx_graph_clean.remove_node(node)
-        nx_graph_cleans[t] = nx_graph_clean
+#     for node in to_remove:
+#         t = ts[node][0]
+#         pos = exp_clean.positions[t]
+#         nx_graph_clean = nx_graph_cleans[t]
+#         #         if t ==3:
+#         #             print('before everythin',node,node_to_fuse,1354 in nx_graph_clean)
+#         if nx_graph_clean.degree(node) <= 2:
+#             continue
+#         #         print('cleaning',node)
+#         neighbours = list(nx_graph_clean.neighbors(node))
+#         candidate_to_fuse = []
+#         weight_candidate = []
+#         for neighbour in neighbours:
+#             if nx_graph_clean.degree(neighbour) >= 3:
+#                 candidate_to_fuse.append(neighbour)
+#                 weight_candidate.append(
+#                     len(nx_graph_clean.get_edge_data(node, neighbour)["pixel_list"])
+#                     - 100 * (neighbour in roots)
+#                     - 100 * (neighbour in tips)
+#                 )
+#         if len(weight_candidate) == 0:
+#             continue
+#         node_to_fuse = candidate_to_fuse[np.argmin(weight_candidate)]
+#         if nx_graph_clean.degree(node) == 1 and node_to_fuse not in to_remove:
+#             print(pos[node])
+#             continue
+#         for neighbour in neighbours:
+#             right_n = node_to_fuse
+#             left_n = neighbour
+#             right_edge = nx_graph_clean.get_edge_data(node, right_n)["pixel_list"]
+#             left_edge = nx_graph_clean.get_edge_data(node, left_n)["pixel_list"]
+#             right_edge_width = nx_graph_clean.get_edge_data(node, right_n)["width"]
+#             left_edge_width = nx_graph_clean.get_edge_data(node, left_n)["width"]
+#             if np.any(right_edge[0] != pos[node]):
+#                 right_edge = list(reversed(right_edge))
+#             if np.any(left_edge[-1] != pos[node]):
+#                 left_edge = list(reversed(left_edge))
+#             pixel_list = left_edge + right_edge[1:]
+#             width_new = (right_edge_width*len(right_edge)+left_edge_width*len(left_edge))/(len(right_edge)+len(left_edge))
+# #             print(width_new)
+#             info = {"weight": len(pixel_list), "pixel_list": pixel_list, "width" : width_new}
+#             if right_n != left_n:
+#                 connection_data = nx_graph_clean.get_edge_data(right_n, left_n)
+#                 if (
+#                     connection_data is None
+#                     or connection_data["weight"] >= info["weight"]
+#                 ):
+#                     if not connection_data is None:
+#                         nx_graph_clean.remove_edge(right_n, left_n)
+#                     nx_graph_clean.add_edges_from([(right_n, left_n, info)])
+#         nx_graph_clean.remove_node(node)
+#         nx_graph_cleans[t] = nx_graph_clean
     for t, nx_graph in enumerate(nx_graph_cleans):
         pos = exp_clean.positions[t]
         reconnect_degree_2(nx_graph, pos)
@@ -797,10 +831,10 @@ def clean_exp_with_hyphaes(experiment):
     for graph in nx_graph_cleans:
         nx_graph_pruned.append(prune_graph(graph, 0.1))
     skeletons = []
-    for nx_graph in nx_graph_pruned:
-        skeletons.append(generate_skeleton(nx_graph, dim=(30000, 60000)))
+#     for nx_graph in nx_graph_pruned:
+#         skeletons.append(generate_skeleton(nx_graph, dim=(30000, 60000)))
     exp_clean.nx_graph = nx_graph_pruned
-    exp_clean.skeletons = skeletons
+#     exp_clean.skeletons = skeletons
     labels = {node for g in exp_clean.nx_graph for node in g}
     exp_clean.nodes = []
     for hyphae in hyphaes:
@@ -822,3 +856,38 @@ def clean_exp_with_hyphaes(experiment):
     for label in labels:
         exp_clean.nodes.append(Node(label, exp_clean))
     return exp_clean
+
+def plot_raw_plus(exp,t0,node_list,shift=(0,0),compress=5):
+    date = exp.dates[t0]
+    directory_name = get_dirname(date,exp.plate)
+    path_snap = exp.directory + directory_name
+    skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
+    Rot = skel["R"]
+    trans = skel["t"]
+    im = read_mat(path_snap+'/Analysis/raw_image.mat')['raw']
+    fig = plt.figure()
+    size = 5
+    ax = fig.add_subplot(111)
+    grey = 1
+    ax.imshow(im)
+    bbox = dict(boxstyle="circle", fc=colors.rgb2hex((grey, grey, grey)))
+    #             ax.text(right, top, time,
+    #                 horizontalalignment='right',
+    #                 verticalalignment='bottom',
+    #                 transform=ax.transAxes,color='white')
+    for node in node_list:
+        #                     print(self.positions[ts[i]])
+        if node in exp.positions[t0].keys():
+            xs,ys = exp.positions[t0][node]
+            rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
+            ys, xs = round(rottrans[0]), round(rottrans[1])
+            t = ax.text(
+                (xs - shift[1]) // compress,
+                (ys - shift[0]) // compress,
+                str(node),
+                ha="center",
+                va="center",
+                size=size,
+                bbox=bbox,
+            )
+    plt.show()
