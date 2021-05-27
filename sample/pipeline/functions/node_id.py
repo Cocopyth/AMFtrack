@@ -483,7 +483,7 @@ def second_identification(
             corresp_tips[tip] = current_node
     print("tip_id", time() - t)
     t = time()
-    while len(ambiguous) > 0:
+    while len(ambiguous) > 0: #improve ambiguity resolving!
         node = ambiguous.pop()
         identifier = corresp_tips[node]
         candidates = [
