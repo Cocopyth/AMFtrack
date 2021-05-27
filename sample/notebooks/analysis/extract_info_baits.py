@@ -8,6 +8,9 @@ from sample.notebooks.analysis.data_info import *
 import pandas as pd
 from scipy.ndimage import gaussian_filter
 from scipy import ndimage
+import matplotlib.pyplot as plt
+import cv2
+import imageio
 
 path_code = "/home/cbisot/pycode/"
 plate_info = pd.read_excel(path_code + 'MscThesis/plate_info/SummaryAnalizedPlates.xlsx',engine='openpyxl',header=3,)
@@ -75,13 +78,43 @@ def get_curvature_density_bait(window, path,kern_sizes=[]):
         column_names.append(f'grad_density_x{kern_size}')
         column_names.append(f'grad_density_y{kern_size}')
         column_names.append(f'grad_density_norm{kern_size}')
+        column_names.append(f'area{kern_size}')
     compress = 100
     infos = pd.DataFrame(columns=column_names)
     for treatment in ['25*','25','baits']:
         insts = treatments[treatment]
         for inst in insts:
             exp = get_exp(inst,path)
+            exp.load_compressed_skel()
             density_maps = [get_density_maps(exp,t,compress,kern_sizes) for t in range(exp.ts)]
+            for index,density_map in enumerate(density_maps):
+                plt.close('all')
+                fig=plt.figure(figsize=(14,12))
+                ax = fig.add_subplot(111)
+                im= density_map[kern_size][0]
+                figure = ax.imshow(im>=0.0005,vmax = 0.01)
+                plt.colorbar(figure,orientation = 'horizontal')
+                save = f'/home/cbisot/pycode/MscThesis/sample/notebooks/plotting/Figure/im*{index}.png'
+                plt.savefig(save)
+            img_array = []
+            for index in range(len(density_maps)):
+                img = cv2.imread(f'/home/cbisot/pycode/MscThesis/sample/notebooks/plotting/Figure/im*{index}.png')
+                img_array.append(img)
+            imageio.mimsave(f'/home/cbisot/pycode/MscThesis/sample/notebooks/plotting/Figure/movie_dense_{kern_size}_{plate_number[inst]}_thresh.gif', img_array,duration = 1)            
+            for index,density_map in enumerate(density_maps):
+                plt.close('all')
+                fig=plt.figure(figsize=(14,12))
+                ax = fig.add_subplot(111)
+                im= density_map[kern_size][0]
+                figure = ax.imshow(im,vmax = 0.01)
+                plt.colorbar(figure,orientation = 'horizontal')
+                save = f'/home/cbisot/pycode/MscThesis/sample/notebooks/plotting/Figure/im*{index}.png'
+                plt.savefig(save)
+            img_array = []
+            for index in range(len(density_maps)):
+                img = cv2.imread(f'/home/cbisot/pycode/MscThesis/sample/notebooks/plotting/Figure/im*{index}.png')
+                img_array.append(img)
+            imageio.mimsave(f'/home/cbisot/pycode/MscThesis/sample/notebooks/plotting/Figure/movie_dense_{kern_size}_{plate_number[inst]}.gif', img_array,duration = 1)
             skeletons = [sparse.csr_matrix(skel) for skel in exp.skeletons]
             RH, BAS, max_speeds, total_growths, widths_sp, lengths, branch_frequ,select_hyph = get_rh_bas(exp,criter)
             for hyph in RH:
@@ -148,6 +181,7 @@ def get_curvature_density_bait(window, path,kern_sizes=[]):
                                 new_line_dic[f'grad_density_x{kern_size}'] = density_maps[t][kern_size][1][pos_comp]
                                 new_line_dic[f'grad_density_y{kern_size}'] = density_maps[t][kern_size][2][pos_comp]
                                 new_line_dic[f'grad_density_norm{kern_size}'] = density_maps[t][kern_size][3][pos_comp]
+                                new_line_dic[f'area{kern_size}'] = np.sum(density_maps[t][kern_size][0]>=0.0005)*compress**2
                             new_line = pd.DataFrame(new_line_dic
 
                             )  # index 0 for

@@ -191,12 +191,7 @@ def get_pixel_growth_and_new_children(hyphae, t1, t2):
     edges = hyphae.get_nodes_within(t2)[1]
     mini = np.inf
     if t1 not in hyphae.ts:
-        pixels = []
-        nodes = [hyphae.root]
-        for edge in edges:
-            pixels.append(edge.pixel_list(t2))
-            nodes.append(edge.end)
-        return (pixels, nodes)
+        raise Exception("t1 not in hyphae.ts") 
     else:
         if len(edges) == 0:
 #             print(hyphae.root, hyphae.end)
@@ -216,6 +211,8 @@ def get_pixel_growth_and_new_children(hyphae, t1, t2):
                         hyphae.end.pos(t1) - np.array(edge.pixel_list(t2)), axis=1
                     )
                 )
+        if mini>50:
+            print('failure in finding closest edge')
         pixels = [last_edge.pixel_list(t2)[index_nearest_pixel:]]
         nodes = [-1, last_edge.end]
         for edge in edges[index + 1:]:

@@ -43,7 +43,7 @@ for hyph in exp_clean.hyphaes:
 for hyph in to_remove:
     exp_clean.hyphaes.remove(hyph)
 get_mother(exp_clean.hyphaes)
-solve_two_ends = resolve_ambiguity_two_ends(exp_clean.hyphaes)
+# solve_two_ends = resolve_ambiguity_two_ends(exp_clean.hyphaes)
 # solved = solve_degree4(exp_clean)
 clean_obvious_fake_tips(exp_clean)
 dirName = f"{directory}Analysis_Plate{plate}_{dates[0]}_{dates[-1]}"
@@ -52,8 +52,8 @@ try:
     print("Directory ", dirName, " Created ")
 except FileExistsError:
     print("Directory ", dirName, " already exists")
-hyphs, gr_inf = save_hyphaes(
-    exp_clean, f"{directory}Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/"
-)
-exp_clean.save(f"{directory}Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/")
+# hyphs, gr_inf = save_hyphaes(
+#     exp_clean, f"{directory}Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/"
+# )
+# exp_clean.save(f"{directory}Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/")
 exp_clean.pickle_save(f"{directory}Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/")
