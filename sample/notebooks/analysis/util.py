@@ -152,6 +152,7 @@ def get_length(exp,t):
 
 def get_curvature_density(inst,window, path):
     exp = get_exp(inst,path)
+    exp.load_compressed_skel()
     skeletons = [sparse.csr_matrix(skel) for skel in exp.skeletons]
     length_network= [get_length(exp,t) for t in range(exp.ts)]
     RH, BAS, max_speeds, total_growths, widths_sp, lengths, branch_frequ,select_hyph = get_rh_bas(exp,criter)

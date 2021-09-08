@@ -173,7 +173,7 @@ def from_sparse_to_graph(doc_skel):
 
 
 def from_nx_to_tab(nx_graph, pos):
-    column_names = ["origin_label", "end_label", "origin_pos", "end_pos", "pixel_list"]
+    column_names = ["origin_label", "end_label", "origin_pos", "end_pos", "pixel_list","width"]
     tab = pd.DataFrame(columns=column_names)
     for edge in nx_graph.edges:
         origin_label = edge[0]
@@ -181,6 +181,7 @@ def from_nx_to_tab(nx_graph, pos):
         origin_pos = pos[origin_label]
         end_pos = pos[end_label]
         pixel_list = orient(nx_graph.get_edge_data(*edge)["pixel_list"], origin_pos)
+        width = nx_graph.get_edge_data(*edge)["width"]
         new_line = pd.DataFrame(
             {
                 "origin_label": [origin_label],
@@ -188,6 +189,7 @@ def from_nx_to_tab(nx_graph, pos):
                 "origin_pos": [origin_pos],
                 "end_pos": [end_pos],
                 "pixel_list": [pixel_list],
+                "width":[width]
             }
         )
         tab = tab.append(new_line, ignore_index=True)
