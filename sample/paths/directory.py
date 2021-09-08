@@ -52,14 +52,14 @@ def check_state(plate,begin,end,file,directory):
             not_exist.append((date,i+begin))
     return(not_exist)
 
-def make_stitching_loop(directory,dirname,index):
+def make_stitching_loop(directory,dirname,index,plate):
     a_file = open(f'{path_code}MscThesis/sample/pipeline/scripts/stitching_loops/stitching_loop.ijm',"r")
 
     list_of_lines = a_file.readlines()
 
     list_of_lines[4] = f'mainDirectory = \u0022{directory}\u0022 ;\n'
     list_of_lines[29] = f'\t if(startsWith(list[i],\u0022{dirname}\u0022)) \u007b\n'
-    file_name = f'{path_code}MscThesis/sample/pipeline/scripts/stitching_loops/stitching_loop{index}.ijm'
+    file_name = f'{path_code}MscThesis/sample/pipeline/scripts/stitching_loops/stitching_loop{index}_{plate}.ijm'
     a_file = open(file_name, "w")
 
     a_file.writelines(list_of_lines)
@@ -76,7 +76,7 @@ def run_parallel_stitch(plate, directory, begin, end, num_parallel, time):
         start = num_parallel * j + begin % num_parallel
         stop = num_parallel * j + num_parallel + begin % num_parallel
         for k in range(start,stop):
-            make_stitching_loop(directory,get_dirname(dates_datetime[k], plate),k)
+            make_stitching_loop(directory,get_dirname(dates_datetime[k], plate),k,plate)
         ide = int(datetime.now().timestamp())
         my_file = open(path_job, "w")
         my_file.write(
@@ -86,7 +86,7 @@ def run_parallel_stitch(plate, directory, begin, end, num_parallel, time):
             f'#SBATCH -o "{path_code}MscThesis/slurm/stitching__{start}_{stop}_{ide}.out" \n'
         )
         for k in range(start,stop):
-            my_file.write(f"~/Fiji.app/ImageJ-linux64 --headless -macro  {path_code}MscThesis/sample/pipeline/scripts/stitching_loops/stitching_loop{k}.ijm &\n")
+            my_file.write(f"~/Fiji.app/ImageJ-linux64 --headless -macro  {path_code}MscThesis/sample/pipeline/scripts/stitching_loops/stitching_loop{k}_{plate}.ijm &\n")
         my_file.write("wait\n")
         my_file.close()
         call(f"sbatch {path_job}", shell=True)
