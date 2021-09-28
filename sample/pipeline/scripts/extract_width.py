@@ -9,6 +9,7 @@ import networkx as nx
 
 plate = int(sys.argv[1])
 directory = str(sys.argv[2])
+skip = str(sys.argv[3])
 i = int(sys.argv[-1])
 dates_datetime = get_dates_datetime(directory,plate)
 dates_datetime.sort()
@@ -25,7 +26,7 @@ dates = dates_datetime_chosen
 exp = Experiment(plate, directory)
 exp.load(dates,False)
 G,pos = exp.nx_graph[0],exp.positions[0]
-edge_test = get_width_info(exp,0)
+edge_test = get_width_info(exp,0,skip=skip)
 nx.set_edge_attributes(G, edge_test, 'width')
 date = exp.dates[0]
 directory_name = get_dirname(date, exp.plate)

@@ -149,14 +149,18 @@ def get_width_edge(edge,resolution,t,local=False, threshold_averaging = 10):
     edge.experiment.nx_graph[t].get_edge_data(edge.begin.label,edge.end.label)['width'] = widths
     return(widths)      
 
-def get_width_info(experiment,t,resolution = 50):
+def get_width_info(experiment,t,resolution = 50,skip=False):
     edge_width={}
     graph = experiment.nx_graph[t]
 #     print(len(list(graph.edges)))
     for edge in graph.edges:
+        if not skip:
 #         print(edge)
-        edge_exp = Edge(Node(edge[0],experiment),Node(edge[1],experiment),experiment)
-        mean = np.mean(list(get_width_edge(edge_exp,resolution,t).values()))
-#         print(np.mean(list(get_width_edge(edge_exp,resolution,t).values())))
-        edge_width[edge]=mean
+            edge_exp = Edge(Node(edge[0],experiment),Node(edge[1],experiment),experiment)
+            mean = np.mean(list(get_width_edge(edge_exp,resolution,t).values()))
+    #         print(np.mean(list(get_width_edge(edge_exp,resolution,t).values())))
+            edge_width[edge]=mean
+        else:
+           #Maybe change to Nan if it doesnt break the rest
+            edge_width[edge]=40
     return(edge_width)

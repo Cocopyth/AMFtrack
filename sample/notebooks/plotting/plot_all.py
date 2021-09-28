@@ -38,15 +38,16 @@ for treatment in treatments.keys():
     for inst in insts:
         plate_label = plate_number[inst] 
         plate,begin,end = inst
+        print(inst)
         dates_datetime = get_dates_datetime(directory,plate)
         dates_datetime_chosen=dates_datetime[begin:end+1]
-        dates = [f'{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}' for date in dates_datetime_chosen]
+        dates = [f'{date.year}{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}' for date in dates_datetime_chosen]
         skels = []
         ims = []
         kernel = np.ones((5,5),np.uint8)
         itera = 1
         for date in dates:
-            directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
+            directory_name=f'{date}_Plate{0 if plate<10 else ""}{plate}'
             path_snap=directory+directory_name
             skel_info = read_mat(path_snap+'/Analysis/skeleton_pruned_compressed.mat')
             skel = skel_info['skeleton']
@@ -75,13 +76,13 @@ for treatment in treatments.keys():
         plate,begin,end = inst
         dates_datetime = get_dates_datetime(directory,plate)
         dates_datetime_chosen=dates_datetime[begin:end+1]
-        dates = [f'{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}' for date in dates_datetime_chosen]
+        dates = [f'{date.year}{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}' for date in dates_datetime_chosen]
         skels = []
         ims = []
         kernel = np.ones((5,5),np.uint8)
         itera = 2
         for date in dates:
-            directory_name=f'2020{date}_Plate{0 if plate<10 else ""}{plate}'
+            directory_name=f'{date}_Plate{0 if plate<10 else ""}{plate}'
             path_snap=directory+directory_name
             skel_info = read_mat(path_snap+'/Analysis/skeleton_realigned_compressed.mat')
             skel = skel_info['skeleton']

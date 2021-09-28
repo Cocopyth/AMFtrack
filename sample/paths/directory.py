@@ -75,7 +75,7 @@ def run_parallel_stitch(plate, directory, begin, end, num_parallel, time):
     for j in range(begin_skel, end_skel):
         start = num_parallel * j + begin % num_parallel
         stop = num_parallel * j + num_parallel + begin % num_parallel
-        for k in range(start,stop):
+        for k in range(start,min(stop,len(dates_datetime))):
             make_stitching_loop(directory,get_dirname(dates_datetime[k], plate),k,plate)
         ide = int(datetime.now().timestamp())
         my_file = open(path_job, "w")
