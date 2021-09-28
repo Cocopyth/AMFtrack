@@ -191,7 +191,7 @@ def reduce_labels(nx_graph_list, pos_list):
     return (new_graphs, new_poss)
 
 
-def reconnect_degree_2(nx_graph, pos):
+def reconnect_degree_2(nx_graph, pos,has_width=True):
     degree_2_nodes = [node for node in nx_graph.nodes if nx_graph.degree(node) == 2]
     while len(degree_2_nodes) > 0:
         node = degree_2_nodes.pop()
@@ -200,8 +200,13 @@ def reconnect_degree_2(nx_graph, pos):
         left_n = neighbours[1]
         right_edge = nx_graph.get_edge_data(node, right_n)["pixel_list"]
         left_edge = nx_graph.get_edge_data(node, left_n)["pixel_list"]
-        right_edge_width = nx_graph.get_edge_data(node, right_n)["width"]
-        left_edge_width = nx_graph.get_edge_data(node, left_n)["width"]
+        if has_width:
+            right_edge_width = nx_graph.get_edge_data(node, right_n)["width"]
+            left_edge_width = nx_graph.get_edge_data(node, left_n)["width"]
+        else:
+            #Maybe change to Nan if it doesnt break the rest
+            right_edge_width = 40
+            left_edge_width = 40
         if np.any(right_edge[0] != pos[node]):
             right_edge = list(reversed(right_edge))
         if np.any(left_edge[-1] != pos[node]):
@@ -454,6 +459,7 @@ def second_identification(
             #                     print('angle',dot_product,pos_t[last_node],pos_t[current_node],pos_t[neighbours_t],angle/(2*np.pi)*360)
             #!!!bug may happen here if two nodes are direct neighbours : I would nee to check further why it the case, optimal segmentation should avoid this issue.
             # This is especially a problem for degree 4 nodes. Maybe fuse nodes that are closer than 3 pixels.
+            #Update on comment above, the fusing has been done. However the current tracking methodology may fail for short edges.
             if i >= 100:
                 print(mini / (2 * np.pi) * 360, pos_t[next_node])
                 if next_node in loop:
@@ -877,3 +883,18 @@ def shift(skeleton1, skeleton2):
         method="nelder-mead",
         options={"xatol": 1, "disp": True, "fatol": 0.1},
     )
+
+def remove_spurs(nx_g,pos,threshold = 100):
+    found = True
+    while found:
+        spurs = []
+        found = False
+        for edge in nx_g.edges:
+            edge_data = nx_g.get_edge_data(*edge)
+            if (nx_g.degree(edge[0])==1 or nx_g.degree(edge[1])==1) and edge_data['weight']<threshold:
+                spurs.append(edge)
+                found = True
+        for spur in spurs:
+            nx_g.remove_edge(spur[0],spur[1])
+        reconnect_degree_2(nx_g, pos,has_width = False)
+    return(nx_g,pos)

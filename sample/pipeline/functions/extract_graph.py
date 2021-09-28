@@ -324,12 +324,12 @@ def clean_degree_4(nx_graph, pos, thresh=30):
     return (nx_graph_clean, difficult_cases)
 
 
-def generate_skeleton(nx_graph, dim=(3000, 4096)):
-    skel = sparse.dok_matrix(dim, dtype=bool)
-    for edge in nx_graph.edges.data("pixel_list"):
-        for pixel in edge[2]:
-            skel[pixel] = True
-    return skel
+# def generate_skeleton(nx_graph, dim=(3000, 4096)):
+#     skel = sparse.dok_matrix(dim, dtype=bool)
+#     for edge in nx_graph.edges.data("pixel_list"):
+#         for pixel in edge[2]:
+#             skel[pixel] = True
+#     return skel
 
 
 def prune_graph(nx_graph,threshold):
@@ -487,3 +487,4 @@ def get_degree3_nodes(skel):
         if num ==3:
             deg_3.append(pixel)
     return(deg_3)
+

@@ -33,7 +33,8 @@ dates_datetime_chosen = dates_datetime[begin : end + 1]
 dates = dates_datetime_chosen
 exp = Experiment(plate, directory)
 exp.load(dates)
-width_based_cleaning(exp)
+#when no width is included
+# width_based_cleaning(exp)
 exp_clean = clean_and_relabel(exp)
 to_remove = []
 for hyph in exp_clean.hyphaes:

@@ -67,7 +67,7 @@ for index,im in enumerate(ims):
     print(index)
     im_cropped = im
     im_blurred =cv2.blur(im_cropped, (200, 200))
-    im_back_rem = (im_cropped+1)/(im_blurred+1)*120
+    im_back_rem = (im_cropped)/((im_blurred==0)*np.ones(im_blurred.shape)+im_blurred)*120
     im_back_rem[im_back_rem>=130]=130
     # # im_back_rem = im_cropped*1.0
     # # # im_back_rem = cv2.normalize(im_back_rem, None, 0, 255, cv2.NORM_MINMAX)
