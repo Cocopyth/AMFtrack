@@ -1,8 +1,12 @@
+from pymatreader import read_mat
 from scipy import sparse
 import numpy as np
 import os
 from datetime import datetime, timedelta
 import pandas
+from sample.pipeline.functions.extract_graph import from_sparse_to_graph, generate_nx_graph, sparse_to_doc
+import cv2
+
 path_code = "/home/cbisot/pycode/"
 plate_info = pandas.read_excel(path_code + 'MscThesis/plate_info/SummaryAnalizedPlates.xlsx',engine='openpyxl',header=3,)
 
@@ -94,3 +98,34 @@ def shift_skeleton(skeleton, shift):
             shifted_skeleton[shifted_pixel] = 1
     return shifted_skeleton
 
+def transform_skeleton_final_for_show(skeleton_doc,Rot,trans):
+    skeleton_transformed={}
+    transformed_keys = np.round(np.transpose(np.dot(Rot,np.transpose(np.array(list(skeleton_doc.keys())))))+trans).astype(np.int)
+    i=0
+    for pixel in list(transformed_keys):
+        i+=1
+        skeleton_transformed[(pixel[0],pixel[1])]=1
+    skeleton_transformed_sparse=sparse.lil_matrix((27000, 60000))
+    for pixel in list(skeleton_transformed.keys()):
+        i+=1
+        skeleton_transformed_sparse[(pixel[0],pixel[1])]=1
+    return(skeleton_transformed_sparse)
+
+def get_skeleton(exp,boundaries,t,directory):
+    i = t
+    plate = exp.plate   
+    listdir=os.listdir(directory) 
+    dates = exp.dates
+    date =dates [i]
+    directory_name = get_dirname(date, plate)
+    path_snap=directory+directory_name
+    skel = read_mat(path_snap+'/Analysis/skeleton_pruned_realigned.mat')
+    skelet = skel['skeleton']
+    skelet = sparse_to_doc(skelet)
+    Rot= skel['R']
+    trans = skel['t']
+    skel_aligned = transform_skeleton_final_for_show(skelet,np.array([[1,0],[0,1]]),np.array([0,0]))
+    output = skel_aligned[boundaries[2]:boundaries[3],boundaries[0]:boundaries[1]].todense()
+    kernel = np.ones((5,5),np.uint8)
+    output = cv2.dilate(output.astype(np.uint8),kernel,iterations = 2)
+    return(output,Rot,trans)
