@@ -270,3 +270,7 @@ def estimate_angle(inst,criter,path):
     angles_rh = [(c[0]+180)%360-180 for c in angles if c[1][1] in RH]
     angles_bas = [(c[0]+180)%360-180 for c in angles if c[1][1] in BAS]
     return(angles_rh,angles_bas)
+
+def get_rh_from_label(label,exp):
+    return([hyph for hyph in exp.hyphaes if hyph.end.label == label][0])
+

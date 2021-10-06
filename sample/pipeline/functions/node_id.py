@@ -222,6 +222,11 @@ def reconnect_degree_2(nx_graph, pos,has_width=True):
                 nx_graph.add_edges_from([(right_n, left_n, info)])
         nx_graph.remove_node(node)
         degree_2_nodes = [node for node in nx_graph.nodes if nx_graph.degree(node) == 2]
+    degree_0_nodes = [node for node in nx_graph.nodes if nx_graph.degree(node) == 2]
+    for node in degree_0_nodes:
+        nx_graph.remove_node(node)
+
+
 
 
 def clean_nodes(nx_graph, to_remove, pos):
