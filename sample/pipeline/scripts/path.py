@@ -1,1 +1,0 @@
-path_code_dir = "/home/cbisot/pycode/MscThesis"
