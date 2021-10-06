@@ -16,6 +16,7 @@ for the script
 - git clone https://github.com/gattia/cycpd
 - cd cycpd
 - sudo python setup.py install
+- pip install bresenham
 <!-- - conda install -c anaconda ipykernel -->
 
 *For nice display*

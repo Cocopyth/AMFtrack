@@ -1,0 +1,35 @@
+from path import path_code_dir
+import sys  
+sys.path.insert(0, path_code_dir)
+from amftrack.pipeline.functions.extract_width_fun import *
+from amftrack.pipeline.functions.experiment_class_surf import Experiment
+from amftrack.util import get_dates_datetime, get_dirname
+import pickle
+import networkx as nx
+
+plate = int(sys.argv[1])
+directory = str(sys.argv[2])
+skip = str(sys.argv[3])
+i = int(sys.argv[-1])
+dates_datetime = get_dates_datetime(directory,plate)
+dates_datetime.sort()
+date_datetime = dates_datetime[i]
+date = date_datetime
+directory_name = get_dirname(date, plate)
+path_snap = directory + directory_name
+begin = i
+end = i
+dates_datetime = get_dates_datetime(directory,plate)
+dates_datetime.sort()
+dates_datetime_chosen = dates_datetime[begin : end + 1]
+dates = dates_datetime_chosen
+exp = Experiment(plate, directory)
+exp.load(dates,False)
+G,pos = exp.nx_graph[0],exp.positions[0]
+edge_test = get_width_info(exp,0,skip=skip)
+nx.set_edge_attributes(G, edge_test, 'width')
+date = exp.dates[0]
+directory_name = get_dirname(date, exp.plate)
+path_snap = directory + directory_name
+print(f'saving {path_snap}')
+pickle.dump((G,pos), open(f'{path_snap}/Analysis/nx_graph_pruned_width.p', "wb"))
