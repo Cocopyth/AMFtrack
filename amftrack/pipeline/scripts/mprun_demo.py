@@ -23,11 +23,11 @@ def test():
     from amftrack.util import get_dates_datetime, get_dirname, get_plate_number, get_postion_number
 
     i = 0
-    plate = 39
+    plate = 31
     low = 30
     high = 80
     dist = 30
-    directory = r'C:\Users\coren\Documents\PhD\Code\data/'
+    directory = directory_scratch
     dates_datetime = get_dates_datetime(directory,plate)
     dates_datetime.sort()
     dates = dates_datetime

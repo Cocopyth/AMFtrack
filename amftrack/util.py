@@ -6,9 +6,11 @@ from datetime import datetime, timedelta
 import pandas
 from amftrack.pipeline.functions.extract_graph import from_sparse_to_graph, generate_nx_graph, sparse_to_doc
 import cv2
+import json
+import pandas as pd
 
-# path_code = "/home/cbisot/pycode/"
-path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack'
+path_code = "/home/cbisot/pycode/MscThesis/"
+# path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack'
 plate_info = pandas.read_excel(path_code+r'/plate_info/SummaryAnalizedPlates.xlsx',engine='openpyxl',header=3,)
 
 
@@ -130,3 +132,39 @@ def get_skeleton(exp,boundaries,t,directory):
     kernel = np.ones((5,5),np.uint8)
     output = cv2.dilate(output.astype(np.uint8),kernel,iterations = 2)
     return(output,Rot,trans)
+
+def get_param(folder,directory): #Very ugly but because interfacing with Matlab so most elegant solution.
+    path_snap=directory+folder
+    file1 = open(path_snap + "/param.m", 'r')
+    Lines = file1.readlines()
+    ldict = {}
+    for line in Lines:
+        exec(line.split(';')[0],globals(),ldict)
+    return(ldict)
+
+def update_plate_info(directory):
+    listdir = os.listdir(directory)
+    plate_info = json.load(open('data_info.json', 'r')) if os.path.isfile('data_info.json') else {}
+    for folder in listdir:
+        path_snap=directory+folder
+        if os.path.isfile(path_snap + "/param.m"):
+            params = get_param(folder,directory)
+            plate_info[folder] = params
+    with open('data_info.json', 'w') as jsonf:
+        json.dump(plate_info, jsonf,  indent=4)
+        
+def get_data_info():
+    data_info = pd.read_json('data_info.json',
+   convert_dates=True).transpose()
+    data_info.index.name = 'folder'
+    data_info.reset_index(inplace=True)
+    return(data_info)
+
+def get_current_folders(directory):
+    plate_info = get_data_info()
+    listdir = os.listdir(directory)
+    return(plate_info.loc[np.isin(plate_info['folder'],listdir)])
+
+def get_folders_by_plate_id(plate_id, directory = None):
+    data_info = get_data_info() if directory is None else get_current_folders(directory)
+    return(data_info.loc[10**8*data_info['Plate']+data_info['CrossDate']== plate_id])

@@ -11,10 +11,10 @@ directory_project = "/projects/0/einf914/data/"
 
 
 
-# path_job = "/home/cbisot/bash/job.sh"
-# path_code = "/home/cbisot/pycode/MscThesis/"
-path_job = r'C:\Users\coren\Documents\PhD\Code\bash\job.sh'
-path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack/'
+path_job = "/home/cbisot/bash/job.sh"
+path_code = "/home/cbisot/pycode/MscThesis/"
+# path_job = r'C:\Users\coren\Documents\PhD\Code\bash\job.sh'
+# path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack/'
 
 def run_parallel(code, args, begin, end, num_parallel, time, name):
     begin_skel = begin // num_parallel
