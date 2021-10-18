@@ -17,6 +17,7 @@ for the script
 - cd cycpd
 - sudo python setup.py install
 - pip install bresenham
+- conda install scikit-image
 <!-- - conda install -c anaconda ipykernel -->
 
 *For nice display*
