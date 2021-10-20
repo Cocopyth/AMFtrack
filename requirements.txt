@@ -18,6 +18,7 @@ for the script
 - sudo python setup.py install
 - pip install bresenham
 - conda install scikit-image
+- conda install -c conda-forge scikit-learn 
 <!-- - conda install -c anaconda ipykernel -->
 
 *For nice display*
