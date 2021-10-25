@@ -6,7 +6,7 @@ for the script
 -  conda install -c anaconda pandas
 -  conda install -c anaconda networkx
 -  conda install -c conda-forge matplotlib
--  conda install -c obob pymatreader
+-  pip install pymatreader
 -  conda install -c anaconda numpy
 -  conda install -c conda-forge opencv
 -  pip install imageio #use pip here to avoid conflict
@@ -17,11 +17,16 @@ for the script
 - cd cycpd
 - sudo python setup.py install
 - pip install bresenham
+- conda install scikit-image
+- conda install -c conda-forge scikit-learn 
 <!-- - conda install -c anaconda ipykernel -->
 
 *For nice display*
 - conda install -c conda-forge ipympl
 - conda install -c conda-forge nodejs
+- conda install -c conda-forge/label/gcc7 nodejs
+- conda install -c conda-forge/label/cf201901 nodejs
+- conda install -c conda-forge/label/cf202003 nodejs
 - jupyter labextension install @jupyter-widgets/jupyterlab-manager
 - jupyter lab build
 
