@@ -6,7 +6,7 @@ import pickle
 from amftrack.pipeline.functions.experiment_class_surf import Edge,Node
 from random import choice
 import networkx as nx
-from amftrack.pipeline.pipeline.paths.directory import directory_scratch, path_code
+from amftrack.pipeline.paths.directory import directory_scratch, path_code
 from scipy import sparse
 from amftrack.pipeline.functions.hyphae_id_surf import get_pixel_growth_and_new_children
 
@@ -55,7 +55,7 @@ def get_exp(inst, directory=directory_scratch):
     end = inst[2]
     dates_datetime = get_dates_datetime(directory,plate)
     print('begin =',dates_datetime[begin],'\n  end =',dates_datetime[end])
-    dates_datetime_chosen=dates_datetime[begin:end+1]
+    dates_datetime_chosen = dates_datetime[begin:end+1]
     dates = dates_datetime_chosen
     exp = pickle.load( open(f'{directory}/Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/experiment_{plate}.pick', "rb" ) )
     return(exp)

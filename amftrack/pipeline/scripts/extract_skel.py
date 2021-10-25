@@ -19,20 +19,22 @@ from time import time
 from skimage.feature import hessian_matrix_det
 from amftrack.pipeline.functions.extract_graph import from_sparse_to_graph, generate_nx_graph
 from amftrack.pipeline.functions.extract_skel import extract_skel_tip_ext
-from amftrack.util import get_dates_datetime, get_dirname, get_plate_number, get_postion_number
-
+from amftrack.util import get_dates_datetime, get_dirname
+from amftrack.pipeline.paths.directory import directory_scratch
+from subprocess import call
+from path import path_code_dir
 i = int(sys.argv[-1])
-plate = int(sys.argv[1])
-low = int(sys.argv[2])
-high = int(sys.argv[3])
-dist = int(sys.argv[4])
-directory = str(sys.argv[5])
+op_id = int(sys.argv[-2])
+low = int(sys.argv[1])
+high = int(sys.argv[2])
+dist = int(sys.argv[3])
+directory = str(sys.argv[4])
 
-dates_datetime = get_dates_datetime(directory,plate)
-dates_datetime.sort()
-dates = dates_datetime
-date = dates[i]
-directory_name = get_dirname(date, plate)
+run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
+folder_list = list(run_info['folder'])
+folder_list.sort()
+print(folder_list)
+directory_name = folder_list[i]
 path_snap=directory+directory_name
 path_tile=path_snap+'/Img/TileConfiguration.txt.registered'
 try:
@@ -53,29 +55,16 @@ xs =[c[0] for c in tileconfig[2]]
 ys =[c[1] for c in tileconfig[2]]
 dim = (int(np.max(ys)-np.min(ys))+4096,int(np.max(xs)-np.min(xs))+4096)
 ims = []
-# for index,name in enumerate(tileconfig[0]):
-#     imname = '/Img/'+name.split('/')[-1]
-# #     ims.append(imageio.imread('//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'+date_plate+plate_str+'/Img/'+name))
-#     ims.append(imageio.imread(directory+directory_name+imname))
 skel = np.zeros(dim,dtype=np.uint8)
 # contour = scipy.sparse.lil_matrix(dim,dtype=np.uint8)
 # half_circle = scipy.sparse.lil_matrix(dim,dtype=np.uint8)
+# for k,name in enumerate(tileconfig[0]):
+# #     call(f'conda activate amftrack')
+#     call(f'python {path_code_dir}/amftrack/pipeline/scripts/extract_skel_indiv.py {low} {high} {dist} {directory} {op_id} {k} {i}')
 for index,name in enumerate(tileconfig[0]):
     imname = '/Img/'+name.split('/')[-1]
-#     ims.append(imageio.imread('//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'+date_plate+plate_str+'/Img/'+name))
     im = imageio.imread(directory+directory_name+imname)
-    print(index)
-#     im_cropped = im
-#     im_blurred =cv2.blur(im_cropped, (200, 200))
-#     im_back_rem = (im_cropped)/((im_blurred==0)*np.ones(im_blurred.shape)+im_blurred)*120
-#     im_back_rem[im_back_rem>=130]=130
-#     hessian = hessian_matrix_det(im_back_rem,sigma = 20)
-#     blur_hessian = cv2.blur(abs(hessian), (20, 20))
-# #     transformed = (frangised+cv2.normalize(blur_hessian, None, 0, 255, cv2.NORM_MINMAX)-im_back_rem+120)*(im_blurred>=35)
-# #     transformed = (frangised+cv2.normalize(abs(hessian), None, 0, 255, cv2.NORM_MINMAX)-im_back_rem+120)*(im_blurred>=35)
-#     #for every component in the image, you keep it only if it's above min_size
-#     laplacian = cv2.Laplacian((im_cropped<=15).astype(np.uint8),cv2.CV_64F)
-#     points = laplacian>=4
+    # print(index)
     segmented = extract_skel_tip_ext(im,low,high,dist)
 #     np.save(f'Temp\dilated{tileconfig[0][i]}',dilated)
     boundaries = int(tileconfig[2][index][0]-np.min(xs)),int(tileconfig[2][index][1]-np.min(ys))

@@ -13,18 +13,17 @@ import numpy as np
 import scipy.sparse
 import os
 from time import time
+from amftrack.pipeline.paths.directory import directory_scratch
 
 i = int(sys.argv[-1])
-plate = int(sys.argv[1])
-thresh = int(sys.argv[2])
-directory = str(sys.argv[3])
+op_id = int(sys.argv[-2])
+thresh = int(sys.argv[1])
+directory = str(sys.argv[2])
 
-dates_datetime = get_dates_datetime(directory,plate)
-dates_datetime.sort()
-dates_datetime_chosen = dates_datetime
-dates = dates_datetime_chosen
-date = dates[i]
-directory_name = get_dirname(date, plate)
+run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
+folder_list = list(run_info['folder'])
+folder_list.sort()
+directory_name = folder_list[i]
 path_snap=directory+directory_name
 path_tile=path_snap+'/Img/TileConfiguration.txt.registered'
 try:

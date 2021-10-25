@@ -11,7 +11,7 @@ import pandas as pd
 
 path_code = "/home/cbisot/pycode/MscThesis/"
 # path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack'
-plate_info = pandas.read_excel(path_code+r'/plate_info/SummaryAnalizedPlates.xlsx',engine='openpyxl',header=3,)
+# plate_info = pandas.read_excel(path_code+r'/plate_info/SummaryAnalizedPlates.xlsx',engine='openpyxl',header=3,)
 
 
 def get_path(date, plate, skeleton, row=None, column=None, extension=".mat"):
@@ -58,33 +58,33 @@ def get_dates_datetime(directory, plate):
 def get_dirname(date,plate):
     return(f'{date.year}{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}_Plate{0 if plate<10 else ""}{plate}')
 
-def get_plate_number(position_number,date):
-    for index,row in plate_info.loc[plate_info['Position #']==position_number].iterrows():
-        if type(row['crossed date'])==datetime:
-            date_crossed = row['crossed date']
-            date_harvest = row['harvest date']+timedelta(days=1)
-        else:
-            date_crossed = datetime.strptime(row['crossed date'], "%d.%m.%Y")
-            date_harvest = datetime.strptime(row['harvest date'], "%d.%m.%Y")+timedelta(days=1)
-        if date>= date_crossed and date<= date_harvest:
-            return(row['Plate #'])
+# def get_plate_number(position_number,date):
+#     for index,row in plate_info.loc[plate_info['Position #']==position_number].iterrows():
+#         if type(row['crossed date'])==datetime:
+#             date_crossed = row['crossed date']
+#             date_harvest = row['harvest date']+timedelta(days=1)
+#         else:
+#             date_crossed = datetime.strptime(row['crossed date'], "%d.%m.%Y")
+#             date_harvest = datetime.strptime(row['harvest date'], "%d.%m.%Y")+timedelta(days=1)
+#         if date>= date_crossed and date<= date_harvest:
+#             return(row['Plate #'])
         
-def get_postion_number(plate_number):
-    for index,row in plate_info.loc[plate_info['Plate #']==plate_number].iterrows():
-            return(row['Position #'])
+# def get_postion_number(plate_number):
+#     for index,row in plate_info.loc[plate_info['Plate #']==plate_number].iterrows():
+#             return(row['Position #'])
 
-def get_begin_index(plate_number,directory):
-    plate = get_postion_number(plate_number)
-    dates_datetime = get_dates_datetime(directory,plate)
-    plate_number_found = get_plate_number(plate,dates_datetime[0])
-    print(0,plate_number)
-    for i in range(len(dates_datetime)):
-        new_plate_number = get_plate_number(plate,dates_datetime[i])
-        if plate_number_found!=new_plate_number:
-            plate_number_found=new_plate_number
-            print(i,plate_number_found)
-        if plate_number_found == plate_number:
-            return(i,dates_datetime[i])
+# def get_begin_index(plate_number,directory):
+#     plate = get_postion_number(plate_number)
+#     dates_datetime = get_dates_datetime(directory,plate)
+#     plate_number_found = get_plate_number(plate,dates_datetime[0])
+#     print(0,plate_number)
+#     for i in range(len(dates_datetime)):
+#         new_plate_number = get_plate_number(plate,dates_datetime[i])
+#         if plate_number_found!=new_plate_number:
+#             plate_number_found=new_plate_number
+#             print(i,plate_number_found)
+#         if plate_number_found == plate_number:
+#             return(i,dates_datetime[i])
 
 def shift_skeleton(skeleton, shift):
     shifted_skeleton = sparse.dok_matrix(skeleton.shape, dtype=bool)
@@ -140,6 +140,13 @@ def get_param(folder,directory): #Very ugly but because interfacing with Matlab 
     ldict = {}
     for line in Lines:
         exec(line.split(';')[0],globals(),ldict)
+    files = [ '/Img/TileConfiguration.txt.registered', '/Analysis/skeleton_compressed.mat', 
+         '/Analysis/skeleton_masked_compressed.mat',
+         '/Analysis/skeleton_pruned_compressed.mat', '/Analysis/transform.mat',
+         '/Analysis/transform_corrupt.mat',
+         '/Analysis/skeleton_realigned_compressed.mat']
+    for file in files:
+        ldict[file] = os.path.isfile(path_snap + file)
     return(ldict)
 
 def update_plate_info(directory):
@@ -149,6 +156,16 @@ def update_plate_info(directory):
         path_snap=directory+folder
         if os.path.isfile(path_snap + "/param.m"):
             params = get_param(folder,directory)
+            ss = folder.split("_")[0]
+            ff = folder.split("_")[1]
+            date = datetime(
+                    year=int(ss[:4]),
+                    month=int(ss[4:6]),
+                    day=int(ss[6:8]),
+                    hour=int(ff[0:2]),
+                    minute=int(ff[2:4]),
+                )
+            params['date'] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
             plate_info[folder] = params
     with open('data_info.json', 'w') as jsonf:
         json.dump(plate_info, jsonf,  indent=4)
@@ -165,6 +182,12 @@ def get_current_folders(directory):
     listdir = os.listdir(directory)
     return(plate_info.loc[np.isin(plate_info['folder'],listdir)])
 
-def get_folders_by_plate_id(plate_id, directory = None):
+def get_folders_by_plate_id(plate_id, begin = 0, end = -1, directory = None):
     data_info = get_data_info() if directory is None else get_current_folders(directory)
-    return(data_info.loc[10**8*data_info['Plate']+data_info['CrossDate']== plate_id])
+    folders = data_info.loc[10**8*data_info['Plate']+data_info['CrossDate']== plate_id]
+    dates_datetime = [datetime.strptime(row['date'],"%d.%m.%Y, %H:%M:") for index,row in folders.iterrows()]
+    dates_datetime.sort()
+    dates_datetime_select = dates_datetime[begin: end]
+    dates_str = [datetime.strftime(date, "%d.%m.%Y, %H:%M:") for date in dates_datetime_select]
+    select_folders = folders.loc[np.isin(folders['date'],dates_str)]
+    return(select_folders)

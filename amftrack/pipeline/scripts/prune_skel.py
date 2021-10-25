@@ -19,17 +19,18 @@ from amftrack.pipeline.functions.extract_graph import (
 from amftrack.util import get_dates_datetime, get_dirname
 import scipy.sparse
 import scipy.io as sio
+from amftrack.pipeline.paths.directory import directory_scratch
+import pandas as pd
 
-plate = int(sys.argv[1])
 i = int(sys.argv[-1])
-threshold = float(sys.argv[2])
-directory = str(sys.argv[3])
+op_id = int(sys.argv[-2])
+threshold = float(sys.argv[1])
+directory = str(sys.argv[2])
 
-dates_datetime = get_dates_datetime(directory,plate)
-dates_datetime.sort()
-date_datetime = dates_datetime[i]
-date = date_datetime
-directory_name = get_dirname(date, plate)
+run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
+folder_list = list(run_info['folder'])
+folder_list.sort()
+directory_name = folder_list[i]
 path_snap = directory + directory_name
 skel = read_mat(path_snap + "/Analysis/skeleton_masked.mat")["skeleton"]
 skeleton = scipy.sparse.dok_matrix(skel)
@@ -40,8 +41,6 @@ skeleton = scipy.sparse.dok_matrix(skel)
 # nx_graph_pruned=[clean_degree_4(prune_graph(nx_graph),poss_aligned[i])[0] for i,nx_graph in enumerate(nx_graphs_aligned)]
 nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
 nx_graph_pruned = clean_degree_4(prune_graph(nx_graph, threshold), pos)[0]
-directory_name = get_dirname(date, plate)
-path_snap = directory + directory_name
 skeleton = generate_skeleton(nx_graph_pruned, (30000, 60000))
 skel = scipy.sparse.csc_matrix(skeleton, dtype=np.uint8)
 sio.savemat(path_snap + "/Analysis/skeleton_pruned.mat", {"skeleton": skel})

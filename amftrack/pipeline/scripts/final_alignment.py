@@ -11,26 +11,28 @@ from amftrack.pipeline.functions.extract_graph import (
 )
 import open3d as o3d
 from cycpd import rigid_registration
-
+from amftrack.pipeline.paths.directory import directory_scratch
+import pandas as pd
 
 i = int(sys.argv[-1])
-plate = int(sys.argv[1])
-thresh = int(sys.argv[2])
-directory = str(sys.argv[3])
+op_id = int(sys.argv[-2])
+thresh = int(sys.argv[1])
+directory = str(sys.argv[2])
 
-dates_datetime = get_dates_datetime(directory,plate)
-dates_datetime.sort()
-dates_datetime_chosen = dates_datetime[i : i + 2]
+run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
+folder_list = list(run_info['folder'])
+folder_list.sort()
+
+dates_datetime_chosen = folder_list[i : i + 2]
 print("========")
-print(f"Matching plate {plate} at dates {dates_datetime_chosen}")
+print(f"Matching plate {dates_datetime_chosen[0]} at dates {dates_datetime_chosen}")
 print("========")
 dates = dates_datetime_chosen
 
 dilateds = []
 skels = []
 skel_docs = []
-for date in dates:
-    directory_name = get_dirname(date, plate)
+for directory_name in dates:
     path_snap = directory + directory_name
     skel_info = read_mat(path_snap + "/Analysis/skeleton_pruned.mat")
     skel = skel_info["skeleton"]
@@ -64,7 +66,7 @@ for order in [(0,1),(1,0)]:
     sigma2 = reg.sigma2
     if sigma2>=thresh:
         print("========")
-        print(f"Failed to match plate {plate} at dates {dates_datetime_chosen}")
+        print(f"Failed to match plate {dates_datetime_chosen[0]} at dates {dates_datetime_chosen}")
         print("========")
         continue
     isnan = np.isnan(tfound[0])
