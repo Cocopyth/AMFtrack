@@ -144,7 +144,7 @@ def get_param(folder,directory): #Very ugly but because interfacing with Matlab 
          '/Analysis/skeleton_masked_compressed.mat',
          '/Analysis/skeleton_pruned_compressed.mat', '/Analysis/transform.mat',
          '/Analysis/transform_corrupt.mat',
-         '/Analysis/skeleton_realigned_compressed.mat']
+         '/Analysis/skeleton_realigned_compressed.mat','/Analysis/nx_graph_pruned.p', '/Analysis/nx_graph_pruned_width.p','/Analysis/nx_graph_pruned_labeled.p']
     for file in files:
         ldict[file] = os.path.isfile(path_snap + file)
     return(ldict)

@@ -11,10 +11,10 @@ from amftrack.pipeline.functions.extract_graph import (
 import scipy.io as sio
 import pickle
 
-plate = int(sys.argv[1])
-begin = int(sys.argv[2])
-end = int(sys.argv[3])
-directory = str(sys.argv[4])
+directory = str(sys.argv[1])
+
+i = int(sys.argv[-1])
+op_id = int(sys.argv[-2])
 
 dates_datetime = get_dates_datetime(directory,plate)
 dates_datetime.sort()

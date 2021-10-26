@@ -6,16 +6,19 @@ from amftrack.pipeline.functions.experiment_class_surf import Experiment
 from amftrack.util import get_dates_datetime, get_dirname
 import pickle
 import networkx as nx
+import pandas as pd
+from amftrack.pipeline.paths.directory import directory_scratch
+from path import path_code_dir
 
-plate = int(sys.argv[1])
-directory = str(sys.argv[2])
-skip = str(sys.argv[3])
+directory = str(sys.argv[1])
+skip = str(sys.argv[2])
 i = int(sys.argv[-1])
-dates_datetime = get_dates_datetime(directory,plate)
-dates_datetime.sort()
-date_datetime = dates_datetime[i]
-date = date_datetime
-directory_name = get_dirname(date, plate)
+op_id = int(sys.argv[-2])
+run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
+folder_list = list(run_info['folder'])
+folder_list.sort()
+print(folder_list)
+directory_name = folder_list[i]
 path_snap = directory + directory_name
 begin = i
 end = i

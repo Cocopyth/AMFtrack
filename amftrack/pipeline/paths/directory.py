@@ -17,7 +17,7 @@ path_code = "/home/cbisot/pycode/MscThesis/"
 # path_job = r'C:\Users\coren\Documents\PhD\Code\bash\job.sh'
 # path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack/'
 
-def run_parallel(code, args, folders, num_parallel, time, name):
+def run_parallel(code, args, folders, num_parallel, time, name,cpus = 128,node = 'thin'):
     op_id = time_ns()
     folders.to_json(f'{directory_scratch}temp/{op_id}.json')# temporary file
     length = len(folders)
@@ -32,7 +32,7 @@ def run_parallel(code, args, folders, num_parallel, time, name):
         ide = time_ns()
         my_file = open(path_job, "w")
         my_file.write(
-            f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task=128\n#SBATCH -p thin \n"
+            f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
         my_file.write(
             f'#SBATCH -o "{path_code}slurm/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'

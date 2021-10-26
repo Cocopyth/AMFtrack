@@ -534,12 +534,12 @@ class Hyphae:
         else:
             mini = np.inf
             poss = self.experiment.positions[t]
-            pos_root = np.mean([self.root.pos(t) for t in self.root.ts()])
+            pos_root = np.mean([self.root.pos(t) for t in self.root.ts()],axis = 0)
             for node in self.experiment.nx_graph[t]:
                 distance = np.linalg.norm(poss[node] - pos_root)
-            if distance < mini:
-                mini = distance
-                identifier = node
+                if distance < mini:
+                    mini = distance
+                    identifier = node
         return(Node(identifier,self.experiment))
         
 

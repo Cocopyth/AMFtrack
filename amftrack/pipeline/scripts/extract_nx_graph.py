@@ -13,17 +13,20 @@ from amftrack.pipeline.functions.extract_graph import (
 from amftrack.pipeline.functions.node_id import (remove_spurs)
 import scipy.sparse
 import pickle
+import pandas as pd
+from amftrack.pipeline.paths.directory import directory_scratch
+from path import path_code_dir
 
-plate = int(sys.argv[1])
-directory = str(sys.argv[2])
+directory = str(sys.argv[1])
 
 i = int(sys.argv[-1])
+op_id = int(sys.argv[-2])
 
-dates_datetime = get_dates_datetime(directory,plate)
-dates_datetime.sort()
-date_datetime = dates_datetime[i]
-date = date_datetime
-directory_name = get_dirname(date, plate)
+run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
+folder_list = list(run_info['folder'])
+folder_list.sort()
+print(folder_list)
+directory_name = folder_list[i]
 path_snap = directory + directory_name
 skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")["skeleton"]
 skeleton = scipy.sparse.dok_matrix(skel)
