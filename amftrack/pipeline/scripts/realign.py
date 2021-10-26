@@ -67,7 +67,7 @@ for i, skel in enumerate(skel_docs):
 #     print(i+begin,j)
     R0 = np.dot(np.transpose(Rs[i]), R0)
     t0 = -np.dot(ts[i], np.transpose(Rs[i])) + np.dot(t0, np.transpose(Rs[i]))
-    folder_list[i]
+    directory_name = folder_list[i]
     path_snap = directory + directory_name
     if i == j:
         print(f'saving {i} {path_snap}')
