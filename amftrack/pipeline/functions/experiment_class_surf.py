@@ -19,17 +19,20 @@ import imageio
 from pymatreader import read_mat
 from matplotlib import colors
 from collections import Counter
+from datetime import datetime, timedelta
+from amftrack.pipeline.functions.post_processing import find_center_orth
 
 
 class Experiment:
     def __init__(self, plate, directory):
         self.plate = plate
         self.directory = directory
-
-    def load(self, dates, labeled=True):
-        self.dates = dates
+    def load(self, folders, labeled=True):
+        self.folders = folders
+        dates_datetime = [datetime.strptime(row['date'],"%d.%m.%Y, %H:%M:") for index,row in folders.iterrows()]
+        self.dates = dates_datetime
         nx_graph_poss = []
-        for date in dates:
+        for date in self.dates:
             directory_name = get_dirname(date,self.plate)
             path_snap = self.directory + directory_name
             if labeled:
@@ -59,6 +62,9 @@ class Experiment:
         self.boundaries_x = np.min(xpos), np.max(xpos)
         self.boundaries_y = np.min(ypos), np.max(ypos)
         self.ts = len(self.dates)
+    def get_center_orth_pivot():
+        return()
+        
     def load_compressed_skel(self):
         skeletons = []
         for nx_graph in self.nx_graph:
@@ -70,6 +76,7 @@ class Experiment:
         self.compressed = compressed_images
 
     def copy(self, experiment):
+        self.folders = experiment.folders
         self.positions = experiment.positions
         self.nx_graph = experiment.nx_graph
         self.dates = experiment.dates
@@ -372,7 +379,19 @@ class Node:
 
     def __hash__(self):
         return self.label
-
+    def get_pseudo_identity(self,t):
+        if self.is_in(t):
+            return(self)
+        else:
+            mini = np.inf
+            poss = self.experiment.positions[t]
+            pos_root = np.mean([self.pos(t) for t in self.ts()],axis = 0)
+            for node in self.experiment.nx_graph[t]:
+                distance = np.linalg.norm(poss[node] - pos_root)
+                if distance < mini:
+                    mini = distance
+                    identifier = node
+        return(Node(identifier,self.experiment))
     def neighbours(self, t):
         return [
             self.experiment.get_node(node)
