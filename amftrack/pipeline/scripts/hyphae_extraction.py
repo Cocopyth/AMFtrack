@@ -21,6 +21,8 @@ from amftrack.pipeline.functions.hyphae_id_surf import (
 #     solve_degree4,
 #     clean_obvious_fake_tips,
 # )
+import pandas as pd
+from amftrack.pipeline.paths.directory import directory_scratch
 
 plate = int(sys.argv[1])
 begin = int(sys.argv[2])

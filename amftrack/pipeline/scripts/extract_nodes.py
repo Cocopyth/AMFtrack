@@ -10,20 +10,24 @@ from amftrack.pipeline.functions.extract_graph import (
 )
 import scipy.io as sio
 import pickle
+import pandas as pd
+from amftrack.pipeline.paths.directory import directory_scratch
 
 directory = str(sys.argv[1])
 
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-dates_datetime = get_dates_datetime(directory,plate)
-dates_datetime.sort()
-dates_datetime_chosen = dates_datetime[begin : end + 1]
-dates = dates_datetime_chosen
+run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
 
+plates = list(set(run_info['Plate'].values))
+plates.sort()
+print(plates[i])
+select_folders = run_info.loc[run_info['Plate'] == plates[i]]
+folder_list = list(select_folders['folder'])
+folder_list.sort()
 nx_graph_pos = []
-for date in dates:
-    directory_name = get_dirname(date, plate)
+for i,directory_name in enumerate(folder_list):
     path_snap = directory + directory_name
     path_save = path_snap + "/Analysis/nx_graph_pruned_width.p"
     nx_graph_pos.append(pickle.load(open(path_save, "rb")))
@@ -31,7 +35,7 @@ nx_graph_pruned = [c[0] for c in nx_graph_pos]
 poss_aligned = [c[1] for c in nx_graph_pos]
 downstream_graphs = []
 downstream_pos = []
-begin = len(dates) - 1
+begin = len(folder_list) - 1
 downstream_graphs = [nx_graph_pruned[begin]]
 downstream_poss = [poss_aligned[begin]]
 for i in range(begin - 1, -1, -1):
@@ -52,16 +56,14 @@ for i in range(begin - 1, -1, -1):
 nx_graph_pruned = downstream_graphs
 poss_aligned = downstream_poss
 for i, g in enumerate(nx_graph_pruned):
-    date = dates[i]
-    directory_name = get_dirname(date, plate)
+    directory_name = folder_list[i]
     path_snap = directory + directory_name
     path_save = path_snap + "/Analysis/nx_graph_pruned_labeled.p"
     pos = poss_aligned[i]
     pickle.dump((g, pos), open(path_save, "wb"))
 
-for i, date in enumerate(dates):
+for i,directory_name in enumerate(folder_list):
     tab = from_nx_to_tab(nx_graph_pruned[i], poss_aligned[i])
-    directory_name = get_dirname(date, plate)
     path_snap = directory + directory_name
     path_save = path_snap + "/Analysis/graph_full_labeled.mat"
     sio.savemat(path_save, {name: col.values for name, col in tab.items()})
