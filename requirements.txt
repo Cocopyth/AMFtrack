@@ -19,6 +19,7 @@ for the script
 - pip install bresenham
 - conda install scikit-image
 - conda install -c conda-forge scikit-learn 
+- pip install Shapely
 <!-- - conda install -c anaconda ipykernel -->
 
 *For nice display*
