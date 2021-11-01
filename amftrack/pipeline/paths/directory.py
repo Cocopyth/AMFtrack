@@ -4,7 +4,7 @@ from amftrack.util import get_dates_datetime, get_dirname
 import os
 from copy import copy
 from time import time_ns
-
+import pickle
 # directory = "/scratch/shared/AMF914/old/from_cartesius/"
 # directory = "/scratch/shared/mrozemul/Fiji.app/"
 directory_scratch = "/scratch-shared/amftrack/"
@@ -13,6 +13,8 @@ directory_project = "/projects/0/einf914/data/"
 
 
 path_job = "/home/cbisot/bash/job.sh"
+path_stitch = "/home/cbisot/bash/stitch.sh"
+
 path_code = "/home/cbisot/pycode/MscThesis/"
 # path_job = r'C:\Users\coren\Documents\PhD\Code\bash\job.sh'
 # path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack/'
@@ -104,6 +106,38 @@ def run_parallel_all_time(code, args, folders, num_parallel, time, name,cpus = 1
         my_file.write("wait\n")
         my_file.close()
         call(f"sbatch {path_job}", shell=True)
+
+path_post_process = "/home/cbisot/bash/post.sh"
+        
+def run_parallel_post(code, list_f,list_args, args, folders, num_parallel, time, name,cpus = 128,node = 'thin'):
+    op_id = time_ns()
+    folders.to_json(f'{directory_scratch}temp/{op_id}.json')# temporary file
+    pickle.dump((list_f,list_args), open(f'{directory_scratch}temp/{op_id}.pick', "wb"))
+    length = len(folders)
+    begin_skel = 0
+    end_skel = length // num_parallel + 1
+    args_str = [str(arg) for arg in args]
+    arg_str = " ".join(args_str)
+    arg_str_out = "_".join([str(arg) for arg in args if type(arg)!=str])
+    for j in range(begin_skel, end_skel):
+        start = num_parallel * j
+        stop = num_parallel * j + num_parallel - 1
+        ide = time_ns()
+        my_file = open(path_post_process , "w")
+        my_file.write(
+            f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
+        )
+        my_file.write(
+            f'#SBATCH -o "{path_code}slurm/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
+        )
+        my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
+        my_file.write(f"conda activate amftrack\n")
+        my_file.write(f"for i in `seq {start} {stop}`; do\n")
+        my_file.write(f"\t python {path_code}amftrack/pipeline/scripts/{code} {arg_str} {op_id} $i &\n")
+        my_file.write("done\n")
+        my_file.write("wait\n")
+        my_file.close()
+        call(f"sbatch {path_post_process }", shell=True)
         
 def check_state(plate,begin,end,file,directory):
     not_exist=[]
@@ -147,7 +181,7 @@ def run_parallel_stitch(directory, folders, num_parallel, time):
             make_stitching_loop(directory,folder_list[k],op_id)
             op_ids.append(op_id)
         ide = time_ns()
-        my_file = open(path_job, "w")
+        my_file = open(path_stitch, "w")
         my_file.write(
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task=128\n#SBATCH -p thin \n"
         )
@@ -159,7 +193,7 @@ def run_parallel_stitch(directory, folders, num_parallel, time):
             my_file.write(f"~/Fiji.app/ImageJ-linux64 --headless -macro  {directory_scratch}stitching_loops/stitching_loop{op_id}.ijm &\n")
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job}", shell=True)
+        call(f"sbatch {path_stitch}", shell=True)
 
 def find_state(plate,begin,end,directory,include_stitch=True):
     files = [ '/Analysis/skeleton_compressed.mat', '/Analysis/skeleton_masked_compressed.mat',
