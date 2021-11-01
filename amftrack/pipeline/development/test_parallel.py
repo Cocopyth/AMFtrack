@@ -1,3 +1,45 @@
+import sys  
+sys.path.insert(0, '/home/cbisot/pycode/MscThesis/')
+import networkx as nx
+import pandas as pd
+from amftrack.pipeline.paths.directory import directory_scratch,directory_project
+from time import time 
+# import multiprocessing
+from joblib import Parallel, delayed
+from time import sleep
+from amftrack.pipeline.functions.experiment_class_surf import Experiment
+
+directory = directory_project
+skip = False
+i = 330
+op_id = 1635343105134052723
+run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
+plate = list(run_info['PrincePos'])[i]
+
+folder_list = list(run_info['folder'])
+directory_name = folder_list[i]
+exp = Experiment(plate,directory)
+exp.load(run_info.loc[run_info['folder']==directory_name],labeled=False)
+path_snap = directory + directory_name
+suffix = "/Analysis/nx_graph_pruned.p"
+
+(G, pos) = exp.nx_graph[0],exp.positions[0]
+
+num_cores = 1
+
+t=0
+resolution = 50
+skip=False
+experiment = exp
+edge_width={}
+graph = experiment.nx_graph[t]
+# print(len(list(graph.edges)))
+# print(len(graph.edges))
+end = 10
+inputs = list(graph.edges)[:end]
+print(type(inputs[0]))
+# inputs = range(end)
+
 from skimage.measure import profile_line
 from amftrack.notebooks.analysis.util import *
 from scipy.optimize import curve_fit
@@ -109,10 +151,10 @@ def get_width_pixel(edge,index,im,pivot,before,after,t,size = 20,width_factor = 
 #     print(np.linalg.norm(point1-point2),len(p),width_pix)
     return(a*np.sqrt(max(0,np.linalg.norm(point1-point2)*(width_pix)/len(p))))
 
-def get_width_edge(edge,experiment,resolution,t,local=False, threshold_averaging = 10):
-    edge = Edge(Node(edge[0],experiment),Node(edge[1],experiment),experiment)
-    pixel_conversion_factor = 1.725
-    pixel_list = edge.pixel_list(t)
+def get_width_edge(pixel_list,resolution,t,local=False, threshold_averaging = 10):
+    # edge = Edge(Node(edge[0],experiment),Node(edge[1],experiment),experiment)
+    # pixel_conversion_factor = 1.725
+    # pixel_list = edge.pixel_list(t)
     pixels = []
     indexes = []
     source_images = []
@@ -169,50 +211,21 @@ def get_width_info(experiment,t,resolution = 50,skip=False):
             edge_width[edge]=40
     return(edge_width)
 
-import networkx as nx
-import pandas as pd
-from amftrack.pipeline.paths.directory import directory_scratch,directory_project
-from time import time 
-# import multiprocessing
-from joblib import Parallel, delayed
-from time import sleep
-directory = directory_project
-skip = False
-i = 330
-op_id = 1635343105134052723
-run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
-plate = list(run_info['PrincePos'])[i]
 
-folder_list = list(run_info['folder'])
-directory_name = folder_list[i]
-exp = Experiment(plate,directory)
-exp.load(run_info.loc[run_info['folder']==directory_name],labeled=False)
-path_snap = directory + directory_name
-suffix = "/Analysis/nx_graph_pruned.p"
 
-(G, pos) = exp.nx_graph[0],exp.positions[0]
-
-num_cores = 1
-
-t=0
-resolution = 50
-skip=False
-experiment = exp
-edge_width={}
-graph = experiment.nx_graph[t]
-# print(len(list(graph.edges)))
-# print(len(graph.edges))
-end = 100
-inputs = list(graph.edges)[:end]
-print(type(inputs[0]))
-# inputs = range(end)
-
-def extract_width(edge):
+def extract_width(pixel_list):
     # edge_exp = Edge(Node(edge[0],experiment),Node(edge[1],experiment),experiment)
-    mean = np.mean(list(get_width_edge(edge,experiment,resolution,t).values()))
-    print(mean)
-    return(mean)
-    # sleep(12)
+    # mean = np.mean(list(get_width_edge(pixel_list,resolution,t).values()))
+    # print(mean)
+    # return(mean)
+    sleep(12)
+edges = list(graph.edges)[:end]
+inputs = []
+for edge in edges:
+    edge_obj = Edge(Node(edge[0],experiment),Node(edge[1],experiment),experiment)
+    pixel_conversion_factor = 1.725
+    pixel_list = edge_obj.pixel_list(t)
+    inputs.append(pixel_list)
 t0=time()
 if __name__ == "__main__":
     processed_list = Parallel(n_jobs=num_cores, backend = "multiprocessing")(delayed(extract_width)(i) for i in inputs)

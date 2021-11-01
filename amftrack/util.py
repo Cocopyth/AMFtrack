@@ -191,3 +191,45 @@ def get_folders_by_plate_id(plate_id, begin = 0, end = -1, directory = None):
     dates_str = [datetime.strftime(date, "%d.%m.%Y, %H:%M:") for date in dates_datetime_select]
     select_folders = folders.loc[np.isin(folders['date'],dates_str)]
     return(select_folders)
+
+def update_analysis_info(directory):
+    listdir = os.listdir(directory)
+    update_plate_info(directory)
+    all_folders = get_current_folders(directory)
+    analysis_dir = [fold for fold in listdir if fold.split('_')[0]=='Analysis']
+    infos_analysed = {}
+    for folder in analysis_dir:
+        metadata= {}
+        version = folder.split("_")[-1]
+        op_id = int(folder.split("_")[-2])
+        dt = datetime.fromtimestamp(op_id  // 1000000000)
+        path = f'{directory}{folder}/exp_info.json'
+        infos = json.load(open(path, 'r')) if os.path.isfile(path) else []
+        infos.sort()
+        if len(infos)>0:
+            select = all_folders.loc[all_folders['folder'].isin(infos)]
+            column_interest = [column for column in select.columns if column[0]!='/']
+            metadata['version'] = version
+            for column in column_interest:
+                if column != 'folder':
+                    metadata[column] = list(select[column])[0]
+            metadata['date_begin'] = infos[0]
+            metadata['date_end'] = infos[-1]
+            metadata['number_timepoints'] = len(infos)
+            metadata['path_exp'] = f'{folder}/experiment.pick'
+            metadata['path_analysis_info'] = f'{folder}/static_inf.json'
+            metadata['date_run_analysis'] = datetime.strftime(dt, "%d.%m.%Y, %H:%M:")
+            infos_analysed[folder] = metadata
+        with open('analysis_info.json', 'w') as jsonf:
+            json.dump(infos_analysed, jsonf,  indent=4)
+        
+def get_analysis_info():
+    analysis_info = pd.read_json('analysis_info.json',
+       convert_dates=True).transpose()
+    analysis_info.index.name = 'folder_analysis'
+    analysis_info.reset_index(inplace=True)
+    return(analysis_info)
+def get_current_analysis(directory):
+    analysis_info = get_analysis_info()
+    listdir = os.listdir(directory)
+    return(analysis_info.loc[np.isin(analysis_info['folder_analysis'],listdir)])

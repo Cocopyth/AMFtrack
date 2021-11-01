@@ -59,8 +59,6 @@ class Experiment:
             self.nodes.append(Node(label, self))
         xpos = [pos[0] for poss in self.positions for pos in poss.values()]
         ypos = [pos[1] for poss in self.positions for pos in poss.values()]
-        self.boundaries_x = np.min(xpos), np.max(xpos)
-        self.boundaries_y = np.min(ypos), np.max(ypos)
         self.ts = len(self.dates)
     def get_center_orth_pivot():
         return()
@@ -82,8 +80,7 @@ class Experiment:
         self.dates = experiment.dates
         self.plate = experiment.plate
         self.hyphaes = None
-        self.boundaries_x = experiment.boundaries_x
-        self.boundaries_y = experiment.boundaries_y
+
         self.ts = experiment.ts
         labels = {node for g in self.nx_graph for node in g}
         self.nodes = []
@@ -103,10 +100,10 @@ class Experiment:
             )
 
     def pickle_save(self, path):
-        pickle.dump(self, open(path + f"experiment_{self.plate}.pick", "wb"))
+        pickle.dump(self, open(path + f"experiment.pick", "wb"))
 
     def pickle_load(self, path):
-        self = pickle.load(open(path + f"experiment_{self.plate}.pick", "rb"))
+        self = pickle.load(open(path + f"experiment.pick", "rb"))
 
     def get_node(self, label):
         return Node(label, self)
@@ -724,8 +721,6 @@ def get_hyphae(experiment, exclude_bottom_factor=0.98):
         node
         for node in experiment.nodes
         if node.degree(node.ts()[0]) == 1
-        and node.pos(node.ts()[0])[0]
-        <= experiment.boundaries_x[1] * exclude_bottom_factor
     ]
     problems = []
     hyphaes = []

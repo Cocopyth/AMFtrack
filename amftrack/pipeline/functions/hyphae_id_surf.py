@@ -6,7 +6,7 @@ from amftrack.pipeline.functions.extract_graph import (
 )
 from amftrack.pipeline.functions.node_id import reconnect_degree_2
 import scipy.io as sio
-from amftrack.pipeline.functions.experiment_class_surf import clean_exp_with_hyphaes, Node, Edge
+from amftrack.pipeline.functions.experiment_class_surf import clean_exp_with_hyphaes, Node, Edge, get_hyphae
 
 def width_based_cleaning(exp):
     thresh = 1
