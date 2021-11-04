@@ -387,3 +387,138 @@ def resolve_ambiguity(hyphaes):
         if not found:
             connect[hyph.end.label] = hyph.end.label
     return (equ_classes, ambiguities, connect)
+
+def clean_exp_with_hyphaes(experiment):
+#     ts = {}
+#     nx_graph_cleans = [nx.Graph.copy(nx_g) for nx_g in experiment.nx_graph]
+# #     exp_clean = Experiment(experiment.plate, experiment.directory)
+# #     exp_clean.copy(experiment)
+#     exp_clean = experiment
+#     labels = {node for g in exp_clean.nx_graph for node in g}
+#     exp_clean.nodes = []
+#     for label in labels:
+#         exp_clean.nodes.append(Node(label, exp_clean))
+#     for node in exp_clean.nodes:
+#         ts[node.label] = []
+#         for t in range(len(nx_graph_cleans)):
+#             if node.is_in(t):
+#                 ts[node.label].append(t)
+    hyphaes, problems = get_hyphae(exp_clean)
+#     to_remove = []
+#     safe_nodes = set()
+#     roots = set()
+#     tips = set()
+#     to_remove_hyphae = set()
+#     for hyphae in hyphaes:
+#         roots.add(hyphae.root.label)
+#         tips.add(hyphae.end.label)
+#         for t in hyphae.end.ts():
+#             if t in hyphae.root.ts():
+#                 try:
+#                     for node in hyphae.get_nodes_within(t)[0]:
+#                         safe_nodes.add(node)
+#                 except nx.exception.NetworkXNoPath:
+#                     to_remove_hyphae.add(hyphae)
+#                     print(
+#                         f"error for hyphae {hyphae} on position {hyphae.end.pos(t),hyphae.root.pos(t)}"
+#                     )
+#     for hyphae in to_remove_hyphae:
+#         hyphaes.remove(hyphae)
+#     for node in experiment.nodes:
+#         posit = node.pos(ts[node.label][0])
+#         if (
+#             len(ts[node.label]) == 1
+#             and ts[node.label][0] != len(exp_clean.nx_graph) - 1
+#             and node.label not in safe_nodes
+#         ):
+#             to_remove.append(node.label)
+#     #     return(to_remove)
+#     print(
+#         "removing ",
+#         len(to_remove),
+#         f" nodes out of {len(exp_clean.nodes)} because they appear only in one timestep and are not within an identified hypha",
+#     )
+# #     for node in to_remove:
+# #         t = ts[node][0]
+# #         pos = exp_clean.positions[t]
+# #         nx_graph_clean = nx_graph_cleans[t]
+# #         #         if t ==3:
+# #         #             print('before everythin',node,node_to_fuse,1354 in nx_graph_clean)
+# #         if nx_graph_clean.degree(node) <= 2:
+# #             continue
+# #         #         print('cleaning',node)
+# #         neighbours = list(nx_graph_clean.neighbors(node))
+# #         candidate_to_fuse = []
+# #         weight_candidate = []
+# #         for neighbour in neighbours:
+# #             if nx_graph_clean.degree(neighbour) >= 3:
+# #                 candidate_to_fuse.append(neighbour)
+# #                 weight_candidate.append(
+# #                     len(nx_graph_clean.get_edge_data(node, neighbour)["pixel_list"])
+# #                     - 100 * (neighbour in roots)
+# #                     - 100 * (neighbour in tips)
+# #                 )
+# #         if len(weight_candidate) == 0:
+# #             continue
+# #         node_to_fuse = candidate_to_fuse[np.argmin(weight_candidate)]
+# #         if nx_graph_clean.degree(node) == 1 and node_to_fuse not in to_remove:
+# #             print(pos[node])
+# #             continue
+# #         for neighbour in neighbours:
+# #             right_n = node_to_fuse
+# #             left_n = neighbour
+# #             right_edge = nx_graph_clean.get_edge_data(node, right_n)["pixel_list"]
+# #             left_edge = nx_graph_clean.get_edge_data(node, left_n)["pixel_list"]
+# #             right_edge_width = nx_graph_clean.get_edge_data(node, right_n)["width"]
+# #             left_edge_width = nx_graph_clean.get_edge_data(node, left_n)["width"]
+# #             if np.any(right_edge[0] != pos[node]):
+# #                 right_edge = list(reversed(right_edge))
+# #             if np.any(left_edge[-1] != pos[node]):
+# #                 left_edge = list(reversed(left_edge))
+# #             pixel_list = left_edge + right_edge[1:]
+# #             width_new = (right_edge_width*len(right_edge)+left_edge_width*len(left_edge))/(len(right_edge)+len(left_edge))
+# # #             print(width_new)
+# #             info = {"weight": len(pixel_list), "pixel_list": pixel_list, "width" : width_new}
+# #             if right_n != left_n:
+# #                 connection_data = nx_graph_clean.get_edge_data(right_n, left_n)
+# #                 if (
+# #                     connection_data is None
+# #                     or connection_data["weight"] >= info["weight"]
+# #                 ):
+# #                     if not connection_data is None:
+# #                         nx_graph_clean.remove_edge(right_n, left_n)
+# #                     nx_graph_clean.add_edges_from([(right_n, left_n, info)])
+# #         nx_graph_clean.remove_node(node)
+# #         nx_graph_cleans[t] = nx_graph_clean
+#     for t, nx_graph in enumerate(nx_graph_cleans):
+#         pos = exp_clean.positions[t]
+#         reconnect_degree_2(nx_graph, pos)
+#     nx_graph_pruned = []
+#     for graph in nx_graph_cleans:
+#         nx_graph_pruned.append(prune_graph(graph, 0.1))
+#     skeletons = []
+# #     for nx_graph in nx_graph_pruned:
+# #         skeletons.append(generate_skeleton(nx_graph, dim=(30000, 60000)))
+#     exp_clean.nx_graph = nx_graph_pruned
+# #     exp_clean.skeletons = skeletons
+#     labels = {node for g in exp_clean.nx_graph for node in g}
+#     exp_clean.nodes = []
+#     for hyphae in hyphaes:
+#         hyphae.update_ts()
+#     to_remove_hyphae = set()
+#     for hyphae in hyphaes:
+#         for t in hyphae.end.ts():
+#             if t in hyphae.root.ts():
+#                 try:
+#                     hyphae.get_nodes_within(t)[0]
+#                 except nx.exception.NetworkXNoPath:
+#                     to_remove_hyphae.add(hyphae)
+#                     print(
+#                         f"error for hyphae {hyphae} on position {hyphae.end.pos(t),hyphae.root.pos(t)}"
+#                     )
+#     for hyphae in to_remove_hyphae:
+#         hyphaes.remove(hyphae)
+#     exp_clean.hyphaes = hyphaes
+#     for label in labels:
+#         exp_clean.nodes.append(Node(label, exp_clean))
+    return exp_clean

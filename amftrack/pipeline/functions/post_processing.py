@@ -337,3 +337,8 @@ def save_study_zone(dr_orth,dr_center,exp,i=0):
     pos_center = round(rottrans[1])*compress, round(rottrans[0])*compress
     orthog = np.flip(np.dot(Rot, np.flip(orthog)))
     exp.center,exp.orthog = pos_center, orthog
+    
+def load_study_zone(exp):
+    exp.center = np.load(f'{exp.save_location}/center.npy')
+    exp.orthog = np.load(f'{exp.save_location}/orthog.npy')
+    exp.reach_out = np.load(f'{exp.save_location}/reach_out.npy')

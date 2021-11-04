@@ -91,6 +91,7 @@ def first_identification(nx_graph_tm1, nx_graph_t, pos_tm1, pos_t, tolerance):
             corresp[node1] = identifier
         else:
             to_remove.add(node1)
+    print('before ambiguities',len(corresp.keys()))
     while len(ambiguous) > 0:
         node = ambiguous.pop()
         identifier = corresp[node]
@@ -336,6 +337,7 @@ def second_identification(
     downstream_graphs = new_graphs
     corresp_tips = {node: node for node in corresp.keys()}
     tips = [node for node in nx_graph_tm1.nodes if nx_graph_tm1.degree(node) == 1]
+    print('tip_length',len(tips))
     ambiguous = set()
     Sedge = sparse.csr_matrix((30000, 60000))
     for edge in nx_graph_t.edges:

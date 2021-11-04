@@ -6,7 +6,8 @@ from amftrack.pipeline.functions.extract_graph import (
 )
 from amftrack.pipeline.functions.node_id import reconnect_degree_2
 import scipy.io as sio
-from amftrack.pipeline.functions.experiment_class_surf import clean_exp_with_hyphaes, Node, Edge, get_hyphae
+from amftrack.pipeline.functions.experiment_class_surf import  Node, Edge, get_hyphae
+
 
 def width_based_cleaning(exp):
     thresh = 1
@@ -192,16 +193,23 @@ def get_anastomosing_hyphae(exp):
 def resolve_anastomosis_crossing_by_root(exp):
     hyphaes, problems = get_hyphae(exp)
     exp.hyphaes = hyphaes
+    print('getting anastomosing',len(hyphaes))
     anastomosing_hyphae = get_anastomosing_hyphae(exp)
+    print('relabeling')
     to_relabel = []
     corresp_hyph = {}
+    print(len(anastomosing_hyphae))
     for hyph,t0,tp1 in anastomosing_hyphae:
+        print(t0)
         corresp_hyph[hyph.end.label]=[]
         for hypha in exp.hyphaes:
-            t00=hypha.ts[0]
-            if t00 in hyph.ts and hypha.get_root(t00)==hyph.get_root(t00) and t00>t0 and hypha not in to_relabel:
-                corresp_hyph[hyph.end.label].append(hypha)
-                to_relabel.append(hypha)
+            pos_root_hyph = np.mean([hyph.root.pos(t) for t in hyph.root.ts()],axis = 0) 
+            pos_root_hypha = np.mean([hypha.root.pos(t) for t in hypha.root.ts()],axis = 0) 
+            if np.linalg.norm(pos_root_hyph-pos_root_hypha)<=100:
+                t00=hypha.ts[0]
+                if t00 in hyph.ts and hypha.get_root(t00)==hyph.get_root(t00) and t00>t0 and hypha not in to_relabel:
+                    corresp_hyph[hyph.end.label].append(hypha)
+                    to_relabel.append(hypha)
     node_after_cross = [hypha.end.label for hypha in to_relabel]
     node_false_anastomose = [hyph.end.label for hyph,_,_ in anastomosing_hyphae if len(corresp_hyph[hyph.end.label])!=0]
     considered_nodes = node_after_cross+node_false_anastomose
@@ -242,6 +250,7 @@ def resolve_anastomosis_crossing_by_root(exp):
     exp.nodes = []
     for label in labels:
         exp.nodes.append(Node(label, exp))
+    print('getting hyphae again')
     hyphaes, problems = get_hyphae(exp)
     exp.hyphaes = hyphaes
 
