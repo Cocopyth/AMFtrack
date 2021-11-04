@@ -22,12 +22,12 @@ import scipy.sparse
 import os
 from amftrack.pipeline.functions.extract_graph import from_sparse_to_graph, generate_nx_graph, sparse_to_doc
 from skimage.feature import hessian_matrix_det
-from amftrack.pipeline.functions.experiment_class_surf import Experiment, Edge, Node, Hyphae, plot_raw_plus, get_hyphae
+from amftrack.pipeline.functions.experiment_class_surf import Experiment, Edge, Node, Hyphae, plot_raw_plus
 from amftrack.pipeline.paths.directory import run_parallel, find_state, directory_scratch, directory_project
 from amftrack.notebooks.analysis.util import * 
 from scipy import stats
 from scipy.ndimage.filters import uniform_filter1d
-from amftrack.pipeline.functions.hyphae_id_surf import get_pixel_growth_and_new_children
+from amftrack.pipeline.functions.hyphae_id_surf import get_pixel_growth_and_new_children, get_hyphae
 from collections import Counter
 from IPython.display import clear_output
 from amftrack.notebooks.analysis.data_info import *

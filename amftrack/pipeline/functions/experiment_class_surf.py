@@ -735,48 +735,6 @@ class Hyphae:
             angle = -np.arccos(dot_product) / (2 * np.pi) * 360
         return angle
 
-def get_hyphae(experiment, exclude_bottom_factor=0.98):
-    tips = [
-        node
-        for node in experiment.nodes
-        if node.degree(node.ts()[0]) == 1
-    ]
-    problems = []
-    hyphaes = []
-    #     for i in range(20):
-    for i, tip in enumerate(tips):
-        if i % 200 == 0:
-            print(i / len(tips))
-        #         tip = choice(tips)
-        hyphae = Hyphae(tip)
-        roots = []
-        for t in tip.ts():
-            #             print(t,tip)
-            if tip.degree(t) == 1:
-                root, edges, nodes = hyphae.get_edges(t, 200)
-                roots.append(root)
-        occurence_count = Counter(roots)
-        if (
-            len(occurence_count.values()) >= 2
-            and occurence_count.most_common(2)[0][0] != roots[0]
-            and occurence_count.most_common(2)[1][1]
-            / occurence_count.most_common(2)[0][1]
-            >= 0.75
-        ):
-            problems.append(tip)
-        else:
-            hyphae.root = occurence_count.most_common(2)[0][0]
-            hyphae.ts = hyphae.end.ts()
-            # hyphae.ts = sorted(set(hyphae.ts).intersection(set(hyphae.root.ts())))
-            hyphaes.append(hyphae)
-    print(
-        f"Detected problems during hyphae detection, {len(problems)} hyphaes have inconsistent root over time"
-    )
-    return (hyphaes, problems)
-
-
-
-
 
 def plot_raw_plus(exp,t0,node_list,shift=(0,0),compress=5):
     date = exp.dates[t0]
