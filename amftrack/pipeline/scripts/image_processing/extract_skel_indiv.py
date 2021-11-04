@@ -6,7 +6,7 @@ import pandas as pd
 import ast
 from scipy import sparse
 from datetime import datetime
-from amftrack.pipeline.functions.node_id import orient
+from amftrack.pipeline.functions.image_processing.node_id import orient
 import scipy.io as sio
 import cv2
 import imageio
@@ -17,8 +17,8 @@ import scipy.sparse
 import os
 from time import time
 from skimage.feature import hessian_matrix_det
-from amftrack.pipeline.functions.extract_graph import from_sparse_to_graph, generate_nx_graph
-from amftrack.pipeline.functions.extract_skel import extract_skel_tip_ext
+from amftrack.pipeline.functions.image_processing.extract_graph import from_sparse_to_graph, generate_nx_graph
+from amftrack.pipeline.functions.image_processing.extract_skel import extract_skel_tip_ext
 from amftrack.util import get_dates_datetime, get_dirname
 from amftrack.pipeline.paths.directory import directory_scratch
 

@@ -7,7 +7,7 @@ import ast
 from amftrack.plotutil import plot_t_tp1
 from scipy import sparse
 from datetime import datetime
-from amftrack.pipeline.functions.node_id import orient
+from amftrack.pipeline.functions.image_processing.node_id import orient
 import pickle
 import scipy.io as sio
 from pymatreader import read_mat
@@ -21,9 +21,9 @@ from skimage import filters
 from random import choice
 import scipy.sparse
 import os
-from amftrack.pipeline.functions.extract_graph import from_sparse_to_graph, generate_nx_graph, sparse_to_doc
+from amftrack.pipeline.functions.image_processing.extract_graph import from_sparse_to_graph, generate_nx_graph, sparse_to_doc
 from skimage.feature import hessian_matrix_det
-from amftrack.pipeline.functions.experiment_class_surf import Experiment
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment
 from amftrack.pipeline.pipeline.paths.directory import run_parallel, find_state, directory_scratch, directory_project, path_code
 from IPython.display import clear_output
 from amftrack.notebooks.analysis.data_info import *

@@ -3,15 +3,15 @@ sys.path.insert(0, '/home/cbisot/pycode/MscThesis/')
 import numpy as np
 from amftrack.util import get_dates_datetime
 import pickle
-from amftrack.pipeline.functions.experiment_class_surf import Edge,Node
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import Edge,Node
 from random import choice
 import networkx as nx
 from amftrack.pipeline.paths.directory import directory_scratch, path_code
 from scipy import sparse
-from amftrack.pipeline.functions.hyphae_id_surf import get_pixel_growth_and_new_children
+from amftrack.pipeline.functions.image_processing.hyphae_id_surf import get_pixel_growth_and_new_children
 from shapely.geometry import Polygon, shape
 from scipy import spatial
-from amftrack.pipeline.functions.hyphae_id_surf import get_pixel_growth_and_new_children
+from amftrack.pipeline.functions.image_processing.hyphae_id_surf import get_pixel_growth_and_new_children
 
 def get_area(exp,t,args):
     nodes = np.array([node.pos(t) for node in exp.nodes if node.is_in(t)])

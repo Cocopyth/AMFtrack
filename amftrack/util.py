@@ -4,7 +4,7 @@ import numpy as np
 import os
 from datetime import datetime, timedelta
 import pandas
-from amftrack.pipeline.functions.extract_graph import from_sparse_to_graph, generate_nx_graph, sparse_to_doc
+from amftrack.pipeline.functions.image_processing.extract_graph import from_sparse_to_graph, generate_nx_graph, sparse_to_doc
 import cv2
 import json
 import pandas as pd

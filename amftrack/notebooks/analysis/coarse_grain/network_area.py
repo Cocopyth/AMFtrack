@@ -7,7 +7,7 @@ import ast
 from amftrack.plotutil import plot_t_tp1
 from scipy import sparse
 from datetime import datetime
-from amftrack.pipeline.functions.node_id import orient
+from amftrack.pipeline.functions.image_processing.node_id import orient
 import pickle
 import scipy.io as sio
 from pymatreader import read_mat
@@ -21,26 +21,27 @@ from skimage import filters
 from random import choice
 import scipy.sparse
 import os
-from amftrack.pipeline.functions.extract_graph import from_sparse_to_graph, generate_nx_graph, sparse_to_doc
+from amftrack.pipeline.functions.image_processing.extract_graph import from_sparse_to_graph, generate_nx_graph, sparse_to_doc
 from skimage.feature import hessian_matrix_det
-from amftrack.pipeline.functions.experiment_class_surf import Experiment, Edge, Node, Hyphae, plot_raw_plus, get_hyphae
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment, Edge, Node, Hyphae, plot_raw_plus
 from amftrack.pipeline.pipeline.paths.directory import run_parallel, find_state, directory_scratch, directory_project
 from amftrack.notebooks.analysis.util import *
 from scipy import stats
 from scipy.ndimage.filters import uniform_filter1d
 from statsmodels.stats import weightstats as stests
-from amftrack.pipeline.functions.hyphae_id_surf import get_pixel_growth_and_new_children, resolve_ambiguity, relabel_nodes_after_amb
+from amftrack.pipeline.functions.image_processing.hyphae_id_surf import get_pixel_growth_and_new_children, resolve_ambiguity, \
+    relabel_nodes_after_amb, get_hyphae
 from collections import Counter
 from IPython.display import clear_output
 from amftrack.notebooks.analysis.data_info import *
-from amftrack.pipeline.functions.node_id import reconnect_degree_2
-from amftrack.pipeline.functions.extract_graph import (
+from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
+from amftrack.pipeline.functions.image_processing.extract_graph import (
     generate_skeleton,
     from_nx_to_tab,
     prune_graph
 )
 
-from amftrack.pipeline.functions.hyphae_id_surf import (
+from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
     clean_and_relabel,
     get_mother,
     save_hyphaes,
@@ -48,7 +49,7 @@ from amftrack.pipeline.functions.hyphae_id_surf import (
     clean_obvious_fake_tips,
     width_based_cleaning
 )
-from amftrack.pipeline.functions.experiment_class_surf import clean_exp_with_hyphaes
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import clean_exp_with_hyphaes
 from scipy.ndimage import gaussian_filter
 from scipy import ndimage
 import matplotlib.pyplot as plt
