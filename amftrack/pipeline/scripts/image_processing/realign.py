@@ -7,11 +7,11 @@ import scipy.io as sio
 from pymatreader import read_mat
 import cv2
 import numpy as np
-from amftrack.pipeline.functions.extract_graph import (
+from amftrack.pipeline.functions.image_processing.extract_graph import (
     sparse_to_doc,
 )
 import scipy.sparse
-from amftrack.pipeline.functions.realign import transform_skeleton_final
+from amftrack.pipeline.functions.image_processing.realign import transform_skeleton_final
 from amftrack.pipeline.paths.directory import directory_scratch
 import pandas as pd
 

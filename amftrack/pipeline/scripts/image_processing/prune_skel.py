@@ -7,10 +7,10 @@ import cv2
 from pymatreader import read_mat
 
 # from extract_graph import dic_to_sparse
-from amftrack.pipeline.functions.extract_graph import (
+from amftrack.pipeline.functions.image_processing.extract_graph import (
     generate_skeleton,
 )
-from amftrack.pipeline.functions.extract_graph import (
+from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_sparse_to_graph,
     generate_nx_graph,
     prune_graph,
