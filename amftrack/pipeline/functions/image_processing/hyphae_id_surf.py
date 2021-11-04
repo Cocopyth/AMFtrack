@@ -1,12 +1,12 @@
 import pandas as pd
 import networkx as nx
 import numpy as np
-from amftrack.pipeline.functions.extract_graph import (
+from amftrack.pipeline.functions.image_processing.extract_graph import (
     prune_graph,
 )
-from amftrack.pipeline.functions.node_id import reconnect_degree_2
+from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
 import scipy.io as sio
-from amftrack.pipeline.functions.experiment_class_surf import Node, Edge, Hyphae
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import Node, Edge, Hyphae
 
 
 def width_based_cleaning(exp):

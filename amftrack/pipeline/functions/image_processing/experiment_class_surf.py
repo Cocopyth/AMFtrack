@@ -3,15 +3,15 @@ import pandas as pd
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
-from amftrack.pipeline.functions.extract_graph import (
+from amftrack.pipeline.functions.image_processing.extract_graph import (
     generate_skeleton,
     from_nx_to_tab,
     prune_graph
 )
-from amftrack.pipeline.functions.node_id import reconnect_degree_2
+from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
 import ast
 from amftrack.plotutil import plot_t_tp1
-from amftrack.pipeline.functions.node_id import orient
+from amftrack.pipeline.functions.image_processing.node_id import orient
 import pickle
 from matplotlib.widgets import CheckButtons
 import scipy.io as sio
@@ -20,8 +20,6 @@ from pymatreader import read_mat
 from matplotlib import colors
 from collections import Counter
 from datetime import datetime, timedelta
-from amftrack.pipeline.functions.post_processing import find_center_orth
-
 
 class Experiment:
     def __init__(self, plate, directory):
