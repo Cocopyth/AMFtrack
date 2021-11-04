@@ -5,7 +5,7 @@ from amftrack.util import get_dates_datetime, get_dirname
 import scipy.io as sio
 from pymatreader import read_mat
 import numpy as np
-from amftrack.pipeline.functions.extract_graph import (
+from amftrack.pipeline.functions.image_processing.extract_graph import (
     sparse_to_doc,
     get_degree3_nodes,
 )

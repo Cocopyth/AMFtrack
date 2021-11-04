@@ -3,9 +3,9 @@ import sys
 sys.path.insert(0, path_code_dir)
 from amftrack.util import get_dates_datetime
 import os
-from amftrack.pipeline.functions.experiment_class_surf import Experiment
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment
 # from experiment_class_surftest import Experiment, clean_exp_with_hyphaes
-from amftrack.pipeline.functions.hyphae_id_surf import (
+from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
     get_mother,
     save_hyphaes,
     width_based_cleaning,

@@ -5,12 +5,12 @@ from scipy import sparse
 from pymatreader import read_mat
 
 from amftrack.util import get_dates_datetime, get_dirname
-from amftrack.pipeline.functions.extract_graph import (
+from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_sparse_to_graph,
     generate_nx_graph,
     clean_degree_4,
 )
-from amftrack.pipeline.functions.node_id import (remove_spurs)
+from amftrack.pipeline.functions.image_processing.node_id import (remove_spurs)
 import scipy.sparse
 import pickle
 import pandas as pd

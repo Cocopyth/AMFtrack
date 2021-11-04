@@ -1,14 +1,17 @@
-import sys  
+import sys
+
+import amftrack.pipeline.functions.post_processing.util
+
 sys.path.insert(0, '/home/cbisot/pycode/MscThesis/')
 import numpy as np
 from amftrack.util import get_dates_datetime
 import pickle
-from amftrack.pipeline.functions.experiment_class_surf import Edge,Node
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import Edge,Node
 from random import choice
 import networkx as nx
 from amftrack.pipeline.paths.directory import directory_scratch, path_code
 from scipy import sparse
-from amftrack.pipeline.functions.hyphae_id_surf import get_pixel_growth_and_new_children
+from amftrack.pipeline.functions.image_processing.hyphae_id_surf import get_pixel_growth_and_new_children
 
 def get_time(exp,t,tp1):
     seconds = (exp.dates[tp1]-exp.dates[t]).total_seconds()
@@ -93,7 +96,7 @@ def get_rh_bas(exp,criter):
         ts = [c[0] for c in select_hyph[hyph]]
         tp1s = [c[1] for c in select_hyph[hyph]]
         if len(speeds)>0:
-            length = hyph.get_length_um(hyph.ts[-1])
+            length = amftrack.pipeline.functions.post_processing.util.get_length_um(hyph.ts[-1])
             nodes = hyph.get_nodes_within(hyph.ts[-1])[0]
             max_speed = np.max(speeds)
             total_growth = np.sum([speed * get_time(exp,ts[i],tp1s[i]) for i,speed in enumerate(speeds)])
