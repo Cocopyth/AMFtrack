@@ -6,7 +6,7 @@ from amftrack.pipeline.functions.extract_graph import (
 )
 from amftrack.pipeline.functions.node_id import reconnect_degree_2
 import scipy.io as sio
-from amftrack.pipeline.functions.experiment_class_surf import  Node, Edge, get_hyphae
+from amftrack.pipeline.functions.experiment_class_surf import Node, Edge, Hyphae
 
 
 def width_based_cleaning(exp):
@@ -255,4 +255,40 @@ def resolve_anastomosis_crossing_by_root(exp):
     exp.hyphaes = hyphaes
 
 
-
+def get_hyphae(experiment):
+    tips = [
+        node
+        for node in experiment.nodes
+        if node.degree(node.ts()[0]) == 1
+    ]
+    problems = []
+    hyphaes = []
+    for i, tip in enumerate(tips):
+        if i % 200 == 0:
+            print(i / len(tips))
+        #         tip = choice(tips)
+        hyphae = Hyphae(tip)
+        roots = []
+        for t in tip.ts():
+            #             print(t,tip)
+            if tip.degree(t) == 1:
+                root, edges, nodes = hyphae.get_edges(t, 200)
+                roots.append(root)
+        occurence_count = Counter(roots)
+        if (
+            len(occurence_count.values()) >= 2
+            and occurence_count.most_common(2)[0][0] != roots[0]
+            and occurence_count.most_common(2)[1][1]
+            / occurence_count.most_common(2)[0][1]
+            >= 0.75
+        ):
+            problems.append(tip)
+        else:
+            hyphae.root = occurence_count.most_common(2)[0][0]
+            hyphae.ts = hyphae.end.ts()
+            hyphaes.append(hyphae)
+    print(
+        f"Detected problems during hyphae detection, {len(problems)} hyphaes have inconsistent root over time"
+    )
+    experiment.inconsistent_root = problems
+    return (hyphaes, problems)
