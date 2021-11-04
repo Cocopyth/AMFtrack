@@ -10,7 +10,7 @@ import pickle
 directory_scratch = "/scratch-shared/amftrack/"
 directory_project = "/projects/0/einf914/data/"
 
-
+path_bash = "/home/cbisot/bash/"
 
 path_job = "/home/cbisot/bash/job.sh"
 path_stitch = "/home/cbisot/bash/stitch.sh"
@@ -106,10 +106,9 @@ def run_parallel_all_time(code, args, folders, num_parallel, time, name,cpus = 1
         my_file.write("wait\n")
         my_file.close()
         call(f"sbatch {path_job}", shell=True)
-
-path_post_process = "/home/cbisot/bash/post.sh"
         
-def run_parallel_post(code, list_f,list_args, args, folders, num_parallel, time, name,cpus = 128,node = 'thin'):
+def run_parallel_post(code, list_f,list_args, args, folders, num_parallel, time, name,cpus = 128,node = 'thin',name_job = 'post'):
+    path_job = f'{path_bash}{name_job}'
     op_id = time_ns()
     folders.to_json(f'{directory_scratch}temp/{op_id}.json')# temporary file
     pickle.dump((list_f,list_args), open(f'{directory_scratch}temp/{op_id}.pick', "wb"))
@@ -123,7 +122,7 @@ def run_parallel_post(code, list_f,list_args, args, folders, num_parallel, time,
         start = num_parallel * j
         stop = num_parallel * j + num_parallel - 1
         ide = time_ns()
-        my_file = open(path_post_process , "w")
+        my_file = open(path_job , "w")
         my_file.write(
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
@@ -137,7 +136,7 @@ def run_parallel_post(code, list_f,list_args, args, folders, num_parallel, time,
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_post_process }", shell=True)
+        call(f"sbatch {path_job }", shell=True)
         
 def check_state(plate,begin,end,file,directory):
     not_exist=[]

@@ -203,7 +203,7 @@ def update_analysis_info(directory):
         version = folder.split("_")[-1]
         op_id = int(folder.split("_")[-2])
         dt = datetime.fromtimestamp(op_id  // 1000000000)
-        path = f'{directory}{folder}/exp_info.json'
+        path = f'{directory}{folder}/folder_info.json'
         infos = json.load(open(path, 'r')) if os.path.isfile(path) else []
         infos.sort()
         if len(infos)>0:

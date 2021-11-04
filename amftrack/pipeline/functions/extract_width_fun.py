@@ -40,39 +40,40 @@ def get_width_pixel(edge,index,im,pivot,before,after,t,size = 20,width_factor = 
     p = profile_line(imtab, point1, point2,mode='constant')
     xdata = np.array(range(len(p)))
     ydata = np.array(p)
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111)
-#     ax.plot(xdata,ydata)
-#     ax.plot(xdata, func5(xdata, *popt0), 'g-')
-    try:
-        p00=[10,60,60,160]
-        popt0, pcov = curve_fit(func5, xdata, ydata,bounds = ([0,0,0,0],4*[np.inf]),p0=p00)
-        p0a=[60,10,100,180,0.1]
-        popt1, pcov = curve_fit(func2, xdata, ydata,bounds = ([0,0,0,0,0],[120,120,200]+2*[np.inf]),p0=p0a)
-        p0b=list(popt1)+[10]
-        popt2, pcov = curve_fit(func3, xdata, ydata,bounds = ([0,0,0,0,0,0],[120,120,200]+2*[np.inf]+[120]),p0=p0b)
-        residuals = ydata- func3(xdata, *popt2)
-        ss_res = np.sum(residuals**2)
-        ss_tot = np.sum((ydata-np.mean(ydata))**2)
-        r_squared1 = 1 - (ss_res / ss_tot)
-        popt3, pcov = curve_fit(func4, xdata, ydata,bounds = ([0,0,0,0,0,0],[120,120,200]+2*[np.inf]+[120]),p0=p0b)
-        residuals = ydata- func4(xdata, *popt3)
-        ss_res = np.sum(residuals**2)
-        ss_tot = np.sum((ydata-np.mean(ydata))**2)
-        r_squared2 = 1 - (ss_res / ss_tot)
-    #     ax.plot(xdata, func2(xdata, *popt1), 'r-')
-        if r_squared1>r_squared2:
-    #         ax.plot(xdata, func3(xdata, *popt2), 'b-')
-            popt=popt2
-        else:
-    #         ax.plot(xdata, func4(xdata, *popt3), 'b-')
-            popt=popt3
-        background = popt[3]
-    except RuntimeError:
-        print('failed')
-        background = np.mean(p)
-#     print(popt[3],popt0[3])
-#     width_pix = popt0[0]*popt0[2]
+# #     fig = plt.figure()
+# #     ax = fig.add_subplot(111)
+# #     ax.plot(xdata,ydata)
+# #     ax.plot(xdata, func5(xdata, *popt0), 'g-')
+#     try:
+#         p00=[10,60,60,160]
+#         popt0, pcov = curve_fit(func5, xdata, ydata,bounds = ([0,0,0,0],4*[np.inf]),p0=p00)
+#         p0a=[60,10,100,180,0.1]
+#         popt1, pcov = curve_fit(func2, xdata, ydata,bounds = ([0,0,0,0,0],[120,120,200]+2*[np.inf]),p0=p0a)
+#         p0b=list(popt1)+[10]
+#         popt2, pcov = curve_fit(func3, xdata, ydata,bounds = ([0,0,0,0,0,0],[120,120,200]+2*[np.inf]+[120]),p0=p0b)
+#         residuals = ydata- func3(xdata, *popt2)
+#         ss_res = np.sum(residuals**2)
+#         ss_tot = np.sum((ydata-np.mean(ydata))**2)
+#         r_squared1 = 1 - (ss_res / ss_tot)
+#         popt3, pcov = curve_fit(func4, xdata, ydata,bounds = ([0,0,0,0,0,0],[120,120,200]+2*[np.inf]+[120]),p0=p0b)
+#         residuals = ydata- func4(xdata, *popt3)
+#         ss_res = np.sum(residuals**2)
+#         ss_tot = np.sum((ydata-np.mean(ydata))**2)
+#         r_squared2 = 1 - (ss_res / ss_tot)
+#     #     ax.plot(xdata, func2(xdata, *popt1), 'r-')
+#         if r_squared1>r_squared2:
+#     #         ax.plot(xdata, func3(xdata, *popt2), 'b-')
+#             popt=popt2
+#         else:
+#     #         ax.plot(xdata, func4(xdata, *popt3), 'b-')
+#             popt=popt3
+#         background = popt[3]
+#     except RuntimeError:
+#         print('failed')
+#         background = np.mean(p)
+# #     print(popt[3],popt0[3])
+# #     width_pix = popt0[0]*popt0[2]
+    background = np.mean((np.mean(p[:width_factor//6]),np.mean(p[-width_factor//6:])))
     width_pix = -np.sum((np.log10(np.array(p)/background)<=0)*np.log10(np.array(p)/background))
 #     print(width_pix)
 #     p0=[165,100,165,45,10,10,10]
