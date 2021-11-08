@@ -72,4 +72,4 @@ for index in indexes:
     exp.save_location = dirName
     exp.pickle_save(f"{dirName}/")
     with open(f"{dirName}/folder_info.json", 'w') as jsonf:
-        json.dump(folder_list, jsonf,  indent=4)
+        json.dump(folder_list[start:stop], jsonf,  indent=4)

@@ -7,6 +7,8 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
 from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
 import scipy.io as sio
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import Node, Edge, Hyphae
+from collections import Counter
+
 
 
 def width_based_cleaning(exp):

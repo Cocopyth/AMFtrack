@@ -1,5 +1,5 @@
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import Node, Edge
-
+import numpy as np
 
 def get_length_um(seg):
     pixel_conversion_factor = 1.725
