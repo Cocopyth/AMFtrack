@@ -12,6 +12,7 @@ from path import path_code_dir
 import os
 import json
 from datetime import datetime
+from amftrack.util import *
 
 directory = str(sys.argv[1])
 overwrite =  eval(sys.argv[2])
@@ -23,24 +24,36 @@ folder_list = list(run_info['folder_analysis'])
 directory_name = folder_list[i]
 select = run_info.loc[run_info['folder_analysis'] == directory_name]
 row = [row for index, row in select.iterrows()][0]
-path_analysis_info = row['path_analysis_info']
+path_exp = f'{directory}{row["path_exp"]}'
+exp = pickle.load(open(path_exp, "rb"))
+folder = row['folder_analysis']
+path = f'{directory}{row["folder_analysis"]}'
+path_global_plate_info = row["path_global_plate_info"]
+exp.center = np.load(f'{path}/center.npy')
+exp.orthog = np.load(f'{path}/orthog.npy')
+exp.reach_out = np.load(f'{path}/reach_out.npy')
+if not os.path.isfile(f'{directory}{path_global_plate_info}') or overwrite:
+    global_plate_info = {}
+else:
+    global_plate_info = json.load(open(f'{directory}{path_global_plate_info}', 'r'))
+global_plate_info['Plate'] = row['Plate']
+global_plate_info['version'] = row['version']
+global_plate_info['PrincePos'] = row['PrincePos']
+global_plate_info['root'] = row['root']
+global_plate_info['strain'] = row['strain']
+global_plate_info['medium'] = row['medium']
+global_plate_info['split'] = row['split']
+global_plate_info['Temp'] = row['Temp']
+global_plate_info['CrossDate'] = row['CrossDate']
+global_plate_info['Pbait'] = row['Pbait']
+global_plate_info['date_begin'] = row['date_begin']
+global_plate_info['date_end'] = row['date_end']
+global_plate_info['number_timepoints'] = row['number_timepoints']
+global_plate_info['path_exp'] = row['path_exp']
 
-if not os.path.isfile(f'{directory}{path_analysis_info}') or overwrite:
-    plate_level_data =  {}
-    path_exp = f'{directory}{row["path_exp"]}'
-    exp = pickle.load(open(path_exp, "rb"))
-    folder = row['folder_analysis']
-    path = f'{directory}{row["folder_analysis"]}'
-    exp.center = np.load(f'{path}/center.npy')
-    exp.orthog = np.load(f'{path}/orthog.npy')
-    exp.reach_out = np.load(f'{path}/reach_out.npy')
-    for index,f in enumerate(list_f):
-        column,result = f(exp,list_args[index])
-        data_t[column] = result
-    data_t['Plate'] = row["Plate"]
-    data_t['path_exp'] = row["path_exp"]
-    data_t['path_analysis_info'] = row["path_analysis_info"]
-    data_t['path_dynamic_infos'] = f'{folder}/dynamic_infos/dyn_inf_{date_str}.json'
-    plate_level_data[t] = data_t
-    with open(f'{directory}{path_analysis_info}', 'w') as jsonf:
-        json.dump(plate_level_data, jsonf,  indent=4)
+for index,f in enumerate(list_f):
+    column,result = f(exp,list_args[index])
+    global_plate_info[column] = result
+    
+with open(f'{directory}{path_global_plate_info}', 'w') as jsonf:
+    json.dump(global_plate_info, jsonf,  indent=4)

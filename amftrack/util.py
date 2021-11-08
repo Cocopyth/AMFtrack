@@ -217,19 +217,19 @@ def update_analysis_info(directory):
             metadata['date_end'] = infos[-1]
             metadata['number_timepoints'] = len(infos)
             metadata['path_exp'] = f'{folder}/experiment.pick'
-            metadata['path_analysis_info'] = f'{folder}/static_inf.json'
+            metadata['path_global_hypha_info'] = f'{folder}/global_hypha_info.json'
+            metadata['path_time_hypha_info'] = f'{folder}/time_hypha_info'
+            metadata['path_time_plate_info'] = f'{folder}/time_plate_info.json'
+            metadata['path_global_plate_info'] = f'{folder}/global_plate_info.json'
             metadata['date_run_analysis'] = datetime.strftime(dt, "%d.%m.%Y, %H:%M:")
             infos_analysed[folder] = metadata
-        with open('analysis_info.json', 'w') as jsonf:
+        with open(f'{directory}global_analysis_info.json', 'w') as jsonf:
             json.dump(infos_analysed, jsonf,  indent=4)
-        
-def get_analysis_info():
-    analysis_info = pd.read_json('analysis_info.json',
+            
+            
+def get_analysis_info(directory):
+    analysis_info = pd.read_json(f'{directory}global_analysis_info.json',
        convert_dates=True).transpose()
     analysis_info.index.name = 'folder_analysis'
     analysis_info.reset_index(inplace=True)
     return(analysis_info)
-def get_current_analysis(directory):
-    analysis_info = get_analysis_info()
-    listdir = os.listdir(directory)
-    return(analysis_info.loc[np.isin(analysis_info['folder_analysis'],listdir)])
