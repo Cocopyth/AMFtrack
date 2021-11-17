@@ -323,7 +323,45 @@ class Experiment:
             plt.close(fig)
         else:
             plt.show()
+            
+def save_graphs(exp, labeled=True):
+    nx_graph_poss = []
+    for i,date in enumerate(exp.dates):
+        directory_name = get_dirname(date,exp.plate)
+        path_snap = exp.directory + directory_name
+        if labeled:
+            suffix = "/Analysis/nx_graph_pruned_labeled2.p"
+        else:
+            suffix = "/Analysis/nx_graph_pruned2.p"
+        path_save = path_snap + suffix
+        print(path_save)
+        g = exp.nx_graph[i]
+        pos = exp.positions[i]
+        pickle.dump((g,pos),open(path_save, "wb"))
 
+def load_graphs(exp, labeled=True):
+    nx_graph_poss = []
+    for date in exp.dates:
+        directory_name = get_dirname(date,exp.plate)
+        path_snap = exp.directory + directory_name
+        if labeled:
+            suffix = "/Analysis/nx_graph_pruned_labeled2.p"
+        else:
+            suffix = "/Analysis/nx_graph_pruned2.p"
+        path_save = path_snap + suffix
+        (g, pos) = pickle.load(open(path_save, "rb"))
+        nx_graph_poss.append((g, pos))
+
+    nx_graphs = [nx_graph_pos[0] for nx_graph_pos in nx_graph_poss]
+    poss = [nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
+    #         nx_graph_clean=[]
+    #         for graph in nx_graphs:
+    #             S = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
+    #             len_connected=[len(nx_graph.nodes) for nx_graph in S]
+    #             nx_graph_clean.append(S[np.argmax(len_connected)])
+    exp.positions = poss
+    exp.nx_graph = nx_graphs
+        
 def plot_raw_plus(exp,t0,node_list,shift=(0,0),compress=5):
     date = exp.dates[t0]
     directory_name = get_dirname(date,exp.plate)
