@@ -33,6 +33,8 @@ else:
 # print(global_hypha_info)
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
+load_graphs(exp)
+
 load_study_zone(exp)
 folder = row['folder_analysis']
 path = f'{directory}{row["folder_analysis"]}'

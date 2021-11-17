@@ -96,3 +96,7 @@ def get_length(exp,t,args):
         edge_obj= Edge(Node(edge[0],exp),Node(edge[1],exp),exp)
         length+= get_length_um_edge(edge_obj, t)
     return('tot_length',length)
+
+def get_num_trunks(exp,t,args):
+    print('in there')
+    return('num_nodes',int(exp.num_trunk))

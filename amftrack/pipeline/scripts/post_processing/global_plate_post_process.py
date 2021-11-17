@@ -2,7 +2,7 @@ from path import path_code_dir
 import sys  
 sys.path.insert(0, path_code_dir)
 from amftrack.pipeline.functions.image_processing.extract_width_fun import *
-from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment, save_graphs, load_graphs
 from amftrack.util import get_dates_datetime, get_dirname
 import pickle
 import networkx as nx
@@ -26,6 +26,8 @@ select = run_info.loc[run_info['folder_analysis'] == directory_name]
 row = [row for index, row in select.iterrows()][0]
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
+load_graphs(exp)
+
 folder = row['folder_analysis']
 path = f'{directory}{row["folder_analysis"]}'
 path_global_plate_info = row["path_global_plate_info"]

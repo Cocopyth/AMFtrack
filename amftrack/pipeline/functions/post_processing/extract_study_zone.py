@@ -342,3 +342,4 @@ def load_study_zone(exp):
     exp.center = np.load(f'{exp.save_location}/center.npy')
     exp.orthog = np.load(f'{exp.save_location}/orthog.npy')
     exp.reach_out = np.load(f'{exp.save_location}/reach_out.npy')
+    exp.num_trunk = np.load(f'{exp.save_location}/num_trunk.npy')
