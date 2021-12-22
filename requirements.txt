@@ -33,3 +33,6 @@ for the script
 
 
 for nice display in jupyter lab
+
+useful jupyterlab extensions
+https://github.com/jpmorganchase/jupyter-fs
