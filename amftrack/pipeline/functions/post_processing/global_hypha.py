@@ -1,5 +1,5 @@
 from amftrack.pipeline.functions.image_processing.hyphae_id_surf import get_pixel_growth_and_new_children
-from amftrack.pipeline.functions.post_processing.util import get_length_um
+from amftrack.pipeline.functions.post_processing.util import get_length_um_edge, is_in_study_zone
 import numpy as np
 from amftrack.notebooks.analysis.util import * 
 pixel_conversion_factor = 1.725
@@ -14,7 +14,7 @@ def get_width(hyph,args):
         av_width = np.sum(widths*lengths)/np.sum(lengths)
         return('av_width_final',av_width)
     except nx.exception.NetworkXNoPath:
-        return('tot_length_C',None)
+        return('av_width_final',None)
 
 def get_tot_length_C(hyph,args):
     t = hyph.ts[-1]
@@ -56,7 +56,7 @@ def get_tot_growth_pp(hyph,args):
 def get_timestep_stop_growth(hyph,args):
     tf = hyph.ts[-1]
     pos_end = hyph.end.pos(tf)
-    thresh = 20
+    thresh = 40
     for t in hyph.ts:
         if np.linalg.norm(hyph.end.pos(t)-pos_end)<thresh:
             return('timestep_stop_growth',t)
@@ -85,6 +85,11 @@ def get_mean_speed_growth(hyph,args):
 def get_stop_track(hyph,args):
     return('strop_track',hyph.ts[-1])   
     
+def gets_out_of_ROI(hyph,args):
+    for t in hyph.ts:
+        if not np.all(is_in_study_zone(hyph.end,t,1000,150)):
+            return('out_of_ROI',t)
+    return('out_of_ROI',None)
     
 def get_timestep_anastomosis(hyph,args):
     for i,t in enumerate(hyph.ts[:-1]):

@@ -16,3 +16,5 @@ core.12631
 amftrack/pipeline/scripts/stitching_loops/
 *.json
 *.pick
+*.npy
+*.zip

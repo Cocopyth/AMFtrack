@@ -34,7 +34,7 @@ row = [row for index, row in select.iterrows()][0]
 plate_num = row['Plate']
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
-load_graphs(exp)
+load_graphs(exp,indexes = [])
 exp.dates.sort()
 plate = exp.plate
 folders = list(exp.folders['folder'])
@@ -56,7 +56,7 @@ finish = len(exp.dates)
 for i in range(start,finish):
     plt.close('all')
     clear_output(wait=True)
-    plot_t_tp1([], [], None, None, skels[i], ims[i], save=f'{directory_scratch}temp/{plate_num}_im{i}',time=f't = {int(get_time(exp,0,i))}h')
+    plot_t_tp1([], [], None, None, skels[i], ims[i], save=f'{directory_scratch}temp/{plate_num}_im{i}.png',time=f't = {int(get_time(exp,0,i))}h')
 img_array = []
 for t in range(start,finish):
     img = cv2.imread(f'{directory_scratch}temp/{plate_num}_im{t}.png')
@@ -74,14 +74,14 @@ for folder in folders:
     skels.append(cv2.dilate(skel.astype(np.uint8),kernel,iterations = itera))
     im = read_mat(path_snap+'/Analysis/raw_image.mat')['raw']
     ims.append(im)
-start=0
-finish = end-begin
-for i in range(start,finish):
-    plt.close('all')
-    clear_output(wait=True)
-    plot_t_tp1([], [], None, None, skels[i], skels[i], save=f'{directory_scratch}temp/{plate_num}_im{i}',time=f't = {int(get_time(exp,0,i))}h')
-img_array = []
-for t in range(start,finish):
-    img = cv2.imread(f'{directory_scratch}temp/{plate_num}_im{t}.png')
-    img_array.append(img)
-imageio.mimsave(f'/home/cbisot/pycode/MscThesis/amftrack/notebooks/plotting/Figure/movie_no_background{plate_num}.gif', img_array,duration = 1)
+# start=0
+# finish = end-begin
+# for i in range(start,finish):
+#     plt.close('all')
+#     clear_output(wait=True)
+#     plot_t_tp1([], [], None, None, skels[i], skels[i], save=f'{directory_scratch}temp/{plate_num}_im{i}',time=f't = {int(get_time(exp,0,i))}h')
+# img_array = []
+# for t in range(start,finish):
+#     img = cv2.imread(f'{directory_scratch}temp/{plate_num}_im{t}.png')
+#     img_array.append(img)
+# imageio.mimsave(f'/home/cbisot/pycode/MscThesis/amftrack/notebooks/plotting/Figure/movie_no_background{plate_num}.gif', img_array,duration = 1)

@@ -98,5 +98,4 @@ def get_length(exp,t,args):
     return('tot_length',length)
 
 def get_num_trunks(exp,t,args):
-    print('in there')
-    return('num_nodes',int(exp.num_trunk))
+    return('num_trunks',int(exp.num_trunk))

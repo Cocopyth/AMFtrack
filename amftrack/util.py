@@ -8,6 +8,7 @@ from amftrack.pipeline.functions.image_processing.extract_graph import from_spar
 import cv2
 import json
 import pandas as pd
+from amftrack.transfer.functions.transfer import download, zip_file,unzip_file,upload
 
 path_code = "/home/cbisot/pycode/MscThesis/"
 # path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack'
@@ -151,7 +152,11 @@ def get_param(folder,directory): #Very ugly but because interfacing with Matlab 
 
 def update_plate_info(directory):
     listdir = os.listdir(directory)
-    plate_info = json.load(open('data_info.json', 'r')) if os.path.isfile('data_info.json') else {}
+    API = str(np.load('/home/cbisot/pycode/API_drop.npy'))
+    source = f'data_info.json'
+    target = '/scratch-shared/amftrack/temp/data_info.json'
+    download(API,source,target,end='')
+    plate_info = json.load(open(target, 'r'))
     for folder in listdir:
         path_snap=directory+folder
         if os.path.isfile(path_snap + "/param.m"):
@@ -167,11 +172,17 @@ def update_plate_info(directory):
                 )
             params['date'] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
             plate_info[folder] = params
-    with open('data_info.json', 'w') as jsonf:
+    with open(target, 'w') as jsonf:
         json.dump(plate_info, jsonf,  indent=4)
+    upload(API,target,f"/{source}", chunk_size=256 * 1024 * 1024,
+)
         
 def get_data_info():
-    data_info = pd.read_json('data_info.json',
+    API = str(np.load('/home/cbisot/pycode/API_drop.npy'))
+    source = f'data_info.json'
+    target = '/scratch-shared/amftrack/temp/data_info.json'
+    download(API,source,target,end='')
+    data_info = pd.read_json(target,
    convert_dates=True).transpose()
     data_info.index.name = 'folder'
     data_info.reset_index(inplace=True)
