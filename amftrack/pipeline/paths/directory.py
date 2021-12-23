@@ -9,6 +9,8 @@ import pickle
 # directory = "/scratch/shared/mrozemul/Fiji.app/"
 directory_scratch = "/scratch-shared/amftrack/"
 directory_project = "/projects/0/einf914/data/"
+directory_archive = "/archive/cbisot/"
+
 
 path_bash = "/home/cbisot/bash/"
 
@@ -222,3 +224,33 @@ def find_state_extract(plate,begin,end,directory):
         if len(not_present)>0:
             return(file,not_present)
     return("extration is complete")
+
+def run_parallel_transfer(code, args, folders, num_parallel, time, name,cpus = 1,node = 'staging',name_job='transfer.sh'):
+    path_job = f'{path_bash}{name_job}'
+    op_id = time_ns()
+    folders.to_json(f'{directory_scratch}temp/{op_id}.json')# temporary file
+    length = len(folders)
+    begin_skel = 0
+    end_skel = length // num_parallel + 1
+    args_str = [str(arg) for arg in args]
+    arg_str = " ".join(args_str)
+    arg_str_out = "_".join([str(arg) for arg in args if type(arg)!=str])
+    for j in range(begin_skel, end_skel):
+        start = num_parallel * j
+        stop = num_parallel * j + num_parallel - 1
+        ide = time_ns()
+        my_file = open(path_job, "w")
+        my_file.write(
+            f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
+        )
+        my_file.write(
+            f'#SBATCH -o "{path_code}slurm/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
+        )
+        my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
+        my_file.write(f"conda activate amftrack\n")
+        my_file.write(f"for i in `seq {start} {stop}`; do\n")
+        my_file.write(f"\t python {path_code}amftrack/transfer/scripts/{code} {arg_str} {op_id} $i &\n")
+        my_file.write("done\n")
+        my_file.write("wait\n")
+        my_file.close()
+        call(f"sbatch {path_job}", shell=True)

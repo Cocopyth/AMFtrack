@@ -151,4 +151,5 @@ def extract_skel_tip_ext(im,low,high,dist):
     for i in range(3):
         dilation=cv.erode(dilation.astype(np.uint8) * 255,kernel,iterations = 1)
         dilation = cv.dilate(dilation.astype(np.uint8) * 255,kernel,iterations = 1)
-        return(dilation>0)
+    dilation=cv.erode(dilation.astype(np.uint8) * 255,kernel,iterations = 2)#recent addition for agg, careful
+    return(dilation>0)

@@ -39,7 +39,7 @@ folder = row['folder_analysis']
 path = f'{directory}{row["folder_analysis"]}'
 load_study_zone(exp)
 for t in range(exp.ts):
-    data_t = time_plate_info[t] if t in time_plate_info.keys() else {}
+    data_t = time_plate_info[str(t)] if str(t) in time_plate_info.keys() else {}
     date = exp.dates[t]
     date_str = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
     for index,f in enumerate(list_f):
@@ -49,6 +49,6 @@ for t in range(exp.ts):
     data_t['Plate'] = row["Plate"]
     data_t['path_exp'] = row["path_exp"]
     data_t['folder_analysis'] = row["folder_analysis"]
-    time_plate_info[t] = data_t
+    time_plate_info[str(t)] = data_t
 with open(f'{directory}{path_time_plate_info}', 'w') as jsonf:
     json.dump(time_plate_info, jsonf,  indent=4)

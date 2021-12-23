@@ -2,7 +2,7 @@ from path import path_code_dir
 import sys  
 sys.path.insert(0, path_code_dir)
 from amftrack.pipeline.functions.image_processing.extract_width_fun import *
-from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment, save_graphs, load_graphs
 from amftrack.util import get_dates_datetime, get_dirname
 import pickle
 import networkx as nx
@@ -13,6 +13,8 @@ import os
 import json
 from datetime import datetime
 from amftrack.pipeline.functions.post_processing.extract_study_zone import load_study_zone
+from time import time
+import random
 
 directory = str(sys.argv[1])
 overwrite =  eval(sys.argv[2])
@@ -38,9 +40,12 @@ load_graphs(exp)
 load_study_zone(exp)
 folder = row['folder_analysis']
 path = f'{directory}{row["folder_analysis"]}'
+t = time()
 for j,hypha in enumerate(exp.hyphaes):
     if j%100==0:
+        print(time()-t)
         print(j/len(exp.hyphaes))
+        t = time()
     data_hypha = global_hypha_info[str(hypha.end.label)] if str(hypha.end.label) in global_hypha_info.keys() else {}
     # print(data_hypha)
     for index,f in enumerate(list_f):

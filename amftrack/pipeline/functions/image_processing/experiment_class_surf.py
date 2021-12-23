@@ -339,9 +339,11 @@ def save_graphs(exp, labeled=True):
         pos = exp.positions[i]
         pickle.dump((g,pos),open(path_save, "wb"))
 
-def load_graphs(exp, labeled=True):
+def load_graphs(exp, labeled=True,indexes = None):
     nx_graph_poss = []
-    for date in exp.dates:
+    if indexes == None:
+        indexes = range(exp.ts)
+    for index, date in enumerate(exp.dates):
         directory_name = get_dirname(date,exp.plate)
         path_snap = exp.directory + directory_name
         if labeled:
@@ -350,8 +352,12 @@ def load_graphs(exp, labeled=True):
             suffix = "/Analysis/nx_graph_pruned2.p"
         path_save = path_snap + suffix
         (g, pos) = pickle.load(open(path_save, "rb"))
-        nx_graph_poss.append((g, pos))
-
+        if index in indexes:
+            nx_graph_poss.append((g, pos))
+        else:
+            edge_empty={edge : None for edge in g.edges}
+            nx.set_edge_attributes(g, edge_empty, 'pixel_list')
+            nx_graph_poss.append((g, pos))
     nx_graphs = [nx_graph_pos[0] for nx_graph_pos in nx_graph_poss]
     poss = [nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
     #         nx_graph_clean=[]
@@ -361,6 +367,15 @@ def load_graphs(exp, labeled=True):
     #             nx_graph_clean.append(S[np.argmax(len_connected)])
     exp.positions = poss
     exp.nx_graph = nx_graphs
+    
+def load_skel(exp,ts):
+    skeletons = []
+    for t,nx_graph in enumerate(exp.nx_graph):
+        if t in ts:
+            skeletons.append(generate_skeleton(nx_graph, dim=(30000, 60000)))
+        else:
+            skeletons.append(None)
+    exp.skeletons = skeletons
         
 def plot_raw_plus(exp,t0,node_list,shift=(0,0),compress=5):
     date = exp.dates[t0]
@@ -496,8 +511,51 @@ class Node:
                 ims[i],
                 gray = True
             )
+            
+def get_distance(node1,node2,t):
+    pixel_conversion_factor = 1.725
+    nodes = nx.shortest_path(
+        node1.experiment.nx_graph[t],
+        source=node1.label,
+        target=node2.label,
+        weight="weight",
+    )
+    edges = [
+        Edge(
+            node1.experiment.get_node(nodes[i]),
+            node1.experiment.get_node(nodes[i + 1]),
+            node1.experiment,
+        )
+        for i in range(len(nodes) - 1)
+    ]
+    length = 0
+    for edge in edges:
+        length_edge = 0
+        pixels = edge.pixel_list(t)
+        for i in range(len(pixels) // 10 + 1):
+            if i * 10 <= len(pixels) - 1:
+                length_edge += np.linalg.norm(
+                    np.array(pixels[i * 10])
+                    - np.array(pixels[min((i + 1) * 10, len(pixels) - 1)])
+                )
+        length += length_edge
+    return(length * pixel_conversion_factor)
 
-
+def find_node_equ(node,t):
+    assert node.ts()[0]<=t
+    if node.is_in(t):
+            return(node)
+    else:
+        mini = np.inf
+        poss = node.experiment.positions[t]
+        pos_root = np.mean([node.pos(t) for t in node.ts()],axis = 0)
+        for node_candidate in node.experiment.nx_graph[t]:
+            distance = np.linalg.norm(poss[node_candidate] - pos_root)
+            if distance < mini:
+                mini = distance
+                identifier = node_candidate
+        return(Node(identifier,node.experiment))
+    
 class Edge:
     def __init__(self, begin, end, experiment):
         self.begin = begin
@@ -576,6 +634,7 @@ class Edge:
         else:
             angle = -np.arccos(dot_product) / (2 * np.pi) * 360
         return angle
+    
 
 
 class Hyphae:
@@ -607,10 +666,11 @@ class Hyphae:
             poss = self.experiment.positions[t]
             pos_root = np.mean([self.root.pos(t) for t in self.root.ts()],axis = 0)
             for node in self.experiment.nx_graph[t]:
-                distance = np.linalg.norm(poss[node] - pos_root)
-                if distance < mini:
-                    mini = distance
-                    identifier = node
+                if self.experiment.nx_graph[t].degree(node)>=3:
+                    distance = np.linalg.norm(poss[node] - pos_root)
+                    if distance < mini:
+                        mini = distance
+                        identifier = node
         return(Node(identifier,self.experiment))
         
 
