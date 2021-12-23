@@ -21,6 +21,7 @@ for the script
 - conda install -c conda-forge scikit-learn 
 - pip install Shapely
 - pip install tqdm
+- pip install dropbox
 <!-- - conda install -c anaconda ipykernel -->
 
 *For nice display*
