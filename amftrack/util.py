@@ -9,7 +9,7 @@ import cv2
 import json
 import pandas as pd
 from amftrack.transfer.functions.transfer import download, zip_file,unzip_file,upload
-
+directory = '/run/user/357100554/gvfs/smb-share:server=sun.amolf.nl,share=shimizu-data,user=bisot/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'
 path_code = os.getenv('HOME')+"/pycode/MscThesis/"
 # path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack'
 # plate_info = pandas.read_excel(path_code+r'/plate_info/SummaryAnalizedPlates.xlsx',engine='openpyxl',header=3,)
