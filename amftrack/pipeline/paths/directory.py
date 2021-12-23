@@ -17,7 +17,7 @@ path_bash = "/home/cbisot/bash/"
 path_job = "/home/cbisot/bash/job.sh"
 path_stitch = "/home/cbisot/bash/stitch.sh"
 
-path_code = "/home/cbisot/pycode/MscThesis/"
+path_code = os.getenv('HOME')+"/pycode/MscThesis/"
 # path_job = r'C:\Users\coren\Documents\PhD\Code\bash\job.sh'
 # path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack/'
 
