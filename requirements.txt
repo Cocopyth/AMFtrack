@@ -20,6 +20,7 @@ for the script
 - conda install scikit-image
 - conda install -c conda-forge scikit-learn 
 - pip install Shapely
+- pip install tqdm
 <!-- - conda install -c anaconda ipykernel -->
 
 *For nice display*
