@@ -33,7 +33,7 @@ run_info['unique_id'] = run_info['Plate'].astype(str) + "_" + run_info['CrossDat
 id_unique = run_info.loc[run_info['folder']==directory_name]['unique_id'].iloc[0]
 
 path_snap=directory+directory_name
-API = str(np.load('/home/cbisot/pycode/API_drop.npy'))
+API = str(np.load(os.getenv('HOME')+'/pycode/API_drop.npy'))
 if unzip:
         path_zip =f'{os.getenv("TEMP")}{directory_name}.zip'
 

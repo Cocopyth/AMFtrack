@@ -9,7 +9,7 @@ import cv2
 import json
 import pandas as pd
 from amftrack.transfer.functions.transfer import download, zip_file,unzip_file,upload
-from tqdm import tqdm
+from tqdm.autonotebook import tqdm
 import dropbox
 
 path_code = os.getenv('HOME')+"/pycode/MscThesis/"

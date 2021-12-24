@@ -32,7 +32,7 @@ line = run_info.loc[run_info['folder']==directory_name]
 id_unique = line['unique_id'].iloc[0]
 
 path_snap=directory+directory_name
-API = str(np.load('/home/cbisot/pycode/API_drop.npy'))
+API = str(np.load(os.getenv('HOME')+'/pycode/API_drop.npy'))
 
 path_zip =f'{os.getenv("TEMP")}{directory_name}.zip'
 path_info =f'{os.getenv("TEMP")}{directory_name}_info.json'
