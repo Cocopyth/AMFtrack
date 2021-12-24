@@ -10,12 +10,13 @@ import pickle
 directory_scratch = "/scratch-shared/amftrack/"
 directory_project = "/projects/0/einf914/data/"
 directory_archive = "/archive/cbisot/"
+directory_sun = '/run/user/357100554/gvfs/smb-share:server=sun.amolf.nl,share=shimizu-data,user=bisot/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE/'
 
 
-path_bash = "/home/cbisot/bash/"
+path_bash = os.getenv('HOME')+"bash/"
 
-path_job = "/home/cbisot/bash/job.sh"
-path_stitch = "/home/cbisot/bash/stitch.sh"
+path_job = os.getenv('HOME')+"bash/job.sh"
+path_stitch = os.getenv('HOME')+"bash/stitch.sh"
 
 path_code = os.getenv('HOME')+"/pycode/MscThesis/"
 # path_job = r'C:\Users\coren\Documents\PhD\Code\bash\job.sh'
@@ -225,7 +226,7 @@ def find_state_extract(plate,begin,end,directory):
             return(file,not_present)
     return("extration is complete")
 
-def run_parallel_transfer(code, args, folders, num_parallel, time, name,cpus = 1,node = 'staging',name_job='transfer.sh'):
+def run_parallel_transfer(code, args, folders, num_parallel, time, name,cpus = 1,node = 'staging',name_job='transfer.sh'):  
     path_job = f'{path_bash}{name_job}'
     op_id = time_ns()
     folders.to_json(f'{directory_scratch}temp/{op_id}.json')# temporary file

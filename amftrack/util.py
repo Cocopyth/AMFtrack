@@ -9,10 +9,13 @@ import cv2
 import json
 import pandas as pd
 from amftrack.transfer.functions.transfer import download, zip_file,unzip_file,upload
-directory = '/run/user/357100554/gvfs/smb-share:server=sun.amolf.nl,share=shimizu-data,user=bisot/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE'
+from tqdm import tqdm
+
 path_code = os.getenv('HOME')+"/pycode/MscThesis/"
 # path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack'
 # plate_info = pandas.read_excel(path_code+r'/plate_info/SummaryAnalizedPlates.xlsx',engine='openpyxl',header=3,)
+API = str(np.load(os.getenv('HOME')+'/pycode/API_drop.npy'))
+target = os.getenv('HOME')+'/pycode/data_info.json'
 
 
 def get_path(date, plate, skeleton, row=None, column=None, extension=".mat"):
@@ -152,46 +155,52 @@ def get_param(folder,directory): #Very ugly but because interfacing with Matlab 
 
 def update_plate_info(directory):
     listdir = os.listdir(directory)
-    API = str(np.load('/home/cbisot/pycode/API_drop.npy'))
     source = f'data_info.json'
-    target = '/scratch-shared/amftrack/temp/data_info.json'
     download(API,source,target,end='')
     plate_info = json.load(open(target, 'r'))
-    for folder in listdir:
-        path_snap=directory+folder
-        if os.path.isfile(path_snap + "/param.m"):
-            params = get_param(folder,directory)
-            ss = folder.split("_")[0]
-            ff = folder.split("_")[1]
-            date = datetime(
-                    year=int(ss[:4]),
-                    month=int(ss[4:6]),
-                    day=int(ss[6:8]),
-                    hour=int(ff[0:2]),
-                    minute=int(ff[2:4]),
-                )
-            params['date'] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
-            plate_info[folder] = params
+    with tqdm(total=len(listdir), desc="analysed") as pbar:
+        for folder in listdir:
+            path_snap=directory+folder
+            if os.path.isfile(path_snap + "/param.m"):
+                params = get_param(folder,directory)
+                ss = folder.split("_")[0]
+                ff = folder.split("_")[1]
+                date = datetime(
+                        year=int(ss[:4]),
+                        month=int(ss[4:6]),
+                        day=int(ss[6:8]),
+                        hour=int(ff[0:2]),
+                        minute=int(ff[2:4]),
+                    )
+                params['date'] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
+                params['folder'] = folder
+                total_path = directory+folder
+                plate_info[total_path] = params
+            pbar.update(1)
     with open(target, 'w') as jsonf:
         json.dump(plate_info, jsonf,  indent=4)
     upload(API,target,f"/{source}", chunk_size=256 * 1024 * 1024,
 )
         
 def get_data_info():
-    API = str(np.load('/home/cbisot/pycode/API_drop.npy'))
     source = f'data_info.json'
-    target = '/scratch-shared/amftrack/temp/data_info.json'
     download(API,source,target,end='')
     data_info = pd.read_json(target,
    convert_dates=True).transpose()
-    data_info.index.name = 'folder'
+    data_info.index.name = 'total_path'
     data_info.reset_index(inplace=True)
     return(data_info)
 
 def get_current_folders(directory):
     plate_info = get_data_info()
-    listdir = os.listdir(directory)
-    return(plate_info.loc[np.isin(plate_info['folder'],listdir)])
+    if directory == 'dropbox':
+        dbx = dropbox.Dropbox(API)
+        response = dbx.files_list_folder("",recursive = True)
+        listdir = [file.name.split(".")[0] for file in response.entries]
+        return(plate_info.loc[np.isin(plate_info['folder'],listdir)])
+    else:
+        listdir = os.listdir(directory)
+        return(plate_info.loc[np.isin(plate_info['folder'],listdir)&(plate_info['total_path']==directory+plate_info['folder'])])
 
 def get_folders_by_plate_id(plate_id, begin = 0, end = -1, directory = None):
     data_info = get_data_info() if directory is None else get_current_folders(directory)
