@@ -67,8 +67,8 @@ def download(
     access_token,
     file_path,
     target_path,
-end = '.zip'):
+end = ''):
     dbx = dropbox.Dropbox(access_token)
     with open(target_path, "wb") as f:
-        metadata, res = dbx.files_download(path=f'/{file_path}{end}')
+        metadata, res = dbx.files_download(path=f'{file_path}{end}')
         f.write(res.content)

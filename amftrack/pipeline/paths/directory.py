@@ -13,10 +13,10 @@ directory_archive = "/archive/cbisot/"
 directory_sun = '/run/user/357100554/gvfs/smb-share:server=sun.amolf.nl,share=shimizu-data,user=bisot/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE/'
 
 
-path_bash = os.getenv('HOME')+"bash/"
+path_bash = os.getenv('HOME')+"/bash/"
 
-path_job = os.getenv('HOME')+"bash/job.sh"
-path_stitch = os.getenv('HOME')+"bash/stitch.sh"
+path_job = os.getenv('HOME')+"/bash/job.sh"
+path_stitch = os.getenv('HOME')+"/bash/stitch.sh"
 
 path_code = os.getenv('HOME')+"/pycode/MscThesis/"
 # path_job = r'C:\Users\coren\Documents\PhD\Code\bash\job.sh'
@@ -255,3 +255,34 @@ def run_parallel_transfer(code, args, folders, num_parallel, time, name,cpus = 1
         my_file.write("wait\n")
         my_file.close()
         call(f"sbatch {path_job}", shell=True)
+        
+def run_parallel_transfer_to_archive(folders, directory, time, name,cpus = 1,node = 'staging',name_job='transfer_archive.sh'):  
+    path_job = f'{path_bash}{name_job}'
+    plates = set(folders['Plate'].values)
+    length = len(plates)
+    folders = folders.copy()
+    folders['unique_id'] = folders['Plate'].astype(str) + "_" + folders['CrossDate'].astype(str)
+    folder_list = list(folders['folder'])
+    folder_list.sort()
+    for directory_name in folder_list:
+        path_info =f'{os.getenv("HOME")}/archinfo/{directory_name}_info.json'
+        line = folders.loc[folders['folder']==directory_name]
+        line.to_json(path_info)
+
+    for plate in plates:
+        id_unique = folders.loc[folders['Plate']==plate]['unique_id'].iloc[0]
+        folder = f'{directory}{id_unique}'
+        ide = time_ns()
+        my_file = open(path_job, "w")
+        my_file.write(
+            f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
+        )
+        my_file.write(
+            f'#SBATCH -o "{path_code}slurm/{name}_{ide}.out" \n'
+        )
+        my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
+        my_file.write(f"conda activate amftrack\n")
+        my_file.write(f"tar cvf /archive/cbisot/prince_data/{id_unique}.tar {folder}*\n")
+        my_file.write("wait\n")
+        my_file.close()
+        call(f"sbatch --dependency=singleton {path_job}", shell=True)
