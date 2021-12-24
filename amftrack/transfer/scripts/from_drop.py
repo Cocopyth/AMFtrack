@@ -35,7 +35,7 @@ id_unique = run_info.loc[run_info['folder']==directory_name]['unique_id'].iloc[0
 path_snap=directory+directory_name
 API = str(np.load('/home/cbisot/pycode/API_drop.npy'))
 if unzip:
-        path_zip =f'/scratch-shared/amftrack/temp/{directory_name}.zip'
+        path_zip =f'{os.getenv("TEMP")}{directory_name}.zip'
 
 
 else:
@@ -48,7 +48,7 @@ else:
             print ("Creation of the directory failed" )
         path_zip =f'{directory}/{id_unique}/{directory_name}.zip'
 
-source = f'{dir_drop}/{id_unique}/{directory_name}'
+source = f'/{dir_drop}/{id_unique}/{directory_name}.zip'
 print(path_zip,source)
 
 

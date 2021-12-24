@@ -10,6 +10,7 @@ import json
 import pandas as pd
 from amftrack.transfer.functions.transfer import download, zip_file,unzip_file,upload
 from tqdm import tqdm
+import dropbox
 
 path_code = os.getenv('HOME')+"/pycode/MscThesis/"
 # path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack'
@@ -155,7 +156,7 @@ def get_param(folder,directory): #Very ugly but because interfacing with Matlab 
 
 def update_plate_info(directory):
     listdir = os.listdir(directory)
-    source = f'data_info.json'
+    source = f'/data_info.json'
     download(API,source,target,end='')
     plate_info = json.load(open(target, 'r'))
     with tqdm(total=len(listdir), desc="analysed") as pbar:
@@ -183,7 +184,7 @@ def update_plate_info(directory):
 )
         
 def get_data_info():
-    source = f'data_info.json'
+    source = f'/data_info.json'
     download(API,source,target,end='')
     data_info = pd.read_json(target,
    convert_dates=True).transpose()
@@ -192,13 +193,24 @@ def get_data_info():
     return(data_info)
 
 def get_current_folders(directory):
-    plate_info = get_data_info()
     if directory == 'dropbox':
+        data = []
         dbx = dropbox.Dropbox(API)
         response = dbx.files_list_folder("",recursive = True)
-        listdir = [file.name.split(".")[0] for file in response.entries]
-        return(plate_info.loc[np.isin(plate_info['folder'],listdir)])
+        # for fil in response.entries:
+        listfiles = [file for file in response.entries if file.name.split(".")[-1]=="zip"]
+        with tqdm(total=len(listfiles), desc="analysed") as pbar:
+            for file in listfiles:
+                source = (file.path_lower.split(".")[0])+"_info.json"
+                target = f'{os.getenv("TEMP")}{file.name.split(".")[0]}.json'
+                download(API,source,target)
+                data.append(pd.read_json(target))
+                os.remove(target) 
+                pbar.update(1)
+            infos = pd.concat(data)
+        return(infos)
     else:
+        plate_info = get_data_info()
         listdir = os.listdir(directory)
         return(plate_info.loc[np.isin(plate_info['folder'],listdir)&(plate_info['total_path']==directory+plate_info['folder'])])
 
