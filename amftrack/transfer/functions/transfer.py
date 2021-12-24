@@ -35,7 +35,7 @@ def upload(
     with open(file_path, "rb") as f:
         file_size = os.path.getsize(file_path)
         if file_size <= chunk_size:
-            # print(dbx.files_upload(f.read(), target_path, mode=dropbox.files.WriteMode.overwrite)) #Overwriting files by default
+            print(dbx.files_upload(f.read(), target_path, mode=dropbox.files.WriteMode.overwrite)) #Overwriting files by default
         else:
             with tqdm(total=file_size, desc="Uploaded") as pbar:
                 upload_session_start_result = dbx.files_upload_session_start(
@@ -49,11 +49,11 @@ def upload(
                 commit = dropbox.files.CommitInfo(path=target_path, mode=dropbox.files.WriteMode.overwrite) #Overwriting files by default
                 while f.tell() < file_size:
                     if (file_size - f.tell()) <= chunk_size:
-                        # print(
-                        #     dbx.files_upload_session_finish(
-                        #         f.read(chunk_size), cursor, commit
-                        #     )
-                        # )
+                        print(
+                            dbx.files_upload_session_finish(
+                                f.read(chunk_size), cursor, commit
+                            )
+                        )
                     else:
                         dbx.files_upload_session_append(
                             f.read(chunk_size),
