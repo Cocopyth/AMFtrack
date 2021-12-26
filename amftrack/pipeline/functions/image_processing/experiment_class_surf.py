@@ -563,7 +563,7 @@ class Edge:
         self.experiment = experiment
 
     def __eq__(self, other):
-        return (self.begin == other.begin and self.end == other.end)
+        return ((self.begin == other.begin and self.end == other.end) or (self.end == other.begin and self.begin == other.end))
 
     def __repr__(self):
         return f"Edge({self.begin},{self.end})"
@@ -572,7 +572,7 @@ class Edge:
         return str((self.begin, self.end))
     
     def __hash__(self):
-        return (self.begin, self.end).__hash__()
+        return frozenset({self.begin, self.end}).__hash__()
 
     def is_in(self, t):
         return (self.begin.label, self.end.label) in self.experiment.nx_graph[t].edges

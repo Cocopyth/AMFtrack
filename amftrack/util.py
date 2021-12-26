@@ -180,7 +180,7 @@ def update_plate_info(directory):
             pbar.update(1)
     with open(target, 'w') as jsonf:
         json.dump(plate_info, jsonf,  indent=4)
-    upload(API,target,f"/{source}", chunk_size=256 * 1024 * 1024,
+    upload(API,target,f"{source}", chunk_size=256 * 1024 * 1024,
 )
         
 def get_data_info():
