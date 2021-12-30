@@ -11,7 +11,9 @@ import pandas as pd
 from amftrack.transfer.functions.transfer import download, zip_file,unzip_file,upload
 from tqdm.autonotebook import tqdm
 import dropbox
-
+#test_remote
+#zfjn
+#fjzz
 path_code = os.getenv('HOME')+"/pycode/MscThesis/"
 # path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack'
 # plate_info = pandas.read_excel(path_code+r'/plate_info/SummaryAnalizedPlates.xlsx',engine='openpyxl',header=3,)
