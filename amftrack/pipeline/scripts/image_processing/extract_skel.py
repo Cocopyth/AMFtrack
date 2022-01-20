@@ -33,7 +33,6 @@ directory = str(sys.argv[4])
 run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
 folder_list = list(run_info['folder'])
 folder_list.sort()
-print(folder_list)
 directory_name = folder_list[i]
 path_snap=directory+directory_name
 path_tile=path_snap+'/Img/TileConfiguration.txt.registered'

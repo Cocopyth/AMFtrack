@@ -29,6 +29,39 @@ def get_speed(hypha,t,tp1,args):
         print('not_connected',hypha.end.label,hypha.get_root(tp1).label)
         return('speed',None)
 
+def get_angle(veca,vecb):
+    begin = veca/np.linalg.norm(veca)
+    end = vecb/np.linalg.norm(vecb)
+    dot_product = min(np.dot(begin, end),1)
+    if (begin[1] * end[0] - end[1] * begin[0] >= 0):  # determinant
+        angle = -np.arccos(dot_product) / (2 * np.pi) * 360
+    else:
+        angle = np.arccos(dot_product) / (2 * np.pi) * 360
+    return(angle)
+
+def get_absolute_angle_growth(hypha,t,tp1,args):
+    try:
+        segs,nodes = get_pixel_growth_and_new_children(hypha,t,tp1)
+        curve = [pixel for seg in segs for pixel in seg]
+        curve_array = np.array(curve)
+        vec1 = curve_array[-1] - curve_array[0]
+        vec2 = [0,1]
+        angle = get_angle(vec1, vec2)
+        return('absolute_angle',angle)
+    except nx.exception.NetworkXNoPath:
+        print('not_connected',hypha.end.label,hypha.get_root(tp1).label)
+        return('absolute_angle',None)
+
+
+def get_tot_length_C(hyph,t,tp1,args):
+    try:
+        edges = hyph.get_nodes_within(t)[1]
+        lengths = np.array([get_length_um_edge(edge,t) for edge in edges])
+        tot_length_C = np.sum(lengths)
+        return('tot_length_C',tot_length_C)
+    except nx.exception.NetworkXNoPath:
+        return('tot_length_C',None)
+
 def get_timestep(hypha,t,tp1,args):
     return("timestep",t)
 

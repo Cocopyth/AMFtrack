@@ -150,7 +150,10 @@ def relabel_nodes_downstream(corresp, nx_graph_list, pos_list):
         all_nodes = all_nodes.union(set(nx_graph.nodes))
     all_nodes = all_nodes.union(set(corresp.keys()))
     all_nodes = all_nodes.union(set(corresp.values()))
-    maxi = max(all_nodes) + 1
+    try:
+        maxi = max(all_nodes) + 1
+    except:
+        maxi = 1
     for key in corresp.keys():
         invert_corresp[corresp[key]] = key
 

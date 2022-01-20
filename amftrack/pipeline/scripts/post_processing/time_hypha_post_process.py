@@ -18,6 +18,8 @@ import sys
 
 directory = str(sys.argv[1])
 overwrite =  eval(sys.argv[2])
+load_graphs_bool =  eval(sys.argv[3])
+
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
@@ -33,8 +35,10 @@ exp = pickle.load(open(path_exp, "rb"))
 # print('size before loading',get_size(exp)/10**6)
 t = row['t']
 tp1 = t+1
+exp.labeled = True #For older versions of experiments, to be removed later
 load_study_zone(exp)
-# load_graphs(exp,labeled=True,indexes = [t,tp1])
+if load_graphs_bool:
+    load_graphs(exp,indexes = [t,tp1])
 # load_skel(exp,[t])
 # print('size after loading',get_size(exp)/10**6)
 
@@ -63,6 +67,6 @@ print(path)
 try:
     os.mkdir(path)
 except OSError as error:
-    print(error)  
+    pass
 with open(path_hyph_info_t, 'w') as jsonf:
     json.dump(time_hypha_info_t, jsonf,  indent=4)

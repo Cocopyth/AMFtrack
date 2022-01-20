@@ -35,7 +35,7 @@ id_unique = run_info.loc[run_info['folder']==directory_name]['unique_id'].iloc[0
 path_snap=directory+directory_name
 API = str(np.load(os.getenv('HOME')+'/pycode/API_drop.npy'))
 if unzip:
-        path_zip =f'{os.getenv("TEMP")}{directory_name}.zip'
+    path_zip =f'{os.getenv("TEMP")}{directory_name}.zip'
 
 
 else:
@@ -55,4 +55,5 @@ print(path_zip,source)
 download(API,source,path_zip)
 if unzip:    
     unzip_file(path_zip,path_snap)
-    os.remove(path_zip) 
+    print(path_snap,path_zip)
+    os.remove(path_zip)

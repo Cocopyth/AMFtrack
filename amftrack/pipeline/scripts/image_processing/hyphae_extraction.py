@@ -1,16 +1,14 @@
 from path import path_code_dir
 import sys  
 sys.path.insert(0, path_code_dir)
-from amftrack.util import get_dates_datetime
 import os
-from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment
-# from experiment_class_surftest import Experiment, clean_exp_with_hyphaes
 from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
     get_mother,
     save_hyphaes,
     width_based_cleaning,
     resolve_anastomosis_crossing_by_root,
 )
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment, save_graphs
 
 import pandas as pd
 from amftrack.pipeline.paths.directory import directory_scratch
@@ -20,6 +18,7 @@ from time import time_ns
 directory = str(sys.argv[1])
 limit = int(sys.argv[2])
 version = str(sys.argv[3])
+labeled = eval(sys.argv[4])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
@@ -47,18 +46,21 @@ for index in indexes:
     #confusion between plate number and position in Prince
     exp = Experiment(plate, directory)
     select_folders = run_info.loc[run_info['folder'].isin(select_folder_names)]
-    exp.load(select_folders)
+    exp.load(select_folders, labeled)
     exp.dates.sort()
     #when no width is included
     # width_based_cleaning(exp)
-    resolve_anastomosis_crossing_by_root(exp)
+    if labeled:
+        resolve_anastomosis_crossing_by_root(exp)
     # get_mother(exp.hyphaes)
     # solve_two_ends = resolve_ambiguity_two_ends(exp_clean.hyphaes)
     # solved = solve_degree4(exp_clean)
     # clean_obvious_fake_tips(exp_clean)
     dates = exp.dates
     op_id = time_ns()
-
+    exp.dates.sort()
+    save_graphs(exp)
+    exp.nx_graph = None
     dirName = f"{directory}Analysis_{op_id}_{start}_{stop}_Version{version}"
     try:
         os.mkdir(dirName)

@@ -59,8 +59,7 @@ class Experiment:
         xpos = [pos[0] for poss in self.positions for pos in poss.values()]
         ypos = [pos[1] for poss in self.positions for pos in poss.values()]
         self.ts = len(self.dates)
-    def get_center_orth_pivot():
-        return()
+        self.labeled = labeled
         
     def load_compressed_skel(self):
         skeletons = []
@@ -324,11 +323,12 @@ class Experiment:
         else:
             plt.show()
             
-def save_graphs(exp, labeled=True):
+def save_graphs(exp):
     nx_graph_poss = []
     for i,date in enumerate(exp.dates):
         directory_name = get_dirname(date,exp.plate)
         path_snap = exp.directory + directory_name
+        labeled = exp.labeled
         if labeled:
             suffix = "/Analysis/nx_graph_pruned_labeled2.p"
         else:
@@ -339,8 +339,9 @@ def save_graphs(exp, labeled=True):
         pos = exp.positions[i]
         pickle.dump((g,pos),open(path_save, "wb"))
 
-def load_graphs(exp, labeled=True,indexes = None):
+def load_graphs(exp, indexes = None):
     nx_graph_poss = []
+    labeled = exp.labeled
     if indexes == None:
         indexes = range(exp.ts)
     for index, date in enumerate(exp.dates):
@@ -450,7 +451,7 @@ class Node:
     def is_in(self, t):
         return self.label in self.experiment.nx_graph[t].nodes
     
-    def is_in_study_zone(node,t):
+    def is_in_study_zone(node,t,dist = 150,radius = 1000):
         exp = node.experiment
         compress = 25
         center = np.array(exp.center)
