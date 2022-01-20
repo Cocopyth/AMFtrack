@@ -33,6 +33,7 @@ else:
     time_plate_info = json.load(open(f'{directory}{path_time_plate_info}', 'r'))
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
+exp.labeled = True
 load_graphs(exp)
 
 folder = row['folder_analysis']

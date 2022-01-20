@@ -8,6 +8,8 @@ from amftrack.pipeline.paths.directory import directory_scratch
 import numpy as np
 from time import time_ns
 import pickle
+import geopandas as gpd
+from amftrack.notebooks.analysis.util import *
 
 def get_hulls(exp,ts):
     hulls = []
@@ -18,27 +20,26 @@ def get_hulls(exp,ts):
         selected = [
             g for g in S if g.size(weight="weight") * len(g.nodes) / 10 ** 6 >= threshold
         ]
+        polys = Polygon()
         if len(selected)>=0:
             area_max = 0
             for g in selected:
-                nodes = np.array([node.pos(t) for node in exp.nodes if node.is_in(t) and np.all(is_in_study_zone(node,t,1000,150)) and (node.label in g.nodes)])
+                nodes = np.array([node.pos(t) for node in exp.nodes if node.is_in(t) and
+                                  np.all(is_in_study_zone(node,t,1000,150)) and (node.label in g.nodes)])
                 if len(nodes)>3:
                     hull=spatial.ConvexHull(nodes)
                     poly = Polygon([nodes[vertice] for vertice in hull.vertices])
                     area_hull = poly.area* 1.725**2/(1000**2)
-                    if area_hull>=area_max:
-                        area_max=area_hull
-                        select_poly  = poly
-        else:
-            select_poly = Polygon()
-        hulls.append(select_poly)
+                    polys = polys.union(poly)
+        hulls.append(polys)
     return(hulls)
 
 def ring_area(hull1,hull2):
-    return(hull2.area* 1.725**2/(1000**2)-hull1.area* 1.725**2/(1000**2))
+    return(np.sum(hull2.difference(hull1).area)* 1.725**2/(1000**2))
 
 def get_nodes_in_ring(hull1,hull2,t,exp):
-    nodes = [node for node in exp.nodes if node.is_in(t) and hull2.contains(Point(node.pos(t))) and not hull1.contains(Point(node.pos(t))) and np.all(is_in_study_zone(node,t,1000,200))]
+    nodes = [node for node in exp.nodes if node.is_in(t) and hull2.contains(Point(node.pos(t))) and not
+    hull1.contains(Point(node.pos(t))) and np.all(is_in_study_zone(node,t,1000,200))]
     return(nodes)
 
 def get_length_in_ring(hull1,hull2,t,exp):
@@ -46,6 +47,46 @@ def get_length_in_ring(hull1,hull2,t,exp):
     edges = {edge for node in nodes for edge in node.edges(t)}
     tot_length = np.sum([np.linalg.norm(edge.end.pos(t)-edge.begin.pos(t))*1.725 for edge in edges])
     return(tot_length)
+
+def get_growing_tips(hull1,hull2,t,exp,rh_only):
+    nodes = get_nodes_in_ring(hull1,hull2,t,exp)
+    tips = [node for node in nodes if node.degree(t) == 1 and node.is_in(t+1)
+            and len(node.ts())>2]
+    growing_tips = [node for node in tips if np.linalg.norm(node.pos(t)-node.pos(node.ts()[-1]))>=40]
+    if rh_only:
+        growing_rhs = [node for node in growing_tips
+                       if np.linalg.norm(node.pos(node.ts()[0])-node.pos(node.ts()[-1]))>=1500]
+        return(growing_rhs)
+    else:
+        return(growing_tips)
+
+def get_rate_anas_in_ring(hull1,hull2,t,exp,rh_only):
+    growing_tips = get_growing_tips(hull1,hull2,t,exp,rh_only)
+    anas_tips = [tip for tip in growing_tips
+                 if tip.degree(t) == 1 and tip.degree(t+1) ==
+                 3 and 1 not in [tip.degree(t) for t in [tau for tau in tip.ts() if tau>t]]]
+    timedelta = get_time(exp, t, t+1)
+    return(len(anas_tips)/timedelta)
+
+def get_rate_branch_in_ring(hull1,hull2,t,exp,rh_only):
+    growing_tips = get_growing_tips(hull1,hull2,t,exp,rh_only)
+    new_tips = [tip for tip in growing_tips
+                 if tip.ts()[0] == t]
+    timedelta = get_time(exp, t, t+1)
+    return(len(new_tips)/timedelta)
+
+def get_rate_stop_in_ring(hull1,hull2,t,exp,rh_only):
+    growing_tips = get_growing_tips(hull1,hull2,t,exp,rh_only)
+    stop_tips = [tip for tip in growing_tips
+                 if np.linalg.norm(tip.pos(t+1)-tip.pos(tip.ts()[-1]))<=40
+                 and tip.degree(t+1)==1]
+    timedelta = get_time(exp, t, t+1)
+    return(len(stop_tips)/timedelta)
+
+def get_num_active_tips_in_ring(hull1,hull2,t,exp,rh_only):
+    growing_tips = get_growing_tips(hull1,hull2,t,exp,rh_only)
+    return(len(growing_tips))
+
 
 def get_regular_hulls(num,exp,ts):
     hulls = get_hulls(exp,ts)
@@ -90,7 +131,7 @@ def get_regular_hulls_area_fixed(exp,ts,incr):
         (regular_hulls, indexes) = pickle.load(open(path,"rb"))
     else:
         hulls = get_hulls(exp,ts)
-        areas = [hull.area* 1.725**2/(1000**2) for hull in hulls]
+        areas = [np.sum(hull.area)* 1.725**2/(1000**2) for hull in hulls]
         area_incr = areas[-1] - areas[0]
         num = int(area_incr / incr)
         regular_hulls = [hulls[0]]
@@ -108,7 +149,6 @@ def get_regular_hulls_area_fixed(exp,ts,incr):
 
 
 def get_density_in_ring(exp,t,args):
-    print(t)
     incr = args["incr"]
     i = args["i"]
     regular_hulls,indexes = get_regular_hulls_area_fixed(exp,range(exp.ts),incr)
@@ -119,3 +159,55 @@ def get_density_in_ring(exp,t,args):
         return(f"ring_density_incr-{incr}_index-{i}",length/area)
     else:
         return(f"ring_density_incr-{incr}_index-{i}",None)
+
+def get_density_anastomose_in_ring(exp,t,args):
+    incr = args["incr"]
+    i = args["i"]
+    rh_only = args["rh_only"]
+    regular_hulls,indexes = get_regular_hulls_area_fixed(exp,range(exp.ts),incr)
+    if i+2<=len(regular_hulls) and t<=exp.ts-2:
+        hull1,hull2 = regular_hulls[i],regular_hulls[i+1]
+        rate = get_rate_anas_in_ring(hull1,hull2,t,exp,rh_only)
+        area= ring_area(hull1,hull2)
+        return(f"ring_anas_density_incr-{incr}_index-{i}",rate/area)
+    else:
+        return(f"ring_anas_density_incr-{incr}_index-{i}",None)
+
+def get_density_branch_rate_in_ring(exp,t,args):
+    incr = args["incr"]
+    i = args["i"]
+    rh_only = args["rh_only"]
+    regular_hulls,indexes = get_regular_hulls_area_fixed(exp,range(exp.ts),incr)
+    if i+2<=len(regular_hulls) and t<=exp.ts-2:
+        hull1,hull2 = regular_hulls[i],regular_hulls[i+1]
+        rate = get_rate_branch_in_ring(hull1,hull2,t,exp,rh_only)
+        area= ring_area(hull1,hull2)
+        return(f"ring_branch_density_incr-{incr}_index-{i}",rate/area)
+    else:
+        return(f"ring_branch_density_incr-{incr}_index-{i}",None)
+
+def get_density_stop_rate_in_ring(exp,t,args):
+    incr = args["incr"]
+    i = args["i"]
+    rh_only = args["rh_only"]
+    regular_hulls,indexes = get_regular_hulls_area_fixed(exp,range(exp.ts),incr)
+    if i+2<=len(regular_hulls) and t<=exp.ts-2:
+        hull1,hull2 = regular_hulls[i],regular_hulls[i+1]
+        rate = get_rate_stop_in_ring(hull1,hull2,t,exp,rh_only)
+        area= ring_area(hull1,hull2)
+        return(f"ring_stop_density_incr-{incr}_index-{i}",rate/area)
+    else:
+        return(f"ring_stop_density_incr-{incr}_index-{i}",None)
+
+def get_density_active_tips_in_ring(exp,t,args):
+    incr = args["incr"]
+    i = args["i"]
+    rh_only = args["rh_only"]
+    regular_hulls,indexes = get_regular_hulls_area_fixed(exp,range(exp.ts),incr)
+    if i+2<=len(regular_hulls) and t<=exp.ts-2:
+        hull1,hull2 = regular_hulls[i],regular_hulls[i+1]
+        rate = get_num_active_tips_in_ring(hull1,hull2,t,exp,rh_only)
+        area= ring_area(hull1,hull2)
+        return(f"ring_active_tips_density_incr-{incr}_index-{i}",rate/area)
+    else:
+        return(f"ring_active_tips_density_incr-{incr}_index-{i}",None)

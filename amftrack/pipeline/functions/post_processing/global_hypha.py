@@ -5,7 +5,7 @@ from amftrack.notebooks.analysis.util import *
 pixel_conversion_factor = 1.725
 import networkx as nx
 
-def get_width(hyph,args):
+def get_width_f(hyph,args):
     t = hyph.ts[-1]
     try:
         edges = hyph.get_nodes_within(t)[1]
@@ -16,7 +16,7 @@ def get_width(hyph,args):
     except nx.exception.NetworkXNoPath:
         return('av_width_final',None)
 
-def get_tot_length_C(hyph,args):
+def get_tot_length_C_f(hyph,args):
     t = hyph.ts[-1]
     try:
         edges = hyph.get_nodes_within(t)[1]
@@ -26,7 +26,7 @@ def get_tot_length_C(hyph,args):
     except nx.exception.NetworkXNoPath:
         return('tot_length_C',None)
 
-def get_tot_growth_C(hyph,args):
+def get_tot_growth_C_f(hyph,args):
     t0 = hyph.ts[0]
     tf = hyph.ts[-1]
     try:
@@ -38,14 +38,14 @@ def get_tot_growth_C(hyph,args):
         return('tot_growth_C',None)        
     return('tot_growth_C',tot_growth_C)
 
-def get_tot_length_pp(hyph,args):
+def get_tot_length_pp_f(hyph,args):
     t = hyph.ts[-1]
     tip_pos = hyph.end.pos(t)
     root_pos = hyph.get_root(t).pos(t)
     tot_length_pp = np.linalg.norm(tip_pos-root_pos)*pixel_conversion_factor
     return('tot_length_pp',tot_length_pp)
 
-def get_tot_growth_pp(hyph,args):
+def get_tot_growth_pp_f(hyph,args):
     t0 = hyph.ts[0]
     tf = hyph.ts[-1]
     tip_pos_init = hyph.end.pos(t0)
@@ -68,6 +68,10 @@ def get_time_stop_growth(hyph,args):
 def get_time_init_growth(hyph,args):
     t0 = hyph.ts[0]
     return('time_init_growth',get_time(hyph.experiment,0,t0))
+
+def get_timestep_init_growth(hyph,args):
+    t0 = hyph.ts[0]
+    return('timestep_init_growth',t0)
 
 def get_mean_speed_growth(hyph,args):
     tf = get_timestep_stop_growth(hyph,args)[1]

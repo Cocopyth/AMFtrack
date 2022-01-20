@@ -11,9 +11,10 @@ import pandas as pd
 from amftrack.transfer.functions.transfer import download, zip_file,unzip_file,upload
 from tqdm.autonotebook import tqdm
 import dropbox
+from time import time_ns
+
 #test_remote
-#zfjn
-#fjzz
+
 path_code = os.getenv('HOME')+"/pycode/MscThesis/"
 # path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack'
 # plate_info = pandas.read_excel(path_code+r'/plate_info/SummaryAnalizedPlates.xlsx',engine='openpyxl',header=3,)
@@ -200,11 +201,15 @@ def get_current_folders(directory):
         dbx = dropbox.Dropbox(API)
         response = dbx.files_list_folder("",recursive = True)
         # for fil in response.entries:
-        listfiles = [file for file in response.entries if file.name.split(".")[-1]=="zip"]
+        listfiles = []
+        while response.has_more:
+            listfiles += [file for file in response.entries if file.name.split(".")[-1] == "zip"]
+            response = dbx.files_list_folder_continue(response.cursor)
         with tqdm(total=len(listfiles), desc="analysed") as pbar:
             for file in listfiles:
                 source = (file.path_lower.split(".")[0])+"_info.json"
                 target = f'{os.getenv("TEMP")}{file.name.split(".")[0]}.json'
+                # print(source,target)
                 download(API,source,target)
                 data.append(pd.read_json(target))
                 os.remove(target) 
@@ -267,3 +272,23 @@ def get_analysis_info(directory):
     analysis_info.index.name = 'folder_analysis'
     analysis_info.reset_index(inplace=True)
     return(analysis_info)
+
+def get_data_tables(redownload = True):
+    API = str(np.load(os.getenv('HOME') + '/pycode/API_drop.npy'))
+    dir_drop = 'data_tables'
+    root = os.getenv('TEMP')
+    op_id = time_ns()
+    if redownload:
+        path_save = f'{root}global_hypha_info{op_id}.pick'
+        download(API, f'/{dir_drop}/global_hypha_infos.pick', path_save)
+        path_save = f'{root}time_plate_infos{op_id}.pick'
+        download(API, f'/{dir_drop}/time_plate_infos.pick', path_save)
+        path_save = f'{root}time_hypha_info{op_id}.pick'
+        download(API, f'/{dir_drop}/time_hypha_infos.pick', path_save)
+    path_save = f'{root}time_plate_infos{op_id}.pick'
+    time_plate_info = pd.read_pickle(path_save)
+    path_save = f'{root}global_hypha_info{op_id}.pick'
+    global_hypha_info = pd.read_pickle(path_save)
+    path_save = f'{root}time_hypha_info{op_id}.pick'
+    time_hypha_info = pd.read_pickle(path_save)
+    return(time_plate_info,global_hypha_info,time_hypha_info)

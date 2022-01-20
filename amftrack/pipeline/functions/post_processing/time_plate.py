@@ -4,6 +4,7 @@ import numpy as np
 from scipy import spatial
 from shapely.geometry import Polygon, shape
 import networkx as nx
+from amftrack.util import *
 
 def is_out_study(exp,t,args):
     return('out_study',int(t>exp.reach_out))
@@ -99,3 +100,31 @@ def get_length(exp,t,args):
 
 def get_num_trunks(exp,t,args):
     return('num_trunks',int(exp.num_trunk))
+
+def get_L_RH(exp,t,args):
+    plate = exp.folders['Plate'].unique()[0]
+    time_plate_info, global_hypha_info, time_hypha_info = get_data_tables()
+    table = global_hypha_info.loc[global_hypha_info['Plate']==plate].copy()
+    table['log_length'] = np.log10((table['tot_length_C'] + 1).astype(float))
+    table['is_rh'] = (table['log_length'] >= 3.36).astype(int)
+    table = table.set_index('hypha')
+    hyphaes = table.loc[(table['strop_track'] >= t) & (table['timestep_init_growth'] <= t) &
+                        ((table['out_of_ROI'].isnull()) | (table['out_of_ROI'] > t))].index
+    rh = hyphaes.loc[(hyphaes['is_rh']==1)].index
+    select_time = time_hypha_info.loc[time_hypha_info['Plate']==plate]
+    L_rh = np.sum(select_time.loc[(select_time['end'].isin(rh))&(select_time['timestep']==t)]['tot_length_C'])
+    return('L_rh',L_rh)
+
+def get_L_BAS(exp,t,args):
+    plate = exp.folders['Plate'].unique()[0]
+    time_plate_info, global_hypha_info, time_hypha_info = get_data_tables(redownload=True)
+    table = global_hypha_info.loc[global_hypha_info['Plate']==plate].copy()
+    table['log_length'] = np.log10((table['tot_length_C'] + 1).astype(float))
+    table['is_rh'] = (table['log_length'] >= 3.36).astype(int)
+    table = table.set_index('hypha')
+    hyphaes = table.loc[(table['strop_track']>=t)&(table['timestep_init_growth']<=t)&
+                        ((table['out_of_ROI'].isnull())+(table['out_of_ROI']>=t))]
+    bas = hyphaes.loc[(hyphaes['is_rh']==0)].index
+    select_time = time_hypha_info.loc[time_hypha_info['Plate']==plate]
+    L_bas = np.sum(select_time.loc[(select_time['end'].isin(bas))&(select_time['timestep']==t)]['tot_length_C'])
+    return('L_BAS',L_bas)

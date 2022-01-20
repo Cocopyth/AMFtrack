@@ -25,7 +25,6 @@ op_id = int(sys.argv[-2])
 run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
 folder_list = list(run_info['folder'])
 folder_list.sort()
-print(folder_list)
 directory_name = folder_list[i]
 path_snap = directory + directory_name
 skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")["skeleton"]
