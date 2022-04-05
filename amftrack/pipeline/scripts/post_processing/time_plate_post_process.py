@@ -14,6 +14,8 @@ import os
 import json
 from datetime import datetime
 from amftrack.pipeline.functions.post_processing.extract_study_zone import load_study_zone
+from amftrack.util import *
+from time import time_ns
 
 directory = str(sys.argv[1])
 overwrite =  eval(sys.argv[2])
@@ -33,18 +35,25 @@ else:
     time_plate_info = json.load(open(f'{directory}{path_time_plate_info}', 'r'))
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
-exp.labeled = True
+try:
+    exp.labeled
+except AttributeError:
+    exp.labeled = True
 load_graphs(exp)
-
+op_id2 = time_ns()
+get_data_tables(op_id2,redownload = True)
 folder = row['folder_analysis']
 path = f'{directory}{row["folder_analysis"]}'
 load_study_zone(exp)
 for t in range(exp.ts):
+    print(t)
     data_t = time_plate_info[str(t)] if str(t) in time_plate_info.keys() else {}
     date = exp.dates[t]
     date_str = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
     for index,f in enumerate(list_f):
+        list_args[index]['op_id'] = op_id2
         column,result = f(exp,t,list_args[index])
+        print(column,result)
         data_t[column] = result
     data_t['date'] = date_str
     data_t['Plate'] = row["Plate"]
@@ -52,4 +61,5 @@ for t in range(exp.ts):
     data_t['folder_analysis'] = row["folder_analysis"]
     time_plate_info[str(t)] = data_t
 with open(f'{directory}{path_time_plate_info}', 'w') as jsonf:
+    print("saving")
     json.dump(time_plate_info, jsonf,  indent=4)

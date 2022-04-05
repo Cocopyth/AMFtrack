@@ -96,6 +96,7 @@ def get_width_root_edge(hypha,t,tp1,args):
         else:
             return('width_tip_edge',None)
     except nx.exception.NetworkXNoPath:
+        print('no_path')
         return('width_root_edge',None)
     
 def get_width_average(hypha,t,tp1,args):
