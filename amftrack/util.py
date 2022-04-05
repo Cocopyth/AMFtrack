@@ -21,11 +21,14 @@ from decouple import Config, RepositoryEnv
 DOTENV_FILE = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/local.env"
 env_config = Config(RepositoryEnv(DOTENV_FILE))
 
+temp_path = env_config.get("TEMP_PATH")
 path_code = env_config.get("BASE_PATH")
 api_path = env_config.get("API_KEY_PATH")
-API = str(np.load(api_path))
 target = env_config.get("DATA_PATH") + "data_info.json"
 fiji_path = env_config.get("FIJI_PATH")
+
+API = str(np.load(api_path))
+os.environ["TEMP"] = temp_path
 
 
 def get_path(date, plate, skeleton, row=None, column=None, extension=".mat"):
