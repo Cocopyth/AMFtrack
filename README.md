@@ -77,4 +77,6 @@ For better display:
 ### Install the package in editable mode
 Remove the *pyproject.toml* file (for poetry)
 
+To run from the base folder:
+(will run the setup.py script)
 `pip install -e .`
