@@ -2,6 +2,7 @@
 AMF segmentation
 
 
+# Setup
 ## Setup with conda
 *For the script*
 
@@ -80,3 +81,19 @@ Remove the *pyproject.toml* file (for poetry)
 To run from the base folder:
 (will run the setup.py script)
 `pip install -e .`
+
+### Local.env file
+
+In the base folder
+
+`touch local.env`
+
+And fill the file with the following lines and adapt them to your situation
+
+```
+BASE_PATH=/home/felix/Wks/AMFtrack/
+DATA_PATH=/home/felix//Wks/amolf/
+FIJI_PATH=/home/felix/usr/fiji-linux64/Fiji.app/ImageJ-linux64
+API_KEY_PATH=/home/felix/Wks/AMFtrack/API_drop.npy
+TEMP_PATH=/home/felix/Wks/amolf/TEMP
+```
