@@ -1,6 +1,6 @@
 from datetime import datetime
 from subprocess import call
-from amftrack.util import get_dates_datetime, get_dirname
+from amftrack.util import get_dates_datetime, get_dirname, path_code
 import os
 from copy import copy
 from time import time_ns
@@ -18,7 +18,7 @@ path_bash = os.getenv('HOME')+"/bash/"
 path_job = os.getenv('HOME')+"/bash/job.sh"
 path_stitch = os.getenv('HOME')+"/bash/stitch.sh"
 
-path_code = os.getenv('HOME')+"/pycode/MscThesis/"
+# path_code = os.getenv("HOME") + "/pycode/MscThesis/"
 # path_job = r'C:\Users\coren\Documents\PhD\Code\bash\job.sh'
 # path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack/'
 
