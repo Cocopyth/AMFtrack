@@ -23,7 +23,7 @@ env_config = Config(RepositoryEnv(DOTENV_FILE))
 
 path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 temp_path = env_config.get("TEMP_PATH")
-target = env_config.get("DATA_PATH") + "data_info.json"
+target = env_config.get("DATA_PATH")
 fiji_path = env_config.get("FIJI_PATH")
 API = env_config.get("API_KEY")
 
