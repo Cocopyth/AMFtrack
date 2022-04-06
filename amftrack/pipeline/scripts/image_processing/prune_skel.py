@@ -1,5 +1,6 @@
 from path import path_code_dir
-import sys  
+import sys
+
 sys.path.insert(0, path_code_dir)
 import numpy as np
 from scipy import sparse
@@ -27,8 +28,8 @@ op_id = int(sys.argv[-2])
 threshold = float(sys.argv[1])
 directory = str(sys.argv[2])
 
-run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
-folder_list = list(run_info['folder'])
+run_info = pd.read_json(f"{directory_scratch}temp/{op_id}.json")
+folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]
 path_snap = directory + directory_name
