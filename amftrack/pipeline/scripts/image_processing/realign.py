@@ -1,5 +1,6 @@
 from path import path_code_dir
-import sys  
+import sys
+
 sys.path.insert(0, path_code_dir)
 from amftrack.util import get_dates_datetime, get_dirname
 from scipy import sparse
@@ -11,7 +12,9 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
     sparse_to_doc,
 )
 import scipy.sparse
-from amftrack.pipeline.functions.image_processing.realign import transform_skeleton_final
+from amftrack.pipeline.functions.image_processing.realign import (
+    transform_skeleton_final,
+)
 from amftrack.pipeline.paths.directory import directory_scratch
 import pandas as pd
 
@@ -21,8 +24,8 @@ op_id = int(sys.argv[-2])
 
 directory = str(sys.argv[1])
 
-run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
-folder_list = list(run_info['folder'])
+run_info = pd.read_json(f"{directory_scratch}temp/{op_id}.json")
+folder_list = list(run_info["folder"])
 folder_list.sort()
 
 dilateds = []
@@ -37,12 +40,12 @@ skel_doc = sparse_to_doc(skel)
 skel_docs.append(skel_doc)
 Rs = [np.array([[1, 0], [0, 1]])]
 ts = [np.array([0, 0])]
-for i,directory_name in enumerate(folder_list[1:]):
+for i, directory_name in enumerate(folder_list[1:]):
     path_snap = directory + directory_name
     skel_info = read_mat(path_snap + "/Analysis/skeleton_pruned.mat")
     skel = skel_info["skeleton"]
     #     skels.append(skel)
-    if i+1 ==j:
+    if i + 1 == j:
         skel_doc = sparse_to_doc(skel)
         skel_docs.append(skel_doc)
     else:
@@ -64,13 +67,13 @@ for i,directory_name in enumerate(folder_list[1:]):
 R0 = np.array([[1, 0], [0, 1]])
 t0 = np.array([0, 0])
 for i, skel in enumerate(skel_docs):
-#     print(i+begin,j)
+    #     print(i+begin,j)
     R0 = np.dot(np.transpose(Rs[i]), R0)
     t0 = -np.dot(ts[i], np.transpose(Rs[i])) + np.dot(t0, np.transpose(Rs[i]))
     directory_name = folder_list[i]
     path_snap = directory + directory_name
     if i == j:
-        print(f'saving {i} {path_snap}')
+        print(f"saving {i} {path_snap}")
         skel_aligned = transform_skeleton_final(skel, R0, t0).astype(np.uint8)
         skel_sparse = scipy.sparse.csc_matrix(skel_aligned)
         sio.savemat(

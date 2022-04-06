@@ -1,5 +1,6 @@
 from path import path_code_dir
-import sys  
+import sys
+
 sys.path.insert(0, path_code_dir)
 from amftrack.util import get_dates_datetime, get_dirname
 from amftrack.pipeline.functions.image_processing.node_id import (
@@ -12,11 +13,12 @@ import scipy.io as sio
 import pickle
 import pandas as pd
 from amftrack.pipeline.paths.directory import directory_scratch
-from amftrack.transfer.functions.transfer import upload,download
+from amftrack.transfer.functions.transfer import upload, download
 import numpy as np
 import os
-API = str(np.load(os.getenv('HOME') + '/pycode/API_drop.npy'))
-dir_drop = 'trash'
+
+API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))
+dir_drop = "trash"
 directory = str(sys.argv[1])
 print(directory)
 limit = int(sys.argv[2])
@@ -24,19 +26,21 @@ skip = eval(sys.argv[3])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
+run_info = pd.read_json(f"{directory_scratch}temp/{op_id}.json")
 
-plates = list(set(run_info['Plate'].values))
+plates = list(set(run_info["Plate"].values))
 plates.sort()
 print(plates[i])
-select_folders = run_info.loc[run_info['Plate'] == plates[i]]
-corrupted_rotation = select_folders.loc[((select_folders['/Analysis/transform.mat']==False))&
-                                        (select_folders['/Analysis/transform_corrupt.mat'])]['folder']
-folder_list = list(select_folders['folder'])
+select_folders = run_info.loc[run_info["Plate"] == plates[i]]
+corrupted_rotation = select_folders.loc[
+    ((select_folders["/Analysis/transform.mat"] == False))
+    & (select_folders["/Analysis/transform_corrupt.mat"])
+]["folder"]
+folder_list = list(select_folders["folder"])
 folder_list.sort()
 print(len(folder_list))
 indexes = [folder_list.index(corrupt_folder) for corrupt_folder in corrupted_rotation]
-indexes = [index for index in indexes if index<limit]
+indexes = [index for index in indexes if index < limit]
 indexes.sort()
 indexes += [limit]
 print(indexes)
@@ -57,7 +61,7 @@ else:
         stop = index
         # print(begin,end)
         # print(folder_list[begin:end])
-        for i,directory_name in enumerate(folder_list[start:stop]):
+        for i, directory_name in enumerate(folder_list[start:stop]):
             print(i)
             path_snap = directory + directory_name
             path_save = path_snap + "/Analysis/nx_graph_pruned_width.p"
@@ -68,7 +72,7 @@ else:
         poss_aligned = [c[1] for c in nx_graph_pos]
         downstream_graphs = []
         downstream_pos = []
-        begin = len(folder_list[start:stop])-1
+        begin = len(folder_list[start:stop]) - 1
         downstream_graphs = [nx_graph_pruned[begin]]
         downstream_poss = [poss_aligned[begin]]
 
@@ -99,7 +103,7 @@ else:
             pos = poss_aligned[i]
             pickle.dump((g, pos), open(path_save, "wb"))
 
-        for i,directory_name in enumerate(folder_list[start:stop]):
+        for i, directory_name in enumerate(folder_list[start:stop]):
             tab = from_nx_to_tab(nx_graph_pruned[i], poss_aligned[i])
             path_snap = directory + directory_name
             path_save = path_snap + "/Analysis/graph_full_labeled.mat"
