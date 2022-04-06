@@ -1,5 +1,6 @@
 from path import path_code_dir
-import sys  
+import sys
+
 sys.path.insert(0, path_code_dir)
 from amftrack.util import get_dates_datetime, get_dirname
 import scipy.io as sio
@@ -19,8 +20,8 @@ op_id = int(sys.argv[-2])
 thresh = int(sys.argv[1])
 directory = str(sys.argv[2])
 
-run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
-folder_list = list(run_info['folder'])
+run_info = pd.read_json(f"{directory_scratch}temp/{op_id}.json")
+folder_list = list(run_info["folder"])
 folder_list.sort()
 
 dates_datetime_chosen = folder_list[i : i + 2]
@@ -40,7 +41,7 @@ for directory_name in dates:
     skel_doc = sparse_to_doc(skel)
     skel_docs.append(skel_doc)
 isnan = True
-for order in [(0,1),(1,0)]:
+for order in [(0, 1), (1, 0)]:
     skeleton1, skeleton2 = skel_docs[order[0]], skel_docs[order[1]]
     skelet_pos = np.array(list(skeleton1.keys()))
     samples = np.random.choice(skelet_pos.shape[0], len(skeleton2.keys()) // 100)
@@ -52,44 +53,44 @@ for order in [(0,1),(1,0)]:
         **{
             "X": np.transpose(X.astype(float)),
             "Y": np.transpose(Y.astype(float)),
-            "scale": False, 'tolerance' : 1e-5, 'w' : 1e-5
+            "scale": False,
+            "tolerance": 1e-5,
+            "w": 1e-5,
         }
     )
     out = reg.register()
     Rfound = reg.R[0:2, 0:2]
     tfound = np.dot(Rfound, reg.t[0:2])
-    if order == (0,1):
+    if order == (0, 1):
         t_init = -tfound
         Rot_init = Rfound
     else:
-        Rot_init,t_init = np.linalg.inv(Rfound), np.dot(np.linalg.inv(Rfound),tfound)
+        Rot_init, t_init = np.linalg.inv(Rfound), np.dot(np.linalg.inv(Rfound), tfound)
     sigma2 = reg.sigma2
-    if sigma2>=thresh:
+    if sigma2 >= thresh:
         print("========")
-        print(f"Failed to match plate {dates_datetime_chosen[0]} at dates {dates_datetime_chosen}")
+        print(
+            f"Failed to match plate {dates_datetime_chosen[0]} at dates {dates_datetime_chosen}"
+        )
         print("========")
         continue
     isnan = np.isnan(tfound[0])
     if isnan:
         continue
-#     X = np.transpose(
-#         np.array([pos1[node] for node in pruned1 if pruned1.degree(node) == 3])
-#     )
-#     Y = np.transpose(
-#         np.array([pos2[node] for node in pruned2 if pruned2.degree(node) == 3])
-#     )
+    #     X = np.transpose(
+    #         np.array([pos1[node] for node in pruned1 if pruned1.degree(node) == 3])
+    #     )
+    #     Y = np.transpose(
+    #         np.array([pos2[node] for node in pruned2 if pruned2.degree(node) == 3])
+    #     )
     skeleton1, skeleton2 = skel_docs[0], skel_docs[1]
-    X = np.transpose(
-        np.array(get_degree3_nodes(skeleton1))
-    )
-    Y = np.transpose(
-        np.array(get_degree3_nodes(skeleton2))
-    )
+    X = np.transpose(np.array(get_degree3_nodes(skeleton1)))
+    Y = np.transpose(np.array(get_degree3_nodes(skeleton2)))
     # fig=plt.figure(figsize=(10,9))
     # ax = fig.add_subplot(111)
     # ax.scatter(X[0,:],X[1,:])
     # ax.scatter(Y[0,:],Y[1,:])
-#     Xex = np.transpose(np.transpose(np.dot(Rot_init, X)) + t_init)
+    #     Xex = np.transpose(np.transpose(np.dot(Rot_init, X)) + t_init)
     # fig=plt.figure(figsize=(10,9))
     # ax = fig.add_subplot(111)
     # ax.scatter(Xex[0,:],Xex[1,:])
@@ -129,7 +130,10 @@ for order in [(0,1),(1,0)]:
     # ax.scatter(np.transpose(Y)[:,0],np.transpose(Y)[:,1])
     break
 
-if not isnan:    
+if not isnan:
     sio.savemat(path_snap + "/Analysis/transform.mat", {"R": Rfound, "t": tfound})
-else :    
-    sio.savemat(path_snap + "/Analysis/transform_corrupt.mat", {"R": np.array([[1,0],[0,1]]), "t": np.array([0,0])})
+else:
+    sio.savemat(
+        path_snap + "/Analysis/transform_corrupt.mat",
+        {"R": np.array([[1, 0], [0, 1]]), "t": np.array([0, 0])},
+    )

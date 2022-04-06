@@ -2,12 +2,13 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import cv2
 import numpy as np
-from amftrack.util import  get_skeleton
+from amftrack.util import get_skeleton
 
 
-def get_time(exp,t,tp1):#redefined here to avoid loop in import
-    seconds = (exp.dates[tp1]-exp.dates[t]).total_seconds()
-    return(seconds/3600)
+def get_time(exp, t, tp1):  # redefined here to avoid loop in import
+    seconds = (exp.dates[tp1] - exp.dates[t]).total_seconds()
+    return seconds / 3600
+
 
 def show_im(matrix, alpha=None, cmap="gray", interpolation="none"):
     fig = plt.figure()
@@ -119,7 +120,7 @@ def plot_t_tp1(
     save="",
     time=None,
     gray=False,
-    fontsize = 25
+    fontsize=25,
 ):
     right = 0.90
     top = 0.90
@@ -131,7 +132,7 @@ def plot_t_tp1(
         size = 5
     ax = fig.add_subplot(111)
     ax.imshow(imtp1, cmap="gray", interpolation="none")
-    if gray: 
+    if gray:
         ax.imshow(imt, cmap="gray", alpha=0.5, interpolation="none")
     else:
         ax.imshow(imt, cmap="jet", alpha=0.5, interpolation="none")
@@ -146,7 +147,7 @@ def plot_t_tp1(
         verticalalignment="bottom",
         transform=ax.transAxes,
         color="white",
-        fontsize = fontsize,
+        fontsize=fontsize,
     )
     for node in node_list_t:
         t = ax.text(
@@ -187,14 +188,49 @@ def compress_skeleton(skeleton_doc, factor, shape=None):
     return final_picture
 
 
-def plot_node_skel(node,t0,ranges = 1000,save='',anchor = None):
+def plot_node_skel(node, t0, ranges=1000, save="", anchor=None):
     t = t0
     exp = node.experiment
     anchor_time = t0 if (anchor is None) else anchor
-    center = node.pos(anchor_time)[1],node.pos(anchor_time)[0]
-    window = (center[0]-ranges,center[0]+ranges,center[1]-ranges,center[1]+ranges)
-    skelet,rot,trans = get_skeleton(node.experiment,window,t,node.experiment.directory)
-#     im_stitched = get_im_stitched(exp,window,t,directory)
-    tips = [node.label for node in exp.nodes if t in node.ts() and node.degree(t) ==1 and node.pos(t)[1]>=window[0] and node.pos(t)[1]<=window[1] and node.pos(t)[0]>=window[2] and node.pos(t)[0]<=window[3]]
-    junction =  [node.label for node in exp.nodes if t in node.ts() and node.degree(t) >=2 and node.pos(t)[1]>=window[0] and node.pos(t)[1]<=window[1] and node.pos(t)[0]>=window[2] and node.pos(t)[0]<=window[3]]
-    _ = plot_t_tp1(junction,tips,exp.positions[t],exp.positions[t],skelet,skelet,shift=(window[2],window[0]),save = save, time=f't={int(get_time(exp,0,t))}h')
+    center = node.pos(anchor_time)[1], node.pos(anchor_time)[0]
+    window = (
+        center[0] - ranges,
+        center[0] + ranges,
+        center[1] - ranges,
+        center[1] + ranges,
+    )
+    skelet, rot, trans = get_skeleton(
+        node.experiment, window, t, node.experiment.directory
+    )
+    #     im_stitched = get_im_stitched(exp,window,t,directory)
+    tips = [
+        node.label
+        for node in exp.nodes
+        if t in node.ts()
+        and node.degree(t) == 1
+        and node.pos(t)[1] >= window[0]
+        and node.pos(t)[1] <= window[1]
+        and node.pos(t)[0] >= window[2]
+        and node.pos(t)[0] <= window[3]
+    ]
+    junction = [
+        node.label
+        for node in exp.nodes
+        if t in node.ts()
+        and node.degree(t) >= 2
+        and node.pos(t)[1] >= window[0]
+        and node.pos(t)[1] <= window[1]
+        and node.pos(t)[0] >= window[2]
+        and node.pos(t)[0] <= window[3]
+    ]
+    _ = plot_t_tp1(
+        junction,
+        tips,
+        exp.positions[t],
+        exp.positions[t],
+        skelet,
+        skelet,
+        shift=(window[2], window[0]),
+        save=save,
+        time=f"t={int(get_time(exp,0,t))}h",
+    )
