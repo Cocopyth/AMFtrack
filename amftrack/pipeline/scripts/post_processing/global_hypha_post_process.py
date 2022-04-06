@@ -35,7 +35,10 @@ else:
 # print(global_hypha_info)
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
-exp.labeled = True
+try:
+    exp.labeled
+except AttributeError:
+    exp.labeled = True
 load_graphs(exp)
 
 load_study_zone(exp)

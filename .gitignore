@@ -21,3 +21,4 @@ amftrack/pipeline/scripts/stitching_loops/
 local.env
 AMFTrack.egg-info
 venv
+*.svg

@@ -7,7 +7,8 @@ from copy import deepcopy
 from amftrack.sparse_util import dilate
 from scipy.optimize import minimize
 from time import time
-
+from amftrack.transfer.functions.transfer import upload,download
+import os
 
 def node_dist(
     node1,
@@ -175,23 +176,18 @@ def reduce_labels(nx_graph_list, pos_list):
     new_poss = [{} for i in range(len(nx_graph_list))]
     new_graphs = []
     all_node_labels = set()
-    node = [node for node in nx_graph_list[0].nodes if node in nx_graph_list[1]][0]
     for nx_graph in nx_graph_list:
         all_node_labels = all_node_labels.union(set(nx_graph.nodes))
     all_node_labels = sorted(all_node_labels)
-
+    dico = {node: all_node_labels.index(node) for node in all_node_labels}
     def mapping(node):
-        return all_node_labels.index(node)
+        return dico[node]
 
     for i, nx_graph in enumerate(nx_graph_list):
         for node in nx_graph.nodes:
             pos = pos_list[i][node]
             new_poss[i][mapping(node)] = pos
         new_graphs.append(nx.relabel_nodes(nx_graph, mapping, copy=True))
-    #     node=choice([node for node in new_graphs[0].nodes if new_graphs[0].degree(node)==3])
-    #     for i,nx_graph in enumerate(nx_graph_list):
-    #         if node in new_poss[i].keys():
-    #             print(node,i,new_poss[i][node])
     return (new_graphs, new_poss)
 
 
@@ -306,7 +302,8 @@ def orient(pixel_list, root_pos):
     else:
         return list(reversed(pixel_list))
 
-
+# API = str(np.load(os.getenv('HOME') + '/pycode/API_drop.npy'))
+dir_drop = 'trash'
 def second_identification(
     nx_graph_tm1,
     nx_graph_t,
@@ -317,12 +314,15 @@ def second_identification(
     downstream_pos=[],
     tolerance=50,
 ):
+    path = os.getenv('HOME') + '/pycode/API_drop.npy'
     reconnect_degree_2(nx_graph_t, pos_t)
     t = time()
     corresp, to_remove = first_identification(
         nx_graph_tm1, nx_graph_t, pos_tm1, pos_t, tolerance
     )
     print("first_id", time() - t)
+    # upload(API, path, f'/{dir_drop}/test_first_id{int(time() - t)}', chunk_size=256 * 1024 * 1024)
+
     t = time()
     #     nx_graph_tm1=clean_nodes(nx_graph_tm1,to_remove,pos_tm1)
     #     print("clean_node",time()-t)
@@ -333,6 +333,8 @@ def second_identification(
         corresp, downstream_graphs, downstream_pos
     )
     print("relabel", time() - t)
+    # upload(API, path, f'/{dir_drop}/relabel{int(time() - t)}', chunk_size=256 * 1024 * 1024)
+
     t = time()
     pos_t = new_poss[0]
     nx_graph_t = new_graphs[0]
@@ -498,6 +500,8 @@ def second_identification(
                 ambiguous.add(tip)
             corresp_tips[tip] = current_node
     print("tip_id", time() - t)
+    # upload(API, path, f'/{dir_drop}/second_id{int(time() - t)}', chunk_size=256 * 1024 * 1024)
+
     t = time()
     while len(ambiguous) > 0: #improve ambiguity resolving!
         node = ambiguous.pop()
@@ -516,16 +520,23 @@ def second_identification(
             if candidate != right_candidate:
                 corresp_tips.pop(candidate)
                 ambiguous.discard(candidate)
+
     new_graphs, new_poss = relabel_nodes_downstream(
         corresp_tips, downstream_graphs, downstream_pos
     )
+    # upload(API, path, f'/{dir_drop}/relabel_down{int(time() - t)}', chunk_size=256 * 1024 * 1024)
+
     downstream_pos = new_poss
     downstream_graphs = new_graphs
     #     print("second relabeling")
     #     print(len(nx_graph_tm1.nodes),len(new_graphs[0].nodes))
+    t = time()
+
     new_graphs, new_poss = reduce_labels(
         [nx_graph_tm1] + downstream_graphs, [pos_tm1] + downstream_pos
     )
+    # upload(API, path, f'/{dir_drop}/reduce{int(time() - t)}', chunk_size=256 * 1024 * 1024)
+
     #     print("third relabeling")
     #     print(len(new_graphs[0].nodes),len(new_graphs[1].nodes))
     return (new_graphs, new_poss)

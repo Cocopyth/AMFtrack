@@ -35,7 +35,10 @@ exp = pickle.load(open(path_exp, "rb"))
 # print('size before loading',get_size(exp)/10**6)
 t = row['t']
 tp1 = t+1
-exp.labeled = True #For older versions of experiments, to be removed later
+try:
+    exp.labeled
+except AttributeError:
+    exp.labeled = True #For older versions of experiments, to be removed later
 load_study_zone(exp)
 if load_graphs_bool:
     load_graphs(exp,indexes = [t,tp1])

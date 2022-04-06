@@ -170,7 +170,11 @@ def get_param(
     Lines = file1.readlines()
     ldict = {}
     for line in Lines:
-        exec(line.split(";")[0], globals(), ldict)
+        to_execute = line.split(";")[0]
+        relation = to_execute.split("=")
+        if len(relation) == 2:
+            ldict[relation[0].strip()] = relation[1].strip()
+        # exec(line.split(';')[0],globals(),ldict)
     files = [
         "/Img/TileConfiguration.txt.registered",
         "/Analysis/skeleton_compressed.mat",
@@ -231,24 +235,50 @@ def get_data_info():
     return data_info
 
 
-def get_current_folders(directory):
+def get_current_folders(directory, file_metadata=False):
     if directory == "dropbox":
         data = []
         dbx = dropbox.Dropbox(API)
         response = dbx.files_list_folder("", recursive=True)
         # for fil in response.entries:
         listfiles = []
+        listjson = []
         while response.has_more:
             listfiles += [
                 file for file in response.entries if file.name.split(".")[-1] == "zip"
             ]
+            listjson += [
+                file.path_lower
+                for file in response.entries
+                if file.name.split(".")[-1] == "json"
+            ]
+
             response = dbx.files_list_folder_continue(response.cursor)
+        listfiles += [
+            file for file in response.entries if file.name.split(".")[-1] == "zip"
+        ]
+        listjson += [
+            file.path_lower
+            for file in response.entries
+            if file.name.split(".")[-1] == "json"
+        ]
+        # print([((file.path_lower.split(".")[0]) + "_info.json") for file in listfiles if (file.name.split(".")[-1] == "zip") &
+        #        (((file.path_lower.split(".")[0]) + "_info.json") not in listjson)])
+        listfiles.reverse()
+        if file_metadata:
+            names = [file.name.split(".")[0] for file in listfiles]
+            sizes = [file.size / 10**9 for file in listfiles]
+            modified = [file.client_modified for file in listfiles]
+            df = pd.DataFrame((names, sizes, modified)).transpose()
+            df = df.rename(columns={0: "folder", 1: "size", 2: "change_date"})
+            return df
         with tqdm(total=len(listfiles), desc="analysed") as pbar:
             for file in listfiles:
                 source = (file.path_lower.split(".")[0]) + "_info.json"
-                target = f'{os.getenv("TEMP")}{file.name.split(".")[0]}.json'
+                target = f'{os.getenv("TEMP")}/{file.name.split(".")[0]}.json'
                 # print(source,target)
                 download(API, source, target)
+                # print(target)
                 data.append(pd.read_json(target))
                 os.remove(target)
                 pbar.update(1)
@@ -325,11 +355,11 @@ def get_analysis_info(directory):
     return analysis_info
 
 
-def get_data_tables(redownload=True):
+def get_data_tables(op_id=time_ns(), redownload=True):
     API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))
     dir_drop = "data_tables"
     root = os.getenv("TEMP")
-    op_id = time_ns()
+    # op_id = time_ns()
     if redownload:
         path_save = f"{root}global_hypha_info{op_id}.pick"
         download(API, f"/{dir_drop}/global_hypha_infos.pick", path_save)
@@ -353,8 +383,6 @@ if __name__ == "__main__":
 
     print(path_code)
     print(str(path_code))
-    print(api_path)
     print(API)
     print(target)
     print(fiji_path)
-    print(API == API_)
