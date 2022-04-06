@@ -30,7 +30,8 @@ plate = plates[i]
 print(plate)
 select_folders = run_info.loc[run_info['Plate'] == plate]
 
-corrupted_rotation = select_folders.loc[select_folders['/Analysis/transform_corrupt.mat']]['folder']
+corrupted_rotation = select_folders.loc[((select_folders['/Analysis/transform.mat']==False))&
+                                        (select_folders['/Analysis/transform_corrupt.mat'])]['folder']
 
 folder_list = list(select_folders['folder'])
 folder_list.sort()
@@ -75,3 +76,4 @@ for index in indexes:
     exp.pickle_save(f"{dirName}/")
     with open(f"{dirName}/folder_info.json", 'w') as jsonf:
         json.dump(folder_list[start:stop], jsonf,  indent=4)
+    start = stop

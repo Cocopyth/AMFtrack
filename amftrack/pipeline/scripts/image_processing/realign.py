@@ -80,7 +80,6 @@ for i, skel in enumerate(skel_docs):
         dim = skel_sparse.shape
         kernel = np.ones((5, 5), np.uint8)
         itera = 1
-        skel
         compressed = cv2.resize(
             cv2.dilate(skel_sparse.todense(), kernel, iterations=itera),
             (dim[1] // 5, dim[0] // 5),

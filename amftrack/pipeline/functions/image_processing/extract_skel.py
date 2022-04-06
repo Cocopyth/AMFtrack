@@ -63,7 +63,7 @@ def bowler_hat(im,no,si):
 
 def extract_skel_bowler_hat(im,no,si,low,high):
     bowled_hat = bowler_hat(-im, no, si)
-    transformed = 255 - bowled_hat
+    transformed = 255*bowled_hat
     hyst = filters.apply_hysteresis_threshold(transformed, low, high)
     kernel = np.ones((3, 3), np.uint8)
     dilation = cv.dilate(hyst.astype(np.uint8) * 255, kernel, iterations=1)
