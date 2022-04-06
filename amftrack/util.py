@@ -374,15 +374,3 @@ def get_data_tables(op_id=time_ns(), redownload=True):
     path_save = f"{root}time_hypha_info{op_id}.pick"
     time_hypha_info = pd.read_pickle(path_save)
     return (time_plate_info, global_hypha_info, time_hypha_info)
-
-
-if __name__ == "__main__":
-    # directory = r"/home/felix/Wks/amolf/"
-    # update_plate_info(directory)
-    # all_folders = get_current_folders(directory)
-
-    print(path_code)
-    print(str(path_code))
-    print(API)
-    print(target)
-    print(fiji_path)

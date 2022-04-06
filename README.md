@@ -84,16 +84,16 @@ To run from the base folder:
 
 ### Local.env file
 
-In the base folder
+Create a text file named `local.env` in the base folder
+(for example: `touch local.env`)
 
-`touch local.env`
-
-And fill the file with the following lines and adapt them to your situation
+And fill the file with the following lines and adapt them to your situation:
 
 ```
-BASE_PATH=/home/felix/Wks/AMFtrack/
-DATA_PATH=/home/felix//Wks/amolf/
+DATA_PATH=/home/felix//Wks/amolf/data_info.json
 FIJI_PATH=/home/felix/usr/fiji-linux64/Fiji.app/ImageJ-linux64
-API_KEY_PATH=/home/felix/Wks/AMFtrack/API_drop.npy
-TEMP_PATH=/home/felix/Wks/amolf/TEMP
+TEMP_PATH=/home/felix/Wks/amolf/TEMP   # Careful no backslash at the end here
+API_KEY=
 ```
+
+To have access to a path: always import from the `util.py` file.
