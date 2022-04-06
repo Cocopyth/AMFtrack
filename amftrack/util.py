@@ -21,13 +21,12 @@ from decouple import Config, RepositoryEnv
 DOTENV_FILE = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/local.env"
 env_config = Config(RepositoryEnv(DOTENV_FILE))
 
+path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 temp_path = env_config.get("TEMP_PATH")
-path_code = env_config.get("BASE_PATH")
-api_path = env_config.get("API_KEY_PATH")
 target = env_config.get("DATA_PATH") + "data_info.json"
 fiji_path = env_config.get("FIJI_PATH")
+API = env_config.get("API_KEY")
 
-API = str(np.load(api_path))
 os.environ["TEMP"] = temp_path
 
 
@@ -345,3 +344,17 @@ def get_data_tables(redownload=True):
     path_save = f"{root}time_hypha_info{op_id}.pick"
     time_hypha_info = pd.read_pickle(path_save)
     return (time_plate_info, global_hypha_info, time_hypha_info)
+
+
+if __name__ == "__main__":
+    # directory = r"/home/felix/Wks/amolf/"
+    # update_plate_info(directory)
+    # all_folders = get_current_folders(directory)
+
+    print(path_code)
+    print(str(path_code))
+    print(api_path)
+    print(API)
+    print(target)
+    print(fiji_path)
+    print(API == API_)
