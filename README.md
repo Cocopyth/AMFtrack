@@ -97,3 +97,7 @@ API_KEY=
 ```
 
 To have access to a path: always import from the `util.py` file.
+
+### Formattage
+
+Le formatage du code est fait avec `black`
