@@ -2,6 +2,7 @@
 AMF segmentation
 
 
+# Setup
 ## Setup with conda
 *For the script*
 
@@ -80,3 +81,23 @@ Remove the *pyproject.toml* file (for poetry)
 To run from the base folder:
 (will run the setup.py script)
 `pip install -e .`
+
+### Local.env file
+
+Create a text file named `local.env` in the base folder
+(for example: `touch local.env`)
+
+And fill the file with the following lines and adapt them to your situation:
+
+```
+DATA_PATH=/home/felix//Wks/amolf/data_info.json
+FIJI_PATH=/home/felix/usr/fiji-linux64/Fiji.app/ImageJ-linux64
+TEMP_PATH=/home/felix/Wks/amolf/TEMP   # Careful no backslash at the end here
+API_KEY=
+```
+
+To have access to a path: always import from the `util.py` file.
+
+### Formattage
+
+Le formatage du code est fait avec `black`
