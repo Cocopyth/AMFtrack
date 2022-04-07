@@ -43,17 +43,14 @@ def is_in_study_zone(node,t,radius,dist):
     exp = node.experiment
     compress = 25
     center = np.array(exp.center)
-    # print(center)
-    poss = exp.positions[t]
     x0,y0 = exp.center
     direction = exp.orthog
     pos_line = np.array((x0,y0))+dist*compress*direction
     x_line,y_line = pos_line[0],pos_line[1]
     orth_direct = np.array([direction[1],-direction[0]])
-    x_orth,y_orth = orth_direct = orth_direct[0],orth_direct[1]
+    x_orth,y_orth = orth_direct[0],orth_direct[1]
     a = y_orth/x_orth
     b = y_line-a*x_line
-    dist_center = np.linalg.norm(node.pos(t)-center)
-    # print(dist_center,radius*compress)
+    dist_center = np.linalg.norm(np.flip(node.pos(t))-center)
     y,x = node.pos(t)
     return(dist_center < radius*compress, a*x+b>y)

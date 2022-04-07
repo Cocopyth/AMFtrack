@@ -35,6 +35,10 @@ else:
 # print(global_hypha_info)
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
+try:
+    exp.labeled
+except AttributeError:
+    exp.labeled = True
 load_graphs(exp)
 
 load_study_zone(exp)
@@ -42,14 +46,15 @@ folder = row['folder_analysis']
 path = f'{directory}{row["folder_analysis"]}'
 t = time()
 for j,hypha in enumerate(exp.hyphaes):
-    if j%100==0:
-        print(time()-t)
-        print(j/len(exp.hyphaes))
-        t = time()
+    # if j%100==0:
+    #     print(time()-t)
+    #     print(j/len(exp.hyphaes))
+    #     t = time()
     data_hypha = global_hypha_info[str(hypha.end.label)] if str(hypha.end.label) in global_hypha_info.keys() else {}
     # print(data_hypha)
     for index,f in enumerate(list_f):
         column,result = f(hypha,list_args[index])
+        # print(column,result)
         data_hypha[column] = result
     data_hypha['Plate'] = row["Plate"]
     data_hypha['path_exp'] = row["path_exp"]

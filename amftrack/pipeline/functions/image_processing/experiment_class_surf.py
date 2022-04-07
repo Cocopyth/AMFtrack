@@ -20,6 +20,7 @@ from pymatreader import read_mat
 from matplotlib import colors
 from collections import Counter
 from datetime import datetime, timedelta
+import cv2
 
 class Experiment:
     def __init__(self, plate, directory):
@@ -32,6 +33,8 @@ class Experiment:
         self.dates.sort()
         nx_graph_poss = []
         for date in self.dates:
+            print(date)
+
             directory_name = get_dirname(date,self.plate)
             path_snap = self.directory + directory_name
             if labeled:
@@ -59,8 +62,7 @@ class Experiment:
         xpos = [pos[0] for poss in self.positions for pos in poss.values()]
         ypos = [pos[1] for poss in self.positions for pos in poss.values()]
         self.ts = len(self.dates)
-    def get_center_orth_pivot():
-        return()
+        self.labeled = labeled
         
     def load_compressed_skel(self):
         skeletons = []
@@ -324,23 +326,25 @@ class Experiment:
         else:
             plt.show()
             
-def save_graphs(exp, labeled=True):
+def save_graphs(exp):
     nx_graph_poss = []
     for i,date in enumerate(exp.dates):
         directory_name = get_dirname(date,exp.plate)
         path_snap = exp.directory + directory_name
+        labeled = exp.labeled
+        print(date,labeled)
+
         if labeled:
             suffix = "/Analysis/nx_graph_pruned_labeled2.p"
-        else:
-            suffix = "/Analysis/nx_graph_pruned2.p"
-        path_save = path_snap + suffix
-        print(path_save)
-        g = exp.nx_graph[i]
-        pos = exp.positions[i]
-        pickle.dump((g,pos),open(path_save, "wb"))
+            path_save = path_snap + suffix
+            # print(path_save)
+            g = exp.nx_graph[i]
+            pos = exp.positions[i]
+            pickle.dump((g,pos),open(path_save, "wb"))
 
-def load_graphs(exp, labeled=True,indexes = None):
+def load_graphs(exp, indexes = None):
     nx_graph_poss = []
+    labeled = exp.labeled
     if indexes == None:
         indexes = range(exp.ts)
     for index, date in enumerate(exp.dates):
@@ -349,7 +353,7 @@ def load_graphs(exp, labeled=True,indexes = None):
         if labeled:
             suffix = "/Analysis/nx_graph_pruned_labeled2.p"
         else:
-            suffix = "/Analysis/nx_graph_pruned2.p"
+            suffix = "/Analysis/nx_graph_pruned.p"
         path_save = path_snap + suffix
         (g, pos) = pickle.load(open(path_save, "rb"))
         if index in indexes:
@@ -377,7 +381,7 @@ def load_skel(exp,ts):
             skeletons.append(None)
     exp.skeletons = skeletons
         
-def plot_raw_plus(exp,t0,node_list,shift=(0,0),compress=5):
+def plot_raw_plus(exp,t0,node_list,shift=(0,0),n=0,compress=5,center=None,radius_imp = None,fig = None,ax=None):
     date = exp.dates[t0]
     directory_name = get_dirname(date,exp.plate)
     path_snap = exp.directory + directory_name
@@ -385,22 +389,47 @@ def plot_raw_plus(exp,t0,node_list,shift=(0,0),compress=5):
     Rot = skel["R"]
     trans = skel["t"]
     im = read_mat(path_snap+'/Analysis/raw_image.mat')['raw']
-    fig = plt.figure()
     size = 5
-    ax = fig.add_subplot(111)
-    grey = 1
-    ax.imshow(im)
+    if fig is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        alpha = 0.3
+        cmap = "jet"
+    else:
+        alpha = 0.3
+        cmap = "gray"
+    grey = 1-1/(n+2)
+    if center is None:
+        center = np.mean([exp.positions[t0][node] for node in node_list
+                          if node in exp.positions[t0].keys()],axis=0)
+        radius = np.max([np.linalg.norm(exp.positions[t0][node]-center)
+                         for node in node_list
+                          if node in exp.positions[t0].keys()])
+        radius = np.max((radius,radius_imp))
+    else:
+        radius = radius_imp
+    boundaries = np.max(np.transpose(((0,0),(center-2*radius).astype(int)//compress)),axis=1),(center+2*radius).astype(int)//compress
+    # boundaries = np.flip(boundaries,axis = 1)
+    height, width = im.shape[:2]
+    trans_mat = np.concatenate((np.linalg.inv(Rot), np.flip(trans.reshape(-1, 1)//compress)), axis=1)
+    im = cv2.warpAffine(src=im, M=trans_mat, dsize=(width, height))
+    # print(radius)
+    im = im[boundaries[0][0]:boundaries[1][0],boundaries[0][1]:boundaries[1][1]]
+    _ = ax.imshow(im,alpha = alpha,cmap = cmap)
     bbox = dict(boxstyle="circle", fc=colors.rgb2hex((grey, grey, grey)))
     #             ax.text(right, top, time,
     #                 horizontalalignment='right',
     #                 verticalalignment='bottom',
     #                 transform=ax.transAxes,color='white')
+    shift = (max(0,boundaries[0][0]*compress),max(0,boundaries[0][1]*compress))
     for node in node_list:
         #                     print(self.positions[ts[i]])
         if node in exp.positions[t0].keys():
             xs,ys = exp.positions[t0][node]
-            rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
-            ys, xs = round(rottrans[0]), round(rottrans[1])
+            # rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
+            # rottrans = np.dot(Rot, np.array([xs, ys]))+trans//5
+            # ys, xs = round(rottrans[0]), round(rottrans[1])
+            xs,ys = ys,xs
             t = ax.text(
                 (xs - shift[1]) // compress,
                 (ys - shift[0]) // compress,
@@ -410,7 +439,9 @@ def plot_raw_plus(exp,t0,node_list,shift=(0,0),compress=5):
                 size=size,
                 bbox=bbox,
             )
-    plt.show()
+    return(fig,ax,center,radius)
+    # return(im,Rot,trans)
+    # plt.show()
 
 class Node:
     def __init__(self, label, experiment):
@@ -450,7 +481,7 @@ class Node:
     def is_in(self, t):
         return self.label in self.experiment.nx_graph[t].nodes
     
-    def is_in_study_zone(node,t):
+    def is_in_study_zone(node,t,dist = 150,radius = 1000):
         exp = node.experiment
         compress = 25
         center = np.array(exp.center)
@@ -563,7 +594,7 @@ class Edge:
         self.experiment = experiment
 
     def __eq__(self, other):
-        return (self.begin == other.begin and self.end == other.end)
+        return ((self.begin == other.begin and self.end == other.end) or (self.end == other.begin and self.begin == other.end))
 
     def __repr__(self):
         return f"Edge({self.begin},{self.end})"
@@ -572,7 +603,7 @@ class Edge:
         return str((self.begin, self.end))
     
     def __hash__(self):
-        return (self.begin, self.end).__hash__()
+        return frozenset({self.begin, self.end}).__hash__()
 
     def is_in(self, t):
         return (self.begin.label, self.end.label) in self.experiment.nx_graph[t].edges
@@ -832,37 +863,37 @@ class Hyphae:
         return angle
 
 
-def plot_raw_plus(exp,t0,node_list,shift=(0,0),compress=5):
-    date = exp.dates[t0]
-    directory_name = get_dirname(date,exp.plate)
-    path_snap = exp.directory + directory_name
-    skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
-    Rot = skel["R"]
-    trans = skel["t"]
-    im = read_mat(path_snap+'/Analysis/raw_image.mat')['raw']
-    fig = plt.figure()
-    size = 5
-    ax = fig.add_subplot(111)
-    grey = 1
-    ax.imshow(im)
-    bbox = dict(boxstyle="circle", fc=colors.rgb2hex((grey, grey, grey)))
-    #             ax.text(right, top, time,
-    #                 horizontalalignment='right',
-    #                 verticalalignment='bottom',
-    #                 transform=ax.transAxes,color='white')
-    for node in node_list:
-        #                     print(self.positions[ts[i]])
-        if node in exp.positions[t0].keys():
-            xs,ys = exp.positions[t0][node]
-            rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
-            ys, xs = round(rottrans[0]), round(rottrans[1])
-            t = ax.text(
-                (xs - shift[1]) // compress,
-                (ys - shift[0]) // compress,
-                str(node),
-                ha="center",
-                va="center",
-                size=size,
-                bbox=bbox,
-            )
-    plt.show()
+# def plot_raw_plus(exp,t0,node_list,shift=(0,0),compress=5):
+#     date = exp.dates[t0]
+#     directory_name = get_dirname(date,exp.plate)
+#     path_snap = exp.directory + directory_name
+#     skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
+#     Rot = skel["R"]
+#     trans = skel["t"]
+#     im = read_mat(path_snap+'/Analysis/raw_image.mat')['raw']
+#     fig = plt.figure()
+#     size = 5
+#     ax = fig.add_subplot(111)
+#     grey = 1
+#     ax.imshow(im)
+#     bbox = dict(boxstyle="circle", fc=colors.rgb2hex((grey, grey, grey)))
+#     #             ax.text(right, top, time,
+#     #                 horizontalalignment='right',
+#     #                 verticalalignment='bottom',
+#     #                 transform=ax.transAxes,color='white')
+#     for node in node_list:
+#         #                     print(self.positions[ts[i]])
+#         if node in exp.positions[t0].keys():
+#             xs,ys = exp.positions[t0][node]
+#             rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
+#             ys, xs = round(rottrans[0]), round(rottrans[1])
+#             t = ax.text(
+#                 (xs - shift[1]) // compress,
+#                 (ys - shift[0]) // compress,
+#                 str(node),
+#                 ha="center",
+#                 va="center",
+#                 size=size,
+#                 bbox=bbox,
+#             )
+#     plt.show()
