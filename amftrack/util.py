@@ -16,14 +16,18 @@ from amftrack.transfer.functions.transfer import download, zip_file, unzip_file,
 from tqdm.autonotebook import tqdm
 import dropbox
 from time import time_ns
+from decouple import Config, RepositoryEnv
 
-# test_remote
+DOTENV_FILE = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/local.env"
+env_config = Config(RepositoryEnv(DOTENV_FILE))
 
-path_code = os.getenv("HOME") + "/pycode/MscThesis/"
-# path_code = r'C:\Users\coren\Documents\PhD\Code\AMFtrack'
-# plate_info = pandas.read_excel(path_code+r'/plate_info/SummaryAnalizedPlates.xlsx',engine='openpyxl',header=3,)
-API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))
-target = os.getenv("HOME") + "/pycode/data_info.json"
+path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
+temp_path = env_config.get("TEMP_PATH")
+target = env_config.get("DATA_PATH")
+fiji_path = env_config.get("FIJI_PATH")
+API = env_config.get("API_KEY")
+
+os.environ["TEMP"] = temp_path
 
 
 def get_path(date, plate, skeleton, row=None, column=None, extension=".mat"):

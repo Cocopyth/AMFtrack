@@ -20,3 +20,5 @@ ipympl
 nodejs
 jupyter-fs # New
 setuptools  # New
+python-decouple
+typing
