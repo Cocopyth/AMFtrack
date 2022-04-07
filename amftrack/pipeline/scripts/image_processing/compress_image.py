@@ -1,5 +1,6 @@
 from path import path_code_dir
-import sys  
+import sys
+
 sys.path.insert(0, path_code_dir)
 from amftrack.util import get_dates_datetime, get_dirname
 import pandas as pd
@@ -16,8 +17,8 @@ i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 directory = str(sys.argv[1])
 
-run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
-folder_list = list(run_info['folder'])
+run_info = pd.read_json(f"{directory_scratch}temp/{op_id}.json")
+folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]
 path_snap = directory + directory_name
@@ -56,12 +57,16 @@ dim = (int(np.max(ys) - np.min(ys)) + 4096, int(np.max(xs) - np.min(xs)) + 4096)
 ims = []
 mask = np.zeros(dim, dtype=np.uint8)
 
-for index,name in enumerate(tileconfig[0]):
+for index, name in enumerate(tileconfig[0]):
     imname = "/Img/" + name.split("/")[-1]
-    im = imageio.imread(directory+directory_name+imname)
+    im = imageio.imread(directory + directory_name + imname)
     im_cropped = im
-    im_blurred =cv.blur(im_cropped, (200, 200))
-    im_back_rem = (im_cropped)/((im_blurred==0)*np.ones(im_blurred.shape)+im_blurred)*120
+    im_blurred = cv.blur(im_cropped, (200, 200))
+    im_back_rem = (
+        (im_cropped)
+        / ((im_blurred == 0) * np.ones(im_blurred.shape) + im_blurred)
+        * 120
+    )
     boundaries = int(tileconfig[2][index][0] - np.min(xs)), int(
         tileconfig[2][index][1] - np.min(ys)
     )
