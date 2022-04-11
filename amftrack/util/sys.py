@@ -18,7 +18,10 @@ import dropbox
 from time import time_ns
 from decouple import Config, RepositoryEnv
 
-DOTENV_FILE = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/local.env"
+DOTENV_FILE = (
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    + "/local.env"
+)
 env_config = Config(RepositoryEnv(DOTENV_FILE))
 
 path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
