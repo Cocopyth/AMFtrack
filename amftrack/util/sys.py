@@ -1,3 +1,5 @@
+"""Utils for defining paths and finding files."""
+
 from pymatreader import read_mat
 from scipy import sparse
 import numpy as np
