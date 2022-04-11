@@ -173,7 +173,14 @@ def from_sparse_to_graph(doc_skel):
 
 
 def from_nx_to_tab(nx_graph, pos):
-    column_names = ["origin_label", "end_label", "origin_pos", "end_pos", "pixel_list","width"]
+    column_names = [
+        "origin_label",
+        "end_label",
+        "origin_pos",
+        "end_pos",
+        "pixel_list",
+        "width",
+    ]
     tab = pd.DataFrame(columns=column_names)
     for edge in nx_graph.edges:
         origin_label = edge[0]
@@ -189,7 +196,7 @@ def from_nx_to_tab(nx_graph, pos):
                 "origin_pos": [origin_pos],
                 "end_pos": [end_pos],
                 "pixel_list": [pixel_list],
-                "width":[width]
+                "width": [width],
             }
         )
         tab = tab.append(new_line, ignore_index=True)
@@ -332,14 +339,14 @@ def clean_degree_4(nx_graph, pos, thresh=30):
 #     return skel
 
 
-def prune_graph(nx_graph,threshold):
+def prune_graph(nx_graph, threshold):
     # should implement threshold!
     S = [nx_graph.subgraph(c).copy() for c in nx.connected_components(nx_graph)]
     selected = [
-        g for g in S if g.size(weight="weight") * len(g.nodes) / 10 ** 6 >= threshold
+        g for g in S if g.size(weight="weight") * len(g.nodes) / 10**6 >= threshold
     ]
     len_connected = [
-        (nx_graph.size(weight="weight") * len(nx_graph.nodes) / 10 ** 6)
+        (nx_graph.size(weight="weight") * len(nx_graph.nodes) / 10**6)
         for nx_graph in selected
     ]
     print(len_connected)
@@ -388,7 +395,11 @@ def sub_graph(nx_graph, pos, xbegin, xend, ybegin, yend):
     return sub_nx_graph
 
 
-def generate_skeleton(nx_graph, dim, shift=(0, 0)):
+def generate_skeleton(nx_graph, dim=(30000, 60000), shift=(0, 0)) -> sparse.dok_matrix:
+    """
+    Generate a sparse binary image of the whole squeleton.
+    Dimension should be the dimension of full stiched image.
+    """
     skel = sparse.dok_matrix(dim, dtype=bool)
     for edge in nx_graph.edges.data("pixel_list"):
         for pixel in edge[2]:
@@ -457,34 +468,44 @@ def from_connection_tab(connect_tab):
     return (from_tip, growth_pattern)
 
 
-def get_neighbours(pixel,non_zero_pixel):
-    x=pixel[0]
-    y=pixel[1]
-    primary_neighbours = {(x+1,y),(x-1,y),(x,y+1),(x,y-1)}
-    secondary_neighbours = {(x+1,y-1),(x+1,y+1),(x-1,y+1),(x-1,y-1)}
+def get_neighbours(pixel, non_zero_pixel):
+    x = pixel[0]
+    y = pixel[1]
+    primary_neighbours = {(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)}
+    secondary_neighbours = {
+        (x + 1, y - 1),
+        (x + 1, y + 1),
+        (x - 1, y + 1),
+        (x - 1, y - 1),
+    }
     num_neighbours = 0
     actual_neighbours = []
     for neighbour in primary_neighbours:
         if neighbour in non_zero_pixel:
-            num_neighbours +=1
-            xp=neighbour[0]
-            yp=neighbour[1]
-            primary_neighboursp = {(xp+1,yp),(xp-1,yp),(xp,yp+1),(xp,yp-1)}
+            num_neighbours += 1
+            xp = neighbour[0]
+            yp = neighbour[1]
+            primary_neighboursp = {
+                (xp + 1, yp),
+                (xp - 1, yp),
+                (xp, yp + 1),
+                (xp, yp - 1),
+            }
             for neighbourp in primary_neighboursp:
                 secondary_neighbours.discard(neighbourp)
             actual_neighbours.append(neighbour)
     for neighbour in secondary_neighbours:
         if neighbour in non_zero_pixel:
-            num_neighbours +=1
+            num_neighbours += 1
             actual_neighbours.append(neighbour)
-    return(actual_neighbours,num_neighbours)
+    return (actual_neighbours, num_neighbours)
+
 
 def get_degree3_nodes(skel):
-    deg_3=[]
-    non_zero= skel.keys()
+    deg_3 = []
+    non_zero = skel.keys()
     for pixel in non_zero:
-        n, num = get_neighbours(pixel,non_zero)
-        if num ==3:
+        n, num = get_neighbours(pixel, non_zero)
+        if num == 3:
             deg_3.append(pixel)
-    return(deg_3)
-
+    return deg_3
