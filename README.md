@@ -70,6 +70,13 @@ cd cycpd
 sudo python setup.py install
 ```
 
+Install Fiji:
+
+Chose a location on the computer and download:
+https://imagej.net/software/fiji/downloads
+
+### Install the package in editable mode
+
 For better display:
 
 `jupyter labextension install @jupyter-widgets/jupyterlab-manager`
@@ -96,8 +103,8 @@ TEMP_PATH=/home/felix/Wks/amolf/TEMP   # Careful no backslash at the end here
 API_KEY=
 ```
 
-To have access to a path: always import from the `util.py` file.
-
+To have access to a path: 
+Always import from the util.sys
 ### Formattage
 
 Le formatage du code est fait avec `black`
