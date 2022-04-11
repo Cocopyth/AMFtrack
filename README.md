@@ -70,6 +70,13 @@ cd cycpd
 sudo python setup.py install
 ```
 
+Install Fiji:
+
+Chose a location on the computer and download:
+https://imagej.net/software/fiji/downloads
+
+### Install the package in editable mode
+
 For better display:
 
 `jupyter labextension install @jupyter-widgets/jupyterlab-manager`
