@@ -6,7 +6,7 @@ from amftrack.pipeline.functions.image_processing.extract_width_fun import *
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
 )
-from amftrack.util import get_dates_datetime, get_dirname
+from amftrack.util.sys import get_dates_datetime, get_dirname
 import pickle
 import networkx as nx
 import pandas as pd

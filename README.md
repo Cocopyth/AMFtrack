@@ -103,8 +103,8 @@ TEMP_PATH=/home/felix/Wks/amolf/TEMP   # Careful no backslash at the end here
 API_KEY=
 ```
 
-To have access to a path: always import from the `util.py` file.
-
+To have access to a path: 
+Always import from the util.sys
 ### Formattage
 
 Le formatage du code est fait avec `black`
