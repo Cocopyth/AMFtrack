@@ -7,8 +7,9 @@ from copy import deepcopy
 from amftrack.sparse_util import dilate
 from scipy.optimize import minimize
 from time import time
-from amftrack.transfer.functions.transfer import upload,download
+from amftrack.transfer.functions.transfer import upload, download
 import os
+
 
 def node_dist(
     node1,
@@ -58,6 +59,7 @@ def node_dist(
 
 
 def first_identification(nx_graph_tm1, nx_graph_t, pos_tm1, pos_t, tolerance):
+    #
     corresp = {}
     ambiguous = set()
     to_remove = set()
@@ -92,7 +94,7 @@ def first_identification(nx_graph_tm1, nx_graph_t, pos_tm1, pos_t, tolerance):
             corresp[node1] = identifier
         else:
             to_remove.add(node1)
-    print('before ambiguities',len(corresp.keys()))
+    print("before ambiguities", len(corresp.keys()))
     while len(ambiguous) > 0:
         node = ambiguous.pop()
         identifier = corresp[node]
@@ -180,6 +182,7 @@ def reduce_labels(nx_graph_list, pos_list):
         all_node_labels = all_node_labels.union(set(nx_graph.nodes))
     all_node_labels = sorted(all_node_labels)
     dico = {node: all_node_labels.index(node) for node in all_node_labels}
+
     def mapping(node):
         return dico[node]
 
@@ -191,7 +194,7 @@ def reduce_labels(nx_graph_list, pos_list):
     return (new_graphs, new_poss)
 
 
-def reconnect_degree_2(nx_graph, pos,has_width=True):
+def reconnect_degree_2(nx_graph, pos, has_width=True):
     degree_2_nodes = [node for node in nx_graph.nodes if nx_graph.degree(node) == 2]
     while len(degree_2_nodes) > 0:
         node = degree_2_nodes.pop()
@@ -204,7 +207,7 @@ def reconnect_degree_2(nx_graph, pos,has_width=True):
             right_edge_width = nx_graph.get_edge_data(node, right_n)["width"]
             left_edge_width = nx_graph.get_edge_data(node, left_n)["width"]
         else:
-            #Maybe change to Nan if it doesnt break the rest
+            # Maybe change to Nan if it doesnt break the rest
             right_edge_width = 40
             left_edge_width = 40
         if np.any(right_edge[0] != pos[node]):
@@ -212,8 +215,10 @@ def reconnect_degree_2(nx_graph, pos,has_width=True):
         if np.any(left_edge[-1] != pos[node]):
             left_edge = list(reversed(left_edge))
         pixel_list = left_edge + right_edge[1:]
-        width_new = (right_edge_width*len(right_edge)+left_edge_width*len(left_edge))/(len(right_edge)+len(left_edge))
-        info = {"weight": len(pixel_list), "pixel_list": pixel_list, "width" : width_new}
+        width_new = (
+            right_edge_width * len(right_edge) + left_edge_width * len(left_edge)
+        ) / (len(right_edge) + len(left_edge))
+        info = {"weight": len(pixel_list), "pixel_list": pixel_list, "width": width_new}
         if right_n != left_n:
             connection_data = nx_graph.get_edge_data(right_n, left_n)
             if connection_data is None or connection_data["weight"] >= info["weight"]:
@@ -225,8 +230,6 @@ def reconnect_degree_2(nx_graph, pos,has_width=True):
     degree_0_nodes = [node for node in nx_graph.nodes if nx_graph.degree(node) == 2]
     for node in degree_0_nodes:
         nx_graph.remove_node(node)
-
-
 
 
 def clean_nodes(nx_graph, to_remove, pos):
@@ -302,8 +305,11 @@ def orient(pixel_list, root_pos):
     else:
         return list(reversed(pixel_list))
 
+
 # API = str(np.load(os.getenv('HOME') + '/pycode/API_drop.npy'))
-dir_drop = 'trash'
+dir_drop = "trash"
+
+
 def second_identification(
     nx_graph_tm1,
     nx_graph_t,
@@ -314,7 +320,7 @@ def second_identification(
     downstream_pos=[],
     tolerance=50,
 ):
-    path = os.getenv('HOME') + '/pycode/API_drop.npy'
+    path = os.getenv("HOME") + "/pycode/API_drop.npy"
     reconnect_degree_2(nx_graph_t, pos_t)
     t = time()
     corresp, to_remove = first_identification(
@@ -342,7 +348,7 @@ def second_identification(
     downstream_graphs = new_graphs
     corresp_tips = {node: node for node in corresp.keys()}
     tips = [node for node in nx_graph_tm1.nodes if nx_graph_tm1.degree(node) == 1]
-    print('tip_length',len(tips))
+    print("tip_length", len(tips))
     ambiguous = set()
     Sedge = sparse.csr_matrix((30000, 60000))
     for edge in nx_graph_t.edges:
@@ -471,7 +477,7 @@ def second_identification(
             #                     print('angle',dot_product,pos_t[last_node],pos_t[current_node],pos_t[neighbours_t],angle/(2*np.pi)*360)
             #!!!bug may happen here if two nodes are direct neighbours : I would nee to check further why it the case, optimal segmentation should avoid this issue.
             # This is especially a problem for degree 4 nodes. Maybe fuse nodes that are closer than 3 pixels.
-            #Update on comment above, the fusing has been done. However the current tracking methodology may fail for short edges.
+            # Update on comment above, the fusing has been done. However the current tracking methodology may fail for short edges.
             if i >= 100:
                 print(mini / (2 * np.pi) * 360, pos_t[next_node])
                 if next_node in loop:
@@ -503,7 +509,7 @@ def second_identification(
     # upload(API, path, f'/{dir_drop}/second_id{int(time() - t)}', chunk_size=256 * 1024 * 1024)
 
     t = time()
-    while len(ambiguous) > 0: #improve ambiguity resolving!
+    while len(ambiguous) > 0:  # improve ambiguity resolving!
         node = ambiguous.pop()
         identifier = corresp_tips[node]
         candidates = [
@@ -540,6 +546,7 @@ def second_identification(
     #     print("third relabeling")
     #     print(len(new_graphs[0].nodes),len(new_graphs[1].nodes))
     return (new_graphs, new_poss)
+
 
 def second_identification2(
     nx_graph_tm1,
@@ -693,10 +700,12 @@ def second_identification2(
                     unit_vector_candidate = candidate_vector / np.linalg.norm(
                         candidate_vector
                     )
-                    candidate_vectors.append((unit_vector_candidate,branch_candidate.shape[0]))
+                    candidate_vectors.append(
+                        (unit_vector_candidate, branch_candidate.shape[0])
+                    )
                     dot_product = np.dot(unit_vector_origin, unit_vector_candidate)
                     angle = np.arccos(dot_product)
-                    score = angle/min(branch_candidate.shape[0],length_id)
+                    score = angle / min(branch_candidate.shape[0], length_id)
                     if score < mini:
                         mini = score
                         next_node = neighbours_t
@@ -716,8 +725,12 @@ def second_identification2(
                     pos_t[current_node],
                     [node for node in nx_graph_t.nodes if nx_graph_t.degree(node) == 2],
                 )
-            competitor_angle = np.arccos(np.dot(candidate_vectors[0][0], -candidate_vectors[1][0]))
-            competitor_score = competitor_angle/min(candidate_vectors[0][1],candidate_vectors[1][1],length_id)
+            competitor_angle = np.arccos(
+                np.dot(candidate_vectors[0][0], -candidate_vectors[1][0])
+            )
+            competitor_score = competitor_angle / min(
+                candidate_vectors[0][1], candidate_vectors[1][1], length_id
+            )
             if mini < competitor_score:
                 current_node, last_node = next_node, current_node
             else:
@@ -905,17 +918,20 @@ def shift(skeleton1, skeleton2):
         options={"xatol": 1, "disp": True, "fatol": 0.1},
     )
 
-def remove_spurs(nx_g,pos,threshold = 100):
+
+def remove_spurs(nx_g, pos, threshold=100):
     found = True
     while found:
         spurs = []
         found = False
         for edge in nx_g.edges:
             edge_data = nx_g.get_edge_data(*edge)
-            if (nx_g.degree(edge[0])==1 or nx_g.degree(edge[1])==1) and edge_data['weight']<threshold:
+            if (nx_g.degree(edge[0]) == 1 or nx_g.degree(edge[1]) == 1) and edge_data[
+                "weight"
+            ] < threshold:
                 spurs.append(edge)
                 found = True
         for spur in spurs:
-            nx_g.remove_edge(spur[0],spur[1])
-        reconnect_degree_2(nx_g, pos,has_width = False)
-    return(nx_g,pos)
+            nx_g.remove_edge(spur[0], spur[1])
+        reconnect_degree_2(nx_g, pos, has_width=False)
+    return (nx_g, pos)
