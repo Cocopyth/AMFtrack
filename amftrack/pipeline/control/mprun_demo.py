@@ -1,5 +1,6 @@
-import sys  
-sys.path.insert(0, '/home/cbisot/pycode/MscThesis/')
+import sys
+
+sys.path.insert(0, "/home/cbisot/pycode/MscThesis/")
 from amftrack.pipeline.functions.post_processing.extract_study_zone import *
 import pandas as pd
 import ast
@@ -20,25 +21,31 @@ from random import choice
 import scipy.sparse
 import os
 from skimage.feature import hessian_matrix_det
-from amftrack.pipeline.paths.directory import run_parallel, find_state, directory_scratch, directory_project
-from amftrack.notebooks.analysis.util import * 
+from amftrack.pipeline.paths.directory import (
+    run_parallel,
+    find_state,
+    directory_scratch,
+    directory_project,
+)
+from amftrack.notebooks.analysis.util import *
 from scipy import stats
 from scipy.ndimage.filters import uniform_filter1d
 from collections import Counter
 from IPython.display import clear_output
 from amftrack.notebooks.analysis.data_info import *
 from IPython.core.interactiveshell import InteractiveShell
+
 InteractiveShell.ast_node_interactivity = "all"
-plt.rcParams.update({
-    "font.family": "verdana",
-'font.weight' : 'normal',
-'font.size': 20})
+plt.rcParams.update(
+    {"font.family": "verdana", "font.weight": "normal", "font.size": 20}
+)
 from amftrack.plotutil import plot_node_skel
 from amftrack.notebooks.validation.util import *
 from amftrack.pipeline.paths.directory import *
-from amftrack.util import *
+from amftrack.util.sys import *
 from amftrack.notebooks.post_processing.util import *
 import pickle
+
 
 def sum_of_lists(N):
 
@@ -48,13 +55,13 @@ def sum_of_lists(N):
     select = analysis_info
     num = 1
     rows = [row for (index, row) in select.iterrows()]
-    for index,row in enumerate(rows):
+    for index, row in enumerate(rows):
         path = f'{directory}{row["folder_analysis"]}'
-        print(index,row["Plate"])
+        print(index, row["Plate"])
         try:
-            a = np.load(f'{path}/center.npy')
+            a = np.load(f"{path}/center.npy")
         except:
-            print(index,row["Plate"])
+            print(index, row["Plate"])
         if index == num:
             path_exp = f'{directory}{row["path_exp"]}'
             exp = pickle.load(open(path_exp, "rb"))

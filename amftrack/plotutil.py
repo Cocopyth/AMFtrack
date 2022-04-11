@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import cv2
 import numpy as np
-from amftrack.util import get_skeleton
+from amftrack.util.sys import get_skeleton
 
 
 def get_time(exp, t, tp1):  # redefined here to avoid loop in import
