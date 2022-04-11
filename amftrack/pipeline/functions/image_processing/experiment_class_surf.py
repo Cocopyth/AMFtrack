@@ -1,4 +1,4 @@
-from amftrack.util import get_dirname
+from amftrack.util.sys import get_dirname
 import pandas as pd
 import networkx as nx
 import numpy as np
@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     generate_skeleton,
     from_nx_to_tab,
-    prune_graph
+    prune_graph,
 )
 from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
 import ast
@@ -22,20 +22,25 @@ from collections import Counter
 from datetime import datetime, timedelta
 import cv2
 
+
 class Experiment:
     def __init__(self, plate, directory):
         self.plate = plate
         self.directory = directory
+
     def load(self, folders, labeled=True):
         self.folders = folders
-        dates_datetime = [datetime.strptime(row['date'],"%d.%m.%Y, %H:%M:") for index,row in folders.iterrows()]
+        dates_datetime = [
+            datetime.strptime(row["date"], "%d.%m.%Y, %H:%M:")
+            for index, row in folders.iterrows()
+        ]
         self.dates = dates_datetime
         self.dates.sort()
         nx_graph_poss = []
         for date in self.dates:
             print(date)
 
-            directory_name = get_dirname(date,self.plate)
+            directory_name = get_dirname(date, self.plate)
             path_snap = self.directory + directory_name
             if labeled:
                 suffix = "/Analysis/nx_graph_pruned_labeled.p"
@@ -63,7 +68,7 @@ class Experiment:
         ypos = [pos[1] for poss in self.positions for pos in poss.values()]
         self.ts = len(self.dates)
         self.labeled = labeled
-        
+
     def load_compressed_skel(self):
         skeletons = []
         for nx_graph in self.nx_graph:
@@ -88,13 +93,12 @@ class Experiment:
         for label in labels:
             self.nodes.append(Node(label, self))
 
-
     def save(self, path=f"Data/"):
         tabs_labeled = []
         for i, date in enumerate(self.dates):
             tabs_labeled.append(from_nx_to_tab(self.nx_graph[i], self.positions[i]))
         for i, date in enumerate(self.dates):
-#             tabs_labeled[i].to_csv(path + f"graph_{date}_{self.plate}_full_labeled.csv")
+            #             tabs_labeled[i].to_csv(path + f"graph_{date}_{self.plate}_full_labeled.csv")
             sio.savemat(
                 path + f"graph_{date}_{self.plate}_full_labeled.mat",
                 {name: col.values for name, col in tabs_labeled[i].items()},
@@ -238,20 +242,22 @@ class Experiment:
         paths = []
         for index in indsImg:
             name = tileconfig[0][index]
-            imname = '/Img/'+name.split('/')[-1]
+            imname = "/Img/" + name.split("/")[-1]
             directory_name = get_dirname(date, self.plate)
-            path  = self.directory + directory_name + imname
+            path = self.directory + directory_name + imname
             paths.append(path)
         ims = [imageio.imread(path) for path in paths]
         return (ims, possImg)
-    def plot_raw(self, t,figsize = (10,9)):
+
+    def plot_raw(self, t, figsize=(10, 9)):
         date = self.dates[t]
-        directory_name = get_dirname(date,self.plate)
+        directory_name = get_dirname(date, self.plate)
         path_snap = self.directory + directory_name
-        im = read_mat(path_snap+'/Analysis/raw_image.mat')['raw']
+        im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111)
         ax.imshow(im)
+
     def plot(self, ts, node_lists=[], shift=(0, 0), compress=5, save="", time=None):
         global check
         right = 0.90
@@ -277,7 +283,7 @@ class Experiment:
         final_image = scale * compressed_images[0] * visibility[0]
         for i, compressed_image in enumerate(compressed_images[1:]):
             final_image = np.power(
-                final_image ** power
+                final_image**power
                 + ((i + 2) * scale * compressed_image * visibility[i + 1]) ** power,
                 1 / power,
             )
@@ -292,7 +298,7 @@ class Experiment:
             final_image = visibility[0] * scale * compressed_images[0]
             for i, compressed_image in enumerate(compressed_images[1:]):
                 final_image = np.power(
-                    final_image ** power
+                    final_image**power
                     + visibility[i + 1] * ((i + 2) * scale * compressed_image) ** power,
                     1 / power,
                 )
@@ -325,14 +331,15 @@ class Experiment:
             plt.close(fig)
         else:
             plt.show()
-            
+
+
 def save_graphs(exp):
     nx_graph_poss = []
-    for i,date in enumerate(exp.dates):
-        directory_name = get_dirname(date,exp.plate)
+    for i, date in enumerate(exp.dates):
+        directory_name = get_dirname(date, exp.plate)
         path_snap = exp.directory + directory_name
         labeled = exp.labeled
-        print(date,labeled)
+        print(date, labeled)
 
         if labeled:
             suffix = "/Analysis/nx_graph_pruned_labeled2.p"
@@ -340,15 +347,16 @@ def save_graphs(exp):
             # print(path_save)
             g = exp.nx_graph[i]
             pos = exp.positions[i]
-            pickle.dump((g,pos),open(path_save, "wb"))
+            pickle.dump((g, pos), open(path_save, "wb"))
 
-def load_graphs(exp, indexes = None):
+
+def load_graphs(exp, indexes=None):
     nx_graph_poss = []
     labeled = exp.labeled
     if indexes == None:
         indexes = range(exp.ts)
     for index, date in enumerate(exp.dates):
-        directory_name = get_dirname(date,exp.plate)
+        directory_name = get_dirname(date, exp.plate)
         path_snap = exp.directory + directory_name
         if labeled:
             suffix = "/Analysis/nx_graph_pruned_labeled2.p"
@@ -359,8 +367,8 @@ def load_graphs(exp, indexes = None):
         if index in indexes:
             nx_graph_poss.append((g, pos))
         else:
-            edge_empty={edge : None for edge in g.edges}
-            nx.set_edge_attributes(g, edge_empty, 'pixel_list')
+            edge_empty = {edge: None for edge in g.edges}
+            nx.set_edge_attributes(g, edge_empty, "pixel_list")
             nx_graph_poss.append((g, pos))
     nx_graphs = [nx_graph_pos[0] for nx_graph_pos in nx_graph_poss]
     poss = [nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
@@ -371,24 +379,37 @@ def load_graphs(exp, indexes = None):
     #             nx_graph_clean.append(S[np.argmax(len_connected)])
     exp.positions = poss
     exp.nx_graph = nx_graphs
-    
-def load_skel(exp,ts):
+
+
+def load_skel(exp, ts):
     skeletons = []
-    for t,nx_graph in enumerate(exp.nx_graph):
+    for t, nx_graph in enumerate(exp.nx_graph):
         if t in ts:
             skeletons.append(generate_skeleton(nx_graph, dim=(30000, 60000)))
         else:
             skeletons.append(None)
     exp.skeletons = skeletons
-        
-def plot_raw_plus(exp,t0,node_list,shift=(0,0),n=0,compress=5,center=None,radius_imp = None,fig = None,ax=None):
+
+
+def plot_raw_plus(
+    exp,
+    t0,
+    node_list,
+    shift=(0, 0),
+    n=0,
+    compress=5,
+    center=None,
+    radius_imp=None,
+    fig=None,
+    ax=None,
+):
     date = exp.dates[t0]
-    directory_name = get_dirname(date,exp.plate)
+    directory_name = get_dirname(date, exp.plate)
     path_snap = exp.directory + directory_name
     skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
     Rot = skel["R"]
     trans = skel["t"]
-    im = read_mat(path_snap+'/Analysis/raw_image.mat')['raw']
+    im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
     size = 5
     if fig is None:
         fig = plt.figure()
@@ -398,38 +419,56 @@ def plot_raw_plus(exp,t0,node_list,shift=(0,0),n=0,compress=5,center=None,radius
     else:
         alpha = 0.3
         cmap = "gray"
-    grey = 1-1/(n+2)
+    grey = 1 - 1 / (n + 2)
     if center is None:
-        center = np.mean([exp.positions[t0][node] for node in node_list
-                          if node in exp.positions[t0].keys()],axis=0)
-        radius = np.max([np.linalg.norm(exp.positions[t0][node]-center)
-                         for node in node_list
-                          if node in exp.positions[t0].keys()])
-        radius = np.max((radius,radius_imp))
+        center = np.mean(
+            [
+                exp.positions[t0][node]
+                for node in node_list
+                if node in exp.positions[t0].keys()
+            ],
+            axis=0,
+        )
+        radius = np.max(
+            [
+                np.linalg.norm(exp.positions[t0][node] - center)
+                for node in node_list
+                if node in exp.positions[t0].keys()
+            ]
+        )
+        radius = np.max((radius, radius_imp))
     else:
         radius = radius_imp
-    boundaries = np.max(np.transpose(((0,0),(center-2*radius).astype(int)//compress)),axis=1),(center+2*radius).astype(int)//compress
+    boundaries = (
+        np.max(
+            np.transpose(((0, 0), (center - 2 * radius).astype(int) // compress)),
+            axis=1,
+        ),
+        (center + 2 * radius).astype(int) // compress,
+    )
     # boundaries = np.flip(boundaries,axis = 1)
     height, width = im.shape[:2]
-    trans_mat = np.concatenate((np.linalg.inv(Rot), np.flip(trans.reshape(-1, 1)//compress)), axis=1)
+    trans_mat = np.concatenate(
+        (np.linalg.inv(Rot), np.flip(trans.reshape(-1, 1) // compress)), axis=1
+    )
     im = cv2.warpAffine(src=im, M=trans_mat, dsize=(width, height))
     # print(radius)
-    im = im[boundaries[0][0]:boundaries[1][0],boundaries[0][1]:boundaries[1][1]]
-    _ = ax.imshow(im,alpha = alpha,cmap = cmap)
+    im = im[boundaries[0][0] : boundaries[1][0], boundaries[0][1] : boundaries[1][1]]
+    _ = ax.imshow(im, alpha=alpha, cmap=cmap)
     bbox = dict(boxstyle="circle", fc=colors.rgb2hex((grey, grey, grey)))
     #             ax.text(right, top, time,
     #                 horizontalalignment='right',
     #                 verticalalignment='bottom',
     #                 transform=ax.transAxes,color='white')
-    shift = (max(0,boundaries[0][0]*compress),max(0,boundaries[0][1]*compress))
+    shift = (max(0, boundaries[0][0] * compress), max(0, boundaries[0][1] * compress))
     for node in node_list:
         #                     print(self.positions[ts[i]])
         if node in exp.positions[t0].keys():
-            xs,ys = exp.positions[t0][node]
+            xs, ys = exp.positions[t0][node]
             # rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
             # rottrans = np.dot(Rot, np.array([xs, ys]))+trans//5
             # ys, xs = round(rottrans[0]), round(rottrans[1])
-            xs,ys = ys,xs
+            xs, ys = ys, xs
             t = ax.text(
                 (xs - shift[1]) // compress,
                 (ys - shift[0]) // compress,
@@ -439,9 +478,10 @@ def plot_raw_plus(exp,t0,node_list,shift=(0,0),n=0,compress=5,center=None,radius
                 size=size,
                 bbox=bbox,
             )
-    return(fig,ax,center,radius)
+    return (fig, ax, center, radius)
     # return(im,Rot,trans)
     # plt.show()
+
 
 class Node:
     def __init__(self, label, experiment):
@@ -459,19 +499,21 @@ class Node:
 
     def __hash__(self):
         return self.label
-    def get_pseudo_identity(self,t):
+
+    def get_pseudo_identity(self, t):
         if self.is_in(t):
-            return(self)
+            return self
         else:
             mini = np.inf
             poss = self.experiment.positions[t]
-            pos_root = np.mean([self.pos(t) for t in self.ts()],axis = 0)
+            pos_root = np.mean([self.pos(t) for t in self.ts()], axis=0)
             for node in self.experiment.nx_graph[t]:
                 distance = np.linalg.norm(poss[node] - pos_root)
                 if distance < mini:
                     mini = distance
                     identifier = node
-        return(Node(identifier,self.experiment))
+        return Node(identifier, self.experiment)
+
     def neighbours(self, t):
         return [
             self.experiment.get_node(node)
@@ -480,24 +522,24 @@ class Node:
 
     def is_in(self, t):
         return self.label in self.experiment.nx_graph[t].nodes
-    
-    def is_in_study_zone(node,t,dist = 150,radius = 1000):
+
+    def is_in_study_zone(node, t, dist=150, radius=1000):
         exp = node.experiment
         compress = 25
         center = np.array(exp.center)
         poss = exp.positions[t]
-        x0,y0 = exp.center
+        x0, y0 = exp.center
         direction = exp.orthog
-        pos_line = np.array((x0,y0))+dist*compress*direction
-        x_line,y_line = pos_line[0],pos_line[1]
-        orth_direct = np.array([direction[1],-direction[0]])
-        x_orth,y_orth = orth_direct = orth_direct[0],orth_direct[1]
-        a = y_orth/x_orth
-        b = y_line-a*x_line
+        pos_line = np.array((x0, y0)) + dist * compress * direction
+        x_line, y_line = pos_line[0], pos_line[1]
+        orth_direct = np.array([direction[1], -direction[0]])
+        x_orth, y_orth = orth_direct = orth_direct[0], orth_direct[1]
+        a = y_orth / x_orth
+        b = y_line - a * x_line
         nodes_exclude = []
-        dist_center = np.linalg.norm(node.pos(t)-center)
-        y,x = node.pos(t)
-        return(dist_center > radius*compress, a*x+b<y)
+        dist_center = np.linalg.norm(node.pos(t) - center)
+        y, x = node.pos(t)
+        return (dist_center > radius * compress, a * x + b < y)
 
     def degree(self, t):
         return self.experiment.nx_graph[t].degree(self.label)
@@ -540,10 +582,11 @@ class Node:
                 None,
                 ims[i],
                 ims[i],
-                gray = True
+                gray=True,
             )
-            
-def get_distance(node1,node2,t):
+
+
+def get_distance(node1, node2, t):
     pixel_conversion_factor = 1.725
     nodes = nx.shortest_path(
         node1.experiment.nx_graph[t],
@@ -570,23 +613,25 @@ def get_distance(node1,node2,t):
                     - np.array(pixels[min((i + 1) * 10, len(pixels) - 1)])
                 )
         length += length_edge
-    return(length * pixel_conversion_factor)
+    return length * pixel_conversion_factor
 
-def find_node_equ(node,t):
-    assert node.ts()[0]<=t
+
+def find_node_equ(node, t):
+    assert node.ts()[0] <= t
     if node.is_in(t):
-            return(node)
+        return node
     else:
         mini = np.inf
         poss = node.experiment.positions[t]
-        pos_root = np.mean([node.pos(t) for t in node.ts()],axis = 0)
+        pos_root = np.mean([node.pos(t) for t in node.ts()], axis=0)
         for node_candidate in node.experiment.nx_graph[t]:
             distance = np.linalg.norm(poss[node_candidate] - pos_root)
             if distance < mini:
                 mini = distance
                 identifier = node_candidate
-        return(Node(identifier,node.experiment))
-    
+        return Node(identifier, node.experiment)
+
+
 class Edge:
     def __init__(self, begin, end, experiment):
         self.begin = begin
@@ -594,20 +639,22 @@ class Edge:
         self.experiment = experiment
 
     def __eq__(self, other):
-        return ((self.begin == other.begin and self.end == other.end) or (self.end == other.begin and self.begin == other.end))
+        return (self.begin == other.begin and self.end == other.end) or (
+            self.end == other.begin and self.begin == other.end
+        )
 
     def __repr__(self):
         return f"Edge({self.begin},{self.end})"
 
     def __str__(self):
         return str((self.begin, self.end))
-    
+
     def __hash__(self):
         return frozenset({self.begin, self.end}).__hash__()
 
     def is_in(self, t):
         return (self.begin.label, self.end.label) in self.experiment.nx_graph[t].edges
-    
+
     def ts(self):
         return [t for t in range(self.experiment.ts) if self.is_in(t)]
 
@@ -618,11 +665,11 @@ class Edge:
             ],
             self.begin.pos(t),
         )
-    def width(self, t):
-        return (self.experiment.nx_graph[t].get_edge_data(self.begin.label, self.end.label)[
-                "width"
-            ])
 
+    def width(self, t):
+        return self.experiment.nx_graph[t].get_edge_data(
+            self.begin.label, self.end.label
+        )["width"]
 
     def orientation_whole(self, t):
         pixel_list = np.array(self.pixel_list(t))
@@ -665,7 +712,6 @@ class Edge:
         else:
             angle = -np.arccos(dot_product) / (2 * np.pi) * 360
         return angle
-    
 
 
 class Hyphae:
@@ -687,23 +733,22 @@ class Hyphae:
 
     def __hash__(self):
         return self.end.label
-    
-    def get_root(self,t):
+
+    def get_root(self, t):
         assert not self.root is None
         if self.root.is_in(t):
-            return(self.root)
+            return self.root
         else:
             mini = np.inf
             poss = self.experiment.positions[t]
-            pos_root = np.mean([self.root.pos(t) for t in self.root.ts()],axis = 0)
+            pos_root = np.mean([self.root.pos(t) for t in self.root.ts()], axis=0)
             for node in self.experiment.nx_graph[t]:
-                if self.experiment.nx_graph[t].degree(node)>=3:
+                if self.experiment.nx_graph[t].degree(node) >= 3:
                     distance = np.linalg.norm(poss[node] - pos_root)
                     if distance < mini:
                         mini = distance
                         identifier = node
-        return(Node(identifier,self.experiment))
-        
+        return Node(identifier, self.experiment)
 
     def get_edges(self, t, length=100):
         first_neighbour = self.end.neighbours(t)[0]
@@ -842,11 +887,10 @@ class Hyphae:
         # It may make more sense to consider that root may not exist at a certain time point in which case one can simply use the closest node
         self.ts = self.end.ts()
 
-        
     def get_orientation(self, t, start, length=50):
         nodes, edges = self.get_nodes_within(t)
         pixel_list_list = []
-    #     print(edges[start:])
+        #     print(edges[start:])
         for edge in edges[start:]:
             pixel_list_list += edge.pixel_list(t)
         pixel_list = np.array(pixel_list_list)

@@ -2,7 +2,7 @@ from path import path_code_dir
 import sys
 
 sys.path.insert(0, path_code_dir)
-from amftrack.util import get_dates_datetime, get_dirname
+from amftrack.util.sys import get_dates_datetime, get_dirname
 import scipy.io as sio
 from pymatreader import read_mat
 import numpy as np

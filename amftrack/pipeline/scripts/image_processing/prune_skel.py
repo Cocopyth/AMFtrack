@@ -17,7 +17,7 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
     prune_graph,
     clean_degree_4,
 )
-from amftrack.util import get_dates_datetime, get_dirname
+from amftrack.util.sys import get_dates_datetime, get_dirname
 import scipy.sparse
 import scipy.io as sio
 from amftrack.pipeline.paths.directory import directory_scratch

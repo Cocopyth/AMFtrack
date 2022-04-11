@@ -1,6 +1,6 @@
 from datetime import datetime
 from subprocess import call
-from amftrack.util import get_dates_datetime, get_dirname, path_code
+from amftrack.util.sys import get_dates_datetime, get_dirname, path_code
 import os
 from copy import copy
 from time import time_ns
