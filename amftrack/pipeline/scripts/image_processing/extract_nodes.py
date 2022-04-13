@@ -2,7 +2,7 @@ from path import path_code_dir
 import sys
 
 sys.path.insert(0, path_code_dir)
-from amftrack.util.sys import get_dates_datetime, get_dirname
+from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
 from amftrack.pipeline.functions.image_processing.node_id import (
     second_identification,
 )
@@ -26,7 +26,7 @@ skip = eval(sys.argv[3])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-run_info = pd.read_json(f"{directory_scratch}temp/{op_id}.json")
+run_info = pd.read_json(f"{temp_path}/{op_id}.json")
 
 plates = list(set(run_info["Plate"].values))
 plates.sort()
