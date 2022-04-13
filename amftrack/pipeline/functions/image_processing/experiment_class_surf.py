@@ -44,7 +44,7 @@ class Experiment:
     def __repr__(self):
         return f"Experiment({self.directory}, {self.plate})"
 
-    def load(self, folders: List[str], labeled=True):
+    def load(self, folders: pd.DataFrame, labeled=True):
         """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
         dates_datetime = [
