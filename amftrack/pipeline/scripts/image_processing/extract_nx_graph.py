@@ -5,7 +5,7 @@ sys.path.insert(0, path_code_dir)
 from scipy import sparse
 from pymatreader import read_mat
 
-from amftrack.util.sys import get_dates_datetime, get_dirname
+from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_sparse_to_graph,
     generate_nx_graph,
@@ -23,7 +23,7 @@ directory = str(sys.argv[1])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-run_info = pd.read_json(f"{directory_scratch}temp/{op_id}.json")
+run_info = pd.read_json(f"{temp_path}/{op_id}.json")
 folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]

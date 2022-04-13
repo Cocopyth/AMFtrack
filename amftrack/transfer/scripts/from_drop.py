@@ -12,7 +12,7 @@ import imageio
 import numpy as np
 import os
 from time import time
-from amftrack.util.sys import get_dates_datetime, get_dirname
+from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
 from amftrack.pipeline.paths.directory import directory_scratch
 from subprocess import call
 from amftrack.transfer.functions.transfer import download, zip_file, unzip_file
@@ -25,7 +25,7 @@ flatten = eval(sys.argv[4])
 
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
-run_info = pd.read_json(f"{directory_scratch}temp/{op_id}.json")
+run_info = pd.read_json(f"{temp_path}/{op_id}.json")
 folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]
