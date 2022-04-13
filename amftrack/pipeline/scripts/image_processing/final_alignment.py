@@ -2,7 +2,7 @@ from path import path_code_dir
 import sys
 
 sys.path.insert(0, path_code_dir)
-from amftrack.util.sys import get_dates_datetime, get_dirname
+from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
 import scipy.io as sio
 from pymatreader import read_mat
 import numpy as np
@@ -20,7 +20,7 @@ op_id = int(sys.argv[-2])
 thresh = int(sys.argv[1])
 directory = str(sys.argv[2])
 
-run_info = pd.read_json(f"{directory_scratch}temp/{op_id}.json")
+run_info = pd.read_json(f"{temp_path}/{op_id}.json")
 folder_list = list(run_info["folder"])
 folder_list.sort()
 

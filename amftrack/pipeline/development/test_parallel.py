@@ -8,12 +8,13 @@ from time import time
 from joblib import Parallel, delayed
 from time import sleep
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment
+from amftrack.util.sys import temp_path
 
 directory = directory_project
 skip = False
 i = 330
 op_id = 1635343105134052723
-run_info = pd.read_json(f'{directory_scratch}temp/{op_id}.json')
+run_info = pd.read_json(f'{temp_path}/{op_id}.json')
 plate = list(run_info['PrincePos'])[i]
 
 folder_list = list(run_info['folder'])
