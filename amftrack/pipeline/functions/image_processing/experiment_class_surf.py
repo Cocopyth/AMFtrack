@@ -21,14 +21,31 @@ from matplotlib import colors
 from collections import Counter
 from datetime import datetime, timedelta
 import cv2
+from typing import List
+from amftrack.util.aliases import node_coord_dict, binary_image, coord, image
+from scipy import sparse
 
 
 class Experiment:
-    def __init__(self, plate, directory):
+    """Represents a single plate experiment over time."""
+
+    def __init__(self, plate: int, directory: str):
         self.plate = plate
         self.directory = directory
 
-    def load(self, folders, labeled=True):
+        self.folders: List[str]
+        self.dates: List[datetime]
+        self.positions: List[node_coord_dict]
+        self.nx_graph: List[nx.Graph]
+        self.skeletons: List[sparse.dok_matrix]
+        self.compressed: List[binary_image]
+        self.hyphaes = None
+
+    def __repr__(self):
+        return f"Experiment({self.directory}, {self.plate})"
+
+    def load(self, folders: List[str], labeled=True):
+        """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
         dates_datetime = [
             datetime.strptime(row["date"], "%d.%m.%Y, %H:%M:")
@@ -52,14 +69,13 @@ class Experiment:
 
         nx_graphs = [nx_graph_pos[0] for nx_graph_pos in nx_graph_poss]
         poss = [nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
-        #         nx_graph_clean=[]
-        #         for graph in nx_graphs:
-        #             S = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
-        #             len_connected=[len(nx_graph.nodes) for nx_graph in S]
-        #             nx_graph_clean.append(S[np.argmax(len_connected)])
+        # nx_graph_clean=[]
+        # for graph in nx_graphs:
+        #     S = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
+        #     len_connected=[len(nx_graph.nodes) for nx_graph in S]
+        #     nx_graph_clean.append(S[np.argmax(len_connected)])
         self.positions = poss
         self.nx_graph = nx_graphs
-        self.hyphaes = None
         labels = {node for g in self.nx_graph for node in g}
         self.nodes = []
         for label in labels:
@@ -69,15 +85,34 @@ class Experiment:
         self.ts = len(self.dates)
         self.labeled = labeled
 
-    def load_compressed_skel(self):
+    def load_compressed_skel(self, factor=5):
+        """
+        Computes and store a sparse binary image of the whole squeleton for each timestep.
+        Computes and store a compressed binary image of the whole squeleton for each timestep.
+        """
+        # TODO(FK): rename function, `load` is ambiguous
         skeletons = []
         for nx_graph in self.nx_graph:
             skeletons.append(generate_skeleton(nx_graph, dim=(30000, 60000)))
         self.skeletons = skeletons
         compressed_images = []
         for t in range(len(self.dates)):
-            compressed_images.append(self.compress_skeleton(t, 5))
+            compressed_images.append(self.compress_skeleton(t, factor))
         self.compressed = compressed_images
+
+    def compress_skeleton(self, t: int, factor: int) -> binary_image:
+        """
+        Computes an image, reduced in size by 'factor', from a the sparse squeleton matrix
+        of timestep t.
+        """
+        # TODO(FK): move to util? (there is a duplicate in util)
+        shape = self.skeletons[t].shape
+        final_picture = np.zeros(shape=(shape[0] // factor, shape[1] // factor))
+        for pixel in self.skeletons[t].keys():
+            x = min(round(pixel[0] / factor), shape[0] // factor - 1)
+            y = min(round(pixel[1] / factor), shape[1] // factor - 1)
+            final_picture[x, y] += 1
+        return final_picture >= 1
 
     def copy(self, experiment):
         self.folders = experiment.folders
@@ -110,22 +145,14 @@ class Experiment:
     def pickle_load(self, path):
         self = pickle.load(open(path + f"experiment.pick", "rb"))
 
-    def get_node(self, label):
+    def get_node(self, label: str):
         return Node(label, self)
 
     def get_edge(self, begin, end):
         return Edge(begin, end, self)
 
-    def compress_skeleton(self, t, factor):
-        shape = self.skeletons[t].shape
-        final_picture = np.zeros(shape=(shape[0] // factor, shape[1] // factor))
-        for pixel in self.skeletons[t].keys():
-            x = min(round(pixel[0] / factor), shape[0] // factor - 1)
-            y = min(round(pixel[1] / factor), shape[1] // factor - 1)
-            final_picture[x, y] += 1
-        return final_picture >= 1
-
     def get_growing_tips(self, t, threshold=80):
+        # TODO(FK): growth patterns not defined
         growths = {
             tip: sum([len(branch) for branch in self.growth_patterns[t][tip]])
             for tip in self.growth_patterns[t].keys()
@@ -134,6 +161,7 @@ class Experiment:
         return growing_tips
 
     def pinpoint_anastomosis(self, t):
+        # TODO(FK): self.connections?
         nx_graph_tm1 = self.nx_graph[t]
         nx_grapht = self.nx_graph[t + 1]
         from_tip = self.connections[t]
@@ -194,7 +222,15 @@ class Experiment:
                 number_anastomosis += 1 / 2
         return (anastomosis, origins, number_anastomosis)
 
-    def find_image_pos(self, xs, ys, t, local=False):
+    def find_image_pos(
+        self, xs: int, ys: int, t: int, local=False
+    ) -> (List[image], List[coord]):
+        """
+        For coordinates (xs, yx) in the full size stiched image,
+        returns a list of original images (before stiching) that contain the coordinate.
+        And for each found image, returns the coordinates of the point of interest in
+        the image.
+        """
         date = self.dates[t]
         directory_name = get_dirname(date, self.plate)
         path_snap = self.directory + directory_name
@@ -250,6 +286,7 @@ class Experiment:
         return (ims, possImg)
 
     def plot_raw(self, t, figsize=(10, 9)):
+        """Plot the full stiched image compressed (otherwise too heavy)"""
         date = self.dates[t]
         directory_name = get_dirname(date, self.plate)
         path_snap = self.directory + directory_name
@@ -259,6 +296,10 @@ class Experiment:
         ax.imshow(im)
 
     def plot(self, ts, node_lists=[], shift=(0, 0), compress=5, save="", time=None):
+        """
+        Plots several nodes at several timesteps, with different colors, on one another.
+        Useful for the debuging of node attribution.
+        """
         global check
         right = 0.90
         top = 0.90
@@ -403,6 +444,9 @@ def plot_raw_plus(
     fig=None,
     ax=None,
 ):
+    """
+    Plots a group of node on the compressed full stiched image of the skeleton.
+    """
     date = exp.dates[t0]
     directory_name = get_dirname(date, exp.plate)
     path_snap = exp.directory + directory_name
@@ -484,9 +528,11 @@ def plot_raw_plus(
 
 
 class Node:
+    """Represents a single node, through time in an experiment."""
+
     def __init__(self, label, experiment):
-        self.experiment = experiment
-        self.label = label
+        self.experiment: Experiment = experiment
+        self.label: str = label
 
     def __eq__(self, other):
         return self.label == other.label
@@ -501,6 +547,7 @@ class Node:
         return self.label
 
     def get_pseudo_identity(self, t):
+        # NB(FK): This method is a duplicate of the function find_node_equ
         if self.is_in(t):
             return self
         else:
@@ -514,32 +561,16 @@ class Node:
                     identifier = node
         return Node(identifier, self.experiment)
 
-    def neighbours(self, t):
+    def neighbours(self, t: int) -> List["Node"]:
+        """Returns a list of neighboors of the node at a specific timestep."""
         return [
             self.experiment.get_node(node)
             for node in self.experiment.nx_graph[t].neighbors(self.label)
         ]
 
-    def is_in(self, t):
+    def is_in(self, t: int) -> bool:
+        """Determines if the node is present at timestep t in the graph."""
         return self.label in self.experiment.nx_graph[t].nodes
-
-    def is_in_study_zone(node, t, dist=150, radius=1000):
-        exp = node.experiment
-        compress = 25
-        center = np.array(exp.center)
-        poss = exp.positions[t]
-        x0, y0 = exp.center
-        direction = exp.orthog
-        pos_line = np.array((x0, y0)) + dist * compress * direction
-        x_line, y_line = pos_line[0], pos_line[1]
-        orth_direct = np.array([direction[1], -direction[0]])
-        x_orth, y_orth = orth_direct = orth_direct[0], orth_direct[1]
-        a = y_orth / x_orth
-        b = y_line - a * x_line
-        nodes_exclude = []
-        dist_center = np.linalg.norm(node.pos(t) - center)
-        y, x = node.pos(t)
-        return (dist_center > radius * compress, a * x + b < y)
 
     def degree(self, t):
         return self.experiment.nx_graph[t].degree(self.label)
@@ -553,13 +584,24 @@ class Node:
     def pos(self, t):
         return self.experiment.positions[t][self.label]
 
-    def ts(self):
+    def ts(self) -> List[int]:
+        """Returns a list of all the timestep at which the node is present."""
         return [t for t in range(len(self.experiment.nx_graph)) if self.is_in(t)]
 
-    def show_source_image(self, t, tp1):
+    def show_source_image(self, t: int, tp1: int):
+        """
+        Two use cases:
+        If t==tp1:
+        This function plots the original image from time t containing the node.
+        As there can be several original images (because of overlap), the
+        darker image is choosen (why?)
+        If t!=tp1:
+        This function plots the original images from time t and tp1 on one another
+        """
         pos = self.pos(t)
         x, y = pos[0], pos[1]
         ims, posimg = self.experiment.find_image_pos(x, y, t)
+        # Choosing which image to show
         i = np.argmax([np.mean(im) for im in ims])
         if t != tp1:
             posp1 = self.pos(tp1)
@@ -586,7 +628,10 @@ class Node:
             )
 
 
-def get_distance(node1, node2, t):
+def get_distance(node1, node2, t) -> float:
+    """
+    Computes the distance between two nodes in micro-meter at timestep t.
+    """
     pixel_conversion_factor = 1.725
     nodes = nx.shortest_path(
         node1.experiment.nx_graph[t],
@@ -616,14 +661,22 @@ def get_distance(node1, node2, t):
     return length * pixel_conversion_factor
 
 
-def find_node_equ(node, t):
+def find_node_equ(node, t) -> Node:
+    """
+    At a given timestep t, determines the node which is the closest to the average position
+    of 'node' over time.
+    If 'node' exists at timestep t, then it will return 'node'.
+    If 'node' has never existed before timestep t, raises an error.
+    This function is used when there is a possible missidentification of a node over time.
+    """
+    # TODO(FK): This function is computationnaly very expensive.
     assert node.ts()[0] <= t
     if node.is_in(t):
         return node
     else:
         mini = np.inf
         poss = node.experiment.positions[t]
-        pos_root = np.mean([node.pos(t) for t in node.ts()], axis=0)
+        pos_root = np.mean([node.pos(t) for t in node.ts()], axis=0)  # me
         for node_candidate in node.experiment.nx_graph[t]:
             distance = np.linalg.norm(poss[node_candidate] - pos_root)
             if distance < mini:
@@ -633,7 +686,9 @@ def find_node_equ(node, t):
 
 
 class Edge:
-    def __init__(self, begin, end, experiment):
+    """Edge object through time in an experiment."""
+
+    def __init__(self, begin: Node, end: Node, experiment: Experiment):
         self.begin = begin
         self.end = end
         self.experiment = experiment
@@ -941,3 +996,8 @@ class Hyphae:
 #                 bbox=bbox,
 #             )
 #     plt.show()
+
+
+if __name__ == "__main__":
+    exp = Experiment(4, "directory")
+    print(exp)
