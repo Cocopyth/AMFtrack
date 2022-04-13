@@ -5,6 +5,15 @@ import re
 from PIL import Image
 from skimage.measure import profile_line
 import logging
+from matplotlib import image
+import matplotlib.pyplot as plt
+
+
+def show_image(image_path: str) -> None:
+    """Plot an image, from image path"""
+    # TODO(FK): distinguish between extensions
+    im = image.imread(image_path)
+    plt.imshow(im)
 
 
 def find_transformation(old_coord_list: List, new_coord_list: List):
