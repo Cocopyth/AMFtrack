@@ -21,8 +21,8 @@ from matplotlib import colors
 from collections import Counter
 from datetime import datetime, timedelta
 import cv2
-from typing import List
-from amftrack.util.aliases import node_coord_dict, binary_image, coord, image
+from typing import List, Tuple
+from amftrack.util.aliases import node_coord_dict, binary_image, coord
 from scipy import sparse
 
 
@@ -224,7 +224,7 @@ class Experiment:
 
     def find_image_pos(
         self, xs: int, ys: int, t: int, local=False
-    ) -> (List[image], List[coord]):
+    ) -> Tuple(List, List[coord]):
         """
         For coordinates (xs, yx) in the full size stiched image,
         returns a list of original images (before stiching) that contain the coordinate.
@@ -433,9 +433,9 @@ def load_skel(exp, ts):
 
 
 def plot_raw_plus(
-    exp,
-    t0,
-    node_list,
+    exp: Experiment,
+    t0: int,
+    node_list: List[int],
     shift=(0, 0),
     n=0,
     compress=5,
@@ -523,8 +523,6 @@ def plot_raw_plus(
                 bbox=bbox,
             )
     return (fig, ax, center, radius)
-    # return(im,Rot,trans)
-    # plt.show()
 
 
 class Node:
