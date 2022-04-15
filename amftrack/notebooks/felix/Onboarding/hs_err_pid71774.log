@@ -1,0 +1,1367 @@
+#
+# A fatal error has been detected by the Java Runtime Environment:
+#
+#  SIGSEGV (0xb) at pc=0x00007f7569e706e7, pid=71774, tid=0x00007f751f5d6700
+#
+# JRE version: Java(TM) SE Runtime Environment (8.0_172-b11) (build 1.8.0_172-b11)
+# Java VM: Java HotSpot(TM) 64-Bit Server VM (25.172-b11 mixed mode linux-amd64 compressed oops)
+# Problematic frame:
+# V  [libjvm.so+0x8cb6e7]  MethodData::clean_method_data(BoolObjectClosure*)+0x17
+#
+# Failed to write core dump. Core dumps have been disabled. To enable core dumping, try "ulimit -c unlimited" before starting Java again
+#
+# If you would like to submit a bug report, please visit:
+#   http://bugreport.java.com/bugreport/crash.jsp
+#
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00000000011d4000):  VMThread [stack: 0x00007f751f4d7000,0x00007f751f5d7000] [id=71786]
+
+siginfo: si_signo: 11 (SIGSEGV), si_code: 128 (SI_KERNEL), si_addr: 0x0000000000000000
+
+Registers:
+RAX=0x00007f751d6e5da8, RBX=0x0000000000000275, RCX=0x0000000000000016, RDX=0x00007f751d6cf568
+RSP=0x00007f751f5d5300, RBP=0x00007f751f5d5330, RSI=0x000000000117d1c8, RDI=0x8000000000000000
+R8 =0x0000000000088456, R9 =0x00007f7518004890, R10=0x00007f75180008d0, R11=0x0000000000000487
+R12=0x000000000117d1c8, R13=0x00000007c01d14b0, R14=0x8000000000000000, R15=0x000000000117d1c8
+RIP=0x00007f7569e706e7, EFLAGS=0x0000000000010206, CSGSFS=0x002b000000000033, ERR=0x0000000000000000
+  TRAPNO=0x000000000000000d
+
+Top of Stack: (sp=0x00007f751f5d5300)
+0x00007f751f5d5300:   0000000000000ff8 0000000000000275
+0x00007f751f5d5310:   000000000117d1c8 00000007c01d14b0
+0x00007f751f5d5320:   0000000000000001 00007f751f5d5370
+0x00007f751f5d5330:   00007f751f5d5360 00007f7569bef9e6
+0x00007f751f5d5340:   00007f7500000000 00000007c01d3260
+0x00007f751f5d5350:   00000007c01d14b0 000000000117d1c8
+0x00007f751f5d5360:   00007f751f5d53f0 00007f7569d77ede
+0x00007f751f5d5370:   00007f756a516190 00000000000001fe
+0x00007f751f5d5380:   ffffffffffffff00 0000000000000004
+0x00007f751f5d5390:   00000000000000a0 0000000000000000
+0x00007f751f5d53a0:   0000000000000000 00007f75180038a0
+0x00007f751f5d53b0:   0000000000000000 00000000011d37f0
+0x00007f751f5d53c0:   00007f751f5d53f0 00007f751f5d55b8
+0x00007f751f5d53d0:   00007f751f5d55bc 000000000117cbb0
+0x00007f751f5d53e0:   00000000011d0e60 00000000011d37f0
+0x00007f751f5d53f0:   00007f751f5d55f0 00007f7569a812aa
+0x00007f751f5d5400:   000000000117d460 000000000000006f
+0x00007f751f5d5410:   00007f751f5d5460 00007f751f5d5550
+0x00007f751f5d5420:   00007f751f5d5510 000000000117d1c8
+0x00007f751f5d5430:   0000000001184490 00000000011844a0
+0x00007f751f5d5440:   0000000001184878 00000000000003d8
+0x00007f751f5d5450:   0000000000000000 0000000000000000
+0x00007f751f5d5460:   0000000000000000 0000000000000000
+0x00007f751f5d5470:   00007f756a50adf0 0000000000000000
+0x00007f751f5d5480:   0000000000000000 00007f756a514340
+0x00007f751f5d5490:   00000000010fa600 00007f751f5d5470
+0x00007f751f5d54a0:   000000000117cbb0 00000005f5990000
+0x00007f751f5d54b0:   00000000394ce000 000000000117d078
+0x00007f751f5d54c0:   000000000117cef8 00000000010fa600
+0x00007f751f5d54d0:   00007f756a50ad00 000000000117cbb0
+0x00007f751f5d54e0:   00000005f5990000 00000000394ce000
+0x00007f751f5d54f0:   000000000117d078 000000000117cef8 
+
+Instructions: (pc=0x00007f7569e706e7)
+0x00007f7569e706c7:   00 eb 90 66 0f 1f 44 00 00 55 48 89 e5 41 57 49
+0x00007f7569e706d7:   89 f7 41 56 49 89 fe 41 55 41 54 53 48 83 ec 08
+0x00007f7569e706e7:   44 8b 9f f8 00 00 00 45 85 db 7f 5d 0f 1f 44 00
+0x00007f7569e706f7:   00 41 8b 86 fc 00 00 00 83 f8 ff 74 2e 48 98 49 
+
+Register to memory mapping:
+
+RAX={method} {0x00007f751d6e5da8} 'getROICount' '()I' in 'ome/xml/meta/OMEXMLMetadata'
+RBX=0x0000000000000275 is an unknown value
+RCX=0x0000000000000016 is an unknown value
+RDX=0x00007f751d6cf568 is pointing into metadata
+RSP=0x00007f751f5d5300 is an unknown value
+RBP=0x00007f751f5d5330 is an unknown value
+RSI=0x000000000117d1c8 is an unknown value
+RDI=0x8000000000000000 is an unknown value
+R8 =0x0000000000088456 is an unknown value
+R9 =0x00007f7518004890 is an unknown value
+R10=0x00007f75180008d0 is an unknown value
+R11=0x0000000000000487 is an unknown value
+R12=0x000000000117d1c8 is an unknown value
+R13=0x00000007c01d14b0 is pointing into metadata
+R14=0x8000000000000000 is an unknown value
+R15=0x000000000117d1c8 is an unknown value
+
+
+Stack: [0x00007f751f4d7000,0x00007f751f5d7000],  sp=0x00007f751f5d5300,  free space=1016k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [libjvm.so+0x8cb6e7]  MethodData::clean_method_data(BoolObjectClosure*)+0x17
+V  [libjvm.so+0x64a9e6]  InstanceKlass::clean_weak_instanceklass_links(BoolObjectClosure*)+0x56
+V  [libjvm.so+0x7d2ede]  Klass::clean_weak_klass_links(BoolObjectClosure*, bool)+0x18e
+V  [libjvm.so+0x4dc2aa]  CMSCollector::refProcessingWork(bool, bool)+0x42a
+V  [libjvm.so+0x4e0cdb]  CMSCollector::checkpointRootsFinalWork(bool, bool, bool)+0xcb
+V  [libjvm.so+0x4e11b6]  CMSCollector::checkpointRootsFinal(bool, bool, bool)+0xb6
+V  [libjvm.so+0x4e1ff5]  CMSCollector::do_CMS_operation(CMSCollector::CMS_op_type, GCCause::Cause)+0x285
+V  [libjvm.so+0xacf7a5]  VM_CMS_Final_Remark::doit()+0x95
+V  [libjvm.so+0xadb7b5]  VM_Operation::evaluate()+0x55
+V  [libjvm.so+0xad9b7a]  VMThread::evaluate_operation(VM_Operation*)+0xba
+V  [libjvm.so+0xad9efe]  VMThread::loop()+0x1ce
+V  [libjvm.so+0xada370]  VMThread::run()+0x70
+V  [libjvm.so+0x930248]  java_start(Thread*)+0x108
+
+VM_Operation (0x00007f752c45bbb0): CMS_Final_Remark, mode: safepoint, requested by thread 0x0000000001181800
+
+
+---------------  P R O C E S S  ---------------
+
+Java Threads: ( => current thread )
+  0x0000000003be7000 JavaThread "AWT-EventQueue-0" [_thread_blocked, id=71877, stack(0x00007f74e7cff000,0x00007f74e7e00000)]
+  0x00000000029c2800 JavaThread "AWT-Shutdown" [_thread_blocked, id=71876, stack(0x00007f74e7bfe000,0x00007f74e7cff000)]
+  0x0000000002dad000 JavaThread "Timer-0" daemon [_thread_blocked, id=71798, stack(0x00007f751d743000,0x00007f751d844000)]
+  0x0000000001231000 JavaThread "Service Thread" daemon [_thread_blocked, id=71795, stack(0x00007f751e8e7000,0x00007f751e9e8000)]
+  0x000000000121e000 JavaThread "C1 CompilerThread3" daemon [_thread_blocked, id=71794, stack(0x00007f751e9e9000,0x00007f751eae9000)]
+  0x000000000121c000 JavaThread "C2 CompilerThread2" daemon [_thread_blocked, id=71793, stack(0x00007f751eaea000,0x00007f751ebea000)]
+  0x0000000001219800 JavaThread "C2 CompilerThread1" daemon [_thread_blocked, id=71792, stack(0x00007f751ebeb000,0x00007f751eceb000)]
+  0x0000000001217800 JavaThread "C2 CompilerThread0" daemon [_thread_blocked, id=71791, stack(0x00007f751ecec000,0x00007f751edec000)]
+  0x0000000001215800 JavaThread "Signal Dispatcher" daemon [_thread_blocked, id=71790, stack(0x00007f751edec000,0x00007f751eeed000)]
+  0x0000000001214000 JavaThread "Surrogate Locker Thread (Concurrent GC)" daemon [_thread_blocked, id=71789, stack(0x00007f751eeed000,0x00007f751efee000)]
+  0x00000000011e0800 JavaThread "Finalizer" daemon [_thread_blocked, id=71788, stack(0x00007f751f2d4000,0x00007f751f3d5000)]
+  0x00000000011de000 JavaThread "Reference Handler" daemon [_thread_blocked, id=71787, stack(0x00007f751f3d5000,0x00007f751f4d6000)]
+  0x00000000010f3800 JavaThread "Run$_mainMacro$" [_thread_blocked, id=71774, stack(0x00007ffee9364000,0x00007ffee9464000)]
+
+Other Threads:
+=>0x00000000011d4000 VMThread [stack: 0x00007f751f4d7000,0x00007f751f5d7000] [id=71786]
+  0x0000000001236000 WatcherThread [stack: 0x00007f751e7e7000,0x00007f751e8e7000] [id=71796]
+
+VM state:at safepoint (normal execution)
+
+VM Mutex/Monitor currently owned by a thread:  ([mutex/lock_event])
+[0x00000000010e6bb0] Threads_lock - owner thread: 0x00000000011d4000
+[0x00000000010e7130] Heap_lock - owner thread: 0x0000000001181800
+
+Heap:
+ par new generation   total 153600K, used 74722K [0x00000005cc000000, 0x00000005d66a0000, 0x00000005f5990000)
+  eden space 136576K,  54% used [0x00000005cc000000, 0x00000005d08f5238, 0x00000005d4560000)
+  from space 17024K,   0% used [0x00000005d5600000, 0x00000005d56039c0, 0x00000005d66a0000)
+  to   space 17024K,   0% used [0x00000005d4560000, 0x00000005d4560000, 0x00000005d5600000)
+ concurrent mark-sweep generation total 341376K, used 45630K [0x00000005f5990000, 0x000000060a6f0000, 0x00000007c0000000)
+ Metaspace       used 37950K, capacity 38291K, committed 39032K, reserved 1083392K
+  class space    used 5112K, capacity 5214K, committed 5304K, reserved 1048576K
+
+Card table byte_map: [0x00007f753b05f000,0x00007f753c000000] byte_map_base: 0x00007f75381ff000
+
+Marking Bits: (CMSBitMap*) 0x000000000117cef8
+ Bits: [0x00007f752cd66000, 0x00007f7533fffc00)
+
+Mod Union Table: (CMSBitMap*) 0x000000000117cfb8
+ Bits: [0x00007f753a040000, 0x00007f753a20a670)
+
+Polling page: 0x00007f756a809000
+
+CodeCache: size=245760Kb used=10219Kb max_used=10429Kb free=235540Kb
+ bounds [0x00007f7559591000, 0x00007f755a001000, 0x00007f7568591000]
+ total_blobs=3331 nmethods=2876 adapters=368
+ compilation: enabled
+
+Compilation events (10 events):
+Event: 123.927 Thread 0x000000000121e000 3738  s    3       java.util.Vector::removeElement (29 bytes)
+Event: 123.927 Thread 0x000000000121e000 nmethod 3738 0x00007f75598bed10 code [0x00007f75598beea0, 0x00007f75598bf438]
+Event: 127.404 Thread 0x000000000121c000 3742 %     4       java.awt.image.IndexColorModel::setRGBs @ 71 (240 bytes)
+Event: 127.410 Thread 0x000000000121c000 nmethod 3742% 0x00007f7559f59790 code [0x00007f7559f59920, 0x00007f7559f5a178]
+Event: 128.553 Thread 0x000000000121e000 3743       3       java.util.regex.Pattern::<init> (90 bytes)
+Event: 128.554 Thread 0x000000000121e000 nmethod 3743 0x00007f7559f58950 code [0x00007f7559f58b20, 0x00007f7559f593b8]
+Event: 131.230 Thread 0x000000000121e000 3744       3       java.security.AccessControlContext::calculateFields (89 bytes)
+Event: 131.230 Thread 0x000000000121e000 nmethod 3744 0x00007f7559f582d0 code [0x00007f7559f58460, 0x00007f7559f58818]
+Event: 135.249 Thread 0x000000000121e000 3745       3       java.util.regex.Pattern::compile (10 bytes)
+Event: 135.251 Thread 0x000000000121e000 nmethod 3745 0x00007f7559f57e50 code [0x00007f7559f57fc0, 0x00007f7559f581a8]
+
+GC Heap History (10 events):
+Event: 130.409 GC heap before
+{Heap before GC invocations=92 (full 14):
+ par new generation   total 153600K, used 146731K [0x00000005cc000000, 0x00000005d66a0000, 0x00000005f5990000)
+  eden space 136576K,  98% used [0x00000005cc000000, 0x00000005d438db38, 0x00000005d4560000)
+  from space 17024K,  70% used [0x00000005d4560000, 0x00000005d511d3e8, 0x00000005d5600000)
+  to   space 17024K,   0% used [0x00000005d5600000, 0x00000005d5600000, 0x00000005d66a0000)
+ concurrent mark-sweep generation total 341376K, used 93630K [0x00000005f5990000, 0x000000060a6f0000, 0x00000007c0000000)
+ Metaspace       used 37949K, capacity 38291K, committed 39032K, reserved 1083392K
+  class space    used 5112K, capacity 5214K, committed 5304K, reserved 1048576K
+Event: 130.414 GC heap after
+Heap after GC invocations=93 (full 14):
+ par new generation   total 153600K, used 12018K [0x00000005cc000000, 0x00000005d66a0000, 0x00000005f5990000)
+  eden space 136576K,   0% used [0x00000005cc000000, 0x00000005cc000000, 0x00000005d4560000)
+  from space 17024K,  70% used [0x00000005d5600000, 0x00000005d61bc820, 0x00000005d66a0000)
+  to   space 17024K,   0% used [0x00000005d4560000, 0x00000005d4560000, 0x00000005d5600000)
+ concurrent mark-sweep generation total 341376K, used 93630K [0x00000005f5990000, 0x000000060a6f0000, 0x00000007c0000000)
+ Metaspace       used 37949K, capacity 38291K, committed 39032K, reserved 1083392K
+  class space    used 5112K, capacity 5214K, committed 5304K, reserved 1048576K
+}
+Event: 132.308 GC heap before
+{Heap before GC invocations=93 (full 15):
+ par new generation   total 153600K, used 146724K [0x00000005cc000000, 0x00000005d66a0000, 0x00000005f5990000)
+  eden space 136576K,  98% used [0x00000005cc000000, 0x00000005d438ca10, 0x00000005d4560000)
+  from space 17024K,  70% used [0x00000005d5600000, 0x00000005d61bc820, 0x00000005d66a0000)
+  to   space 17024K,   0% used [0x00000005d4560000, 0x00000005d4560000, 0x00000005d5600000)
+ concurrent mark-sweep generation total 341376K, used 93630K [0x00000005f5990000, 0x000000060a6f0000, 0x00000007c0000000)
+ Metaspace       used 37950K, capacity 38291K, committed 39032K, reserved 1083392K
+  class space    used 5112K, capacity 5214K, committed 5304K, reserved 1048576K
+Event: 132.311 GC heap after
+Heap after GC invocations=94 (full 15):
+ par new generation   total 153600K, used 15K [0x00000005cc000000, 0x00000005d66a0000, 0x00000005f5990000)
+  eden space 136576K,   0% used [0x00000005cc000000, 0x00000005cc000000, 0x00000005d4560000)
+  from space 17024K,   0% used [0x00000005d4560000, 0x00000005d4563dc0, 0x00000005d5600000)
+  to   space 17024K,   0% used [0x00000005d5600000, 0x00000005d5600000, 0x00000005d66a0000)
+ concurrent mark-sweep generation total 341376K, used 93630K [0x00000005f5990000, 0x000000060a6f0000, 0x00000007c0000000)
+ Metaspace       used 37950K, capacity 38291K, committed 39032K, reserved 1083392K
+  class space    used 5112K, capacity 5214K, committed 5304K, reserved 1048576K
+}
+Event: 133.300 GC heap before
+{Heap before GC invocations=94 (full 15):
+ par new generation   total 153600K, used 98725K [0x00000005cc000000, 0x00000005d66a0000, 0x00000005f5990000)
+  eden space 136576K,  72% used [0x00000005cc000000, 0x00000005d2065a10, 0x00000005d4560000)
+  from space 17024K,   0% used [0x00000005d4560000, 0x00000005d4563dc0, 0x00000005d5600000)
+  to   space 17024K,   0% used [0x00000005d5600000, 0x00000005d5600000, 0x00000005d66a0000)
+ concurrent mark-sweep generation total 341376K, used 21630K [0x00000005f5990000, 0x000000060a6f0000, 0x00000007c0000000)
+ Metaspace       used 37950K, capacity 38291K, committed 39032K, reserved 1083392K
+  class space    used 5112K, capacity 5214K, committed 5304K, reserved 1048576K
+Event: 133.306 GC heap after
+Heap after GC invocations=95 (full 15):
+ par new generation   total 153600K, used 12017K [0x00000005cc000000, 0x00000005d66a0000, 0x00000005f5990000)
+  eden space 136576K,   0% used [0x00000005cc000000, 0x00000005cc000000, 0x00000005d4560000)
+  from space 17024K,  70% used [0x00000005d5600000, 0x00000005d61bc630, 0x00000005d66a0000)
+  to   space 17024K,   0% used [0x00000005d4560000, 0x00000005d4560000, 0x00000005d5600000)
+ concurrent mark-sweep generation total 341376K, used 45630K [0x00000005f5990000, 0x000000060a6f0000, 0x00000007c0000000)
+ Metaspace       used 37950K, capacity 38291K, committed 39032K, reserved 1083392K
+  class space    used 5112K, capacity 5214K, committed 5304K, reserved 1048576K
+}
+Event: 135.243 GC heap before
+{Heap before GC invocations=95 (full 15):
+ par new generation   total 153600K, used 146728K [0x00000005cc000000, 0x00000005d66a0000, 0x00000005f5990000)
+  eden space 136576K,  98% used [0x00000005cc000000, 0x00000005d438dc40, 0x00000005d4560000)
+  from space 17024K,  70% used [0x00000005d5600000, 0x00000005d61bc630, 0x00000005d66a0000)
+  to   space 17024K,   0% used [0x00000005d4560000, 0x00000005d4560000, 0x00000005d5600000)
+ concurrent mark-sweep generation total 341376K, used 45630K [0x00000005f5990000, 0x000000060a6f0000, 0x00000007c0000000)
+ Metaspace       used 37950K, capacity 38291K, committed 39032K, reserved 1083392K
+  class space    used 5112K, capacity 5214K, committed 5304K, reserved 1048576K
+Event: 135.248 GC heap after
+Heap after GC invocations=96 (full 15):
+ par new generation   total 153600K, used 12018K [0x00000005cc000000, 0x00000005d66a0000, 0x00000005f5990000)
+  eden space 136576K,   0% used [0x00000005cc000000, 0x00000005cc000000, 0x00000005d4560000)
+  from space 17024K,  70% used [0x00000005d4560000, 0x00000005d511c820, 0x00000005d5600000)
+  to   space 17024K,   0% used [0x00000005d5600000, 0x00000005d5600000, 0x00000005d66a0000)
+ concurrent mark-sweep generation total 341376K, used 45630K [0x00000005f5990000, 0x000000060a6f0000, 0x00000007c0000000)
+ Metaspace       used 37950K, capacity 38291K, committed 39032K, reserved 1083392K
+  class space    used 5112K, capacity 5214K, committed 5304K, reserved 1048576K
+}
+Event: 137.178 GC heap before
+{Heap before GC invocations=96 (full 16):
+ par new generation   total 153600K, used 146724K [0x00000005cc000000, 0x00000005d66a0000, 0x00000005f5990000)
+  eden space 136576K,  98% used [0x00000005cc000000, 0x00000005d438cac0, 0x00000005d4560000)
+  from space 17024K,  70% used [0x00000005d4560000, 0x00000005d511c820, 0x00000005d5600000)
+  to   space 17024K,   0% used [0x00000005d5600000, 0x00000005d5600000, 0x00000005d66a0000)
+ concurrent mark-sweep generation total 341376K, used 45630K [0x00000005f5990000, 0x000000060a6f0000, 0x00000007c0000000)
+ Metaspace       used 37950K, capacity 38291K, committed 39032K, reserved 1083392K
+  class space    used 5112K, capacity 5214K, committed 5304K, reserved 1048576K
+Event: 137.181 GC heap after
+Heap after GC invocations=97 (full 16):
+ par new generation   total 153600K, used 14K [0x00000005cc000000, 0x00000005d66a0000, 0x00000005f5990000)
+  eden space 136576K,   0% used [0x00000005cc000000, 0x00000005cc000000, 0x00000005d4560000)
+  from space 17024K,   0% used [0x00000005d5600000, 0x00000005d56039c0, 0x00000005d66a0000)
+  to   space 17024K,   0% used [0x00000005d4560000, 0x00000005d4560000, 0x00000005d5600000)
+ concurrent mark-sweep generation total 341376K, used 45630K [0x00000005f5990000, 0x000000060a6f0000, 0x00000007c0000000)
+ Metaspace       used 37950K, capacity 38291K, committed 39032K, reserved 1083392K
+  class space    used 5112K, capacity 5214K, committed 5304K, reserved 1048576K
+}
+
+Deoptimization events (10 events):
+Event: 5.755 Thread 0x00000000010f3800 Uncommon trap: reason=unstable_if action=reinterpret pc=0x00007f7559e59cc0 method=ij.plugin.filter.BackgroundSubtracter.rollingBallFloatBackground(Lij/process/FloatProcessor;FZZLij/plugin/filter/RollingBall;)V @ 42
+Event: 6.672 Thread 0x00000000010f3800 Uncommon trap: reason=unstable_if action=reinterpret pc=0x00007f7559fab85c method=ij.plugin.filter.BackgroundSubtracter.enlargeImage(Lij/process/FloatProcessor;Lij/process/FloatProcessor;I)V @ 168
+Event: 7.007 Thread 0x00000000010f3800 Uncommon trap: reason=bimorphic action=maybe_recompile pc=0x00007f7559f76690 method=java.util.Hashtable.put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; @ 60
+Event: 7.900 Thread 0x00000000010f3800 Uncommon trap: reason=bimorphic action=maybe_recompile pc=0x00007f7559f76690 method=java.util.Hashtable.put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; @ 60
+Event: 8.971 Thread 0x00000000010f3800 Uncommon trap: reason=unstable_if action=reinterpret pc=0x00007f7559fb6a20 method=ij.util.Tools.getMinMax([F)[D @ 61
+Event: 8.971 Thread 0x00000000010f3800 Uncommon trap: reason=unstable_if action=reinterpret pc=0x00007f7559fb8b90 method=ij.util.Tools.getMinMax([F)[D @ 61
+Event: 9.552 Thread 0x00000000010f3800 Uncommon trap: reason=unstable_if action=reinterpret pc=0x00007f7559fc9770 method=ij.plugin.filter.BackgroundSubtracter.rollingBallBackground(Lij/process/ImageProcessor;DZZZZZ)V @ 393
+Event: 9.553 Thread 0x00000000010f3800 Uncommon trap: reason=unstable_if action=reinterpret pc=0x00007f7559fb9ca8 method=ij.plugin.filter.BackgroundSubtracter.rollingBallBackground(Lij/process/ImageProcessor;DZZZZZ)V @ 393
+Event: 11.102 Thread 0x00000000010f3800 Uncommon trap: reason=unstable_if action=reinterpret pc=0x00007f75596b0b18 method=ij.util.Tools.getMinMax([F)[D @ 74
+Event: 12.079 Thread 0x00000000010f3800 Uncommon trap: reason=unstable_if action=reinterpret pc=0x00007f75596cde14 method=ij.util.Tools.getMinMax([F)[D @ 74
+
+Classes redefined (0 events):
+No events
+
+Internal exceptions (10 events):
+Event: 4.001 Thread 0x00000000010f3800 Exception <a 'java/lang/ArrayIndexOutOfBoundsException'> (0x00000005d0e7cfb8) thrown at [/HUDSON/workspace/8-2-build-linux-amd64/jdk8u172/10810/hotspot/src/share/vm/runtime/sharedRuntime.cpp, line 605]
+Event: 4.001 Thread 0x00000000010f3800 Exception <a 'java/lang/ArrayIndexOutOfBoundsException'> (0x00000005d0e7f0b8) thrown at [/HUDSON/workspace/8-2-build-linux-amd64/jdk8u172/10810/hotspot/src/share/vm/runtime/sharedRuntime.cpp, line 605]
+Event: 4.001 Thread 0x00000000010f3800 Exception <a 'java/lang/ArrayIndexOutOfBoundsException'> (0x00000005d0e80830) thrown at [/HUDSON/workspace/8-2-build-linux-amd64/jdk8u172/10810/hotspot/src/share/vm/runtime/sharedRuntime.cpp, line 605]
+Event: 4.001 Thread 0x00000000010f3800 Exception <a 'java/lang/ArrayIndexOutOfBoundsException'> (0x00000005d0e82bb0) thrown at [/HUDSON/workspace/8-2-build-linux-amd64/jdk8u172/10810/hotspot/src/share/vm/runtime/sharedRuntime.cpp, line 605]
+Event: 4.001 Thread 0x00000000010f3800 Exception <a 'java/lang/ArrayIndexOutOfBoundsException'> (0x00000005d0e844b0) thrown at [/HUDSON/workspace/8-2-build-linux-amd64/jdk8u172/10810/hotspot/src/share/vm/runtime/sharedRuntime.cpp, line 605]
+Event: 4.001 Thread 0x00000000010f3800 Exception <a 'java/lang/ArrayIndexOutOfBoundsException'> (0x00000005d0e86798) thrown at [/HUDSON/workspace/8-2-build-linux-amd64/jdk8u172/10810/hotspot/src/share/vm/runtime/sharedRuntime.cpp, line 605]
+Event: 4.001 Thread 0x00000000010f3800 Exception <a 'java/lang/ArrayIndexOutOfBoundsException'> (0x00000005d0e87b18) thrown at [/HUDSON/workspace/8-2-build-linux-amd64/jdk8u172/10810/hotspot/src/share/vm/runtime/sharedRuntime.cpp, line 605]
+Event: 4.144 Thread 0x00000000010f3800 Implicit null exception at 0x00007f7559c4e0b5 to 0x00007f7559c4e2b1
+Event: 4.144 Thread 0x00000000010f3800 Implicit null exception at 0x00007f7559845858 to 0x00007f75598458e6
+Event: 4.145 Thread 0x00000000010f3800 Implicit null exception at 0x00007f75598a126f to 0x00007f75598a12d9
+
+Events (10 events):
+Event: 132.506 Executing VM operation: CMS_Final_Remark done
+Event: 133.300 Executing VM operation: GenCollectForAllocation
+Event: 133.306 Executing VM operation: GenCollectForAllocation done
+Event: 135.243 Executing VM operation: GenCollectForAllocation
+Event: 135.248 Executing VM operation: GenCollectForAllocation done
+Event: 135.249 Executing VM operation: CMS_Initial_Mark
+Event: 135.250 Executing VM operation: CMS_Initial_Mark done
+Event: 137.178 Executing VM operation: GenCollectForAllocation
+Event: 137.181 Executing VM operation: GenCollectForAllocation done
+Event: 137.300 Executing VM operation: CMS_Final_Remark
+
+
+Dynamic libraries:
+00400000-00411000 r-xp 00000000 00:39 928339                             /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/ImageJ-linux64
+00611000-00612000 r--p 00011000 00:39 928339                             /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/ImageJ-linux64
+00612000-00613000 rw-p 00012000 00:39 928339                             /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/ImageJ-linux64
+00613000-00615000 rw-p 00000000 00:00 0 
+010e3000-03e8f000 rw-p 00000000 00:00 0                                  [heap]
+5cc000000-5d66a0000 rw-p 00000000 00:00 0 
+5d66a0000-5f5990000 ---p 00000000 00:00 0 
+5f5990000-60a6f0000 rw-p 00000000 00:00 0 
+60a6f0000-7c0000000 ---p 00000000 00:00 0 
+7c0000000-7c052e000 rw-p 00000000 00:00 0 
+7c052e000-800000000 ---p 00000000 00:00 0 
+7f74d8000000-7f74d8021000 rw-p 00000000 00:00 0 
+7f74d8021000-7f74dc000000 ---p 00000000 00:00 0 
+7f74e0000000-7f74e0021000 rw-p 00000000 00:00 0 
+7f74e0021000-7f74e4000000 ---p 00000000 00:00 0 
+7f74e75fe000-7f74e76fe000 rw-p 00000000 00:00 0 
+7f74e76fe000-7f74e77fe000 ---p 00000000 00:00 0 
+7f74e77fe000-7f74e79fe000 rw-p 00000000 00:00 0 
+7f74e79fe000-7f74e7bfe000 rw-p 00000000 00:00 0 
+7f74e7bfe000-7f74e7c01000 ---p 00000000 00:00 0 
+7f74e7c01000-7f74e7cff000 rw-p 00000000 00:00 0 
+7f74e7cff000-7f74e7d02000 ---p 00000000 00:00 0 
+7f74e7d02000-7f74e7fff000 rw-p 00000000 00:00 0 
+7f74e7fff000-7f74e8000000 ---p 00000000 00:00 0 
+7f74e8000000-7f74e8021000 rw-p 00000000 00:00 0 
+7f74e8021000-7f74ec000000 ---p 00000000 00:00 0 
+7f74ec000000-7f74eca00000 rw-p 00000000 00:00 0 
+7f74eca00000-7f74f0000000 ---p 00000000 00:00 0 
+7f74f0000000-7f74f0021000 rw-p 00000000 00:00 0 
+7f74f0021000-7f74f4000000 ---p 00000000 00:00 0 
+7f74f4000000-7f74f4021000 rw-p 00000000 00:00 0 
+7f74f4021000-7f74f8000000 ---p 00000000 00:00 0 
+7f74f8000000-7f74fa3ee000 rw-p 00000000 00:00 0 
+7f74fa3ee000-7f74fc000000 ---p 00000000 00:00 0 
+7f74fc000000-7f74fc9cc000 rw-p 00000000 00:00 0 
+7f74fc9cc000-7f7500000000 ---p 00000000 00:00 0 
+7f7500000000-7f7501db1000 rw-p 00000000 00:00 0 
+7f7501db1000-7f7504000000 ---p 00000000 00:00 0 
+7f7504000000-7f7505205000 rw-p 00000000 00:00 0 
+7f7505205000-7f7508000000 ---p 00000000 00:00 0 
+7f7508000000-7f7508021000 rw-p 00000000 00:00 0 
+7f7508021000-7f750c000000 ---p 00000000 00:00 0 
+7f750c000000-7f750c021000 rw-p 00000000 00:00 0 
+7f750c021000-7f7510000000 ---p 00000000 00:00 0 
+7f7510000000-7f7510021000 rw-p 00000000 00:00 0 
+7f7510021000-7f7514000000 ---p 00000000 00:00 0 
+7f7514000000-7f7514021000 rw-p 00000000 00:00 0 
+7f7514021000-7f7518000000 ---p 00000000 00:00 0 
+7f7518000000-7f75182cf000 rw-p 00000000 00:00 0 
+7f75182cf000-7f751c000000 ---p 00000000 00:00 0 
+7f751c0d5000-7f751c0dc000 r-xp 00000000 00:39 2152488439                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libawt_headless.so
+7f751c0dc000-7f751c2db000 ---p 00007000 00:39 2152488439                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libawt_headless.so
+7f751c2db000-7f751c2dc000 rw-p 00006000 00:39 2152488439                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libawt_headless.so
+7f751c2dc000-7f751c37e000 r-xp 00000000 00:39 2152488421                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libawt.so
+7f751c37e000-7f751c57e000 ---p 000a2000 00:39 2152488421                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libawt.so
+7f751c57e000-7f751c58a000 rw-p 000a2000 00:39 2152488421                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libawt.so
+7f751c58a000-7f751c7a0000 rw-p 00000000 00:00 0 
+7f751c7a0000-7f751c7ae000 ---p 00000000 00:00 0 
+7f751c814000-7f751c82f000 r--s 001d4000 00:39 6583032919                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/ext/nashorn.jar
+7f751c82f000-7f751ca2e000 rw-p 00000000 00:00 0 
+7f751ca2e000-7f751ca2f000 ---p 00000000 00:00 0 
+7f751ca2f000-7f751cc2f000 rw-p 00000000 00:00 0 
+7f751cc2f000-7f751ce2f000 rw-p 00000000 00:00 0 
+7f751ce2f000-7f751d02f000 rw-p 00000000 00:00 0 
+7f751d02f000-7f751d042000 r--s 00345000 00:39 4397917069                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/resources.jar
+7f751d042000-7f751d242000 rw-p 00000000 00:00 0 
+7f751d242000-7f751d442000 rw-p 00000000 00:00 0 
+7f751d442000-7f751d445000 ---p 00000000 00:00 0 
+7f751d445000-7f751d743000 rw-p 00000000 00:00 0 
+7f751d743000-7f751d746000 ---p 00000000 00:00 0 
+7f751d746000-7f751da44000 rw-p 00000000 00:00 0 
+7f751da44000-7f751da46000 r--s 0001e000 00:39 8747690253                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/ij_ridge_detect-1.4.1.jar
+7f751da46000-7f751da48000 r--s 00009000 00:39 8747600068                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/n5-viewer_fiji-4.5.0.jar
+7f751da48000-7f751da4e000 r--s 00058000 00:39 8747690244                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/bigwarp_fiji-7.0.5.jar
+7f751da4e000-7f751da54000 r--s 00074000 00:39 8747688899                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Trainable_Segmentation-3.3.2.jar
+7f751da54000-7f751da57000 r--s 0001e000 00:39 6582745980                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/z_spacing-1.1.1.jar
+7f751da57000-7f751da58000 r--s 00002000 00:39 6582717982                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/trakem2_tps-1.1.4.jar
+7f751da58000-7f751da59000 r--s 00007000 00:39 6582717974                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/registration_3d-2.0.1.jar
+7f751da59000-7f751da5b000 r--s 00009000 00:39 8747602330                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/register_virtual_stack_slices-3.0.5.jar
+7f751da5b000-7f751da5c000 r--s 00007000 00:39 6582699816                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/panorama_-3.0.2.jar
+7f751da5c000-7f751da5d000 r--s 00000000 00:39 8747688868                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/TrackMate_-0.0.0-STUB.jar
+7f751da5d000-7f751da5e000 r--s 00004000 00:39 6582620636                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/blockmatching_-2.1.3.jar
+7f751da5e000-7f751da61000 r--s 0002a000 00:39 8747690229                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/bigdataviewer_fiji-6.2.2.jar
+7f751da61000-7f751da73000 r--s 00179000 00:39 8747614208                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/SPIM_Registration-5.0.22.jar
+7f751da73000-7f751da76000 r--s 0003b000 00:39 8747600072                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/bio-formats_plugins-6.9.0.jar
+7f751da76000-7f751da78000 r--s 0001c000 00:39 6582620597                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Volume_Viewer-2.01.2.jar
+7f751da78000-7f751da79000 r--s 00007000 00:39 6582620579                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Volume_Calculator-2.0.2.jar
+7f751da79000-7f751da7b000 r--s 00006000 00:39 6582617044                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Video_Editing-2.0.1.jar
+7f751da7b000-7f751da7c000 r--s 00001000 00:39 8747690230                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Vaa3d_Writer-1.0.3.jar
+7f751da7c000-7f751da7e000 r--s 00004000 00:39 6582617037                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Vaa3d_Reader-2.0.3.jar
+7f751da7e000-7f751da80000 r--s 00004000 00:39 6582617034                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/TrakEM2_Archipelago-2.0.3.jar
+7f751da80000-7f751da84000 r--s 00056000 00:39 8747614209                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Stitching_-3.1.8.jar
+7f751da84000-7f751da85000 r--s 00000000 00:39 8747602333                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Sholl_Analysis-0.0.0-STUB.jar
+7f751da85000-7f751da86000 r--s 00002000 00:39 6582333838                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/TopoJ_-2.0.1.jar
+7f751da86000-7f751da88000 r--s 00005000 00:39 6582333834                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/ToAST_-25.0.2.jar
+7f751da88000-7f751da89000 r--s 00001000 00:39 6582333827                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Time_Stamper-2.1.0.jar
+7f751da89000-7f751da8b000 r--s 00012000 00:39 6582238381                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Time_Lapse-2.1.1.jar
+7f751da8b000-7f751da8d000 r--s 00000000 00:39 6582171981                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Thread_Killer-2.0.1.jar
+7f751da8d000-7f751da8f000 r--s 0000a000 00:39 8747614210                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Sync_Win-1.7-fiji4.jar
+7f751da8f000-7f751da90000 r--s 00001000 00:39 6582171969                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Statistical_Region_Merging-2.0.1.jar
+7f751da90000-7f751da92000 r--s 00008000 00:39 6582162530                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Stack_Manipulation-2.1.2.jar
+7f751da92000-7f751da93000 r--s 0000a000 00:39 6582152188                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/SplineDeformationGenerator_-2.0.2.jar
+7f751da93000-7f751da95000 r--s 0001a000 00:39 8747602335                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Siox_Segmentation-1.0.5.jar
+7f751da95000-7f751da97000 r--s 0002b000 00:39 8747690228                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/View5D_-2.3.6.jar
+7f751da97000-7f751da98000 r--s 00000000 00:39 8747602334                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Simple_Neurite_Tracer-0.0.0-STUB.jar
+7f751da98000-7f751da99000 r--s 00008000 00:39 6582101154                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Series_Labeler-2.0.1.jar
+7f751da99000-7f751da9a000 r--s 00000000 00:39 6581860401                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Samples_-2.0.2.jar
+7f751da9a000-7f751da9b000 r--s 0002e000 00:39 6582620599                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/bUnwarpJ_-2.6.13.jar
+7f751da9b000-7f751daa1000 r--s 00068000 00:39 6582617036                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/VIB_-3.0.3.jar
+7f751daa1000-7f751daa3000 r--s 00020000 00:39 6582682017                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/mpicbg_-1.4.1.jar
+7f751daa3000-7f751dabb000 r--s 0022c000 00:39 8747690227                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/TrakEM2_-1.3.6.jar
+7f751dabb000-7f751dabd000 r--s 0000f000 00:39 6581456310                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Reconstruct_Reader-2.0.4.jar
+7f751dabd000-7f751dabf000 r--s 00002000 00:39 6581456309                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/RATS_-2.0.2.jar
+7f751dabf000-7f751dac1000 r--s 0000d000 00:39 6581718838                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/QuickPALM_-1.1.2.jar
+7f751dac1000-7f751dac2000 r--s 00005000 00:39 6581718825                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/PIV_analyser-1.1.2.jar
+7f751dac2000-7f751dac3000 r--s 00003000 00:39 6581718809                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Multi_Kymograph-3.0.1.jar
+7f751dac3000-7f751dac5000 r--s 00005000 00:39 6581456308                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Manual_Tracking-2.1.1.jar
+7f751dac5000-7f751dac6000 r--s 00003000 00:39 6581456307                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/M_I_P-2.0.1.jar
+7f751dac6000-7f751dac7000 r--s 00002000 00:39 6581456303                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/MTrack2_-2.0.1.jar
+7f751dac7000-7f751dac9000 r--s 00006000 00:39 6581456298                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/LocalThickness_-4.0.3.jar
+7f751dac9000-7f751daca000 r--s 00001000 00:39 6581456280                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Linear_Kuwahara-2.0.1.jar
+7f751daca000-7f751dacf000 r--s 0004e000 00:39 8747602329                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/LSM_Toolbox-4.1.2.jar
+7f751dacf000-7f751dad0000 r--s 00004000 00:39 6581437170                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/LSM_Reader-4.1.2.jar
+7f751dad0000-7f751dad1000 r--s 00004000 00:39 6581279101                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/KymographBuilder-2.1.1.jar
+7f751dad1000-7f751dad2000 r--s 00001000 00:39 6581279099                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Kuwahara_Filter-2.0.1.jar
+7f751dad2000-7f751dad4000 r--s 00000000 00:39 6581279095                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/IsoData_Classifier-2.0.1.jar
+7f751dad4000-7f751dad6000 r--s 00016000 00:39 6581279084                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Interactive_3D_Surface_Plot-3.0.0.jar
+7f751dad6000-7f751dad9000 r--s 00012000 00:39 8747602328                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Image_Expression_Parser-3.0.1.jar
+7f751dad9000-7f751dadb000 r--s 0001e000 00:39 6581279077                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Image_5D-2.0.2.jar
+7f751dadb000-7f751dadd000 r--s 00027000 00:39 6581279073                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/IO_-4.1.0.jar
+7f751dadd000-7f751dade000 r--s 00001000 00:39 6581279069                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/IJ_Robot-2.0.1.jar
+7f751dade000-7f751dadf000 r--s 00002000 00:39 6581279063                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Helmholtz_Analysis-2.0.2.jar
+7f751dadf000-7f751dae1000 r--s 0000a000 00:39 6581279061                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/HDF5_Vibez-1.1.0.jar
+7f751dae1000-7f751dae3000 r--s 00009000 00:39 8747690240                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/H5J_Loader_Plugin-1.1.0.jar
+7f751dae3000-7f751dae5000 r--s 00007000 00:39 6581279049                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Gray_Morphology-2.3.5.jar
+7f751dae5000-7f751dae6000 r--s 00009000 00:39 8747602327                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Graph_Cut-1.0.2.jar
+7f751dae6000-7f751dae7000 r--s 00001000 00:39 6581279043                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/FlowJ_-2.0.1.jar
+7f751dae7000-7f751dae8000 r--s 00005000 00:39 6581200810                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Fiji_Package_Maker-2.1.1.jar
+7f751dae8000-7f751daea000 r--s 0000a000 00:39 6581175722                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Fiji_Developer-2.0.7.jar
+7f751daea000-7f751daeb000 r--s 00004000 00:39 6581175690                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Feature_Detection-2.0.2.jar
+7f751daeb000-7f751daed000 r--s 00013000 00:39 6582682002                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/level_sets-1.0.2.jar
+7f751daed000-7f751daef000 r--s 00005000 00:39 6581437177                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Lasso_and_Blow_Tool-2.0.2.jar
+7f751daef000-7f751daf0000 r--s 00002000 00:39 6582152165                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Skeletonize3D_-2.1.1.jar
+7f751daf0000-7f751daf1000 r--s 00005000 00:39 6581147830                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/FS_Align_TrakEM2-2.0.3.jar
+7f751daf1000-7f751daf3000 r--s 00005000 00:39 6581131853                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Directionality_-2.3.0.jar
+7f751daf3000-7f751daf5000 r--s 00004000 00:39 6581131842                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Dichromacy_-2.1.2.jar
+7f751daf5000-7f751daf6000 r--s 00009000 00:39 6581787325                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/SPIM_Opener-2.0.2.jar
+7f751daf6000-7f751daf8000 r--s 00016000 00:39 6581279041                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Fiji_Plugins-3.1.1.jar
+7f751daf8000-7f751dafa000 r--s 00012000 00:39 6581131833                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Descriptor_based_registration-2.1.7.jar
+7f751dafa000-7f751dafb000 r--s 00004000 00:39 6581131464                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Correct_3D_Drift-1.0.6.jar
+7f751dafb000-7f751dafd000 r--s 00003000 00:39 6581050757                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/CorrectBleach_-2.0.3.jar
+7f751dafd000-7f751dafe000 r--s 00003000 00:39 6581050755                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Colour_Deconvolution-3.0.3.jar
+7f751dafe000-7f751db00000 r--s 0003e000 00:39 6581050741                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Color_Inspector_3D-2.5.0.jar
+7f751db00000-7f751db01000 r--s 00005000 00:39 6581050732                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Color_Histogram-2.0.7.jar
+7f751db01000-7f751db04000 r--s 00023000 00:39 8747602323                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Colocalisation_Analysis-3.0.5.jar
+7f751db04000-7f751db06000 r--s 00007000 00:39 6581013770                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Cell_Counter-3.0.0.jar
+7f751db06000-7f751db07000 r--s 00001000 00:39 6580997217                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Calculator_Plus-2.0.1.jar
+7f751db07000-7f751db08000 r--s 00001000 00:39 6580988828                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/CPU_Meter-2.0.1.jar
+7f751db08000-7f751db09000 r--s 00005000 00:39 6580981989                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Bug_Submitter-2.1.1.jar
+7f751db09000-7f751db0a000 r--s 00010000 00:39 6580981985                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/BalloonSegmentation_-3.0.1.jar
+7f751db0a000-7f751db0b000 r--s 00004000 00:39 6580979292                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Auto_Threshold-1.17.2.jar
+7f751db0b000-7f751db0d000 r--s 00002000 00:39 6580979283                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Auto_Local_Threshold-1.10.1.jar
+7f751db0d000-7f751db0f000 r--s 00006000 00:39 6580979239                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Arrow_-2.0.2.jar
+7f751db0f000-7f751db14000 r--s 00029000 00:39 8747690232                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Fiji_Archipelago-2.0.1.jar
+7f751db14000-7f751db15000 r--s 00006000 00:39 6580971928                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Archipelago_Plugins-0.5.4.jar
+7f751db15000-7f751db16000 r--s 00002000 00:39 6580971920                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/Anisotropic_Diffusion_2D-2.0.1.jar
+7f751db16000-7f751db18000 r--s 0000b000 00:39 8747600071                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/AnalyzeSkeleton_-3.4.2.jar
+7f751db18000-7f751db1f000 r--s 00083000 00:39 6580817774                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/3D_Viewer-4.0.3.jar
+7f751db1f000-7f751db20000 r--s 00005000 00:39 6580817770                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/3D_Objects_Counter-2.0.1.jar
+7f751db20000-7f751db22000 r--s 00002000 00:39 8747600070                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/plugins/3D_Blob_Segmentation-3.0.1.jar
+7f751db22000-7f751db24000 r--s 0000d000 00:39 2169615815                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/script-editor-jython-0.1.3.jar
+7f751db24000-7f751db2b000 r--s 00051000 00:39 2169615814                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/reload4j-1.2.18.3.jar
+7f751db2b000-7f751db3a000 r--s 0009e000 00:39 2152541409                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imglib2-algorithm-0.12.1.jar
+7f751db3a000-7f751db3d000 r--s 0001a000 00:39 2152028872                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imglib2-realtransform-3.1.2.jar
+7f751db3d000-7f751db3e000 r--s 00000000 00:39 13018350059                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/log4j-0.0.0-STUB.jar
+7f751db3e000-7f751db3f000 r--s 00000000 00:39 12900413143                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/yecht-0.0.0-STUB.jar
+7f751db3f000-7f751db64000 r--s 002de000 00:39 12900410697                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/xalan-2.7.2.jar
+7f751db64000-7f751db68000 r--s 00040000 00:39 12900336988                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/serializer-2.7.2.jar
+7f751db68000-7f751db6a000 r--s 00011000 00:39 2157050898                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bigdataviewer-vistools-1.0.0-beta-29.jar
+7f751db6a000-7f751db80000 r--s 00155000 00:39 2169615812                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/TrackMate-7.6.1.jar
+7f751db80000-7f751db81000 r--s 00000000 00:39 12899933833                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/mapdb-0.0.0-STUB.jar
+7f751db81000-7f751db82000 r--s 00036000 00:39 4148758                    /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/linux64/jogl-all-2.3.2-natives-linux-amd64.jar
+7f751db82000-7f751db83000 r--s 00002000 00:39 4139099                    /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/linux64/jocl-2.3.2-natives-linux-amd64.jar
+7f751db83000-7f751db84000 r--s 0002e000 00:39 4139098                    /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/linux64/joal-2.3.2-natives-linux-amd64.jar
+7f751db84000-7f751db86000 r--s 00000000 00:39 4132896                    /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/linux64/gluegen-rt-2.3.2-natives-linux-amd64.jar
+7f751db86000-7f751db87000 r--s 00f09000 00:39 4131903                    /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/linux64/ffmpeg-4.1-1.4.4-linux-x86_64.jar
+7f751db87000-7f751db88000 r--s 00000000 00:39 12894068001                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jython-shaded-0.0.0-STUB.jar
+7f751db88000-7f751db89000 r--s 00004000 00:39 2152894237                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jitk-tps-3.0.2.jar
+7f751db89000-7f751db8a000 r--s 00000000 00:39 12890828409                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jgrapht-0.0.0-STUB.jar
+7f751db8a000-7f751db90000 r--s 0004b000 00:39 12889896576                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jcommon-1.0.24.jar
+7f751db90000-7f751db92000 r--s 0001d000 00:39 2168701936                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/n5-ij-3.2.1.jar
+7f751db92000-7f751db98000 r--s 00041000 00:39 12899860559                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/logback-classic-1.2.3.jar
+7f751db98000-7f751db99000 r--s 00000000 00:39 12892640889                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jogl-all-main-2.3.2.jar
+7f751db99000-7f751db9e000 r--s 00031000 00:39 12891792151                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jocl-2.3.2.jar
+7f751db9e000-7f751db9f000 r--s 00000000 00:39 12891796416                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jocl-main-2.3.2.jar
+7f751db9f000-7f751dba1000 r--s 0000f000 00:39 12891168773                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/joal-2.3.2.jar
+7f751dba1000-7f751dba2000 r--s 00000000 00:39 12891792135                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/joal-main-2.3.2.jar
+7f751dba2000-7f751dba3000 r--s 0000a000 00:39 12890784429                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jfreesvg-3.4.jar
+7f751dba3000-7f751dba4000 r--s 00001000 00:39 12900316938                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-config-2.0.2.jar
+7f751dba4000-7f751dba5000 r--s 00004000 00:39 12900316846                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scifio-lifesci-0.9.0.jar
+7f751dba5000-7f751dba7000 r--s 00006000 00:39 12900316824                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scifio-hdf5-0.2.1.jar
+7f751dba7000-7f751dba9000 r--s 00004000 00:39 12900316820                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scifio-bf-compat-4.1.0.jar
+7f751dba9000-7f751dbb5000 r--s 000d8000 00:39 12900294318                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/postgresql-42.2.12.jar
+7f751dbb5000-7f751dbb7000 r--s 0000e000 00:39 12889895348                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jcommander-1.48.jar
+7f751dbb7000-7f751dbb9000 r--s 00003000 00:39 2162666883                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-http-client-appengine-1.40.0.jar
+7f751dbb9000-7f751dbbb000 r--s 00001000 00:39 2158304789                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-http-client-jackson2-1.40.0.jar
+7f751dbbb000-7f751dbc1000 r--s 00078000 00:39 12900338830                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/threetenbp-1.4.4.jar
+7f751dbc1000-7f751dbc4000 r--s 00010000 00:39 12900303016                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/protobuf-java-util-3.11.4.jar
+7f751dbc4000-7f751dbd6000 r--s 00184000 00:39 12900294905                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/protobuf-java-3.11.4.jar
+7f751dbd6000-7f751dbd8000 r--s 00022000 00:39 12900294903                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/proto-google-iam-v1-0.13.0.jar
+7f751dbd8000-7f751dbe2000 r--s 0004c000 00:39 12900288088                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/opencensus-api-0.24.0.jar
+7f751dbe2000-7f751dbe4000 r--s 00005000 00:39 12887972963                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/javax.annotation-api-1.3.2.jar
+7f751dbe4000-7f751dbf1000 r--s 0013b000 00:39 12900294858                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/proto-google-common-protos-1.17.0.jar
+7f751dbf1000-7f751dbf2000 r--s 00005000 00:39 12900294273                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/opencensus-contrib-http-util-0.24.0.jar
+7f751dbf2000-7f751dbf4000 r--s 00003000 00:39 12893175105                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jsr305-3.0.2.jar
+7f751dbf4000-7f751dbf6000 r--s 00003000 00:39 2158304795                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/n5-google-cloud-3.3.2.jar
+7f751dbf6000-7f751dbf8000 r--s 0000e000 00:39 2158304797                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jackson-dataformat-cbor-2.12.5.jar
+7f751dbf8000-7f751dbfa000 r--s 00005000 00:39 12890925278                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jmespath-java-1.11.796.jar
+7f751dbfa000-7f751dbfc000 r--s 00002000 00:39 12900231392                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/n5-aws-s3-3.2.0.jar
+7f751dbfc000-7f751dbfd000 r--s 00003000 00:39 2156292056                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/weave_jy2java-2.1.1.jar
+7f751dbfd000-7f751dc03000 r--s 00059000 00:39 12887916735                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/javacpp-1.4.4.jar
+7f751dc03000-7f751dc0a000 r--s 00040000 00:39 2160727901                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-http-client-1.40.0.jar
+7f751dc0a000-7f751dc0c000 r--s 00006000 00:39 2158304788                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-http-client-xml-1.40.0.jar
+7f751dc0c000-7f751dc10000 r--s 005c0000 00:39 2169615809                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/sqlite-jdbc-3.28.0.jar
+7f751dc10000-7f751dc12000 r--s 0000a000 00:39 12893083738                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/json-20090211.jar
+7f751dc12000-7f751dc14000 r--s 00015000 00:39 12900413113                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/xmpcore-5.1.3.jar
+7f751dc14000-7f751dc1f000 r--s 0009a000 00:39 12900167278                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/metadata-extractor-2.11.0.jar
+7f751dc1f000-7f751dc23000 r--s 0001b000 00:39 12900294295                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/perf4j-0.9.16.jar
+7f751dc23000-7f751dc25000 r--s 00004000 00:39 2169615813                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/reflectasm-1.11.3.jar
+7f751dc25000-7f751dc2e000 r--s 0007f000 00:39 12890132812                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jep-2.4.2.jar
+7f751dc2e000-7f751dc31000 r--s 0001a000 00:39 4398291201                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/jce.jar
+7f751dc31000-7f751dc36000 r--s 0009d000 00:39 4397917067                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/jsse.jar
+7f751dc36000-7f751dc41000 r--s 0015c000 00:39 12892919493                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jpedalSTD-2.80b11.jar
+7f751dc41000-7f751dc44000 r--s 0001e000 00:39 12890925272                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jheaps-0.11.jar
+7f751dc44000-7f751dc55000 r--s 000fa000 00:39 12890828432                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jgrapht-core-1.4.0.jar
+7f751dc55000-7f751dc5a000 r--s 00054000 00:39 2169610367                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/javaGeom-0.11.1.jar
+7f751dc5a000-7f751dc5c000 r--s 00007000 00:39 2169549508                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/fontchooser-2.4.jar
+7f751dc5c000-7f751dc68000 r--s 00099000 00:39 12900413098                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/xmlgraphics-commons-2.4.jar
+7f751dc68000-7f751dc74000 r--s 000c0000 00:39 12890925247                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jgraphx-4.1.0.jar
+7f751dc74000-7f751dc7a000 r--s 0017c000 00:39 2168701939                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/FilamentDetector-2.0.0.jar
+7f751dc7a000-7f751dc7e000 r--s 00052000 00:39 12900202877                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/mpicbg-1.4.1.jar
+7f751dc7e000-7f751dc80000 r--s 00008000 00:39 12900338813                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/stax-ex-1.8.1.jar
+7f751dc80000-7f751dc82000 r--s 00010000 00:39 12900338845                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/txw2-2.3.2.jar
+7f751dc82000-7f751dc97000 r--s 000e3000 00:39 12887974953                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jaxb-runtime-2.3.2.jar
+7f751dc97000-7f751dc9b000 r--s 00019000 00:39 12887916728                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jakarta.xml.bind-api-2.3.2.jar
+7f751dc9b000-7f751dc9d000 r--s 00009000 00:39 12887875033                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jakarta.activation-api-1.2.1.jar
+7f751dc9d000-7f751dc9f000 r--s 00001000 00:39 12889597232                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jclipboardhelper-0.1.0.jar
+7f751dc9f000-7f751dca1000 r--s 0000a000 00:39 12890779415                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jfilechooser-bookmarks-0.1.6.jar
+7f751dca1000-7f751dca3000 r--s 0001d000 00:39 12887916732                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/java-cup-11b-20160615.jar
+7f751dca3000-7f751dd04000 r--s 0087c000 00:39 12900410695                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/weka-dev-3.9.4.jar
+7f751dd04000-7f751dd0a000 r--s 00042000 00:39 12893088508                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jsoup-1.7.2.jar
+7f751dd0a000-7f751dd0c000 r--s 00002000 00:39 12900338826                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/swing-worker-1.1.jar
+7f751dd0c000-7f751dd27000 r--s 00139000 00:39 12900338827                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/swingx-1.6.1.jar
+7f751dd27000-7f751dd28000 r--s 0000c000 00:39 12900288086                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/op-finder-0.1.4.jar
+7f751dd28000-7f751dd29000 r--s 0000b000 00:39 2156321482                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/fiji-2.3.1.jar
+7f751dd29000-7f751dd30000 r--s 0004c000 00:39 2156292834                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/kryo-4.0.2.jar
+7f751dd30000-7f751dd31000 r--s 00000000 00:39 2156276717                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/netcdf-0.0.0-STUB.jar
+7f751dd31000-7f751dd33000 r--s 00001000 00:39 12887057444                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/j2objc-annotations-1.3.jar
+7f751dd33000-7f751dd4c000 r--s 00221000 00:39 12887057422                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/itextpdf-5.5.13.1.jar
+7f751dd4c000-7f751dd4e000 r--s 00005000 00:39 12887057318                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/istack-commons-runtime-3.0.8.jar
+7f751dd4e000-7f751dd58000 r--s 00081000 00:39 12887057313                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/ion-java-1.0.2.jar
+7f751dd58000-7f751dd5a000 r--s 0000e000 00:39 12887057041                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imglib2-ui-2.0.1.jar
+7f751dd5a000-7f751dd5e000 r--s 0003a000 00:39 2151050167                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-updater-0.10.8-SNAPSHOT.jar
+7f751dd5e000-7f751dd62000 r--s 00047000 00:39 2156341939                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/script-editor-0.7.6.jar
+7f751dd62000-7f751dd68000 r--s 0003d000 00:39 2151050166                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-ui-swing-0.23.4-SNAPSHOT.jar
+7f751dd68000-7f751dd6b000 r--s 00023000 00:39 12887055565                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imglib2-algorithm-gpl-0.2.5.jar
+7f751dd6b000-7f751dd7d000 r--s 000c9000 00:39 2151050163                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-common-2.87.1.jar
+7f751dd7d000-7f751dd88000 r--s 0024f000 00:39 2151050161                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/ij-1.53q.jar
+7f751dd88000-7f751dd89000 r--s 00001000 00:39 2156292848                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/minlog-1.3.0.jar
+7f751dd89000-7f751dd8d000 r--s 00167000 00:39 12890990507                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jna-4.5.2.jar
+7f751dd8d000-7f751dd8e000 r--s 00002000 00:39 12889262295                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jblosc-1.0.1.jar
+7f751dd8e000-7f751dd8f000 r--s 00001000 00:39 12900231405                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/n5-blosc-1.1.0.jar
+7f751dd8f000-7f751dd91000 r--s 00009000 00:39 2168701933                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/n5-zarr-0.0.7.jar
+7f751dd91000-7f751dd92000 r--s 00007000 00:39 12887051927                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/image4j-0.7.jar
+7f751dd92000-7f751dd93000 r--s 00004000 00:39 2168504146                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/n5-hdf5-1.4.1.jar
+7f751dd93000-7f751dd94000 r--s 0000d000 00:39 12886991292                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/httpservices-4.6.13.jar
+7f751dd94000-7f751dd95000 r--s 00009000 00:39 12886991059                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/httpmime-4.5.1.jar
+7f751dd95000-7f751dd97000 r--s 00006000 00:39 12886991021                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/grpc-context-1.22.1.jar
+7f751dd97000-7f751dd9a000 r--s 0000e000 00:39 12886891591                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-oauth-client-1.30.5.jar
+7f751dd9a000-7f751dd9f000 r--s 00055000 00:39 2158304793                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jackson-core-2.12.5.jar
+7f751dd9f000-7f751dda2000 r--s 00010000 00:39 2158304798                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jackson-annotations-2.12.5.jar
+7f751dda2000-7f751ddb9000 r--s 0015c000 00:39 2158304796                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jackson-databind-2.12.5.jar
+7f751ddb9000-7f751ddbc000 r--s 00032000 00:39 12892647913                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/joni-2.1.29.jar
+7f751ddbc000-7f751ddc4000 r--s 00044000 00:39 12887768534                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jackson-jq-1.0.0-preview.20191208.jar
+7f751ddc4000-7f751ddc9000 r--s 00033000 00:39 2158304787                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/n5-imglib2-4.3.0.jar
+7f751ddc9000-7f751ddcc000 r--s 0000b000 00:39 2156314626                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/objenesis-2.5.1.jar
+7f751ddcc000-7f751ddce000 r--s 0000c000 00:39 2158304800                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imglib2-label-multisets-0.10.0.jar
+7f751ddce000-7f751ddd5000 r--s 00045000 00:39 12900338798                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/snakeyaml-1.26.jar
+7f751ddd5000-7f751ddd7000 r--s 00001000 00:39 12900316946                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-listeners-1.0.0-beta-3.jar
+7f751ddd7000-7f751ddda000 r--s 0001b000 00:39 2156321488                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/ui-behaviour-2.0.3.jar
+7f751ddda000-7f751ddf5000 r--s 008d1000 00:39 12890925270                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jhdf5-14.12.6.jar
+7f751ddf5000-7f751ddfb000 r--s 00045000 00:39 12890108990                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jdom2-2.0.6.jar
+7f751ddfb000-7f751ddfe000 r--s 00019000 00:39 12900338805                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/spim_data-2.2.4.jar
+7f751ddfe000-7f751de0b000 r--s 000ba000 00:39 2156292085                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bigdataviewer-core-10.2.2.jar
+7f751de0b000-7f751de0e000 r--s 00027000 00:39 2155353886                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/ij1-patcher-1.2.2-SNAPSHOT.jar
+7f751de0e000-7f751de15000 r--s 0004b000 00:39 12886846517                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-cloud-storage-1.108.0.jar
+7f751de15000-7f751de18000 r--s 00010000 00:39 12886822711                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-cloud-resourcemanager-0.117.2-alpha.jar
+7f751de18000-7f751de19000 r--s 00003000 00:39 12886694278                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-cloud-core-http-1.93.4.jar
+7f751de19000-7f751de1c000 r--s 0001d000 00:39 12886694248                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-cloud-core-1.93.4.jar
+7f751de1c000-7f751de1e000 r--s 00018000 00:39 12886662331                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-auth-library-oauth2-http-0.20.0.jar
+7f751de1e000-7f751de1f000 r--s 00001000 00:39 12886658913                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-auth-library-credentials-0.20.0.jar
+7f751de1f000-7f751de23000 r--s 0002a000 00:39 12886611477                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-api-services-storage-v1-rev20200326-1.30.9.jar
+7f751de23000-7f751de27000 r--s 00023000 00:39 12886603389                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-api-services-cloudresourcemanager-v1-rev20200210-1.30.9.jar
+7f751de27000-7f751de2c000 r--s 0002e000 00:39 12886507405                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/google-api-client-1.30.9.jar
+7f751de2c000-7f751de2d000 r--s 00000000 00:39 12886506534                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/gluegen-rt-main-2.3.2.jar
+7f751de2d000-7f751de30000 r--s 0000f000 00:39 12886499389                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/gax-httpjson-0.73.0.jar
+7f751de30000-7f751de39000 r--s 00048000 00:39 12886499368                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/gax-1.56.0.jar
+7f751de39000-7f751de40000 r--s 0004d000 00:39 12886485233                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/filters-2.0.235.jar
+7f751de40000-7f751de43000 r--s 00014000 00:39 2156253343                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/fiji-lib-2.1.3.jar
+7f751de43000-7f751de44000 r--s 00000000 00:39 12886458073                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/fiji-compat-0.0.0-STUB.jar
+7f751de44000-7f751de54000 r--s 00192000 00:39 2156197750                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jcodings-1.0.55.jar
+7f751de54000-7f751de55000 r--s 00000000 00:39 12886458063                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/ffmpeg-platform-4.1-1.4.4.jar
+7f751de55000-7f751de5c000 r--s 00036000 00:39 12886450812                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/ffmpeg-4.1-1.4.4.jar
+7f751de5c000-7f751de5e000 r--s 00002000 00:39 12886333552                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/error_prone_annotations-2.3.4.jar
+7f751de5e000-7f751de8a000 r--s 003d1000 00:39 12886319145                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/cdm-4.6.13.jar
+7f751de8a000-7f751de9a000 r--s 00089000 00:39 12900161812                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/mchange-commons-java-0.2.15.jar
+7f751de9a000-7f751dea1000 r--s 00073000 00:39 12886319141                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/c3p0-0.9.5.3.jar
+7f751dea1000-7f751deae000 r--s 000dc000 00:39 6597616179                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/ome-poi-5.3.4.jar
+7f751deae000-7f751deaf000 r--s 00003000 00:39 6597616178                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/metakit-5.3.3.jar
+7f751deaf000-7f751deb6000 r--s 00156000 00:39 6597616176                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/formats-gpl-6.9.0.jar
+7f751deb6000-7f751deb8000 r--s 0013b000 00:39 6570912307                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/turbojpeg-6.9.0.jar
+7f751deb8000-7f751debe000 r--s 000c7000 00:39 6597616170                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/formats-bsd-6.9.0.jar
+7f751debe000-7f751dec0000 r--s 00015000 00:39 6597725707                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/ome-codecs-0.3.1.jar
+7f751dec0000-7f751dec4000 r--s 00096000 00:39 6597616191                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/specification-6.2.3.jar
+7f751dec4000-7f751deca000 r--s 000a0000 00:39 6597616185                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/ome-xml-6.2.3.jar
+7f751deca000-7f751decc000 r--s 00021000 00:39 6597725705                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/ome-common-6.0.7.jar
+7f751decc000-7f751dece000 r--s 00020000 00:39 6597616168                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/formats-api-6.9.0.jar
+7f751dece000-7f751ded1000 r--s 00014000 00:39 15046503345                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/ome-mdbtools-5.3.2.jar
+7f751ded1000-7f751dee1000 r--s 000f1000 00:39 15039969969                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/ome-jai-0.1.0.jar
+7f751dee1000-7f751dee3000 r--s 0007b000 00:39 15073861675                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/jxrlib-all-0.2.4.jar
+7f751dee3000-7f751dee4000 r--s 00000000 00:39 15073861674                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bio-formats/jai_imageio-0.0.0-STUB.jar
+7f751dee4000-7f751dee8000 r--s 00056000 00:39 12886192894                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bij-1.0.0.jar
+7f751dee8000-7f751deeb000 r--s 0009c000 00:39 12899928402                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/lz4-java-1.7.1.jar
+7f751deeb000-7f751deef000 r--s 00017000 00:39 12900413133                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/xz-1.8.jar
+7f751deef000-7f751def1000 r--s 0000c000 00:39 2158304791                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/n5-2.5.1.jar
+7f751def1000-7f751def2000 r--s 00004000 00:39 2155353883                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/native-lib-loader-2.3.6.jar
+7f751def2000-7f751defc000 r--s 000e2000 00:39 2155353882                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scifio-0.42.0.jar
+7f751defc000-7f751defe000 r--s 00007000 00:39 12886192036                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-xml-1.13.jar
+7f751defe000-7f751df02000 r--s 0001c000 00:39 12886192030                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-util-1.13.jar
+7f751df02000-7f751df07000 r--s 00033000 00:39 12886191343                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-svggen-1.13.jar
+7f751df07000-7f751df0b000 r--s 00035000 00:39 12886191341                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-svg-dom-1.13.jar
+7f751df0b000-7f751df0c000 r--s 00001000 00:39 12886191311                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-shared-resources-1.13.jar
+7f751df0c000-7f751df0e000 r--s 00005000 00:39 12886188990                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-script-1.13.jar
+7f751df0e000-7f751df10000 r--s 00011000 00:39 12886188983                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-parser-1.13.jar
+7f751df10000-7f751df11000 r--s 00002000 00:39 12886188703                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-i18n-1.13.jar
+7f751df11000-7f751df14000 r--s 0002c000 00:39 12886188681                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-gvt-1.13.jar
+7f751df14000-7f751df15000 r--s 00002000 00:39 12886183836                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-ext-1.13.jar
+7f751df15000-7f751df1a000 r--s 00029000 00:39 12886183789                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-dom-1.13.jar
+7f751df1a000-7f751df21000 r--s 0004a000 00:39 12886183217                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-css-1.13.jar
+7f751df21000-7f751df23000 r--s 00001000 00:39 12886183199                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-constants-1.13.jar
+7f751df23000-7f751df2e000 r--s 000a1000 00:39 12886183190                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-bridge-1.13.jar
+7f751df2e000-7f751df35000 r--s 00061000 00:39 12886183181                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-awt-util-1.13.jar
+7f751df35000-7f751df41000 r--s 0006b000 00:39 12886183174                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batik-anim-1.13.jar
+7f751df41000-7f751df58000 r--s 000ec000 00:39 12886177849                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/aws-java-sdk-s3-1.11.796.jar
+7f751df58000-7f751df64000 r--s 00085000 00:39 12886175962                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/aws-java-sdk-kms-1.11.796.jar
+7f751df64000-7f751df7c000 r--s 000e0000 00:39 12886175505                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/aws-java-sdk-core-1.11.796.jar
+7f751df7c000-7f751df7d000 r--s 00001000 00:39 12886174835                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/auto-value-annotations-1.7.jar
+7f751df7d000-7f751df7f000 r--s 0000a000 00:39 12886099385                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/api-common-1.9.0.jar
+7f751df7f000-7f751df81000 r--s 00000000 00:39 12886099360                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/alphanumeric-comparator-1.4.1.jar
+7f751df81000-7f751df83000 r--s 00004000 00:39 12886091994                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/ahocorasick-0.2.4.jar
+7f751df83000-7f751df85000 r--s 00001000 00:39 12886091693                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/T2-TreelineGraph-1.1.3.jar
+7f751df85000-7f751df87000 r--s 0000d000 00:39 12900338839                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/trakem2-transform-1.0.1.jar
+7f751df87000-7f751df8e000 r--s 00095000 00:39 2156292046                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/VIB-lib-2.2.0.jar
+7f751df8e000-7f751dfa5000 r--s 00112000 00:39 12900410707                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/xercesImpl-2.8.1.jar
+7f751dfa5000-7f751dfa7000 r--s 00007000 00:39 12890819004                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jgoodies-common-1.7.0.jar
+7f751dfa7000-7f751dfa9000 r--s 0001b000 00:39 12890819007                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jgoodies-forms-1.7.2.jar
+7f751dfa9000-7f751dfba000 r--s 000c5000 00:39 2156276676                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/legacy-imglib1-1.1.9.jar
+7f751dfba000-7f751dfbf000 r--s 00010000 00:39 12900413089                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/xml-apis-ext-1.3.04.jar
+7f751dfbf000-7f751dfce000 r--s 000f1000 00:39 2156316260                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/j3dutils-1.6.0-scijava-2.jar
+7f751dfce000-7f751dff2000 r--s 0031e000 00:39 12892618532                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jogl-all-2.3.2.jar
+7f751dff2000-7f751dff8000 r--s 0004f000 00:39 12886500799                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/gluegen-rt-2.3.2.jar
+7f751dff8000-7f751dffb000 r--s 00026000 00:39 2156316274                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/vecmath-1.6.0-scijava-2.jar
+7f751dffb000-7f751e008000 r--s 001ce000 00:39 2156316257                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/j3dcore-1.6.0-scijava-2.jar
+7f751e008000-7f751e009000 r--s 0000a000 00:39 12900294291                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/pal-optimization-2.0.1.jar
+7f751e009000-7f751e00a000 r--s 0000b000 00:39 12886091992                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/VectorString-2.0.2.jar
+7f751e00a000-7f751e01e000 r--s 001bd000 00:39 12887857533                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jai-core-1.1.3.jar
+7f751e01e000-7f751e022000 r--s 0003c000 00:39 12887799681                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jai-codec-1.1.3.jar
+7f751e022000-7f751e027000 r--s 0003d000 00:39 12900202880                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/mtj-1.0.4.jar
+7f751e027000-7f751e02b000 r--s 0002f000 00:39 12886212448                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bounce-0.18.jar
+7f751e02b000-7f751e02c000 r--s 0014a000 00:39 2156292833                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/T2-NIT-1.1.3.jar
+7f751e02c000-7f751e02d000 r--s 00008000 00:39 12900316822                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scifio-cli-0.6.1.jar
+7f751e02d000-7f751e030000 r--s 00010000 00:39 12886117119                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/args4j-2.0.25.jar
+7f751e030000-7f751e03b000 r--s 00069000 00:39 12899860580                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/logback-core-1.2.3.jar
+7f751e03b000-7f751e03e000 r--s 0001b000 00:39 12900413120                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/xpp3-1.1.4c.jar
+7f751e03e000-7f751e041000 r--s 0001d000 00:39 12900189111                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/minio-5.0.2.jar
+7f751e041000-7f751e043000 r--s 0000d000 00:39 2156276725                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scifio-ome-xml-0.16.1.jar
+7f751e043000-7f751e045000 r--s 00004000 00:39 12886041972                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/OMEVisual-2.0.0.jar
+7f751e045000-7f751e055000 r--s 000a8000 00:39 12886331150                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/commons-collections4-4.4.jar
+7f751e055000-7f751e062000 r--s 00083000 00:39 12886329021                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/commons-collections-3.2.2.jar
+7f751e062000-7f751e067000 r--s 00038000 00:39 12886319152                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/commons-beanutils-1.9.4.jar
+7f751e067000-7f751e06c000 r--s 00030000 00:39 2156314677                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/opencsv-5.2.jar
+7f751e06c000-7f751e071000 r--s 00036000 00:39 12886991023                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/gson-2.8.6.jar
+7f751e071000-7f751e074000 r--s 00040000 00:39 12886033951                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/Kappa-2.0.0.jar
+7f751e074000-7f751e079000 r--s 00018000 00:39 12886029175                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/JWlz-1.4.0.jar
+7f751e079000-7f751e081000 r--s 00078000 00:39 12886331684                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/commons-lang3-3.10.jar
+7f751e081000-7f751e083000 r--s 00000000 00:39 12900316988                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-plugins-text-plain-0.1.3.jar
+7f751e083000-7f751e085000 r--s 00009000 00:39 12899933839                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/markdownj-0.3.0-1.0.2b4.jar
+7f751e085000-7f751e087000 r--s 00000000 00:39 12900316983                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-plugins-text-markdown-0.1.3.jar
+7f751e087000-7f751e089000 r--s 00001000 00:39 2156195770                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-plugins-platforms-0.3.1.jar
+7f751e089000-7f751e08a000 r--s 00002000 00:39 2158304792                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-plugins-io-table-0.4.0.jar
+7f751e08a000-7f751e08b000 r--s 00005000 00:39 2156195768                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-plugins-commands-0.2.3.jar
+7f751e08b000-7f751e0a0000 r--s 00157000 00:39 2168335776                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/kotlin-stdlib-1.4.21.jar
+7f751e0a0000-7f751e0a8000 r--s 00027000 00:39 2159966633                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/kotlin-stdlib-common-1.4.21.jar
+7f751e0a8000-7f751e0aa000 r--s 00003000 00:39 12886099363                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/annotations-13.0.jar
+7f751e0aa000-7f751e0ac000 r--s 0003a000 00:39 12900288071                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/okio-2.6.0.jar
+7f751e0ac000-7f751e0b5000 r--s 000b9000 00:39 12885469966                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/okhttp-4.7.2.jar
+7f751e0b5000-7f751e0b6000 r--s 00002000 00:39 12900316943                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-io-http-0.2.1.jar
+7f751e0b6000-7f751e0b7000 r--s 00002000 00:39 2156195767                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-ui-awt-0.3.1.jar
+7f751e0b7000-7f751e0d8000 r--s 001e0000 00:39 12890925273                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jhotdraw-7.6.0.jar
+7f751e0d8000-7f751e0e9000 r--s 0016c000 00:39 12890784427                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jfreechart-1.5.0.jar
+7f751e0e9000-7f751e0ea000 r--s 00001000 00:39 12900336985                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scripting-scala-0.2.2.jar
+7f751e0ea000-7f751e0eb000 r--s 00001000 00:39 12900336984                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scripting-renjin-0.2.3.jar
+7f751e0eb000-7f751e0f7000 r--s 0008f000 00:39 12886331155                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/commons-compress-1.20.jar
+7f751e0f7000-7f751e0f8000 r--s 00004000 00:39 12886099366                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/ant-launcher-1.9.7.jar
+7f751e0f8000-7f751e117000 r--s 001d3000 00:39 12886099364                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/ant-1.9.7.jar
+7f751e117000-7f751e121000 r--s 0006a000 00:39 12900286578                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/netty-transport-4.1.45.Final.jar
+7f751e121000-7f751e123000 r--s 00007000 00:39 12900276536                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/netty-resolver-4.1.45.Final.jar
+7f751e123000-7f751e12b000 r--s 00066000 00:39 12900274867                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/netty-handler-4.1.45.Final.jar
+7f751e12b000-7f751e138000 r--s 00089000 00:39 12900263183                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/netty-common-4.1.45.Final.jar
+7f751e138000-7f751e13e000 r--s 00048000 00:39 12900263171                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/netty-codec-4.1.45.Final.jar
+7f751e13e000-7f751e141000 r--s 00041000 00:39 12900257465                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/netty-buffer-4.1.45.Final.jar
+7f751e141000-7f751e145000 r--s 0003e000 00:39 12890925276                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jline-2.14.5.jar
+7f751e145000-7f751e14e000 r--s 0007e000 00:39 12891009844                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jnr-constants-0.9.12.jar
+7f751e14e000-7f751e154000 r--s 00039000 00:39 12891059418                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jnr-posix-3.0.50.jar
+7f751e154000-7f751e156000 r--s 00014000 00:39 12890990515                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jnr-a64asm-1.0.0.jar
+7f751e156000-7f751e158000 r--s 000af000 00:39 12890284364                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jffi-1.2.19-native.jar
+7f751e158000-7f751e169000 r--s 0009a000 00:39 12891056756                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jnr-ffi-2.1.10.jar
+7f751e169000-7f751e16c000 r--s 00022000 00:39 12890682650                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jffi-1.2.20.jar
+7f751e16c000-7f751e16e000 r--s 00005000 00:39 12887916733                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/java-sizeof-0.0.5.jar
+7f751e16e000-7f751e1d7000 r--s 00af5000 00:39 12887051281                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/icu4j-59.1.jar
+7f751e1d7000-7f751e1d9000 r--s 00000000 00:39 12886350565                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/failureaccess-1.0.1.jar
+7f751e1d9000-7f751e1da000 r--s 00013000 00:39 12886174799                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/asm-util-7.1.jar
+7f751e1da000-7f751e1dc000 r--s 00007000 00:39 12886163116                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/asm-analysis-7.1.jar
+7f751e1dc000-7f751e1de000 r--s 0000b000 00:39 12886171595                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/asm-tree-7.1.jar
+7f751e1de000-7f751e1e0000 r--s 00010000 00:39 12886170571                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/asm-commons-7.1.jar
+7f751e1e0000-7f751e1e2000 r--s 0001b000 00:39 12886142319                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/asm-7.1.jar
+7f751e1e2000-7f751e241000 r--s 003fa000 00:39 12886192867                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bcprov-jdk15on-1.62.jar
+7f751e241000-7f751e255000 r--s 000c1000 00:39 12886192055                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bcpkix-jdk15on-1.62.jar
+7f751e255000-7f751e258000 r--s 00026000 00:39 12886099384                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/antlr-runtime-3.5.2.jar
+7f751e258000-7f751e25b000 r--s 00015000 00:39 12887972964                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/javax.servlet-api-3.1.0.jar
+7f751e25b000-7f751e25f000 r--s 00037000 00:39 12886069287                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/ST4-4.0.8.jar
+7f751e25f000-7f751e269000 r--s 00110000 00:39 12886099378                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/antlr-3.5.2.jar
+7f751e269000-7f751e2dd000 r--s 00dfe000 00:39 12898569942                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jython-slim-2.7.2.jar
+7f751e2dd000-7f751e2de000 r--s 00001000 00:39 12900336978                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scripting-jython-1.0.0.jar
+7f751e2de000-7f751e2ef000 r--s 0008d000 00:39 12892113323                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/joda-time-2.10.6.jar
+7f751e2ef000-7f751e31c000 r--s 0084f000 00:39 12892919508                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jruby-stdlib-9.1.17.0.jar
+7f751e31c000-7f751e31e000 r--s 00000000 00:39 12900189116                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/modulator-1.0.jar
+7f751e31e000-7f751e31f000 r--s 00000000 00:39 12900339257                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/unsafe-fences-1.0.jar
+7f751e31f000-7f751e320000 r--s 00003000 00:39 12900294284                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/options-1.4.jar
+7f751e320000-7f751e321000 r--s 0000a000 00:39 12887057046                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/invokebinder-1.10.jar
+7f751e321000-7f751e323000 r--s 00003000 00:39 12886333548                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/dirgra-0.3.jar
+7f751e323000-7f751e324000 r--s 00002000 00:39 12886319140                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bytelist-1.0.15.jar
+7f751e324000-7f751e325000 r--s 0000a000 00:39 12891168756                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jnr-unixsocket-0.17.jar
+7f751e325000-7f751e326000 r--s 00006000 00:39 12891009845                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jnr-enxio-0.16.jar
+7f751e326000-7f751e329000 r--s 0000d000 00:39 12891058773                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jnr-netdb-1.1.6.jar
+7f751e329000-7f751e3dd000 r--s 00864000 00:39 12892919506                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jruby-core-9.1.17.0.jar
+7f751e3dd000-7f751e3de000 r--s 00001000 00:39 2156195771                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scripting-jruby-0.3.1.jar
+7f751e3de000-7f751e3e3000 r--s 00041000 00:39 12886990973                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/groovy-xml-3.0.4.jar
+7f751e3e3000-7f751e3e5000 r--s 00016000 00:39 12886990970                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/groovy-templates-3.0.4.jar
+7f751e3e5000-7f751e3ed000 r--s 00062000 00:39 12886990969                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/groovy-swing-3.0.4.jar
+7f751e3ed000-7f751e3f0000 r--s 0001e000 00:39 12886990968                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/groovy-json-3.0.4.jar
+7f751e3f0000-7f751e3f1000 r--s 00002000 00:39 12886915883                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/groovy-dateutil-3.0.4.jar
+7f751e3f1000-7f751e467000 r--s 0071b000 00:39 12886911942                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/groovy-3.0.4.jar
+7f751e467000-7f751e468000 r--s 00003000 00:39 12900336955                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scripting-groovy-0.3.0.jar
+7f751e468000-7f751e469000 r--s 00002000 00:39 12900336952                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scripting-beanshell-0.3.4.jar
+7f751e469000-7f751e46f000 r--s 00080000 00:39 12900316811                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scala-xml_2.12-1.0.6.jar
+7f751e46f000-7f751e491000 r--s 0033e000 00:39 12900316808                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scala-reflect-2.12.1.jar
+7f751e491000-7f751e4c9000 r--s 004d0000 00:39 12900316803                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scala-library-2.12.1.jar
+7f751e4c9000-7f751e514000 r--s 00910000 00:39 12900316802                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scala-compiler-2.12.1.jar
+7f751e514000-7f751e517000 r--s 0001e000 00:39 12886900444                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/graphics-0.8.1906.jar
+7f751e517000-7f751e51a000 r--s 00014000 00:39 12886900423                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/grDevices-0.8.1906.jar
+7f751e51a000-7f751e521000 r--s 0005a000 00:39 12900339262                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/utils-0.8.1906.jar
+7f751e521000-7f751e524000 r--s 00026000 00:39 12886333537                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/datasets-0.8.1906.jar
+7f751e524000-7f751e530000 r--s 0013b000 00:39 12900167288                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/methods-0.8.1906.jar
+7f751e530000-7f751e532000 r--s 00013000 00:39 12900303042                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/renjin-gnur-runtime-0.8.1906.jar
+7f751e532000-7f751e533000 r--s 00005000 00:39 12900303027                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/renjin-appl-0.8.1906.jar
+7f751e533000-7f751e53f000 r--s 000ae000 00:39 12900338807                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/stats-0.8.1906.jar
+7f751e53f000-7f751e543000 r--s 00022000 00:39 12886319149                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/codemodel-2.6.jar
+7f751e543000-7f751e545000 r--s 0000e000 00:39 12893604384                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jung-graph-impl-2.0.1.jar
+7f751e545000-7f751e551000 r--s 00076000 00:39 12886319150                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/collections-generic-4.01.jar
+7f751e551000-7f751e554000 r--s 00008000 00:39 12893364810                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jung-api-2.0.1.jar
+7f751e554000-7f751e55f000 r--s 0006f000 00:39 12893175139                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jtransforms-2.4.jar
+7f751e55f000-7f751e561000 r--s 00005000 00:39 12900303026                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/regexp-1.3.jar
+7f751e561000-7f751e563000 r--s 00008000 00:39 12900157808                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/maven-scm-provider-svn-commons-1.4.jar
+7f751e563000-7f751e566000 r--s 0000f000 00:39 12900161769                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/maven-scm-provider-svnexe-1.4.jar
+7f751e566000-7f751e56b000 r--s 00039000 00:39 12900294296                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/plexus-utils-1.5.6.jar
+7f751e56b000-7f751e56f000 r--s 00014000 00:39 12900074448                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/maven-scm-api-1.4.jar
+7f751e56f000-7f751e571000 r--s 0000e000 00:39 12886331685                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/commons-logging-1.2.jar
+7f751e571000-7f751e57a000 r--s 0005d000 00:39 12886333526                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/commons-vfs2-2.0.jar
+7f751e57a000-7f751e57c000 r--s 0000d000 00:39 12885474867                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/blas-0.8.jar
+7f751e57c000-7f751e57d000 r--s 00000000 00:39 12900410704                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/xerbla-0.8.jar
+7f751e57d000-7f751e57f000 r--s 0000f000 00:39 12886333944                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/f2jutil-0.8.jar
+7f751e57f000-7f751e58d000 r--s 000dd000 00:39 12899852871                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/lapack-0.8.jar
+7f751e58d000-7f751e58e000 r--s 00093000 00:39 12900231438                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/netlib-java-0.9.3-renjin-patched-2.jar
+7f751e58e000-7f751e590000 r--s 00004000 00:39 12886500793                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/gcc-runtime-0.8.1906.jar
+7f751e590000-7f751e5a3000 r--s 000df000 00:39 12886333507                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/commons-math-2.2.jar
+7f751e5a3000-7f751e5d2000 r--s 002e2000 00:39 12900303028                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/renjin-core-0.8.1906.jar
+7f751e5d2000-7f751e5d4000 r--s 00003000 00:39 12900303047                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/renjin-script-engine-0.8.1906.jar
+7f751e5d4000-7f751e5d6000 r--s 00007000 00:39 12900231423                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/nailgun-server-0.9.1.jar
+7f751e5d6000-7f751e5d8000 r--s 00010000 00:39 12898569945                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jzlib-1.1.3.jar
+7f751e5d8000-7f751e5db000 r--s 00033000 00:39 12891168758                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jnr-x86asm-1.0.2.jar
+7f751e5db000-7f751e5dc000 r--s 0000e000 00:39 12893096055                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jsr166y-1.7.0.jar
+7f751e5dc000-7f751e5e2000 r--s 00037000 00:39 12900215286                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/multiverse-core-0.7.0.jar
+7f751e5e2000-7f751e5fe000 r--s 00136000 00:39 12886900422                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/gpars-1.2.1.jar
+7f751e5fe000-7f751e614000 r--s 00124000 00:39 12887057443                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/ivy-2.4.0.jar
+7f751e614000-7f751e657000 r--s 00332000 00:39 12886319147                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/clojure-1.8.0.jar
+7f751e657000-7f751e659000 r--s 00001000 00:39 12900336954                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scripting-clojure-0.1.6.jar
+7f751e659000-7f751e65e000 r--s 0005a000 00:39 12886319139                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/bsh-2.0b6.jar
+7f751e65e000-7f751e660000 r--s 00007000 00:39 2156235163                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-scripting-0.8.2.jar
+7f751e660000-7f751e668000 r--s 00049000 00:39 12886991058                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/httpcore-4.4.13.jar
+7f751e668000-7f751e66f000 r--s 0004e000 00:39 12886319154                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/commons-codec-1.14.jar
+7f751e66f000-7f751e67c000 r--s 000b1000 00:39 12886991056                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/httpclient-4.5.12.jar
+7f751e67c000-7f751e67e000 r--s 00009000 00:39 12900336990                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/slf4j-api-1.7.30.jar
+7f751e67e000-7f751e686000 r--s 00049000 00:39 12887058841                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jackrabbit-webdav-2.21.1.jar
+7f751e686000-7f751e688000 r--s 00004000 00:39 12887054053                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-plugins-uploader-webdav-0.3.2.jar
+7f751e688000-7f751e68c000 r--s 00041000 00:39 12892927712                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jsch-0.1.55.jar
+7f751e68c000-7f751e68e000 r--s 00004000 00:39 2156195766                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-plugins-uploader-ssh-0.3.2.jar
+7f751e68e000-7f751e690000 r--s 0000b000 00:39 2156195764                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-plugins-tools-0.3.1.jar
+7f751e690000-7f751e692000 r--s 00003000 00:39 12886178335                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/base64-2.3.8.jar
+7f751e692000-7f751e698000 r--s 00051000 00:39 2156195763                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-plugins-commands-0.8.1.jar
+7f751e698000-7f751e699000 r--s 00001000 00:39 12887053759                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-plugins-batch-0.1.1.jar
+7f751e699000-7f751e69b000 r--s 0000c000 00:39 12892919500                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jply-0.2.0.jar
+7f751e69b000-7f751e6ca000 r--s 00239000 00:39 12886991031                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/guava-21.0.jar
+7f751e6ca000-7f751e6cb000 r--s 00003000 00:39 2158304785                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-mesh-io-0.1.2.jar
+7f751e6cb000-7f751e6d6000 r--s 000b5000 00:39 12887916764                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/javassist-3.27.0-GA.jar
+7f751e6d6000-7f751e6e2000 r--s 00119000 00:39 12900303063                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/rsyntaxtextarea-3.1.1.jar
+7f751e6e2000-7f751e6ef000 r--s 00116000 00:39 12900303061                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/rhino-1.7.6.jar
+7f751e6ef000-7f751e6ff000 r--s 00104000 00:39 12899852870                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/languagesupport-3.1.0.jar
+7f751e6ff000-7f751e703000 r--s 00022000 00:39 12886174836                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/autocomplete-3.1.0.jar
+7f751e703000-7f751e709000 r--s 0003e000 00:39 12886331681                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/commons-io-2.7.jar
+7f751e709000-7f751e70b000 r--s 00004000 00:39 2157050941                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/batch-processor-0.4.1.jar
+7f751e70b000-7f751e70d000 r--s 0000d000 00:39 12900189109                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/minimaven-2.2.2.jar
+7f751e70d000-7f751e70f000 r--s 00003000 00:39 12886500795                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/gentyref-1.1.0.jar
+7f751e70f000-7f751e711000 r--s 00007000 00:39 12890108954                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jdatepicker-1.3.2.jar
+7f751e711000-7f751e713000 r--s 00005000 00:39 12900286581                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/object-inspector-0.1.jar
+7f751e713000-7f751e715000 r--s 00001000 00:39 12900338819                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/swing-checkbox-tree-1.0.2.jar
+7f751e715000-7f751e71a000 r--s 0002b000 00:39 2152494962                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-ui-swing-0.13.3.jar
+7f751e71a000-7f751e71c000 r--s 0000a000 00:39 2152388020                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-ui-awt-0.1.7.jar
+7f751e71c000-7f751e71e000 r--s 00017000 00:39 12887056995                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imglib2-ij-2.0.0-beta-46.jar
+7f751e71e000-7f751e730000 r--s 0009a000 00:39 2152889623                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-deprecated-0.1.4.jar
+7f751e730000-7f751e738000 r--s 0006a000 00:39 2156195762                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-legacy-0.38.0.jar
+7f751e738000-7f751e74f000 r--s 000d7000 00:39 12886319143                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/caffeine-2.4.0.jar
+7f751e74f000-7f751e755000 r--s 0002a000 00:39 2152894238                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imglib2-cache-1.0.0-beta-16.jar
+7f751e755000-7f751e765000 r--s 000e6000 00:39 2156195773                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scifio-jai-imageio-1.1.1.jar
+7f751e765000-7f751e76a000 r--s 00041000 00:39 12886331682                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/commons-lang-2.6.jar
+7f751e76a000-7f751e76e000 r--s 000ae000 00:39 12892643077                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/joml-1.9.25.jar
+7f751e76e000-7f751e79e000 r--s 001a2000 00:39 2151050165                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-ops-0.45.8.jar
+7f751e79e000-7f751e7bf000 r--s 0018e000 00:39 12900288055                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/ojalgo-45.1.1.jar
+7f751e7bf000-7f751e7e6000 r--s 001f6000 00:39 12886333513                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/commons-math3-3.6.1.jar
+7f751e7e6000-7f751e7e7000 ---p 00000000 00:00 0 
+7f751e7e7000-7f751e8e7000 rw-p 00000000 00:00 0 
+7f751e8e7000-7f751e8ea000 ---p 00000000 00:00 0 
+7f751e8ea000-7f751e9e8000 rw-p 00000000 00:00 0 
+7f751e9e8000-7f751e9e9000 ---p 00000000 00:00 0 
+7f751e9e9000-7f751e9ec000 ---p 00000000 00:00 0 
+7f751e9ec000-7f751eae9000 rw-p 00000000 00:00 0 
+7f751eae9000-7f751eaea000 ---p 00000000 00:00 0 
+7f751eaea000-7f751eaed000 ---p 00000000 00:00 0 
+7f751eaed000-7f751ebea000 rw-p 00000000 00:00 0 
+7f751ebea000-7f751ebeb000 ---p 00000000 00:00 0 
+7f751ebeb000-7f751ebee000 ---p 00000000 00:00 0 
+7f751ebee000-7f751eceb000 rw-p 00000000 00:00 0 
+7f751eceb000-7f751ecec000 ---p 00000000 00:00 0 
+7f751ecec000-7f751ecef000 ---p 00000000 00:00 0 
+7f751ecef000-7f751edec000 rw-p 00000000 00:00 0 
+7f751edec000-7f751edef000 ---p 00000000 00:00 0 
+7f751edef000-7f751eeed000 rw-p 00000000 00:00 0 
+7f751eeed000-7f751eef0000 ---p 00000000 00:00 0 
+7f751eef0000-7f751efee000 rw-p 00000000 00:00 0 
+7f751efee000-7f751f2d4000 r--p 00000000 fd:00 33560710                   /usr/lib/locale/locale-archive
+7f751f2d4000-7f751f2d7000 ---p 00000000 00:00 0 
+7f751f2d7000-7f751f3d5000 rw-p 00000000 00:00 0 
+7f751f3d5000-7f751f3d8000 ---p 00000000 00:00 0 
+7f751f3d8000-7f751f4d6000 rw-p 00000000 00:00 0 
+7f751f4d6000-7f751f4d7000 ---p 00000000 00:00 0 
+7f751f4d7000-7f751f626000 rw-p 00000000 00:00 0 
+7f751f626000-7f751f800000 r--s 03d6a000 00:39 4397917064                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/rt.jar
+7f751f800000-7f7520000000 rw-p 00000000 00:00 0 
+7f7520000000-7f7520021000 rw-p 00000000 00:00 0 
+7f7520021000-7f7524000000 ---p 00000000 00:00 0 
+7f7524000000-7f7524021000 rw-p 00000000 00:00 0 
+7f7524021000-7f7528000000 ---p 00000000 00:00 0 
+7f7528000000-7f7528021000 rw-p 00000000 00:00 0 
+7f7528021000-7f752c000000 ---p 00000000 00:00 0 
+7f752c000000-7f752c001000 r--s 00004000 00:39 12900336967                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scripting-java-0.4.1.jar
+7f752c001000-7f752c002000 r--s 00001000 00:39 12900336971                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scripting-javascript-0.5.0.jar
+7f752c002000-7f752c004000 r--s 00019000 00:39 12900167295                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/miglayout-core-5.2.jar
+7f752c004000-7f752c005000 r--s 00005000 00:39 12900189100                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/miglayout-swing-5.2.jar
+7f752c005000-7f752c008000 r--s 00011000 00:39 2152906599                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-search-0.7.0.jar
+7f752c008000-7f752c009000 r--s 00006000 00:39 12887051937                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-mesh-0.8.0.jar
+7f752c009000-7f752c00e000 r--s 0002e000 00:39 12886333515                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/commons-text-1.8.jar
+7f752c00e000-7f752c010000 r--s 00015000 00:39 12886091988                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/VectorGraphics2D-0.13.jar
+7f752c010000-7f752c016000 r--s 0003c000 00:39 12900410700                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/xchart-3.5.4.jar
+7f752c016000-7f752c019000 r--s 0001a000 00:39 12900294320                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/prettytime-4.0.1.Final.jar
+7f752c019000-7f752c02e000 r--s 001d7000 00:39 12900189103                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/mines-jtk-20151125.jar
+7f752c02e000-7f752c030000 r--s 00004000 00:39 12887054179                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imglib2-algorithm-fft-0.2.0.jar
+7f752c030000-7f752c037000 r--s 00041000 00:39 2152504528                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imglib2-roi-0.11.0.jar
+7f752c037000-7f752c039000 r--s 0001d000 00:39 12900338847                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/udunits-4.3.18.jar
+7f752c039000-7f752c35c000 rw-p 00000000 00:00 0 
+7f752c35c000-7f752c35d000 ---p 00000000 00:00 0 
+7f752c35d000-7f752cc65000 rw-p 00000000 00:00 0 
+7f752cc65000-7f752cc66000 ---p 00000000 00:00 0 
+7f752cc66000-7f7534000000 rw-p 00000000 00:00 0 
+7f7534000000-7f7534021000 rw-p 00000000 00:00 0 
+7f7534021000-7f7538000000 ---p 00000000 00:00 0 
+7f7538000000-7f7538001000 r--s 00008000 00:39 2157050938                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-notebook-0.7.1.jar
+7f7538001000-7f7538002000 r--s 00001000 00:39 12900316959                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-optional-1.0.0.jar
+7f7538002000-7f7538005000 r--s 0000e000 00:39 2153039779                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/scijava-table-0.7.0.jar
+7f7538005000-7f753802d000 r--s 00241000 00:39 12900338844                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/trove4j-3.0.3.jar
+7f753802d000-7f7538040000 r--s 000bf000 00:39 2151050162                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imglib2-5.12.0.jar
+7f7538040000-7f753a2b2000 rw-p 00000000 00:00 0 
+7f753a2b2000-7f753b05f000 ---p 00000000 00:00 0 
+7f753b05f000-7f753b0b3000 rw-p 00000000 00:00 0 
+7f753b0b3000-7f753b1ab000 ---p 00000000 00:00 0 
+7f753b1ab000-7f753b253000 rw-p 00000000 00:00 0 
+7f753b253000-7f753bfff000 ---p 00000000 00:00 0 
+7f753bfff000-7f753c000000 rw-p 00000000 00:00 0 
+7f753c000000-7f753c021000 rw-p 00000000 00:00 0 
+7f753c021000-7f7540000000 ---p 00000000 00:00 0 
+7f7540000000-7f7540021000 rw-p 00000000 00:00 0 
+7f7540021000-7f7544000000 ---p 00000000 00:00 0 
+7f7544000000-7f7544021000 rw-p 00000000 00:00 0 
+7f7544021000-7f7548000000 ---p 00000000 00:00 0 
+7f7548000000-7f7548021000 rw-p 00000000 00:00 0 
+7f7548021000-7f754c000000 ---p 00000000 00:00 0 
+7f754c000000-7f754c021000 rw-p 00000000 00:00 0 
+7f754c021000-7f7550000000 ---p 00000000 00:00 0 
+7f7550000000-7f7550021000 rw-p 00000000 00:00 0 
+7f7550021000-7f7554000000 ---p 00000000 00:00 0 
+7f7554000000-7f7554021000 rw-p 00000000 00:00 0 
+7f7554021000-7f7558000000 ---p 00000000 00:00 0 
+7f7558000000-7f7558003000 r--s 00012000 00:39 12886333555                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/eventbus-1.4.jar
+7f7558003000-7f7558009000 r--s 0004f000 00:39 12886333549                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/ejml-0.24.jar
+7f7558009000-7f755800b000 r--s 00008000 00:39 12887916731                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/jama-1.0.3.jar
+7f755800b000-7f75580c0000 rw-p 00000000 00:00 0 
+7f75580c0000-7f75580c1000 ---p 00000000 00:00 0 
+7f75580c1000-7f75589c9000 rw-p 00000000 00:00 0 
+7f75589c9000-7f75589ca000 ---p 00000000 00:00 0 
+7f75589ca000-7f7558aca000 rw-p 00000000 00:00 0 
+7f7558aca000-7f7558acb000 ---p 00000000 00:00 0 
+7f7558acb000-7f7558bcb000 rw-p 00000000 00:00 0 
+7f7558bcb000-7f7558bcc000 ---p 00000000 00:00 0 
+7f7558bcc000-7f7558ccc000 rw-p 00000000 00:00 0 
+7f7558ccc000-7f7558ccd000 ---p 00000000 00:00 0 
+7f7558ccd000-7f7558dcd000 rw-p 00000000 00:00 0 
+7f7558dcd000-7f7558dce000 ---p 00000000 00:00 0 
+7f7558dce000-7f7558ece000 rw-p 00000000 00:00 0 
+7f7558ece000-7f7558ecf000 ---p 00000000 00:00 0 
+7f7558ecf000-7f7558fcf000 rw-p 00000000 00:00 0 
+7f7558fcf000-7f7558fd0000 ---p 00000000 00:00 0 
+7f7558fd0000-7f75590d0000 rw-p 00000000 00:00 0 
+7f75590d0000-7f75590d1000 ---p 00000000 00:00 0 
+7f75590d1000-7f75591fb000 rw-p 00000000 00:00 0 
+7f75591fb000-7f7559591000 ---p 00000000 00:00 0 
+7f7559591000-7f755a001000 rwxp 00000000 00:00 0 
+7f755a001000-7f7568591000 ---p 00000000 00:00 0 
+7f7568591000-7f75685ac000 r-xp 00000000 00:39 2162019036                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libzip.so
+7f75685ac000-7f75687ac000 ---p 0001b000 00:39 2162019036                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libzip.so
+7f75687ac000-7f75687ad000 rw-p 0001b000 00:39 2162019036                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libzip.so
+7f75687ad000-7f7568fb2000 r--s 00000000 fd:00 67338604                   /var/lib/sss/mc/passwd
+7f7568fb2000-7f7568fb4000 r--p 00000000 fd:00 102241505                  /usr/lib/x86_64-linux-gnu/libnss_sss.so.2
+7f7568fb4000-7f7568fba000 r-xp 00002000 fd:00 102241505                  /usr/lib/x86_64-linux-gnu/libnss_sss.so.2
+7f7568fba000-7f7568fbc000 r--p 00008000 fd:00 102241505                  /usr/lib/x86_64-linux-gnu/libnss_sss.so.2
+7f7568fbc000-7f7568fbd000 r--p 00009000 fd:00 102241505                  /usr/lib/x86_64-linux-gnu/libnss_sss.so.2
+7f7568fbd000-7f7568fbe000 rw-p 0000a000 fd:00 102241505                  /usr/lib/x86_64-linux-gnu/libnss_sss.so.2
+7f7568fbe000-7f7568fc4000 r--p 00000000 fd:00 100728447                  /usr/lib/x86_64-linux-gnu/libnss_systemd.so.2
+7f7568fc4000-7f7568fea000 r-xp 00006000 fd:00 100728447                  /usr/lib/x86_64-linux-gnu/libnss_systemd.so.2
+7f7568fea000-7f7568ff6000 r--p 0002c000 fd:00 100728447                  /usr/lib/x86_64-linux-gnu/libnss_systemd.so.2
+7f7568ff6000-7f7568ff9000 r--p 00037000 fd:00 100728447                  /usr/lib/x86_64-linux-gnu/libnss_systemd.so.2
+7f7568ff9000-7f7568ffa000 rw-p 0003a000 fd:00 100728447                  /usr/lib/x86_64-linux-gnu/libnss_systemd.so.2
+7f7568ffa000-7f7568ffb000 r--s 0000a000 00:39 12900294292                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/parsington-2.0.0.jar
+7f7568ffb000-7f7569004000 r--s 00068000 00:39 2151050164                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-common-0.34.1.jar
+7f7569004000-7f7569009000 r--s 00049000 00:39 12886029127                /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/FastInfoset-1.2.16.jar
+7f7569009000-7f7569011000 rw-s 00000000 fd:00 19240961                   /tmp/hsperfdata_kahane/71774
+7f7569011000-7f756903c000 r-xp 00000000 00:39 2157842583                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libjava.so
+7f756903c000-7f756923b000 ---p 0002b000 00:39 2157842583                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libjava.so
+7f756923b000-7f756923d000 rw-p 0002a000 00:39 2157842583                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libjava.so
+7f756923d000-7f756924a000 r-xp 00000000 00:39 2152488445                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libverify.so
+7f756924a000-7f756944a000 ---p 0000d000 00:39 2152488445                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libverify.so
+7f756944a000-7f756944c000 rw-p 0000d000 00:39 2152488445                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/libverify.so
+7f756944c000-7f756944e000 r--p 00000000 fd:00 102700946                  /usr/lib/x86_64-linux-gnu/librt-2.31.so
+7f756944e000-7f7569452000 r-xp 00002000 fd:00 102700946                  /usr/lib/x86_64-linux-gnu/librt-2.31.so
+7f7569452000-7f7569454000 r--p 00006000 fd:00 102700946                  /usr/lib/x86_64-linux-gnu/librt-2.31.so
+7f7569454000-7f7569455000 r--p 00007000 fd:00 102700946                  /usr/lib/x86_64-linux-gnu/librt-2.31.so
+7f7569455000-7f7569456000 rw-p 00008000 fd:00 102700946                  /usr/lib/x86_64-linux-gnu/librt-2.31.so
+7f7569456000-7f7569463000 r--p 00000000 fd:00 102700933                  /usr/lib/x86_64-linux-gnu/libm-2.31.so
+7f7569463000-7f756950a000 r-xp 0000d000 fd:00 102700933                  /usr/lib/x86_64-linux-gnu/libm-2.31.so
+7f756950a000-7f75695a3000 r--p 000b4000 fd:00 102700933                  /usr/lib/x86_64-linux-gnu/libm-2.31.so
+7f75695a3000-7f75695a4000 r--p 0014c000 fd:00 102700933                  /usr/lib/x86_64-linux-gnu/libm-2.31.so
+7f75695a4000-7f75695a5000 rw-p 0014d000 fd:00 102700933                  /usr/lib/x86_64-linux-gnu/libm-2.31.so
+7f75695a5000-7f756a281000 r-xp 00000000 00:39 4398291221                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/server/libjvm.so
+7f756a281000-7f756a481000 ---p 00cdc000 00:39 4398291221                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/server/libjvm.so
+7f756a481000-7f756a55b000 rw-p 00cdc000 00:39 4398291221                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172/jre/lib/amd64/server/libjvm.so
+7f756a55b000-7f756a5a9000 rw-p 00000000 00:00 0 
+7f756a5a9000-7f756a5cb000 r--p 00000000 fd:00 102700931                  /usr/lib/x86_64-linux-gnu/libc-2.31.so
+7f756a5cb000-7f756a743000 r-xp 00022000 fd:00 102700931                  /usr/lib/x86_64-linux-gnu/libc-2.31.so
+7f756a743000-7f756a791000 r--p 0019a000 fd:00 102700931                  /usr/lib/x86_64-linux-gnu/libc-2.31.so
+7f756a791000-7f756a795000 r--p 001e7000 fd:00 102700931                  /usr/lib/x86_64-linux-gnu/libc-2.31.so
+7f756a795000-7f756a797000 rw-p 001eb000 fd:00 102700931                  /usr/lib/x86_64-linux-gnu/libc-2.31.so
+7f756a797000-7f756a79b000 rw-p 00000000 00:00 0 
+7f756a79b000-7f756a7a1000 r--p 00000000 fd:00 102700944                  /usr/lib/x86_64-linux-gnu/libpthread-2.31.so
+7f756a7a1000-7f756a7b2000 r-xp 00006000 fd:00 102700944                  /usr/lib/x86_64-linux-gnu/libpthread-2.31.so
+7f756a7b2000-7f756a7b8000 r--p 00017000 fd:00 102700944                  /usr/lib/x86_64-linux-gnu/libpthread-2.31.so
+7f756a7b8000-7f756a7b9000 r--p 0001c000 fd:00 102700944                  /usr/lib/x86_64-linux-gnu/libpthread-2.31.so
+7f756a7b9000-7f756a7ba000 rw-p 0001d000 fd:00 102700944                  /usr/lib/x86_64-linux-gnu/libpthread-2.31.so
+7f756a7ba000-7f756a7be000 rw-p 00000000 00:00 0 
+7f756a7be000-7f756a7bf000 r--p 00000000 fd:00 102700932                  /usr/lib/x86_64-linux-gnu/libdl-2.31.so
+7f756a7bf000-7f756a7c1000 r-xp 00001000 fd:00 102700932                  /usr/lib/x86_64-linux-gnu/libdl-2.31.so
+7f756a7c1000-7f756a7c2000 r--p 00003000 fd:00 102700932                  /usr/lib/x86_64-linux-gnu/libdl-2.31.so
+7f756a7c2000-7f756a7c3000 r--p 00003000 fd:00 102700932                  /usr/lib/x86_64-linux-gnu/libdl-2.31.so
+7f756a7c3000-7f756a7c4000 rw-p 00004000 fd:00 102700932                  /usr/lib/x86_64-linux-gnu/libdl-2.31.so
+7f756a7c4000-7f756a7c5000 r--s 00002000 00:39 2155353887                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-2.3.0.jar
+7f756a7c5000-7f756a7c6000 r--s 00005000 00:39 2155381280                 /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-launcher-6.0.1.jar
+7f756a7c6000-7f756a7c9000 r--p 00000000 fd:00 102700939                  /usr/lib/x86_64-linux-gnu/libnss_files-2.31.so
+7f756a7c9000-7f756a7d0000 r-xp 00003000 fd:00 102700939                  /usr/lib/x86_64-linux-gnu/libnss_files-2.31.so
+7f756a7d0000-7f756a7d2000 r--p 0000a000 fd:00 102700939                  /usr/lib/x86_64-linux-gnu/libnss_files-2.31.so
+7f756a7d2000-7f756a7d3000 r--p 0000b000 fd:00 102700939                  /usr/lib/x86_64-linux-gnu/libnss_files-2.31.so
+7f756a7d3000-7f756a7d4000 rw-p 0000c000 fd:00 102700939                  /usr/lib/x86_64-linux-gnu/libnss_files-2.31.so
+7f756a7d4000-7f756a7dd000 rw-p 00000000 00:00 0 
+7f756a7dd000-7f756a7de000 r--p 00000000 fd:00 102700479                  /usr/lib/x86_64-linux-gnu/ld-2.31.so
+7f756a7de000-7f756a801000 r-xp 00001000 fd:00 102700479                  /usr/lib/x86_64-linux-gnu/ld-2.31.so
+7f756a801000-7f756a809000 r--p 00024000 fd:00 102700479                  /usr/lib/x86_64-linux-gnu/ld-2.31.so
+7f756a809000-7f756a80a000 ---p 00000000 00:00 0 
+7f756a80a000-7f756a80b000 r--p 0002c000 fd:00 102700479                  /usr/lib/x86_64-linux-gnu/ld-2.31.so
+7f756a80b000-7f756a80c000 rw-p 0002d000 fd:00 102700479                  /usr/lib/x86_64-linux-gnu/ld-2.31.so
+7f756a80c000-7f756a80d000 rw-p 00000000 00:00 0 
+7ffee9364000-7ffee9367000 ---p 00000000 00:00 0 
+7ffee9367000-7ffee9464000 rw-p 00000000 00:00 0                          [stack]
+7ffee94b1000-7ffee94b4000 r--p 00000000 00:00 0                          [vvar]
+7ffee94b4000-7ffee94b5000 r-xp 00000000 00:00 0                          [vdso]
+ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+
+VM Arguments:
+jvm_args: -Dpython.cachedir.skip=true -Dplugins.dir=/home/ipausers/kahane/opt/fiji-linux64/Fiji.app -Xmx8000m -Djava.awt.headless=true -Dapple.awt.UIElement=true -Xincgc -XX:PermSize=128m 
+java_command: <unknown>
+java_class_path (initial): /home/ipausers/kahane/opt/fiji-linux64/Fiji.app/jars/imagej-launcher-6.0.1.jar
+Launcher Type: generic
+
+Environment Variables:
+JAVA_HOME=/home/ipausers/kahane/opt/fiji-linux64/Fiji.app/java/linux-amd64/jdk1.8.0_172//jre
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/opt/puppetlabs/bin:/home/ipausers/kahane/.local/bin
+USERNAME=kahane
+LD_LIBRARY_PATH=/home/ipausers/kahane/.local/lib/python3.8/site-packages/cv2/../../lib64::/home/ipausers/kahane/opt/fiji-linux64/Fiji.app/lib/linux64:/home/ipausers/kahane/opt/fiji-linux64/Fiji.app/mm/linux64
+SHELL=/bin/bash
+DISPLAY=:0
+
+Signal Handlers:
+SIGSEGV: [libjvm.so+0xad2ab0], sa_mask[0]=11111111011111111101111111111110, sa_flags=SA_RESTART|SA_SIGINFO
+SIGBUS: [libjvm.so+0xad2ab0], sa_mask[0]=11111111011111111101111111111110, sa_flags=SA_RESTART|SA_SIGINFO
+SIGFPE: [libjvm.so+0x92a790], sa_mask[0]=11111111011111111101111111111110, sa_flags=SA_RESTART|SA_SIGINFO
+SIGPIPE: [libjvm.so+0x92a790], sa_mask[0]=11111111011111111101111111111110, sa_flags=SA_RESTART|SA_SIGINFO
+SIGXFSZ: [libjvm.so+0x92a790], sa_mask[0]=11111111011111111101111111111110, sa_flags=SA_RESTART|SA_SIGINFO
+SIGILL: [libjvm.so+0x92a790], sa_mask[0]=11111111011111111101111111111110, sa_flags=SA_RESTART|SA_SIGINFO
+SIGUSR1: SIG_DFL, sa_mask[0]=00000000000000000000000000000000, sa_flags=none
+SIGUSR2: [libjvm.so+0x92bff0], sa_mask[0]=00000000000000000000000000000000, sa_flags=SA_RESTART|SA_SIGINFO
+SIGHUP: [libjvm.so+0x92d3f0], sa_mask[0]=11111111011111111101111111111110, sa_flags=SA_RESTART|SA_SIGINFO
+SIGINT: [libjvm.so+0x92d3f0], sa_mask[0]=11111111011111111101111111111110, sa_flags=SA_RESTART|SA_SIGINFO
+SIGTERM: [libjvm.so+0x92d3f0], sa_mask[0]=11111111011111111101111111111110, sa_flags=SA_RESTART|SA_SIGINFO
+SIGQUIT: [libjvm.so+0x92d3f0], sa_mask[0]=11111111011111111101111111111110, sa_flags=SA_RESTART|SA_SIGINFO
+
+
+---------------  S Y S T E M  ---------------
+
+OS:DISTRIB_ID=Ubuntu
+DISTRIB_RELEASE=20.04
+DISTRIB_CODENAME=focal
+DISTRIB_DESCRIPTION="Ubuntu 20.04.4 LTS"
+
+uname:Linux 5.4.0-107-generic #121-Ubuntu SMP Thu Mar 24 16:04:27 UTC 2022 x86_64
+libc:glibc 2.31 NPTL 2.31 
+rlimit: STACK 8192k, CORE 0k, NPROC 127551, NOFILE 1048576, AS infinity
+load average:0.86 0.93 0.91
+
+/proc/meminfo:
+MemTotal:       32748556 kB
+MemFree:        19842936 kB
+MemAvailable:   26547016 kB
+Buffers:           31044 kB
+Cached:          7581524 kB
+SwapCached:            0 kB
+Active:          7980192 kB
+Inactive:        3735624 kB
+Active(anon):    4686600 kB
+Inactive(anon):   103540 kB
+Active(file):    3293592 kB
+Inactive(file):  3632084 kB
+Unevictable:      523088 kB
+Mlocked:           18492 kB
+SwapTotal:      16777208 kB
+SwapFree:       16777208 kB
+Dirty:               332 kB
+Writeback:             0 kB
+AnonPages:       4626420 kB
+Mapped:           927788 kB
+Shmem:            683604 kB
+KReclaimable:     243392 kB
+Slab:             462260 kB
+SReclaimable:     243392 kB
+SUnreclaim:       218868 kB
+KernelStack:       19472 kB
+PageTables:        43264 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    33151484 kB
+Committed_AS:   14985960 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:       40060 kB
+VmallocChunk:          0 kB
+Percpu:             7136 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:     10240 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      418436 kB
+DirectMap2M:    12029952 kB
+DirectMap1G:    20971520 kB
+
+
+CPU:total 8 (initial active 8) (4 cores per cpu, 2 threads per core) family 6 model 94 stepping 3, cmov, cx8, fxsr, mmx, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, avx, avx2, aes, clmul, erms, rtm, 3dnowpref, lzcnt, ht, tsc, tscinvbit, bmi1, bmi2, adx
+
+/proc/cpuinfo:
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 94
+model name	: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz
+stepping	: 3
+microcode	: 0xea
+cpu MHz		: 800.034
+cache size	: 8192 KB
+physical id	: 0
+siblings	: 8
+core id		: 0
+cpu cores	: 4
+apicid		: 0
+initial apicid	: 0
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 22
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear flush_l1d
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit srbds
+bogomips	: 6799.81
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+processor	: 1
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 94
+model name	: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz
+stepping	: 3
+microcode	: 0xea
+cpu MHz		: 800.011
+cache size	: 8192 KB
+physical id	: 0
+siblings	: 8
+core id		: 1
+cpu cores	: 4
+apicid		: 2
+initial apicid	: 2
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 22
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear flush_l1d
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit srbds
+bogomips	: 6799.81
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+processor	: 2
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 94
+model name	: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz
+stepping	: 3
+microcode	: 0xea
+cpu MHz		: 800.059
+cache size	: 8192 KB
+physical id	: 0
+siblings	: 8
+core id		: 2
+cpu cores	: 4
+apicid		: 4
+initial apicid	: 4
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 22
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear flush_l1d
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit srbds
+bogomips	: 6799.81
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+processor	: 3
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 94
+model name	: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz
+stepping	: 3
+microcode	: 0xea
+cpu MHz		: 800.002
+cache size	: 8192 KB
+physical id	: 0
+siblings	: 8
+core id		: 3
+cpu cores	: 4
+apicid		: 6
+initial apicid	: 6
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 22
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear flush_l1d
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit srbds
+bogomips	: 6799.81
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+processor	: 4
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 94
+model name	: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz
+stepping	: 3
+microcode	: 0xea
+cpu MHz		: 800.031
+cache size	: 8192 KB
+physical id	: 0
+siblings	: 8
+core id		: 0
+cpu cores	: 4
+apicid		: 1
+initial apicid	: 1
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 22
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear flush_l1d
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit srbds
+bogomips	: 6799.81
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+processor	: 5
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 94
+model name	: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz
+stepping	: 3
+microcode	: 0xea
+cpu MHz		: 800.020
+cache size	: 8192 KB
+physical id	: 0
+siblings	: 8
+core id		: 1
+cpu cores	: 4
+apicid		: 3
+initial apicid	: 3
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 22
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear flush_l1d
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit srbds
+bogomips	: 6799.81
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+processor	: 6
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 94
+model name	: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz
+stepping	: 3
+microcode	: 0xea
+cpu MHz		: 800.010
+cache size	: 8192 KB
+physical id	: 0
+siblings	: 8
+core id		: 2
+cpu cores	: 4
+apicid		: 5
+initial apicid	: 5
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 22
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear flush_l1d
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit srbds
+bogomips	: 6799.81
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+processor	: 7
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 94
+model name	: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz
+stepping	: 3
+microcode	: 0xea
+cpu MHz		: 823.689
+cache size	: 8192 KB
+physical id	: 0
+siblings	: 8
+core id		: 3
+cpu cores	: 4
+apicid		: 7
+initial apicid	: 7
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 22
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear flush_l1d
+bugs		: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa itlb_multihit srbds
+bogomips	: 6799.81
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+
+
+Memory: 4k page, physical 32748556k(19841936k free), swap 16777208k(16777208k free)
+
+vm_info: Java HotSpot(TM) 64-Bit Server VM (25.172-b11) for linux-amd64 JRE (1.8.0_172-b11), built on Mar 28 2018 21:44:09 by "java_re" with gcc 4.3.0 20080428 (Red Hat 4.3.0-8)
+
+time: Wed Apr 13 17:21:13 2022
+elapsed time: 137 seconds (0d 0h 2m 17s)
+
