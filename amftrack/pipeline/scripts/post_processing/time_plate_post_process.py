@@ -9,7 +9,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     load_graphs,
 )
 
-from amftrack.util.sys import get_dates_datetime, get_dirname
+from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
 import pickle
 import networkx as nx
 import pandas as pd
@@ -28,8 +28,8 @@ directory = str(sys.argv[1])
 overwrite = eval(sys.argv[2])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
-run_info = pd.read_json(f"{directory_scratch}temp/{op_id}.json")
-list_f, list_args = pickle.load(open(f"{directory_scratch}temp/{op_id}.pick", "rb"))
+run_info = pd.read_json(f"{temp_path}/{op_id}.json")
+list_f, list_args = pickle.load(open(f"{temp_path}/{op_id}.pick", "rb"))
 folder_list = list(run_info["folder_analysis"])
 directory_name = folder_list[i]
 select = run_info.loc[run_info["folder_analysis"] == directory_name]

@@ -1,24 +1,21 @@
-"""Utils for defining paths and finding files."""
+"""Utils for defining environement variables and defining paths"""
 
-from pymatreader import read_mat
 from scipy import sparse
 import numpy as np
 import os
 from datetime import datetime, timedelta
-import pandas
 from amftrack.pipeline.functions.image_processing.extract_graph import (
-    from_sparse_to_graph,
-    generate_nx_graph,
     sparse_to_doc,
 )
 import cv2
 import json
 import pandas as pd
-from amftrack.transfer.functions.transfer import download, zip_file, unzip_file, upload
+from amftrack.transfer.functions.transfer import download, upload
 from tqdm.autonotebook import tqdm
 import dropbox
 from time import time_ns
 from decouple import Config, RepositoryEnv
+from pymatreader import read_mat
 
 DOTENV_FILE = (
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -29,19 +26,27 @@ env_config = Config(RepositoryEnv(DOTENV_FILE))
 path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 temp_path = env_config.get("TEMP_PATH")
 target = env_config.get("DATA_PATH")
+data_path = env_config.get("STORAGE_PATH")
 fiji_path = env_config.get("FIJI_PATH")
 API = env_config.get("API_KEY")
 
 os.environ["TEMP"] = temp_path
 
 
-def get_path(date, plate, skeleton, row=None, column=None, extension=".mat"):
-    def get_number(number):
-        if number < 10:
-            return f"0{number}"
-        else:
-            return str(number)
+def pad_number(number):
+    """
+    Convert number to string and padd with a zero
+    Ex:
+    1 -> 01
+    23 -> 23
+    """
+    if number < 10:
+        return f"0{number}"
+    else:
+        return str(number)
 
+
+def get_path(date, plate, skeleton, row=None, column=None, extension=".mat"):
     root_path = (
         r"//sun.amolf.nl/shimizu-data/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE"
     )
@@ -50,7 +55,7 @@ def get_path(date, plate, skeleton, row=None, column=None, extension=".mat"):
     if skeleton:
         end = "/Analysis/Skeleton" + extension
     else:
-        end = "/Img" + f"/Img_r{get_number(row)}_c{get_number(column)}.tif"
+        end = "/Img" + f"/Img_r{pad_number(row)}_c{pad_number(column)}.tif"
     return root_path + date_plate + plate + end
 
 
@@ -170,7 +175,7 @@ def get_skeleton(exp, boundaries, t, directory):
 def get_param(
     folder, directory
 ):  # Very ugly but because interfacing with Matlab so most elegant solution.
-    path_snap = directory + folder
+    path_snap = os.path.join(directory, folder)
     file1 = open(path_snap + "/param.m", "r")
     Lines = file1.readlines()
     ldict = {}
@@ -197,15 +202,22 @@ def get_param(
     return ldict
 
 
-def update_plate_info(directory):
+def update_plate_info(directory: str) -> None:
+    """*
+    1/ Download `data_info.json` file containing all information about acquisitions.
+    2/ Add all acquisition files in the `directory` path to the `data_info.json`.
+    3/ Upload the new version of data_info (actuliased) to the dropbox.
+    An acquisition repositorie has a param.m file inside it.
+    """
+    # TODO(FK): add a local version without dropbox modification
     listdir = os.listdir(directory)
     source = f"/data_info.json"
     download(API, source, target, end="")
     plate_info = json.load(open(target, "r"))
     with tqdm(total=len(listdir), desc="analysed") as pbar:
         for folder in listdir:
-            path_snap = directory + folder
-            if os.path.isfile(path_snap + "/param.m"):
+            path_snap = os.path.join(directory, folder)
+            if os.path.isfile(os.path.join(path_snap, "param.m")):
                 params = get_param(folder, directory)
                 ss = folder.split("_")[0]
                 ff = folder.split("_")[1]
@@ -218,7 +230,7 @@ def update_plate_info(directory):
                 )
                 params["date"] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
                 params["folder"] = folder
-                total_path = directory + folder
+                total_path = os.path.join(directory, folder)
                 plate_info[total_path] = params
             pbar.update(1)
     with open(target, "w") as jsonf:
@@ -240,7 +252,14 @@ def get_data_info():
     return data_info
 
 
-def get_current_folders(directory, file_metadata=False):
+def get_current_folders(directory: str, file_metadata=False) -> pd.DataFrame:
+    """
+    Returns a pandas data frame with all informations about the acquisition files
+    inside the directory. The information is only taken from the dropbox
+    If directory == dropbox, the information is taken from the dropbox.
+    WARNING: directory must finish with '/'
+    """
+    # TODO(FK): solve the / problem
     if directory == "dropbox":
         data = []
         dbx = dropbox.Dropbox(API)
@@ -379,3 +398,8 @@ def get_data_tables(op_id=time_ns(), redownload=True):
     path_save = f"{root}time_hypha_info{op_id}.pick"
     time_hypha_info = pd.read_pickle(path_save)
     return (time_plate_info, global_hypha_info, time_hypha_info)
+
+
+if __name__ == "__main__":
+    directory = r"/data/felix/"
+    update_plate_info(directory)

@@ -18,6 +18,7 @@ import pandas as pd
 from amftrack.pipeline.paths.directory import directory_scratch
 import json
 from time import time_ns
+from amftrack.util.sys import temp_path
 
 directory = str(sys.argv[1])
 limit = int(sys.argv[2])
@@ -26,7 +27,7 @@ labeled = eval(sys.argv[4])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-run_info = pd.read_json(f"{directory_scratch}temp/{op_id}.json")
+run_info = pd.read_json(f"{temp_path}/{op_id}.json")
 
 plates = list(set(run_info["Plate"].values))
 plates.sort()

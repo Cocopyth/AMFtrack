@@ -1,6 +1,6 @@
 from datetime import datetime
 from subprocess import call
-from amftrack.util.sys import get_dates_datetime, get_dirname, path_code
+from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path, path_code
 import os
 from copy import copy
 from time import time_ns
@@ -26,7 +26,7 @@ path_stitch = os.getenv("HOME") + "/bash/stitch.sh"
 
 def run_parallel(code, args, folders, num_parallel, time, name, cpus=128, node="thin"):
     op_id = time_ns()
-    folders.to_json(f"{directory_scratch}temp/{op_id}.json")  # temporary file
+    folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     length = len(folders)
     begin_skel = 0
     end_skel = length // num_parallel + 1
@@ -58,7 +58,7 @@ def run_parallel(code, args, folders, num_parallel, time, name, cpus=128, node="
 
 # def run_parallel_skelet(low, high, dist, op_id, i):
 #     op_id = time_ns()
-#     folders.to_json(f'{directory_scratch}temp/{op_id}.json')# temporary file
+#     folders.to_json(f'{temp_path}/{op_id}.json')# temporary file
 #     length = len(folders)
 #     begin_skel = 0
 #     end_skel = length // num_parallel + 1
@@ -90,7 +90,7 @@ def run_parallel_all_time(
     code, args, folders, num_parallel, time, name, cpus=128, node="thin"
 ):
     op_id = time_ns()
-    folders.to_json(f"{directory_scratch}temp/{op_id}.json")  # temporary file
+    folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     plates = set(folders["Plate"].values)
     length = len(plates)
     begin_skel = 0
@@ -136,9 +136,9 @@ def run_parallel_post(
 ):
     path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
-    folders.to_json(f"{directory_scratch}temp/{op_id}.json")  # temporary file
+    folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     pickle.dump(
-        (list_f, list_args), open(f"{directory_scratch}temp/{op_id}.pick", "wb")
+        (list_f, list_args), open(f"{temp_path}/{op_id}.pick", "wb")
     )
     length = len(folders)
     begin_skel = 0
@@ -286,7 +286,7 @@ def run_parallel_transfer(
 ):
     path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
-    folders.to_json(f"{directory_scratch}temp/{op_id}.json")  # temporary file
+    folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     length = len(folders)
     begin_skel = 0
     end_skel = length // num_parallel + 1
