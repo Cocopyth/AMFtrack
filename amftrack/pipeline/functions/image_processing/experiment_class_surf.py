@@ -224,7 +224,7 @@ class Experiment:
 
     def find_image_pos(
         self, xs: int, ys: int, t: int, local=False
-    ) -> Tuple(List, List[coord]):
+    ) -> Tuple[List, List[coord]]:
         """
         For coordinates (xs, yx) in the full size stiched image,
         returns a list of original images (before stiching) that contain the coordinate.
@@ -258,7 +258,12 @@ class Experiment:
         ximg = xs
         yimg = ys
 
-        def find(xsub, ysub, x, y):
+        def find(xsub: List, ysub: List, x: float, y: float):
+            """
+            :param x: x coordinate of point of interest
+            :param xsub: List of x coordinate of all the images
+            :return: list of indexes of images which contain (x,y)
+            """
             indexes = []
             for i in range(len(xsub)):
                 if (
@@ -997,5 +1002,21 @@ class Hyphae:
 
 
 if __name__ == "__main__":
-    exp = Experiment(4, "directory")
-    print(exp)
+    # exp = Experiment(4, "directory")
+    # print(exp)
+    from amftrack.util.sys import update_plate_info, get_current_folders
+
+    directory = "/data/felix/width1/full_plates/"
+    plate_name = "20220325_1423_Plate907"
+    update_plate_info(directory)
+    folder_df = get_current_folders(directory)
+    selected_df = folder_df.loc[folder_df["folder"] == plate_name]
+    i = 0
+    plate = int(list(selected_df["folder"])[i].split("_")[-1][5:])
+    folder_list = list(selected_df["folder"])
+    directory_name = folder_list[i]
+    exp = Experiment(plate, directory)
+    exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
+
+    r = exp.find_image_pos(10000, 5000, t=0)
+    print(r)
