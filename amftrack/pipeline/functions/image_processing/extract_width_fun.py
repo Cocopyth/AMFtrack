@@ -97,39 +97,7 @@ def get_width_pixel(
     width_pix = -np.sum(
         (np.log10(np.array(p) / background) <= 0) * np.log10(np.array(p) / background)
     )
-    #     print(width_pix)
-    #     p0=[165,100,165,45,10,10,10]
-    #     popt, pcov = curve_fit(func, xdata, ydata,bounds = ([-np.inf,-np.inf,-np.inf,-np.inf,0,0,0],np.inf),p0=p0)
-    #     width_pix = popt[-2]
-    #     ax.plot(xdata, func(xdata, *popt), 'r-')
-    #     derivative = [p[i+1]-p[i] for i in range(len(p)-1)]
-    #     fig = plt.figure()
-    #     ax = fig.add_subplot(111)
-    #     ax.plot([np.mean(derivative[5*i:5*i+5]) for i in range(len(derivative)//5)])
-    #     problem=False
-    #     arg = len(p)//2
-    #     if p[arg]>threshold:
-    #         arg = np.argmin(p)
-    # #     we_plot=randrange(1000)
-    #     while  p[arg]<=threshold:
-    #         if arg<=0:
-    # #             we_plot=50
-    #             problem=True
-    #             break
-    #         arg-=1
-    #     begin = arg
-    #     arg = len(p)//2
-    #     if p[arg]>threshold:
-    #         arg = np.argmin(p)
-    #     while  p[arg]<=threshold:
-    #         if arg>=len(p)-1:
-    # #             we_plot=50
-    #             problem=True
-    #             break
-    #         arg+=1
-    #     end = arg
-    # #     print(end-begin,threshold)
-    #     print(np.linalg.norm(point1-point2),len(p),width_pix)
+
     return a * np.sqrt(max(0, np.linalg.norm(point1 - point2) * (width_pix) / len(p)))
 
 

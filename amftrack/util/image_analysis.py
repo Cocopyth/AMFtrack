@@ -42,3 +42,5 @@ if __name__ == "__main__":
     )
     f = get_transformation(R, t)
     print(f([16420, 26260]))
+
+    assert convert_to_micrometer(10) == 17.25
