@@ -1,4 +1,31 @@
-def expand_segment(point1, point2, factor: float):
+from amftrack.util.aliases import coord
+from typing import Tuple
+import numpy as np
+
+
+def get_section_segment(
+    orientation: coord, pivot: coord, target_length: float
+) -> Tuple[coord, coord]:
+    """
+    Return the coordinate of a segment giving the section.
+    :param orientation: a non nul vector giving the perpendicular to the future segment
+    :param pivot: center point for the future segment
+    :param target_length: length of the future segment
+    :warning: the returned coordinates are float and not int, rounding up will change slightly the length
+    """
+    perpendicular = (
+        [1, -orientation[0] / orientation[1]] if orientation[1] != 0 else [0, 1]
+    )
+    perpendicular_norm = np.array(perpendicular) / np.sqrt(
+        perpendicular[0] ** 2 + perpendicular[1] ** 2
+    )
+    point1 = np.array(pivot) + target_length * perpendicular_norm / 2
+    point2 = np.array(pivot) - target_length * perpendicular_norm / 2
+
+    return (point1, point2)
+
+
+def expand_segment(point1: coord, point2: coord, factor: float) -> Tuple[coord, coord]:
     """
     From the segment [point1, point2], return a new segment dilated by `factor`
     and centered on the same point.
@@ -15,7 +42,7 @@ def expand_segment(point1, point2, factor: float):
     return [x1_, y1_], [x2_, y2_]
 
 
-def compute_factor(point1, point2, target_length: float) -> float:
+def compute_factor(point1: coord, point2: coord, target_length: float) -> float:
     """
     Determine the dilatation factor to apply to the segment [point1, point2]
     in order to reach the `target_length`.
@@ -40,4 +67,4 @@ if __name__ == "__main__":
     assert compute_factor([0, 0], [0, 3], 6) == 2
     assert compute_factor([1, 0], [10, 0], 4.5) == 0.5
 
-    assert convert_to_micrometer(10) == 17.25
+    print(get_section_segment([-2, 2], [1, 1], 2.82))
