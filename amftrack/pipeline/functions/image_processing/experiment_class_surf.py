@@ -1041,12 +1041,16 @@ class Hyphae:
 if __name__ == "__main__":
     # exp = Experiment(4, "directory")
     # print(exp)
-    from amftrack.util.sys import update_plate_info, get_current_folders
+    from amftrack.util.sys import (
+        update_plate_info_local,
+        get_current_folders_local,
+        test_path,
+    )
 
-    directory = "/data/felix/width1/full_plates/"
-    plate_name = "20220325_1423_Plate907"
-    update_plate_info(directory)
-    folder_df = get_current_folders(directory)
+    directory = test_path + "/"  # TODO(FK): fix this error
+    plate_name = "20220330_2357_Plate19"
+    update_plate_info_local(directory)
+    folder_df = get_current_folders_local(directory)
     selected_df = folder_df.loc[folder_df["folder"] == plate_name]
     i = 0
     plate = int(list(selected_df["folder"])[i].split("_")[-1][5:])
@@ -1057,3 +1061,5 @@ if __name__ == "__main__":
 
     r = exp.find_image_pos(10000, 5000, t=0)
     print(r)
+
+    print(exp.get_image_coordinates(0))
