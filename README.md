@@ -108,3 +108,36 @@ Always import from the util.sys
 ### Formattage
 
 Le formatage du code est fait avec `black`
+
+# Presentation of the repository
+## Logging
+For logging, the logging module `logging` enables to add logging messages across code and set the level of verbosity.
+There are 4 levels of verbosity (DEBUG, INFO, WARNING, ERROR). Each log line is of one of this types.
+Examples: 
+```python
+logger.info("Processing is done")
+logger.warning("Couldn't handle all cases")
+```
+The general log level (verbosity) can be set in the general __init__.py file.
+A filter can also be added to suppress logs from a specific files.
+To add logging to a file we use:
+
+``` python
+import logging
+import os
+logger = logging.getLogger(os.path.basename(__file__))
+```
+
+This creates a logger with the name of the file.
+The log level for this file can then be set with:
+```python
+logger.setLevel("INFO")
+```
+
+Or from the general __init__.py file with
+```
+some_logger = logging.getLogger("name_of_the_file")
+some_logger.setLevel(logging.WARNING)
+```
+
+In a certain file, `logging.info("something")` will also work but will display "root" as the name of the logger and not the name of the file that issued the log
