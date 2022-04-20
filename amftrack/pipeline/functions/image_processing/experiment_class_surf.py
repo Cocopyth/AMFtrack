@@ -37,13 +37,12 @@ class Experiment:
 
         self.folders: List[str]
         self.dates: List[datetime]
-        self.positions: List[node_coord_dict]
+        self.positions: List[node_coord_dict]  # TODO(FK): in which referential?
         self.nx_graph: List[nx.Graph]
         self.skeletons: List[sparse.dok_matrix]
         self.compressed: List[binary_image]
-        self.image_coordinates: List[
-            List[coord_int]
-        ]  # Coordinates of stiched images at each t
+        # Coordinates of stiched images at each t given in the referential of the timestep t
+        self.image_coordinates: List[List[coord_int]]
         self.hyphaes = None
 
     def __repr__(self):
