@@ -1,4 +1,4 @@
-from amftrack.util.sys import get_dirname
+import os
 import pandas as pd
 import networkx as nx
 import numpy as np
@@ -8,10 +8,6 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_nx_to_tab,
     prune_graph,
 )
-from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
-import ast
-from amftrack.plotutil import plot_t_tp1
-from amftrack.pipeline.functions.image_processing.node_id import orient
 import pickle
 from matplotlib.widgets import CheckButtons
 import scipy.io as sio
@@ -22,8 +18,14 @@ from collections import Counter
 from datetime import datetime, timedelta
 import cv2
 from typing import List, Tuple
-from amftrack.util.aliases import node_coord_dict, binary_image, coord
+import ast
 from scipy import sparse
+
+from amftrack.util.sys import get_dirname
+from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
+from amftrack.plotutil import plot_t_tp1
+from amftrack.pipeline.functions.image_processing.node_id import orient
+from amftrack.util.aliases import node_coord_dict, binary_image, coord, coord_int
 
 
 class Experiment:
@@ -39,6 +41,9 @@ class Experiment:
         self.nx_graph: List[nx.Graph]
         self.skeletons: List[sparse.dok_matrix]
         self.compressed: List[binary_image]
+        self.image_coordinates: List[
+            List[coord_int]
+        ]  # Coordinates of stiched images at each t
         self.hyphaes = None
 
     def __repr__(self):
@@ -47,6 +52,7 @@ class Experiment:
     def load(self, folders: pd.DataFrame, labeled=True):
         """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
+        self.image_coordinates = [None] * len(folders)
         dates_datetime = [
             datetime.strptime(row["date"], "%d.%m.%Y, %H:%M:")
             for index, row in folders.iterrows()
@@ -221,6 +227,37 @@ class Experiment:
                 origins.append(tip)
                 number_anastomosis += 1 / 2
         return (anastomosis, origins, number_anastomosis)
+
+    def get_image_coordinates(self, t: int) -> List[coord_int]:
+        """
+        For a time step t, return the coordinates of all the images in the general referential.
+        """
+        if self.image_coordinates is None:
+            raise Exception("Must load directories first")
+        if self.image_coordinates[t] is None:
+            date = self.dates[t]
+            directory_name = get_dirname(date, self.plate)
+            path_tile = os.path.join(
+                self.directory, directory_name, "Img/TileConfiguration.txt.registered"
+            )
+            tileconfig = pd.read_table(
+                path_tile,
+                sep=";",
+                skiprows=4,
+                header=None,
+                converters={2: ast.literal_eval},
+                skipinitialspace=True,
+            )
+            raw_coordinates = list(tileconfig[2])
+            n_im = len(raw_coordinates)
+            cmin = np.min([raw_coordinates[i][0] for i in range(n_im)])
+            rmin = np.min([raw_coordinates[i][1] for i in range(n_im)])
+            coordinates = [
+                [raw_coordinates[i][0] - cmin, raw_coordinates[i][1] - rmin]
+                for i in range(n_im)
+            ]
+            self.image_coordinates[t] = coordinates
+        return self.image_coordinates[t]
 
     def find_image_pos(
         self, xs: int, ys: int, t: int, local=False
