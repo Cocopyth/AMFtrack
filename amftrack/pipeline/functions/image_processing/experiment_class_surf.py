@@ -32,17 +32,24 @@ class Experiment:
     """Represents a single plate experiment over time."""
 
     def __init__(self, plate: int, directory: str):
-        self.plate = plate
-        self.directory = directory
+        self.plate = plate  # plate number in Prince
+        self.directory = directory  # full directory path
 
-        self.folders: List[str]
-        self.dates: List[datetime]
-        self.positions: List[node_coord_dict]  # TODO(FK): in which referential?
-        self.nx_graph: List[nx.Graph]
-        self.skeletons: List[sparse.dok_matrix]
-        self.compressed: List[binary_image]
-        # Coordinates of stiched images at each t given in the referential of the timestep t
-        self.image_coordinates: List[List[coord_int]]
+        self.folders: List[pd.DataFrame]  # one dataframe per timestep
+        self.dates: List[datetime]  # dates for each timestep
+        self.positions: List[
+            node_coord_dict
+        ]  # coordinates of nodes in the general referential for each timestep
+        self.nx_graph: List[nx.Graph]  # graph extracted from each timestep
+        self.skeletons: List[sparse.dok_matrix]  # one skeletton per timestep
+        self.compressed: List[binary_image]  # compressed image for visualisation
+        self.image_coordinates: List[
+            List[coord_int]
+        ]  # Coordinates of stiched images at each t in the referential of the timestep
+        self.image_transformation: List[
+            Tuple[np.array, np.array]
+        ]  # (R, t) transformation to go from timestep referential to general referential
+        self.image_paths: List[List[str]] # full paths to each images for each timestep
         self.hyphaes = None
 
     def __repr__(self):
@@ -52,6 +59,8 @@ class Experiment:
         """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
         self.image_coordinates = [None] * len(folders)
+        self.image_transformation = [None] * len(folders)
+        self.image_paths = [None] * len(folders)
         dates_datetime = [
             datetime.strptime(row["date"], "%d.%m.%Y, %H:%M:")
             for index, row in folders.iterrows()
@@ -104,6 +113,61 @@ class Experiment:
         for t in range(len(self.dates)):
             compressed_images.append(self.compress_skeleton(t, factor))
         self.compressed = compressed_images
+
+    def load_tile_information(self, t: int) -> None:
+        """
+        This function loads the informations regarding the stiching of timestep t.
+        It consist of two steps:
+        - loading the coordinates of each image in the timestep referential
+        - loading the paths of each image
+        WARNING: the plate has to be fully processed
+        """
+        # Loading coordinates of each image in its timestep referential
+        date = self.dates[t]
+        directory_name = get_dirname(date, self.plate)
+        path_tile = os.path.join(
+            self.directory, directory_name, "Img/TileConfiguration.txt.registered"
+        )
+        tileconfig = pd.read_table(
+            path_tile,
+            sep=";",
+            skiprows=4,
+            header=None,
+            converters={2: ast.literal_eval},
+            skipinitialspace=True,
+        )
+        raw_coordinates = list(tileconfig[2])
+        n_im = len(raw_coordinates)
+        cmin = np.min([raw_coordinates[i][0] for i in range(n_im)])
+        rmin = np.min([raw_coordinates[i][1] for i in range(n_im)])
+        coordinates = [
+            [raw_coordinates[i][0] - cmin, raw_coordinates[i][1] - rmin]
+            for i in range(n_im)
+        ]
+        self.image_coordinates[t] = coordinates
+        # Loading names of the images at timestep t
+        paths = []
+        for i in range(n_im):
+            name = tileconfig[0][i]
+            path = os.path.join(
+                self.directory, directory_name, "Img", name.split("/")[-1]
+            )
+            paths.append(path)
+        self.image_paths[t] = paths
+
+    def load_image_transformation(self, t):
+        date = self.dates[t]
+        directory_name = get_dirname(date, self.plate)
+        skel = read_mat(
+            os.path.join(
+                self.directory,
+                directory_name,
+                "Analysis/skeleton_pruned_realigned.mat",
+            )
+        )
+        R = skel["R"]
+        t = skel["t"]
+        return R, t
 
     def compress_skeleton(self, t: int, factor: int) -> binary_image:
         """
@@ -227,36 +291,51 @@ class Experiment:
                 number_anastomosis += 1 / 2
         return (anastomosis, origins, number_anastomosis)
 
-    def get_image_coordinates(self, t: int) -> List[coord_int]:
+    def general_to_image_coords(self, point: coord, t: int) -> coord:
+        """
+        Take a input float coordinates `coord` in the general referential
+        and convert them into the referential of timestep t.
+        """
+        old_coord = np.array(point).astype(dtype=np.float)
+        if self.image_transformation is None:
+            raise Exception("Must load directories first")
+        if self.image_transformation[t] is None:
+            self.image_transformation[t] = self.load_image_transformation(t)
+
+        R, t = self.image_transformation[t]
+        new_coord = np.dot(np.linalg.inv(R), old_coord - t)
+        return new_coord
+
+    def image_to_general_coords(self, point: coord, t: int) -> coord:
+        """
+        Take a input float coordinates `coord` the referential of timestep t
+        and convert them into the general referential.
+        """
+        old_coord = np.array(point).astype(dtype=np.float)
+        if self.image_transformation is None:
+            raise Exception("Must load directories first")
+        if self.image_transformation[t] is None:
+            self.image_transformation[t] = self.load_image_transformation(t)
+        R, t = self.image_transformation[t]
+        new_coord = np.dot(R, np.array(old_coord)) + t
+        return new_coord
+
+    def get_image_coords(self, t: int) -> List[coord_int]:
         """
         For a time step t, return the coordinates of all the images in the general referential.
         """
         if self.image_coordinates is None:
             raise Exception("Must load directories first")
         if self.image_coordinates[t] is None:
-            date = self.dates[t]
-            directory_name = get_dirname(date, self.plate)
-            path_tile = os.path.join(
-                self.directory, directory_name, "Img/TileConfiguration.txt.registered"
-            )
-            tileconfig = pd.read_table(
-                path_tile,
-                sep=";",
-                skiprows=4,
-                header=None,
-                converters={2: ast.literal_eval},
-                skipinitialspace=True,
-            )
-            raw_coordinates = list(tileconfig[2])
-            n_im = len(raw_coordinates)
-            cmin = np.min([raw_coordinates[i][0] for i in range(n_im)])
-            rmin = np.min([raw_coordinates[i][1] for i in range(n_im)])
-            coordinates = [
-                [raw_coordinates[i][0] - cmin, raw_coordinates[i][1] - rmin]
-                for i in range(n_im)
-            ]
-            self.image_coordinates[t] = coordinates
+            self.load_tile_information(t)
         return self.image_coordinates[t]
+
+    def get_image(self, t: int, i: int) -> np.array:
+        "Return ith image at timestep t"
+        if self.image_paths[t] is None:
+            self.load_tile_information(t)
+        im_path = self.image_paths[t][i]
+        return imageio.imread(im_path)
 
     def find_image_pos(
         self, xs: int, ys: int, t: int, local=False
@@ -275,6 +354,7 @@ class Experiment:
         Rot = skel["R"]
         trans = skel["t"]
         rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
+
         ys, xs = round(rottrans[0]), round(rottrans[1])
         tileconfig = pd.read_table(
             path_tile,
