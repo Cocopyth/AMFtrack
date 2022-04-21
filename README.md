@@ -141,3 +141,28 @@ some_logger.setLevel(logging.WARNING)
 ```
 
 In a certain file, `logging.info("something")` will also work but will display "root" as the name of the logger and not the name of the file that issued the log
+
+## Tests
+
+The tests are all in the `test` folder.
+The python module chosen for tests is `unittest`.
+https://docs.python.org/3/library/unittest.html
+
+All test files must start with `test`. **Ex**: `test_sys_util.py`
+The file `helper.py` contains utils for testing.
+
+Tests can be launched with the following command:
+
+
+For some tests, a processed Prince plate is required.
+The data file must be stored at the following path:
+data_path + "test"
+If the data is not present, the tests will be skipped.
+
+Getting test coverage:
+`coverage run -m unittest discover`
+`coverage report -m`
+(https://coverage.readthedocs.io/en/6.3.2/)
+
+Running only one test:
+pytest test_article_api_links.py -k 'test_formating_tag_issues'

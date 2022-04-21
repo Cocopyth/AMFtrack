@@ -1,17 +1,95 @@
 from skimage.measure import profile_line
 import numpy as np
-from scipy import special
 from scipy.optimize import curve_fit
-from typing import Tuple, List
+from typing import Tuple, List, Dict
+import os
+import logging
 
 from amftrack.notebooks.analysis.util import *
-from amftrack.util.aliases import coord
+from amftrack.util.aliases import coord, coord_int
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Edge,
 )
+from amftrack.util.other import get_section_segment
+
+logger = logging.getLogger(os.path.basename(__file__))
 
 a = 2.3196552
+
+
+def get_random_edge():
+    "TODO"
+
+
+def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
+    """
+    From the length of the pixel list, determine which pixel will be chosen to compute width
+    :param n: length of the list of pixels
+    :param resolution: step between two chosen points
+    :param offset: offset at the begining and at the end where no points will be selected
+    """
+    # Normal case
+    n_points = n - 2 * offset  # TODO: case where this is negative?
+    l = [offset + i * resolution for i in range(n_points)]
+    # Small cases
+    if l == []:
+        l = [n // 2]
+    return l
+
+
+def chose_pivots(pixel_list: List[coord_int]) -> List[int]:
+    """
+    From the pixel list of the hypha, returns the pixels
+    on which we will compute the width
+    :return: list of indexes in the pixel list
+    """
+    # NB(FK): For now this function depends only of the length of pixel_list
+
+
+def compute_section_coordinates(
+    pixel_list: List[coord_int], pivot_indexes: List, step: int, target_length=120
+) -> List[coord_int, coord_int]:
+    """
+    Compute the coordinates of each segment section where the width will be computed
+    :param pivot_indexes: list of indexes in the pixel_list
+    :param step: this determine which neibooring points to use for computing the tangent
+    :param target_length: the approximate target_length that we want for the segment
+    WARNING: taget_length is not exact as the coordinates are ints
+    """
+    # TODO(FK): handle case where the step is bigger than the offset, raise error instead of logging
+    if step > pivot_indexes[0]:
+        logger.error("The step is bigger than the offset. Offset should be raised")
+    list_of_segments = []
+    for i in pivot_indexes:
+        pivot = pixel_list[i]
+        before = pixel_list[i - step]
+        after = pixel_list[i + step]
+        orientation = np.array(before) - np.array(after)
+        list_of_segments.append(get_section_segment(orientation, pivot, target_length))
+    return list_of_segments
+
+
+def find_source_images(section_coord_list: List[coord_int, coord_int]):
+    """
+    In this function we determine (and chose) an image for each section.
+    This image will then be used to extract the profile section.
+    :return:
+    - List of images (there is only one image in a lot of cases)
+    - Dictionnary mapping each section to an index in the list of images so that this image contain the section
+    - List of coordinates of each section in its image
+    """
+    # TODO(FK): find the right function in the classes
+
+
+def extract_section_profiles():
+    """"""
+    # TODO
+
+
+def compute_width_edge():
+    "hello"
+    # TODO
 
 
 def get_source_image(
@@ -29,6 +107,7 @@ def get_source_image(
     """
     x, y = pos[0], pos[1]
     ims, posimg = experiment.find_image_pos(x, y, t, local)
+
     if force_selection is None:
         dist_border = [
             min([posimg[1][i], 3000 - posimg[1][i], posimg[0][i], 4096 - posimg[0][i]])
@@ -43,6 +122,7 @@ def get_source_image(
             for i in range(posimg[0].shape[0])
         ]
         j = np.argmin(dist_last)
+    logger.info("Getting images")
     return (ims[j], (posimg[1][j], posimg[0][j]))
 
 

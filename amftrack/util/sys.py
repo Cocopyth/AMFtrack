@@ -28,7 +28,7 @@ temp_path = env_config.get("TEMP_PATH")
 target = env_config.get("DATA_PATH")
 data_path = env_config.get("STORAGE_PATH")
 fiji_path = env_config.get("FIJI_PATH")
-test_path = os.path.join(data_path, "test") # repository used for tests
+test_path = os.path.join(data_path, "test")  # repository used for tests
 API = env_config.get("API_KEY")
 
 os.environ["TEMP"] = temp_path
