@@ -18,10 +18,6 @@ logger = logging.getLogger(os.path.basename(__file__))
 a = 2.3196552
 
 
-def get_random_edge():
-    "TODO"
-
-
 def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
     """
     From the length of the pixel list, determine which pixel will be chosen to compute width
@@ -29,27 +25,20 @@ def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
     :param resolution: step between two chosen points
     :param offset: offset at the begining and at the end where no points will be selected
     """
+    x_min = offset
+    x_max = n - 1 - offset
+    # Small case
+    if x_min > x_max:
+        return [n // 2]
     # Normal case
-    n_points = n - 2 * offset  # TODO: case where this is negative?
-    l = [offset + i * resolution for i in range(n_points)]
-    # Small cases
-    if l == []:
-        l = [n // 2]
+    k_max = (x_max - x_min) // resolution
+    l = [x_min + k * resolution for k in range(k_max + 1)]
     return l
-
-
-def chose_pivots(pixel_list: List[coord_int]) -> List[int]:
-    """
-    From the pixel list of the hypha, returns the pixels
-    on which we will compute the width
-    :return: list of indexes in the pixel list
-    """
-    # NB(FK): For now this function depends only of the length of pixel_list
 
 
 def compute_section_coordinates(
     pixel_list: List[coord_int], pivot_indexes: List, step: int, target_length=120
-) -> List[coord_int, coord_int]:
+) -> List[Tuple[coord_int, coord_int]]:
     """
     Compute the coordinates of each segment section where the width will be computed
     :param pivot_indexes: list of indexes in the pixel_list
