@@ -4,6 +4,7 @@ from scipy.optimize import curve_fit
 from typing import Tuple, List, Dict
 import os
 import logging
+from random import choice
 
 from amftrack.notebooks.analysis.util import *
 from amftrack.util.aliases import coord, coord_int
@@ -45,6 +46,7 @@ def compute_section_coordinates(
     :param step: this determine which neibooring points to use for computing the tangent
     :param target_length: the approximate target_length that we want for the segment
     WARNING: taget_length is not exact as the coordinates are ints
+    NB: the coordinates are all in the general referential
     """
     # TODO(FK): handle case where the step is bigger than the offset, raise error instead of logging
     if step > pivot_indexes[0]:
@@ -59,16 +61,40 @@ def compute_section_coordinates(
     return list_of_segments
 
 
-def find_source_images(section_coord_list: List[coord_int, coord_int]):
+def find_source_images(
+    section_coord_list: List[Tuple[coord_int]], exp: Experiment, t: int
+):
     """
     In this function we determine (and chose) an image for each section.
     This image will then be used to extract the profile section.
     :return:
     - List of images (there is only one image in a lot of cases)
     - Dictionnary mapping each section to an index in the list of images so that this image contain the section
-    - List of coordinates of each section in its image
+    - Dictionnary mapping coordinates of each section to their coordinate in the chosen image
     """
-    # TODO(FK): find the right function in the classes
+    image_indexes = []  # map each segment to the index of its image in `images`
+    new_coord = {}  # new coordinates in the new
+
+    current_image = [-10000000, -1000000]  # TODO(FK)
+    for section_coord in section_coord_list:
+        point1, point2 = section_coord
+        # convert to timestep referential
+        point1_, point2_ = exp.general_to_image_coords(
+            point1, t
+        ), exp.general_to_image_coords(point2, t)
+        # check if the current_image works
+        # TODO(FK)
+        # if is in image current_image
+        # else:
+        #     images1 = exp.find_im_indexes(point1_[0], point1_[1], t)
+        #     images2 = exp.find_im_indexes(point2_[0], point2_[1], t)
+        #     possible_choice = list(set(images1) & set(images2))
+        #     if possible_choice == []:
+        #         raise Exception("What") #TODO(FK)
+        #     else:
+        #         index = choice(possible_choice)
+        #         current_image = []
+        #     image_indexes.append(index)
 
 
 def extract_section_profiles():

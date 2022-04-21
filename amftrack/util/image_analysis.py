@@ -26,6 +26,17 @@ def find_image_index(im_coord_list, x: float, y: float):
             return i
 
 
+def find_image_indexes(im_coord_list, x: float, y: float):
+    """
+    Find the images that contain the coordinates (x, y)
+    """
+    l = []
+    for (i, (x_im, y_im)) in enumerate(im_coord_list):
+        if is_in_image(x_im, y_im, x, y):
+            l.append(i)
+    return l
+
+
 def find_transformation(old_coord_list: List, new_coord_list: List):
     """
     Compute the rotation and translation to transform the old plane into the new one.
