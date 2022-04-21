@@ -26,6 +26,7 @@ from amftrack.pipeline.functions.image_processing.node_id import reconnect_degre
 from amftrack.plotutil import plot_t_tp1
 from amftrack.pipeline.functions.image_processing.node_id import orient
 from amftrack.util.aliases import node_coord_dict, binary_image, coord, coord_int
+from amftrack.util.image_analysis import find_image_indexes
 
 
 class Experiment:
@@ -49,7 +50,7 @@ class Experiment:
         self.image_transformation: List[
             Tuple[np.array, np.array]
         ]  # (R, t) transformation to go from timestep referential to general referential
-        self.image_paths: List[List[str]] # full paths to each images for each timestep
+        self.image_paths: List[List[str]]  # full paths to each images for each timestep
         self.hyphaes = None
 
     def __repr__(self):
@@ -336,6 +337,14 @@ class Experiment:
             self.load_tile_information(t)
         im_path = self.image_paths[t][i]
         return imageio.imread(im_path)
+
+    def find_im_indexes(self, xs: float, ys: float, t: int) -> List[int]:
+        """
+        Take as input coordinates in the TIMESTEP referential.
+        And determine the index of the image.
+        """
+        # TODO(FK): change to general coordinates?
+        return find_image_indexes(self.get_image_coords(t), xs, ys)
 
     def find_image_pos(
         self, xs: int, ys: int, t: int, local=False
