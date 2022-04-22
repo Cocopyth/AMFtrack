@@ -13,6 +13,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Edge,
 )
 from amftrack.util.other import get_section_segment
+from amftrack.util.image_analysis import is_in_image
 
 logger = logging.getLogger(os.path.basename(__file__))
 
@@ -67,44 +68,102 @@ def find_source_images(
     """
     In this function we determine (and chose) an image for each section.
     This image will then be used to extract the profile section.
-    :return:
-    - List of images (there is only one image in a lot of cases)
-    - Dictionnary mapping each section to an index in the list of images so that this image contain the section
-    - Dictionnary mapping coordinates of each section to their coordinate in the chosen image
+    :return
+    - List of image indexes for each section
+    - List of coordinates of the segment in their respective image
     """
+    # TODO(FK): could maybe only check the center of the segment
+    # TODO(FK): could chose image further from the border
     image_indexes = []  # map each segment to the index of its image in `images`
-    new_coord = {}  # new coordinates in the new
+    new_section_coord_list = []
 
-    current_image = [-10000000, -1000000]  # TODO(FK)
-    for section_coord in section_coord_list:
-        point1, point2 = section_coord
+    current_image = [np.inf, np.inf]
+    current_index = 0
+    for (point1, point2) in section_coord_list:
         # convert to timestep referential
-        point1_, point2_ = exp.general_to_image_coords(
-            point1, t
-        ), exp.general_to_image_coords(point2, t)
-        # check if the current_image works
-        # TODO(FK)
-        # if is in image current_image
-        # else:
-        #     images1 = exp.find_im_indexes(point1_[0], point1_[1], t)
-        #     images2 = exp.find_im_indexes(point2_[0], point2_[1], t)
-        #     possible_choice = list(set(images1) & set(images2))
-        #     if possible_choice == []:
-        #         raise Exception("What") #TODO(FK)
-        #     else:
-        #         index = choice(possible_choice)
-        #         current_image = []
-        #     image_indexes.append(index)
+        point1_ = exp.general_to_image_coords(point1, t)
+        point2_ = exp.general_to_image_coords(point2, t)
+        # check if the current image contains the segment
+        if is_in_image(
+            current_image[0], current_image[1], point1_[0], point1_[1]
+        ) and is_in_image(current_image[0], current_image[1], point2_[0], point2_[1]):
+            index = current_index
+        else:
+            logging.debug("New image needed")
+            images1 = exp.find_im_indexes(point1_[0], point1_[1], t)
+            images2 = exp.find_im_indexes(point2_[0], point2_[1], t)
+            possible_choices = list(set(images1) & set(images2))
+            if possible_choices == []:
+                logging.debug(
+                    "This section is not contained in a single original image. The section won't be used"
+                )
+                # index = choice(list(set(images1) | set(images2)))
+                index = None
+                new_section_coord_list.append(None)
+            else:
+                index = choice(possible_choices)
+                current_image = exp.image_coordinates[t][index]
+                current_index = index
+                image_indexes.append(index)
+                # compute the coordinates of the segment in the image ref
+                point1__ = [
+                    point1_[0] - current_image[0],
+                    point1_[1] - current_image[1],
+                ]
+                point2__ = [
+                    point2_[0] - current_image[0],
+                    point2_[1] - current_image[1],
+                ]
+                new_section_coord_list.append([point1__, point2__])
+    return image_indexes, new_section_coord_list
 
 
-def extract_section_profiles():
-    """"""
-    # TODO
-
-
-def compute_width_edge():
-    "hello"
-    # TODO
+def extract_section_profiles_for_edge(
+    exp: Experiment,
+    t: int,
+    edge: Edge,
+    resolution=5,
+    offset=4,
+    step=3,
+    target_length=120,
+) -> np.array:
+    """
+    Main function to extract section profiles of an edge.
+    Given an Edge of Experiment at timestep t, returns a np array
+    of dimension (target_length, m) where m is the number of section
+    taken on the hypha.
+    :param resolution: distance between two measure points along the hypha
+    :param offset: distance at the end and the start where no point is taken
+    :param step: step in pixel to compute the tangent to the hypha
+    :target_length: length of the section extracted in pixels
+    """
+    pixel_list = edge.pixel_list(t)
+    offset = max(
+        offset, step
+    )  # avoiding index out of range at start and end of pixel_list
+    pixel_indexes = generate_pivot_indexes(
+        len(pixel_list), resolution=resolution, offset=offset
+    )
+    list_of_segments = compute_section_coordinates(
+        pixel_list, pixel_indexes, step=step, target_length=target_length + 1
+    )  # target_length + 1 to be sure to have length all superior to target_length when cropping
+    # TODO (FK): is a +1 enough?
+    image_indexes, new_section_coord_list = find_source_images(list_of_segments, exp, t)
+    images = {}
+    for im_index in set(image_indexes):
+        images[im_index] = exp.get_image(t, im_index)
+    l = []
+    for i, sect in enumerate(new_section_coord_list):
+        im = images[image_indexes[i]]
+        # WARNING: profile_line has a different order for x an y
+        # This is way point1 and point2 have shape (y, x)
+        point1 = np.array([sect[0][0], sect[0][1]])
+        point2 = np.array([sect[1][0], sect[1][1]])
+        profile = profile_line(im, point1, point2, mode="constant")[:target_length]
+        profile = profile.reshape((1, len(profile)))
+        # TODO(FK): Add thickness of the profile here
+        l.append(profile)
+    return np.concatenate(l, axis=0)
 
 
 def get_source_image(
@@ -290,6 +349,9 @@ if __name__ == "__main__":
         get_current_folders_local,
         data_path,
     )
+    from amftrack.pipeline.functions.image_processing.experiment_util import (
+        get_random_edge,
+    )
     import os
     from random import choice
 
@@ -314,4 +376,5 @@ if __name__ == "__main__":
     edge_exp = Edge(Node(edge[0], exp), Node(edge[1], exp), exp)
 
     ## Run the width function
-    print(get_width_edge(edge_exp, resolution=3, t=0))
+    edge = get_random_edge(exp, 0)
+    extract_section_profiles_for_edge(exp, 0, edge)

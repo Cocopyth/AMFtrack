@@ -9,9 +9,12 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
 )
 from amftrack.pipeline.functions.image_processing.extract_width_fun import (
-    chose_pivots,
     generate_pivot_indexes,
+    compute_section_coordinates,
+    find_source_images,
+    extract_section_profiles_for_edge,
 )
+from amftrack.pipeline.functions.image_processing.experiment_util import get_random_edge
 
 from test import helper
 
@@ -42,3 +45,31 @@ class TestWidth(unittest.TestCase):
         )
         self.assertEqual(generate_pivot_indexes(6, resolution=1, offset=2), [2, 3])
         self.assertEqual(generate_pivot_indexes(6, resolution=2, offset=10), [3])
+
+    def test_compute_section_coordinates(self):
+        pixel_list = [
+            [1, 2],
+            [1, 3],
+            [3, 3],
+            [11, 2],
+            [11, 4],
+            [15, 15],
+            [16, 16],
+            [22, 4],
+        ]
+        compute_section_coordinates(pixel_list, pivot_indexes=[3, 4], step=2)
+
+    def test_find_source_images(self):
+        edge = get_random_edge(self.exp, 0)
+        pixel_list = edge.pixel_list(0)
+        pixel_indexes = [len(pixel_list) // 2]
+        find_source_images(
+            compute_section_coordinates(pixel_list, pixel_indexes, step=2), self.exp, 0
+        )
+
+    def test_extract_section_profiles_for_edge(self):
+        import random
+
+        random.seed(1232)
+        edge = get_random_edge(self.exp, 0)
+        extract_section_profiles_for_edge(self.exp, 0, edge)
