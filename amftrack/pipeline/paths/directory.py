@@ -1,6 +1,6 @@
 from datetime import datetime
 from subprocess import call
-from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path, path_code
+from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path, path_code, slurm_path
 import os
 from copy import copy
 from time import time_ns
@@ -42,13 +42,13 @@ def run_parallel(code, args, folders, num_parallel, time, name, cpus=128, node="
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
         my_file.write(
-            f'#SBATCH -o "{path_code}slurm/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
+            f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
         my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
-            f"\t python {path_code}amftrack/pipeline/scripts/image_processing/{code} {arg_str} {op_id} $i &\n"
+            f"\t python {path_code}pipeline/scripts/image_processing/{code} {arg_str} {op_id} $i &\n"
         )
         my_file.write("done\n")
         my_file.write("wait\n")
@@ -107,13 +107,13 @@ def run_parallel_all_time(
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
         my_file.write(
-            f'#SBATCH -o "{path_code}slurm/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
+            f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
         my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
-            f"\t python {path_code}amftrack/pipeline/scripts/image_processing/{code} {arg_str} {op_id} $i &\n"
+            f"\t python {path_code}pipeline/scripts/image_processing/{code} {arg_str} {op_id} $i &\n"
         )
         my_file.write("done\n")
         my_file.write("wait\n")
@@ -155,13 +155,13 @@ def run_parallel_post(
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
         my_file.write(
-            f'#SBATCH -o "{path_code}slurm/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
+            f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
         my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
-            f"\t python {path_code}amftrack/pipeline/scripts/post_processing/{code} {arg_str} {op_id} $i &\n"
+            f"\t python {path_code}pipeline/scripts/post_processing/{code} {arg_str} {op_id} $i &\n"
         )
         my_file.write("done\n")
         my_file.write("wait\n")
@@ -185,14 +185,14 @@ def check_state(plate, begin, end, file, directory):
 
 def make_stitching_loop(directory, dirname, op_id):
     a_file = open(
-        f"{path_code}amftrack/pipeline/scripts/stitching_loops/stitching_loop.ijm", "r"
+        f"{path_code}pipeline/scripts/stitching_loops/stitching_loop.ijm", "r"
     )
 
     list_of_lines = a_file.readlines()
 
     list_of_lines[4] = f"mainDirectory = \u0022{directory}\u0022 ;\n"
     list_of_lines[29] = f"\t if(startsWith(list[i],\u0022{dirname}\u0022)) \u007b\n"
-    file_name = f"{directory_scratch}stitching_loops/stitching_loop{op_id}.ijm"
+    file_name = f"{temp_path}/stitching_loops/stitching_loop{op_id}.ijm"
     a_file = open(file_name, "w")
 
     a_file.writelines(list_of_lines)
@@ -220,12 +220,12 @@ def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
         my_file.write(
-            f'#SBATCH -o "{path_code}slurm/stitching__{folder_list[start]}_{ide}.out" \n'
+            f'#SBATCH -o "{path_slurm}/stitching__{folder_list[start]}_{ide}.out" \n'
         )
         for k in range(0, min(stop, len(folder_list)) - start):
             op_id = op_ids[k]
             my_file.write(
-                f"~/Fiji.app/ImageJ-linux64 --headless -macro  {directory_scratch}stitching_loops/stitching_loop{op_id}.ijm &\n"
+                f"~/Fiji.app/ImageJ-linux64 --headless -macro  {temp_path}/stitching_loops/stitching_loop{op_id}.ijm &\n"
             )
         my_file.write("wait\n")
         my_file.close()
@@ -302,7 +302,7 @@ def run_parallel_transfer(
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
         my_file.write(
-            f'#SBATCH -o "{path_code}slurm/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
+            f'#SBATCH -o "{path_slurm}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
         my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
         my_file.write(f"conda activate amftrack\n")
@@ -347,7 +347,7 @@ def run_parallel_transfer_to_archive(
         my_file.write(
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
-        my_file.write(f'#SBATCH -o "{path_code}slurm/{name}_{ide}.out" \n')
+        my_file.write(f'#SBATCH -o "{path_slurm}/{name}_{ide}.out" \n')
         my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(

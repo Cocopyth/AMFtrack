@@ -24,10 +24,12 @@ DOTENV_FILE = (
 env_config = Config(RepositoryEnv(DOTENV_FILE))
 
 path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
+slurm_path = env_config.get("SLURM_PATH")
 temp_path = env_config.get("TEMP_PATH")
 target = env_config.get("DATA_PATH")
 data_path = env_config.get("STORAGE_PATH")
 fiji_path = env_config.get("FIJI_PATH")
+pastis_path = env_config.get("PASTIS_PATH")   
 API = env_config.get("API_KEY")
 
 os.environ["TEMP"] = temp_path
@@ -84,35 +86,6 @@ def get_dates_datetime(directory, plate):
 
 def get_dirname(date, plate):
     return f'{date.year}{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}_Plate{0 if plate<10 else ""}{plate}'
-
-
-# def get_plate_number(position_number,date):
-#     for index,row in plate_info.loc[plate_info['Position #']==position_number].iterrows():
-#         if type(row['crossed date'])==datetime:
-#             date_crossed = row['crossed date']
-#             date_harvest = row['harvest date']+timedelta(days=1)
-#         else:
-#             date_crossed = datetime.strptime(row['crossed date'], "%d.%m.%Y")
-#             date_harvest = datetime.strptime(row['harvest date'], "%d.%m.%Y")+timedelta(days=1)
-#         if date>= date_crossed and date<= date_harvest:
-#             return(row['Plate #'])
-
-# def get_postion_number(plate_number):
-#     for index,row in plate_info.loc[plate_info['Plate #']==plate_number].iterrows():
-#             return(row['Position #'])
-
-# def get_begin_index(plate_number,directory):
-#     plate = get_postion_number(plate_number)
-#     dates_datetime = get_dates_datetime(directory,plate)
-#     plate_number_found = get_plate_number(plate,dates_datetime[0])
-#     print(0,plate_number)
-#     for i in range(len(dates_datetime)):
-#         new_plate_number = get_plate_number(plate,dates_datetime[i])
-#         if plate_number_found!=new_plate_number:
-#             plate_number_found=new_plate_number
-#             print(i,plate_number_found)
-#         if plate_number_found == plate_number:
-#             return(i,dates_datetime[i])
 
 
 def shift_skeleton(skeleton, shift):
@@ -202,7 +175,7 @@ def get_param(
     return ldict
 
 
-def update_plate_info(directory: str) -> None:
+def update_plate_info(directory: str,local = False) -> None:
     """*
     1/ Download `data_info.json` file containing all information about acquisitions.
     2/ Add all acquisition files in the `directory` path to the `data_info.json`.
@@ -212,8 +185,11 @@ def update_plate_info(directory: str) -> None:
     # TODO(FK): add a local version without dropbox modification
     listdir = os.listdir(directory)
     source = f"/data_info.json"
-    download(API, source, target, end="")
-    plate_info = json.load(open(target, "r"))
+    if local:
+        plate_info = {}
+    else:
+        download(API, source, target, end="")
+        plate_info = json.load(open(target, "r"))
     with tqdm(total=len(listdir), desc="analysed") as pbar:
         for folder in listdir:
             path_snap = os.path.join(directory, folder)
@@ -235,24 +211,26 @@ def update_plate_info(directory: str) -> None:
             pbar.update(1)
     with open(target, "w") as jsonf:
         json.dump(plate_info, jsonf, indent=4)
-    upload(
-        API,
-        target,
-        f"{source}",
-        chunk_size=256 * 1024 * 1024,
-    )
+    if not local:
+        upload(
+            API,
+            target,
+            f"{source}",
+            chunk_size=256 * 1024 * 1024,
+        )
 
 
-def get_data_info():
+def get_data_info(local=False):
     source = f"/data_info.json"
-    download(API, source, target, end="")
+    if not local:
+        download(API, source, target, end="")
     data_info = pd.read_json(target, convert_dates=True).transpose()
     data_info.index.name = "total_path"
     data_info.reset_index(inplace=True)
     return data_info
 
 
-def get_current_folders(directory: str, file_metadata=False) -> pd.DataFrame:
+def get_current_folders(directory: str, file_metadata=False,local=False) -> pd.DataFrame:
     """
     Returns a pandas data frame with all informations about the acquisition files
     inside the directory. The information is only taken from the dropbox
@@ -309,7 +287,7 @@ def get_current_folders(directory: str, file_metadata=False) -> pd.DataFrame:
             infos = pd.concat(data)
         return infos
     else:
-        plate_info = get_data_info()
+        plate_info = get_data_info(local)
         listdir = os.listdir(directory)
         return plate_info.loc[
             np.isin(plate_info["folder"], listdir)

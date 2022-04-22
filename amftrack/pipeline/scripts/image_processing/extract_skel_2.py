@@ -7,7 +7,6 @@ import pandas as pd
 import ast
 from scipy import sparse
 from datetime import datetime
-from amftrack.pipeline.functions.image_processing.node_id import orient
 import scipy.io as sio
 import cv2
 import imageio
@@ -17,34 +16,24 @@ from skimage import filters
 import scipy.sparse
 import os
 from time import time
-from skimage.feature import hessian_matrix_det
-from amftrack.pipeline.functions.image_processing.extract_graph import (
-    from_sparse_to_graph,
-    generate_nx_graph,
-)
-from amftrack.pipeline.functions.image_processing.extract_skel import (
-    extract_skel_bowler_hat,
-)
-from amftrack.util.sys import (
-    get_dates_datetime,
-    get_dirname,
-    get_plate_number,
-    get_postion_number,
-)
+from amftrack.pipeline.functions.image_processing.extract_skel import extract_skel_new_prince,run_back_sub
+
+from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
+from subprocess import call
+from path import path_code_dir
 
 i = int(sys.argv[-1])
-plate = int(sys.argv[1])
-low = int(sys.argv[2])
-high = int(sys.argv[3])
-no = int(sys.argv[4])
-si = int(sys.argv[5])
-directory = str(sys.argv[6])
+op_id = int(sys.argv[-2])
+hyph_width = int(sys.argv[1])
+perc_low = float(sys.argv[2])
+perc_high = float(sys.argv[3])
+directory = str(sys.argv[4])
 
-dates_datetime = get_dates_datetime(directory, plate)
-dates_datetime.sort()
-dates = dates_datetime
-date = dates[i]
-directory_name = get_dirname(date, plate)
+run_info = pd.read_json(f"{temp_path}/{op_id}.json")
+folder_list = list(run_info["folder"])
+folder_list.sort()
+directory_name = folder_list[i]
+run_back_sub(directory,directory_name)
 path_snap = directory + directory_name
 path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
 try:
@@ -81,10 +70,14 @@ dim = (int(np.max(ys) - np.min(ys)) + 4096, int(np.max(xs) - np.min(xs)) + 4096)
 ims = []
 skel = np.zeros(dim, dtype=np.uint8)
 for index, name in enumerate(tileconfig[0]):
-    imname = "/Img/" + name.split("/")[-1]
-    im = imageio.imread(directory + directory_name + imname)
     print(index)
-    segmented = extract_skel_tip_ext(im, low, high, dist)
+    imname = "/Img2/" + name.split("/")[-1]
+    im = imageio.imread(directory + directory_name + imname)
+    segmented = extract_skel_new_prince(im, [hyph_width],perc_low,perc_high)
+    # low = np.percentile(-im+255, perc_low)
+    # high = np.percentile(-im+255, perc_high)
+    # segmented = filters.apply_hysteresis_threshold(-im+255, low, high)
+    
     boundaries = int(tileconfig[2][index][0] - np.min(xs)), int(
         tileconfig[2][index][1] - np.min(ys)
     )
@@ -92,12 +85,9 @@ for index, name in enumerate(tileconfig[0]):
         boundaries[1] : boundaries[1] + shape[0],
         boundaries[0] : boundaries[0] + shape[1],
     ] += segmented
-
 print("number to reduce : ", np.sum(skel > 0), np.sum(skel <= 0))
 skeletonized = cv2.ximgproc.thinning(np.array(255 * (skel > 0), dtype=np.uint8))
-
 skel_sparse = sparse.lil_matrix(skel)
-sio.savemat(path_snap + "/Analysis/dilated.mat", {"dilated": skel_sparse})
 sio.savemat(
     path_snap + "/Analysis/skeleton.mat",
     {"skeleton": scipy.sparse.csc_matrix(skeletonized)},

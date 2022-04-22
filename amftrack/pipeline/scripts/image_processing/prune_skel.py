@@ -1,7 +1,8 @@
 from path import path_code_dir
 import sys
+import os  
 
-sys.path.insert(0, path_code_dir)
+sys.path.insert(0, os.getenv('HOME')+'/pycode/MscThesis/')
 import numpy as np
 from scipy import sparse
 import cv2
