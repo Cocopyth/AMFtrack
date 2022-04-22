@@ -3,7 +3,7 @@ import sys
 path_code_dir = "/home/cbisot/pycode/MscThesis"
 
 sys.path.insert(0, path_code_dir)
-from amftrack.util.sys import get_dirname
+from amftrack.util.sys import get_dirname,temp_path,pastis_path, fiji_path, path_code
 import pandas as pd
 import ast
 from scipy import sparse
@@ -24,6 +24,8 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
     generate_nx_graph,
 )
 from bresenham import bresenham
+from time import time_ns
+import subprocess
 
 
 def streline(linelen, degrees):
@@ -47,6 +49,23 @@ def streline(linelen, degrees):
 def stredisk(radius):
     return cv.getStructuringElement(cv.MORPH_ELLIPSE, (2 * radius - 1, 2 * radius - 1))
 
+def remove_component(dilated):
+    nb_components, output, stats, centroids = cv.connectedComponentsWithStats(dilated.astype(np.uint8), connectivity=8)
+#connectedComponentswithStats yields every seperated component with information on each of them, such as size
+#the following part is just taking out the background which is also considered a component, but most of the time we don't want that.
+    sizes = stats[1:, -1]; nb_components = nb_components - 1
+
+    # minimum size of particles we want to keep (number of pixels)
+    #here, it's a fixed value, but you can set it as you want, eg the mean of the sizes or whatever
+    min_size = 4000  
+
+    #your answer image
+    img_f = np.zeros((dilated.shape))
+    #for every component in the image, you keep it only if it's above min_size
+    for i in range(0, nb_components):
+        if sizes[i] >= min_size:
+            img_f[output == i + 1] = 1
+    return(np.array(255*img_f,dtype=np.uint8))
 
 def bowler_hat(im, no, si):
     o = np.linspace(0, 180, no)
@@ -71,85 +90,35 @@ def bowler_hat(im, no, si):
     imda = (imda - np.min(imda[:])) / (np.max(imda[:]) - np.min(imda[:]))
     return imda
 
-
-def extract_skel_bowler_hat(im, no, si, low, high):
-    bowled_hat = bowler_hat(-im, no, si)
-    transformed = 255 * bowled_hat
+def extract_skel_new_prince(im, params,perc_low,perc_high):
+    bowled = bowler_hat(-im,32,params)
+    filename = time_ns()
+    place_save = temp_path
+    to_smooth = (bowled*255)
+    # to_smooth = 255-im
+    imtransformed_path = f'{place_save}/{filename}.tif'
+    imageio.imsave(imtransformed_path,to_smooth.astype(np.uint8))
+    path_anis = pastis_path
+    args = [0.1, 7, 0.9, 10, 50]
+    command = [path_anis,imtransformed_path]+args
+    command = [str(elem) for elem in command]
+    process = subprocess.run(command,cwd = place_save, stdout=subprocess.DEVNULL)
+    foldname = f'{filename}_ani-K{int(args[0]*10)}s{args[1]}g{int(args[2]*10)}itD{args[3]}'
+    imname = foldname+f'/{foldname}it{args[4]}.tif'
+    path_modif = place_save +"/"+ imname
+    im2 = imageio.imread(path_modif)
+    low = np.percentile(im2, perc_low)
+    high = np.percentile(im2, perc_high)
+    # transformed = -img+255
+    transformed = im2
     hyst = filters.apply_hysteresis_threshold(transformed, low, high)
-    kernel = np.ones((3, 3), np.uint8)
-    dilation = cv.dilate(hyst.astype(np.uint8) * 255, kernel, iterations=1)
-    for i in range(3):
-        dilation = cv.erode(dilation.astype(np.uint8) * 255, kernel, iterations=1)
-        dilation = cv.dilate(dilation.astype(np.uint8) * 255, kernel, iterations=1)
-    dilated = dilation > 0
+    dilated = remove_holes(hyst)
+    dilated = dilated.astype(np.uint8)
+    connected = remove_component(dilated)
+    return(connected)
 
-    nb_components, output, stats, centroids = cv.connectedComponentsWithStats(
-        dilated.astype(np.uint8), connectivity=8
-    )
-    # connectedComponentswithStats yields every seperated component with information on each of them, such as size
-    # the following part is just taking out the background which is also considered a component, but most of the time we don't want that.
-    sizes = stats[1:, -1]
-    nb_components = nb_components - 1
-
-    # minimum size of particles we want to keep (number of pixels)
-    # here, it's a fixed value, but you can set it as you want, eg the mean of the sizes or whatever
-    min_size = 4000
-
-    # your answer image
+def extend_tip(skeletonized,dilated):
     img2 = np.zeros((dilated.shape))
-    # for every component in the image, you keep it only if it's above min_size
-    for i in range(0, nb_components):
-        if sizes[i] >= min_size:
-            img2[output == i + 1] = 1
-    return img2
-
-
-def extract_skel_tip_ext(im, low, high, dist):
-    im_cropped = im
-    im_blurred = cv.blur(im_cropped, (200, 200))
-    im_back_rem = (
-        (im_cropped)
-        / ((im_blurred == 0) * np.ones(im_blurred.shape) + im_blurred)
-        * 120
-    )
-    im_back_rem[im_back_rem >= 130] = 130
-    # # im_back_rem = im_cropped*1.0
-    # # # im_back_rem = cv.normalize(im_back_rem, None, 0, 255, cv.NORM_MINMAX)
-    frangised = frangi(im_back_rem, sigmas=range(1, 20, 4)) * 255
-    # # frangised = cv.normalize(frangised, None, 0, 255, cv.NORM_MINMAX)
-    # hessian = hessian_matrix_det(im_back_rem,sigma = 20)
-    #     transformed = (frangised+cv.normalize(blur_hessian, None, 0, 255, cv.NORM_MINMAX)-im_back_rem+120)*(im_blurred>=35)
-    #     transformed = (frangised+cv.normalize(abs(hessian), None, 0, 255, cv.NORM_MINMAX)-im_back_rem+120)*(im_blurred>=35)
-    transformed = (frangised - im_back_rem + 120) * (im_blurred >= 35)
-    #     low = 20
-    #     high = 100
-    hyst = filters.apply_hysteresis_threshold(transformed, low, high)
-    kernel = np.ones((3, 3), np.uint8)
-    dilation = cv.dilate(hyst.astype(np.uint8) * 255, kernel, iterations=1)
-    for i in range(3):
-        dilation = cv.erode(dilation.astype(np.uint8) * 255, kernel, iterations=1)
-        dilation = cv.dilate(dilation.astype(np.uint8) * 255, kernel, iterations=1)
-    dilated = dilation > 0
-
-    nb_components, output, stats, centroids = cv.connectedComponentsWithStats(
-        dilated.astype(np.uint8), connectivity=8
-    )
-    # connectedComponentswithStats yields every seperated component with information on each of them, such as size
-    # the following part is just taking out the background which is also considered a component, but most of the time we don't want that.
-    sizes = stats[1:, -1]
-    nb_components = nb_components - 1
-
-    # minimum size of particles we want to keep (number of pixels)
-    # here, it's a fixed value, but you can set it as you want, eg the mean of the sizes or whatever
-    min_size = 4000
-
-    # your answer image
-    img2 = np.zeros((dilated.shape))
-    # for every component in the image, you keep it only if it's above min_size
-    for i in range(0, nb_components):
-        if sizes[i] >= min_size:
-            img2[output == i + 1] = 1
-    skeletonized = cv.ximgproc.thinning(np.array(255 * img2, dtype=np.uint8))
     nx_g = generate_nx_graph(
         from_sparse_to_graph(scipy.sparse.dok_matrix(skeletonized))
     )
@@ -184,6 +153,7 @@ def extract_skel_tip_ext(im, low, high, dist):
                     dilated_bis[
                         xp - window : xp + window, yp - window : yp + window
                     ] += shape_tip
+    kernel = np.ones((3, 3), np.uint8)
     dilation = cv.dilate(dilated_bis.astype(np.uint8) * 255, kernel, iterations=1)
     for i in range(3):
         dilation = cv.erode(dilation.astype(np.uint8) * 255, kernel, iterations=1)
@@ -192,3 +162,51 @@ def extract_skel_tip_ext(im, low, high, dist):
         dilation.astype(np.uint8) * 255, kernel, iterations=2
     )  # recent addition for agg, careful
     return dilation > 0
+
+def remove_holes(hyst):
+    kernel = np.ones((3, 3), np.uint8)
+    dilation = cv.dilate(hyst.astype(np.uint8) * 255, kernel, iterations=1)
+    for i in range(3):
+        dilation = cv.erode(dilation.astype(np.uint8) * 255, kernel, iterations=1)
+        dilation = cv.dilate(dilation.astype(np.uint8) * 255, kernel, iterations=1)
+    return(dilation>0)
+
+def extract_skel_tip_ext(im, low, high, dist):
+    im_cropped = im
+    im_blurred = cv.blur(im_cropped, (200, 200))
+    im_back_rem = (
+        (im_cropped)
+        / ((im_blurred == 0) * np.ones(im_blurred.shape) + im_blurred)
+        * 120
+    )
+    im_back_rem[im_back_rem >= 130] = 130
+    frangised = frangi(im_back_rem, sigmas=range(1, 20, 4)) * 255
+    transformed = (frangised - im_back_rem + 120) * (im_blurred >= 35)
+    hyst = filters.apply_hysteresis_threshold(transformed, low, high)
+
+    dilated = remove_holes(hyst)
+    dilated = dilated.astype(np.uint8)
+    connected = remove_component(dilated)
+    skeletonized = cv.ximgproc.thinning(connected)
+    dilation = extend_tip(skeletonized,dilated)
+    return dilation
+
+def make_back_sub(directory,dirname,op_id):
+    a_file = open(f'{path_code}pipeline/scripts/stitching_loops/background_substract.ijm',"r")
+
+    list_of_lines = a_file.readlines()
+
+    list_of_lines[4] = f'mainDirectory = \u0022{directory}\u0022 ;\n'
+    list_of_lines[29] = f'\t if(startsWith(list[i],\u0022{dirname}\u0022)) \u007b\n'
+    file_name = f'{temp_path}/stitching_loops/background_substract{op_id}.ijm'
+    a_file = open(file_name, "w")
+
+    a_file.writelines(list_of_lines)
+
+    a_file.close()
+    
+def run_back_sub(directory, folder):  
+    op_id = time_ns()
+    make_back_sub(directory,folder,op_id)
+    command = [fiji_path,'--mem=8000m','--headless','--ij2','--console','-macro',f'{os.getenv("TEMP")}/stitching_loops/background_substract{op_id}.ijm']
+    process = subprocess.run(command,stdout=subprocess.DEVNULL)
