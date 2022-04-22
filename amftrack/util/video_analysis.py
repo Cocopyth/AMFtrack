@@ -1,3 +1,11 @@
+import numpy as np
+from skimage.measure import profile_line
+import logging
+import os
+import re
+from PIL import Image
+
+
 def extract_kymograph(path, x1, y1, x2, y2, validation_fun=None) -> np.array:
     """
     Takes as input the path to a folder of consecutive images (a movie) of size (m, n)
@@ -51,5 +59,5 @@ def variance_over_time_on_segment(path, x1, y1, x2, y2, validation_fun=None):
     Return an array of shape (p, ) where p is the number of images in the folder `path`.
     """
     return np.std(
-        extract_kymograth(path, x1, y1, x2, y2, validation_fun=validation_fun), axis=0
+        extract_kymograph(path, x1, y1, x2, y2, validation_fun=validation_fun), axis=0
     )
