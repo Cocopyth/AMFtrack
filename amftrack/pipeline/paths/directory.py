@@ -220,7 +220,7 @@ def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
         my_file.write(
-            f'#SBATCH -o "{path_slurm}/stitching__{folder_list[start]}_{ide}.out" \n'
+            f'#SBATCH -o "{slurm_path}/stitching__{folder_list[start]}_{ide}.out" \n'
         )
         for k in range(0, min(stop, len(folder_list)) - start):
             op_id = op_ids[k]
