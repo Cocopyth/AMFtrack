@@ -12,8 +12,8 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Edge,
 )
-from amftrack.util.geometry import get_section_segment, generate_index_along_sequence
-from amftrack.util.image_analysis import is_in_image
+from amftrack.util.other import get_section_segment, generate_index_along_sequence
+from amftrack.util.image_analysis import is_in_image, find_image_indexes
 
 logger = logging.getLogger(os.path.basename(__file__))
 
@@ -54,59 +54,49 @@ def compute_section_coordinates(
     return list_of_segments
 
 
-def find_source_images(
-    section_coord_list: List[Tuple[coord_int]], exp: Experiment, t: int
-):
+def find_source_images_filtered(
+    section_coord_list: List[Tuple[coord_int]], image_coord_list: List[Tuple[coord_int]]
+) -> Tuple[List[int], List[Tuple[coord, coord]]]:
     """
-    In this function we determine (and chose) an image for each section.
-    This image will then be used to extract the profile section.
-    :return
+    For each segment in section_coord_list, determine the index of an
+    image in `image_coord_list` which contains the segment.
+    If no image contains fully the segment, the segment is removed.
+    :return:
     - List of image indexes for each section
     - List of coordinates of the segment in their respective image
+    NB: This implementation suppose that the section are close to one another
+    and that there are often in the same image as the previous one
     """
-    # TODO(FK): could maybe only check the center of the segment
-    # TODO(FK): could chose image further from the border
-    image_indexes = []  # map each segment to the index of its image in `images`
-    new_section_coord_list = []
+    image_indexes = []  # image index for each segment
+    new_section_coord_list = []  # segment list filtered and converted to the image ref
 
     current_image = [np.inf, np.inf]
     current_index = 0
-    for (point1, point2) in section_coord_list:
-        # convert to timestep referential
-        point1_ = exp.general_to_timestep(point1, t)
-        point2_ = exp.general_to_timestep(point2, t)
-        # check if the current image contains the segment
-        if is_in_image(
-            current_image[0], current_image[1], point1_[0], point1_[1]
-        ) and is_in_image(current_image[0], current_image[1], point2_[0], point2_[1]):
-            index = current_index
-        else:
+    for sec in section_coord_list:
+        (point1, point2) = sec
+        if not (
+            is_in_image(current_image[0], current_image[1], point1[0], point1[1])
+            and is_in_image(current_image[0], current_image[1], point2[0], point2[1])
+        ):
             logging.debug("New image needed")
-            images1 = exp.find_im_indexes(point1_[0], point1_[1], t)
-            images2 = exp.find_im_indexes(point2_[0], point2_[1], t)
+            images1 = find_image_indexes(image_coord_list, point1[0], point1[1])
+            images2 = find_image_indexes(image_coord_list, point2[0], point2[1])
             possible_choices = list(set(images1) & set(images2))
             if possible_choices == []:
-                logging.debug(
-                    "This section is not contained in a single original image. The section won't be used"
+                logger.debug(
+                    "This section is not contained in a single original image. Skipping.."
                 )
-                # index = choice(list(set(images1) | set(images2)))
-                index = None
-                new_section_coord_list.append(None)
+                continue
             else:
-                index = choice(possible_choices)
-                current_image = exp.image_coordinates[t][index]
+                index = possible_choices[0]  # NB(FK): we choose randomly
                 current_index = index
-                image_indexes.append(index)
-                # compute the coordinates of the segment in the image ref
-                point1__ = [
-                    point1_[0] - current_image[0],
-                    point1_[1] - current_image[1],
-                ]
-                point2__ = [
-                    point2_[0] - current_image[0],
-                    point2_[1] - current_image[1],
-                ]
-                new_section_coord_list.append([point1__, point2__])
+                current_image = image_coord_list[index]
+        # Adding the new point and its image index
+        image_indexes.append(current_index)
+        new_sec = [
+            [point[0] - current_image[0], point[1] - current_image[1]] for point in sec
+        ]
+        new_section_coord_list.append(new_sec)
     return image_indexes, new_section_coord_list
 
 
@@ -133,14 +123,18 @@ def extract_section_profiles_for_edge(
     offset = max(
         offset, step
     )  # avoiding index out of range at start and end of pixel_list
+    pixel_list_ts = [exp.general_to_timestep(point, t) for point in pixel_list]
     pixel_indexes = generate_pivot_indexes(
         len(pixel_list), resolution=resolution, offset=offset
     )
     list_of_segments = compute_section_coordinates(
-        pixel_list, pixel_indexes, step=step, target_length=target_length + 1
+        pixel_list_ts, pixel_indexes, step=step, target_length=target_length + 1
     )  # target_length + 1 to be sure to have length all superior to target_length when cropping
     # TODO (FK): is a +1 enough?
-    image_indexes, new_section_coord_list = find_source_images(list_of_segments, exp, t)
+    image_coord_list = exp.get_image_coords(t)
+    image_indexes, new_section_coord_list = find_source_images_filtered(
+        list_of_segments, image_coord_list
+    )
     images = {}
     for im_index in set(image_indexes):
         images[im_index] = exp.get_image(t, im_index)
@@ -149,8 +143,9 @@ def extract_section_profiles_for_edge(
         im = images[image_indexes[i]]
         # WARNING: profile_line has a different order for x an y
         # This is way point1 and point2 have shape (y, x)
-        point1 = np.array([sect[0][0], sect[0][1]])
-        point2 = np.array([sect[1][0], sect[1][1]])
+        # TODO(FK)
+        point1 = np.array([sect[0][1], sect[0][0]])
+        point2 = np.array([sect[1][1], sect[1][0]])
         profile = profile_line(im, point1, point2, mode="constant")[:target_length]
         profile = profile.reshape((1, len(profile)))
         # TODO(FK): Add thickness of the profile here
