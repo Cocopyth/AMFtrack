@@ -1,6 +1,7 @@
 import os
 import unittest
 import numpy as np
+import random
 
 from amftrack.util.sys import (
     update_plate_info_local,
@@ -9,6 +10,9 @@ from amftrack.util.sys import (
 )
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
+)
+from amftrack.pipeline.functions.image_processing.experiment_util import (
+    get_random_edge,
 )
 
 from test import helper
@@ -40,11 +44,22 @@ class TestExperiment(unittest.TestCase):
         self.assertIsNotNone(image_coord)
 
     def test_general_to_image_coords(self):
-        self.exp.general_to_image_coords([145, 345], 0)
-        self.exp.image_to_general_coords([12, 23], 0)
+        self.exp.general_to_timestep([145, 345], 0)
+        self.exp.timestep_to_general([12, 23], 0)
         a = np.array([12, 12.3])
-        b = self.exp.image_to_general_coords(self.exp.image_to_general_coords(a, 0), 0)
+        b = self.exp.timestep_to_general(self.exp.timestep_to_general(a, 0), 0)
         np.testing.assert_array_almost_equal(a, b, 2)
 
     def test_get_image(self):
         self.exp.get_image(0, 4)
+
+    def test_show_source_images(self):
+        random.seed(10)
+        edge = get_random_edge(self.exp)
+        edge.begin.show_source_image(0)
+
+    def test_find_image_pos(self):
+        self.exp.find_image_pos(21980, 30916, 0)
+
+    def test_find_im_indexes_from_general(self):
+        self.exp.find_im_indexes_from_general(21980, 30916, 0)

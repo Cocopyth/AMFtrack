@@ -40,7 +40,7 @@ def extract_kymograph(path, x1, y1, x2, y2, validation_fun=None) -> np.array:
     #         else:
     #             return False
 
-    listdir = [file_name for file_name in os.listdir(path) if is_valid(file_name)]
+    listdir = [file_name for file_name in os.listdir(path) if validation_fun(file_name)]
     l = []
     for file_name in listdir:
         im = Image.open(os.path.join(path, file_name))
