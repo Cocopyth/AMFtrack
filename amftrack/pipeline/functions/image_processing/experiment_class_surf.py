@@ -298,9 +298,9 @@ class Experiment:
                 number_anastomosis += 1 / 2
         return (anastomosis, origins, number_anastomosis)
 
-    def general_to_image_coords(self, point: coord, t: int) -> coord:
+    def general_to_timestep(self, point: coord, t: int) -> coord:
         """
-        Take a input float coordinates `coord` in the general referential
+        Take as input float coordinates `coord` in the general referential
         and convert them into the referential of timestep t.
         """
         old_coord = np.array(point).astype(dtype=np.float)
@@ -311,11 +311,13 @@ class Experiment:
 
         R, t = self.image_transformation[t]
         new_coord = np.dot(np.linalg.inv(R), old_coord - t)
+        # WARNING: x an y must also be inversed
+        new_coord[0], new_coord[1] = new_coord[1], new_coord[0]
         return new_coord
 
-    def image_to_general_coords(self, point: coord, t: int) -> coord:
+    def timestep_to_general(self, point: coord, t: int) -> coord:
         """
-        Take a input float coordinates `coord` the referential of timestep t
+        Take as input float coordinates `coord` the referential of timestep t
         and convert them into the general referential.
         """
         old_coord = np.array(point).astype(dtype=np.float)
@@ -325,6 +327,20 @@ class Experiment:
             self.image_transformation[t] = self.load_image_transformation(t)
         R, t = self.image_transformation[t]
         new_coord = np.dot(R, np.array(old_coord)) + t
+        return new_coord
+
+    def general_to_image(self, point: coord, t: int, i: int) -> coord:
+        """
+        Take as input float coordinates `coord` the general referential
+        and convert them into the coordinates in the source image `i`
+        of timestep t.
+        """
+        coord_timestep = self.general_to_timestep(point, t)
+        image_position = self.get_image_coords(t)[i]
+        new_coord = (
+            coord_timestep[0] - image_position[0],
+            coord_timestep[1] - image_position[1],
+        )
         return new_coord
 
     def get_image_coords(self, t: int) -> List[coord_int]:
@@ -352,6 +368,14 @@ class Experiment:
         # TODO(FK): change to general coordinates?
         return find_image_indexes(self.get_image_coords(t), xs, ys)
 
+    def find_im_indexes_from_general(self, x: float, y: float, t: int) -> List[int]:
+        """
+        Take as input coordinates in the GENERAL referential.
+        And determine the index of the image.
+        """
+        xt, yt = self.general_to_timestep([x, y], t)
+        return find_image_indexes(self.get_image_coords(t), xt, yt)
+
     def find_image_pos(
         self, xs: int, ys: int, t: int, local=False
     ) -> Tuple[List, List[coord]]:
@@ -370,7 +394,7 @@ class Experiment:
         trans = skel["t"]
         rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
 
-        ys, xs = round(rottrans[0]), round(rottrans[1])
+        ys, xs = round(rottrans[0]), round(rottrans[1])  # !!!!!!!!
         tileconfig = pd.read_table(
             path_tile,
             sep=";",

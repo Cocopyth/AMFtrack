@@ -3,6 +3,11 @@ import numpy as np
 from typing import List, Tuple
 
 from amftrack.util.aliases import coord_int, coord
+import matplotlib.pyplot as plt
+
+from amftrack.util.aliases import coord_int, coord
+
+from amftrack.util.image_analysis import is_in_image
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Node,
@@ -39,3 +44,67 @@ def distance_point_edge(point: coord, edge: Edge, t: int, step=1):
 
     pixel_list = edge.pixel_list(t)
     return distance_point_pixel_line(point, pixel_list, step)
+
+
+def aux_plot_edge(edge: Edge, t: int, mode=0) -> Tuple[np.array, List[coord]]:
+    """
+    This intermediary function returns the data that will be plotted.
+    See plot_edge for more information.
+    :return: image, coordinate of all the points in image
+    """
+    # TODO(FK): use a mask instead of points
+    exp = edge.experiment
+    number_points = 10
+    # Fetch coordinates of edge points in general referential
+    if mode == 0:
+        list_of_coord = [edge.begin.pos(t), edge.end.pos(t)]
+    else:
+        list_of_coord = edge.pixel_list(t)
+        if mode == 2:
+            pace = len(list_of_coord) // number_points
+            l = [list_of_coord[i * pace] for i in range(number_points)]
+            l.append(list_of_coord[-1])
+            list_of_coord = l
+
+    # Image index: we take the first one we find for the first node
+    x, y = list_of_coord[0]
+    try:
+        i = exp.find_im_indexes_from_general(x, y, t)[0]
+    except:
+        raise Exception("There is no image for this Edge")
+    # Convert coordinates to image coordinates
+    list_of_coord_im = [exp.general_to_image(coord, t, i) for coord in list_of_coord]
+    # Fetch the image
+    im = exp.get_image(t, i)
+    return im, list_of_coord_im
+
+
+def plot_edge(edge: Edge, t: int, mode=0):
+    """
+    Plot the Edge in its source images, if one exists.
+    :WARNING: If the edge is accros two image, only a part of the edge will be plotted
+    :param mode:
+    - mode 0: only begin end end
+    - mode 1: plot whole edge
+    - mode 2: plot only 100 points
+    """
+    im, list_of_coord_im = aux_plot_edge(edge, t, mode)
+    plt.imshow(im)
+    for i in range(len(list_of_coord_im)):
+        plt.plot(
+            list_of_coord_im[i][0], list_of_coord_im[i][1], marker="x", color="red"
+        )
+
+
+def plot_edge_mask(edge: Edge, t: int):
+    """
+    Plot the Edge skeletton in its source images.
+    TODO(FK): not working for now, we don't see anything
+    """
+    im, list_of_coord_im = aux_plot_edge(edge, t, mode=1)
+    m = np.max(im)
+    for coord in list_of_coord_im:
+        x, y = coord[0], coord[1]
+        if is_in_image(0, 0, x, y):
+            im[int(y)][int(x)] = 250  # Careful with the order
+    plt.imshow(im)

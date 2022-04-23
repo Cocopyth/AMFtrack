@@ -73,8 +73,8 @@ def find_source_images(
     current_index = 0
     for (point1, point2) in section_coord_list:
         # convert to timestep referential
-        point1_ = exp.general_to_image_coords(point1, t)
-        point2_ = exp.general_to_image_coords(point2, t)
+        point1_ = exp.general_to_timestep(point1, t)
+        point2_ = exp.general_to_timestep(point2, t)
         # check if the current image contains the segment
         if is_in_image(
             current_image[0], current_image[1], point1_[0], point1_[1]
