@@ -30,7 +30,13 @@ from amftrack.util.image_analysis import find_image_indexes
 
 
 class Experiment:
-    """Represents a single plate experiment over time."""
+    """
+    Represents a single plate experiment over time.
+    For coordinates we distinguish between:
+    - general referential: it is shared along the timestep
+    - timestep referential
+    - image referential: it is the referential of one particular source image at a certain timestep
+    """
 
     def __init__(self, plate: int, directory: str):
         self.plate = plate  # plate number in Prince
@@ -218,7 +224,7 @@ class Experiment:
     def get_node(self, label: str):
         return Node(label, self)
 
-    def get_edge(self, begin, end):
+    def get_edge(self, begin, end) -> "Edge":
         return Edge(begin, end, self)
 
     def get_growing_tips(self, t, threshold=80):
@@ -658,9 +664,9 @@ def plot_raw_plus(
 class Node:
     """Represents a single node, through time in an experiment."""
 
-    def __init__(self, label, experiment):
+    def __init__(self, label: int, experiment: Experiment):
         self.experiment: Experiment = experiment
-        self.label: str = label
+        self.label: int = label
 
     def __eq__(self, other):
         return self.label == other.label
@@ -700,30 +706,34 @@ class Node:
         """Determines if the node is present at timestep t in the graph."""
         return self.label in self.experiment.nx_graph[t].nodes
 
-    def degree(self, t):
+    def degree(self, t) -> int:
+        """Return the degree of the node."""
         return self.experiment.nx_graph[t].degree(self.label)
 
-    def edges(self, t):
+    def edges(self, t) -> List["Edge"]:
+        """Return all the edges connected to this node"""
         return [
             self.experiment.get_edge(self, neighbour)
             for neighbour in self.neighbours(t)
         ]
 
-    def pos(self, t):
+    def pos(self, t) -> coord_int:
+        "Return coordinates in the general referential at timestep t"
         return self.experiment.positions[t][self.label]
 
     def ts(self) -> List[int]:
         """Returns a list of all the timestep at which the node is present."""
         return [t for t in range(len(self.experiment.nx_graph)) if self.is_in(t)]
 
-    def show_source_image(self, t: int, tp1: int):
+    def show_source_image(self, t: int, tp1=None):
         """
         Two use cases:
-        If t==tp1:
+        If tp1 is not provided:
         This function plots the original image from time t containing the node.
         As there can be several original images (because of overlap), the
-        darker image is choosen (why?)
-        If t!=tp1:
+        darker image is choosen
+        TODO(FK): (why?)
+        If tp1 is provided:
         This function plots the original images from time t and tp1 on one another
         """
         pos = self.pos(t)
@@ -731,7 +741,7 @@ class Node:
         ims, posimg = self.experiment.find_image_pos(x, y, t)
         # Choosing which image to show
         i = np.argmax([np.mean(im) for im in ims])
-        if t != tp1:
+        if tp1 is not None and tp1 > t:
             posp1 = self.pos(tp1)
             xp1, yp1 = posp1[0], posp1[1]
             imsp1, posimgp1 = self.experiment.find_image_pos(xp1, yp1, tp1)
@@ -817,8 +827,8 @@ class Edge:
     """Edge object through time in an experiment."""
 
     def __init__(self, begin: Node, end: Node, experiment: Experiment):
-        self.begin = begin
-        self.end = end
+        self.begin = begin  # Starting Node
+        self.end = end  # Ending Node
         self.experiment = experiment
 
     def __eq__(self, other):
@@ -839,9 +849,15 @@ class Edge:
         return (self.begin.label, self.end.label) in self.experiment.nx_graph[t].edges
 
     def ts(self):
+        "Return a list of timesteps in Experimant at which this Edge is present"
         return [t for t in range(self.experiment.ts) if self.is_in(t)]
 
-    def pixel_list(self, t):
+    def pixel_list(self, t: int) -> Tuple[List[coord_int], coord_int]:
+        """
+        Return a list of pixels coordinates that make the edge.
+        These coordinates are in the general referential.
+        Also returns the starting position of the Edge.
+        """
         return orient(
             self.experiment.nx_graph[t].get_edge_data(self.begin.label, self.end.label)[
                 "pixel_list"
