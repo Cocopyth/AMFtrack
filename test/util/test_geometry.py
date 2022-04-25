@@ -1,9 +1,11 @@
+import numpy as np
 import unittest
-from amftrack.util.other import (
+from amftrack.util.geometry import (
     expand_segment,
     get_section_segment,
     compute_factor,
     generate_index_along_sequence,
+    distance_point_pixel_line,
 )
 
 
@@ -42,3 +44,31 @@ class TestSegment(unittest.TestCase):
         self.assertEqual(
             generate_index_along_sequence(7, resolution=6, offset=0), [0, 6]
         )
+
+    def test_distance_point_pixel_line(self):
+
+        line = [[2, 3], [3, 3], [3, 4], [4, 5], [5, 5], [6, 6], [7, 7]]
+        self.assertEqual(
+            distance_point_pixel_line([2, 3], line, step=1),
+            0,
+        )
+
+        self.assertEqual(
+            distance_point_pixel_line([2, 1], line, step=1),
+            2.0,
+        )
+
+        self.assertEqual(
+            distance_point_pixel_line([0, 3], line, step=1),
+            2.0,
+        )
+
+        self.assertAlmostEqual(
+            distance_point_pixel_line([2, 5], line, step=1), np.sqrt(2), 4
+        )
+
+        # distance increases with increassing step
+        self.assertTrue(
+            distance_point_pixel_line([0, 9], line, step=2)
+            > distance_point_pixel_line([0, 9], line, step=1)
+        )  # when the closest point isn't taken

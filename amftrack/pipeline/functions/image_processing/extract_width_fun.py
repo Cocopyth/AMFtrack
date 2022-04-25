@@ -12,7 +12,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Edge,
 )
-from amftrack.util.other import get_section_segment, generate_index_along_sequence
+from amftrack.util.geometry import get_section_segment, generate_index_along_sequence
 from amftrack.util.image_analysis import is_in_image
 
 logger = logging.getLogger(os.path.basename(__file__))

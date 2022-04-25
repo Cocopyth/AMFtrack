@@ -11,6 +11,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 )
 from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_random_edge,
+    distance_point_edge,
 )
 from test import helper
 
@@ -35,3 +36,19 @@ class TestExperiment(unittest.TestCase):
     def test_get_random_edge(self):
         get_random_edge(self.exp)
         get_random_edge(self.exp)
+
+
+class TestExperimentLight(unittest.TestCase):
+    def test_distance_point_edge(self):
+        class EdgeMock:
+            def __init__(self, list_coord):
+                self.list_coord = list_coord
+
+            def pixel_list(self, t):
+                return self.list_coord
+
+        edge = EdgeMock([[2, 3], [3, 3], [3, 4], [4, 5], [5, 5], [6, 6], [7, 7]])
+        self.assertEqual(
+            distance_point_edge([2, 3], edge, 0, step=1),
+            0,
+        )
