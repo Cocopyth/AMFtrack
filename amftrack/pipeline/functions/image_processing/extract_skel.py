@@ -107,17 +107,18 @@ def extract_skel_new_prince(im, params,perc_low,perc_high):
     imname = foldname+f'/{foldname}it{args[4]}.tif'
     path_modif = place_save +"/"+ imname
     im2 = imageio.imread(path_modif)
-    low = np.percentile(im2, perc_low)
-    high = np.percentile(im2, perc_high)
+    low = max(20,np.percentile(im2, perc_low))
+    high = max(90,np.percentile(im2, perc_high))
     # transformed = -img+255
     transformed = im2
     hyst = filters.apply_hysteresis_threshold(transformed, low, high)
     dilated = remove_holes(hyst)
     dilated = dilated.astype(np.uint8)
     connected = remove_component(dilated)
+    
     return(connected)
 
-def extend_tip(skeletonized,dilated):
+def extend_tip(skeletonized,dilated,dist):
     img2 = np.zeros((dilated.shape))
     nx_g = generate_nx_graph(
         from_sparse_to_graph(scipy.sparse.dok_matrix(skeletonized))
@@ -188,7 +189,7 @@ def extract_skel_tip_ext(im, low, high, dist):
     dilated = dilated.astype(np.uint8)
     connected = remove_component(dilated)
     skeletonized = cv.ximgproc.thinning(connected)
-    dilation = extend_tip(skeletonized,dilated)
+    dilation = extend_tip(skeletonized,dilated,dist)
     return dilation
 
 def make_back_sub(directory,dirname,op_id):

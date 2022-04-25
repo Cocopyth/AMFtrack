@@ -94,9 +94,9 @@ print("number to reduce : ", np.sum(skel > 0), np.sum(skel <= 0))
 skeletonized = cv2.ximgproc.thinning(np.array(255 * (skel > 0), dtype=np.uint8))
 skel_sparse = sparse.lil_matrix(skel)
 sio.savemat(
-    path_snap + "/Analysis/skeleton.mat",
+    path_snap + "/Analysis/skeleton2.mat",
     {"skeleton": scipy.sparse.csc_matrix(skeletonized)},
 )
 compressed = cv2.resize(skeletonized, (dim[1] // 5, dim[0] // 5))
-sio.savemat(path_snap + "/Analysis/skeleton_compressed.mat", {"skeleton": compressed})
+sio.savemat(path_snap + "/Analysis/skeleton_compressed2.mat", {"skeleton": compressed})
 print("time=", time() - t)
