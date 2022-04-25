@@ -70,7 +70,7 @@ dim = (int(np.max(ys) - np.min(ys)) + 4096, int(np.max(xs) - np.min(xs)) + 4096)
 ims = []
 skel = np.zeros(dim, dtype=np.uint8)
 for index, name in enumerate(tileconfig[0]):
-    print(index)
+    # print(index)
     imname = "/Img2/" + name.split("/")[-1]
     im = imageio.imread(directory + directory_name + imname)
     segmented = extract_skel_new_prince(im, [hyph_width],perc_low,perc_high)
