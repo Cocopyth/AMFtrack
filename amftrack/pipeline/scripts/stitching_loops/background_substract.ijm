@@ -31,7 +31,7 @@ for (i=0; i<=list.length-1; i=i+1){
 		outputDirectory = mainDirectory + File.separator + list[i]; 
         print(list[i]);
         inputDirectory  = outputDirectory + File.separator + "Img";
-        inputDirectory2  = outputDirectory + File.separator + "Img2";
+        inputDirectory2  = outputDirectory + File.separator + "Img3";
         File.makeDirectory(inputDirectory2);
         listImg = getFileList(inputDirectory);
 

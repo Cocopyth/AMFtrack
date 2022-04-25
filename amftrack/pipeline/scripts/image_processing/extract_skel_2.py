@@ -6,21 +6,17 @@ from amftrack.util.sys import get_dirname
 import pandas as pd
 import ast
 from scipy import sparse
-from datetime import datetime
 import scipy.io as sio
 import cv2
 import imageio
 import numpy as np
-from skimage.filters import frangi
-from skimage import filters
 import scipy.sparse
 import os
 from time import time
 from amftrack.pipeline.functions.image_processing.extract_skel import extract_skel_new_prince,run_back_sub
 
 from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
-from subprocess import call
-from path import path_code_dir
+import shutil
 
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
@@ -70,8 +66,7 @@ dim = (int(np.max(ys) - np.min(ys)) + 4096, int(np.max(xs) - np.min(xs)) + 4096)
 ims = []
 skel = np.zeros(dim, dtype=np.uint8)
 for index, name in enumerate(tileconfig[0]):
-    # print(index)
-    imname = "/Img2/" + name.split("/")[-1]
+    imname = "/Img3/" + name.split("/")[-1]
     im = imageio.imread(directory + directory_name + imname)
     segmented = extract_skel_new_prince(im, [hyph_width],perc_low,perc_high)
     # low = np.percentile(-im+255, perc_low)
@@ -95,3 +90,6 @@ sio.savemat(
 compressed = cv2.resize(skeletonized, (dim[1] // 5, dim[0] // 5))
 sio.savemat(path_snap + "/Analysis/skeleton_compressed.mat", {"skeleton": compressed})
 print("time=", time() - t)
+im_fold= "/Img3"
+to_delete = directory + directory_name+im_fold
+shutil.rmtree(to_delete)
