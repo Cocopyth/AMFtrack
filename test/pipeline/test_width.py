@@ -36,16 +36,6 @@ class TestWidth(unittest.TestCase):
             selected_df.loc[selected_df["folder"] == directory_name], labeled=False
         )
 
-    def test_generate_pivot_indexes(self):
-        self.assertEqual(
-            generate_pivot_indexes(20, resolution=3, offset=4), [4, 7, 10, 13]
-        )
-        self.assertEqual(
-            generate_pivot_indexes(21, resolution=3, offset=4), [4, 7, 10, 13, 16]
-        )
-        self.assertEqual(generate_pivot_indexes(6, resolution=1, offset=2), [2, 3])
-        self.assertEqual(generate_pivot_indexes(6, resolution=2, offset=10), [3])
-
     def test_compute_section_coordinates(self):
         pixel_list = [
             [1, 2],
@@ -70,6 +60,6 @@ class TestWidth(unittest.TestCase):
     def test_extract_section_profiles_for_edge(self):
         import random
 
-        random.seed(1232)
+        random.seed(13)
         edge = get_random_edge(self.exp, 0)
         extract_section_profiles_for_edge(self.exp, 0, edge)

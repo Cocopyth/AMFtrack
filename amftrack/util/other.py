@@ -1,6 +1,26 @@
 from amftrack.util.aliases import coord
 from typing import Tuple
 import numpy as np
+from typing import List
+
+
+def generate_index_along_sequence(n: int, resolution=3, offset=5) -> List[int]:
+    """
+    From the length `n` of the list, generate indexes at interval `resolution`
+    with `offset` at the start and at the end.
+    :param n: length of the sequence
+    :param resolution: step between two chosen indexes
+    :param offset: offset at the begining and at the end
+    """
+    x_min = offset
+    x_max = n - 1 - offset
+    # Small case
+    if x_min > x_max:
+        return [n // 2]
+    # Normal case
+    k_max = (x_max - x_min) // resolution
+    l = [x_min + k * resolution for k in range(k_max + 1)]
+    return l
 
 
 def get_section_segment(

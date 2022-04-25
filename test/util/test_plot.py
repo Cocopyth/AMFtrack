@@ -20,5 +20,5 @@ class TestPlot(unittest.TestCase):
         np.testing.assert_array_almost_equal(M, M_)
         self.assertTrue((M == M_).all())
         self.assertSequenceEqual(
-            pixel_list_to_matrix(pixel_list, 0, margin=1).shape, (6, 8)
+            pixel_list_to_matrix(pixel_list, margin=1).shape, (6, 8)
         )

@@ -1,5 +1,10 @@
 import unittest
-from amftrack.util.other import expand_segment, get_section_segment, compute_factor
+from amftrack.util.other import (
+    expand_segment,
+    get_section_segment,
+    compute_factor,
+    generate_index_along_sequence,
+)
 
 
 class TestSegment(unittest.TestCase):
@@ -16,3 +21,24 @@ class TestSegment(unittest.TestCase):
 
     def test_get_section_segment(self):
         get_section_segment([-2, 2], [1, 1], 2.82)
+
+    def test_generate_index_along_sequence(self):
+        self.assertEqual(
+            generate_index_along_sequence(20, resolution=3, offset=4), [4, 7, 10, 13]
+        )
+        self.assertEqual(
+            generate_index_along_sequence(21, resolution=3, offset=4),
+            [4, 7, 10, 13, 16],
+        )
+        self.assertEqual(
+            generate_index_along_sequence(6, resolution=1, offset=2), [2, 3]
+        )
+        self.assertEqual(generate_index_along_sequence(6, resolution=2, offset=10), [3])
+        self.assertEqual(
+            generate_index_along_sequence(7, resolution=1, offset=0),
+            [0, 1, 2, 3, 4, 5, 6],
+        )
+        self.assertEqual(generate_index_along_sequence(7, resolution=10, offset=0), [0])
+        self.assertEqual(
+            generate_index_along_sequence(7, resolution=6, offset=0), [0, 6]
+        )

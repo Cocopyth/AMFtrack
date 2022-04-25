@@ -12,7 +12,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Edge,
 )
-from amftrack.util.other import get_section_segment
+from amftrack.util.other import get_section_segment, generate_index_along_sequence
 from amftrack.util.image_analysis import is_in_image
 
 logger = logging.getLogger(os.path.basename(__file__))
@@ -27,15 +27,7 @@ def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
     :param resolution: step between two chosen points
     :param offset: offset at the begining and at the end where no points will be selected
     """
-    x_min = offset
-    x_max = n - 1 - offset
-    # Small case
-    if x_min > x_max:
-        return [n // 2]
-    # Normal case
-    k_max = (x_max - x_min) // resolution
-    l = [x_min + k * resolution for k in range(k_max + 1)]
-    return l
+    return generate_index_along_sequence(n, resolution, offset)
 
 
 def compute_section_coordinates(
