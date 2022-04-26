@@ -76,17 +76,13 @@ ys = [c[1] for c in tileconfig[2]]
 dim = (int(np.max(ys) - np.min(ys)) + 4096, int(np.max(xs) - np.min(xs)) + 4096)
 ims = []
 skel = np.zeros(dim, dtype=np.uint8)
-# contour = scipy.sparse.lil_matrix(dim,dtype=np.uint8)
-# half_circle = scipy.sparse.lil_matrix(dim,dtype=np.uint8)
-# for k,name in enumerate(tileconfig[0]):
-# #     call(f'conda activate amftrack')
-#     call(f'python {path_code_dir}/amftrack/pipeline/scripts/extract_skel_indiv.py {low} {high} {dist} {directory} {op_id} {k} {i}')
 for index, name in enumerate(tileconfig[0]):
     imname = "/Img/" + name.split("/")[-1]
     im = imageio.imread(directory + directory_name + imname)
-    # print(index)
     segmented = extract_skel_tip_ext(im, low, high, dist)
-    #     np.save(f'Temp\dilated{tileconfig[0][i]}',dilated)
+    # low = np.percentile(-im+255, 95)
+    # high = np.percentile(-im+255, 99.5)
+    # segmented = filters.apply_hysteresis_threshold(-im+255, low, high)
     boundaries = int(tileconfig[2][index][0] - np.min(xs)), int(
         tileconfig[2][index][1] - np.min(ys)
     )
@@ -94,22 +90,13 @@ for index, name in enumerate(tileconfig[0]):
         boundaries[1] : boundaries[1] + shape[0],
         boundaries[0] : boundaries[0] + shape[1],
     ] += segmented
-    # contour[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += points
-    # if index<=80:
-    #     half_circle[boundaries[1]:boundaries[1]+shape[0],boundaries[0]:boundaries[0]+shape[1]] += points
-# print(len(skel.nonzero()[0]))
-# skelet = sparse_to_doc(skel)
 print("number to reduce : ", np.sum(skel > 0), np.sum(skel <= 0))
 skeletonized = cv2.ximgproc.thinning(np.array(255 * (skel > 0), dtype=np.uint8))
-# skeletonized = cv2.ximgproc.thinning(np.array(255*(skel>0),dtype=np.uint8))
-# skeletonized = zhangSuen(skelet)
 skel_sparse = sparse.lil_matrix(skel)
-# sio.savemat(path_snap+'/Analysis/dilated.mat',{'dilated' : skel_sparse})
-# sio.savemat(path_snap+'/Analysis/skeleton.mat',{'skeleton' : scipy.sparse.csc_matrix(skeletonized),'contour' : scipy.sparse.csc_matrix(contour),'half_circle' : half_circle})
 sio.savemat(
-    path_snap + "/Analysis/skeleton.mat",
+    path_snap + "/Analysis/skeleton2.mat",
     {"skeleton": scipy.sparse.csc_matrix(skeletonized)},
 )
 compressed = cv2.resize(skeletonized, (dim[1] // 5, dim[0] // 5))
-sio.savemat(path_snap + "/Analysis/skeleton_compressed.mat", {"skeleton": compressed})
+sio.savemat(path_snap + "/Analysis/skeleton_compressed2.mat", {"skeleton": compressed})
 print("time=", time() - t)
