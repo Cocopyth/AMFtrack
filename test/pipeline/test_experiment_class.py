@@ -13,7 +13,8 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 
 from test import helper
 
-# @unittest.skipUnless(helper.has_test_plate(), "No plate to run the tests..")
+
+@unittest.skipUnless(helper.has_test_plate(), "No plate to run the tests..")
 class TestExperiment(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

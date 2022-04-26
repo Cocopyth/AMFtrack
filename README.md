@@ -50,11 +50,16 @@ https://github.com/jpmorganchase/jupyter-fs
 ### Setting up environment
 
 From base folder:
-`virtualenv --python=python3 venv`
+```
+virtualenv --python=python3 venv
+```
 (or replace `python3` by the path to the python version you want to clone.)
 
 Launching environment:
-`source venv/bin/activate`
+
+```
+source venv/bin/activate
+```
 
 ### Install requiered packages
 
@@ -111,6 +116,7 @@ Le formatage du code est fait avec `black`
 
 # Presentation of the repository
 ## Logging
+### Intro
 For logging, the logging module `logging` enables to add logging messages across code and set the level of verbosity.
 There are 4 levels of verbosity (DEBUG, INFO, WARNING, ERROR). Each log line is of one of this types.
 Examples: 
@@ -118,8 +124,7 @@ Examples:
 logger.info("Processing is done")
 logger.warning("Couldn't handle all cases")
 ```
-The general log level (verbosity) can be set in the general __init__.py file.
-A filter can also be added to suppress logs from a specific files.
+### 1/ Adding logging to a file
 To add logging to a file we use:
 
 ``` python
@@ -127,42 +132,71 @@ import logging
 import os
 logger = logging.getLogger(os.path.basename(__file__))
 ```
-
 This creates a logger with the name of the file.
-The log level for this file can then be set with:
-```python
-logger.setLevel("INFO")
+### 2/ Setting log level
+- The general log level (verbosity) can be set in the general \_\_init\_\_.py file.
+By changing the line
+```
+logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=log_format)
 ```
 
-Or from the general __init__.py file with
+- A filter can also be added to change log level from a specific files or from a specific module.
 ```
 some_logger = logging.getLogger("name_of_the_file")
 some_logger.setLevel(logging.WARNING)
 ```
 
+- The log level can also be changed directly in a file with:
+```python
+logger.setLevel("INFO")
+```
+
+### 3/ Remarks
+
 In a certain file, `logging.info("something")` will also work but will display "root" as the name of the logger and not the name of the file that issued the log
 
 ## Tests
 
+### 1/ Generality
 The tests are all in the `test` folder.
 The python module chosen for tests is `unittest`.
 https://docs.python.org/3/library/unittest.html
 
-All test files must start with `test`. **Ex**: `test_sys_util.py`
-The file `helper.py` contains utils for testing.
+All test files must start with `test`. All test function and classes must start with `test`.
 
+**Ex**: `test_sys_util.py`
+
+And all testing classes must be subclass from the unittest base test class and must start with Test.
+
+The file **helper.py** contains utils for testing.
+
+### 2/ Launching tests
 Tests can be launched with the following command:
+```
+python3 -m unittest discover . "test*.py"
+```
 
+Runing only one test:
+```
+python3 -m unittest -v ~/Wks/AMFtrack/test/util/test_geometry.py
+```
 
-For some tests, a processed Prince plate is required.
+Test can also be run with `pytest` if installed (prettier display)
+```bash
+pytest test_file.py -k test_function
+```
+
+### 3/ Special tests
+For some tests, a processed Prince plate is required. Or other types of files.
 The data file must be stored at the following path:
-data_path + "test"
+**data_path** + "**test**".
 If the data is not present, the tests will be skipped.
+
+### 4/ Getting test coverage
+The coverage gives an idea of the portion of code which is covered by the tests.
 
 Getting test coverage:
 `coverage run -m unittest discover`
 `coverage report -m`
 (https://coverage.readthedocs.io/en/6.3.2/)
 
-Running only one test:
-pytest test_article_api_links.py -k 'test_formating_tag_issues'
