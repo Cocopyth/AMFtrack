@@ -50,7 +50,7 @@ def get_closest_lines(
         bisect.insort(l, (d, i))
         if len(l) > n_nearest:
             del l[-1]
-    return [index for index, _ in l], [distance for _, distance in l]
+    return [index for _, index in l], [distance for distance, _ in l]
 
 
 def aux_get_closest_line_opt(
@@ -67,41 +67,48 @@ def aux_get_closest_line_opt(
     l = [(d, i) for (d, i) in l if d <= d_min + error_margin]
     # NB: as we want only the single closest, no need to order here
 
-    return [index for index, _ in l], [distance for _, distance in l]
+    return [index for _, index in l], [distance for distance, _ in l]
 
 
 def get_closest_line_opt(
-    point: coord, lines: List[List[coord]], starting_step=1000
+    point: coord, lines: List[List[coord]], step=1000, factor=2
 ) -> Tuple[int, float]:
+    """
+    Returns the closest line to `point` (in `lines`).
+    Along with its respective distance to the `point`.
 
-    step = starting_step
-    while len(lines) > 1 and step > 1:
+    This version is optimized. We search with different resolution and stop when
+    the resolution is good enough to conclude.
+
+    :param step: this is the initial resolution. It will be decreased at each iteration
+    :param factor: determines how we change the resolution between two iteration (2, 3, 4 work well)
+    :return: (index of closest lines, corresponding distance to point)
+    NB: if there are several lines at same distance, we return only one
+
+    In the worst case, this function has (factor/factor-1) the cost of the computing the
+    distance to every point in every line.
+    The worst case is: all the lines are at same distance.
+
+    The best cases are:
+    - the first closest line is much closer than the second (then we stop before reaching a small resolution)
+    - a lot of lines are far from the point and will be removed early in the iterations
+    """
+    # The length of lines evolve over time, d dict keeps track of the original indexes
+    mapping = {i: i for i in range(len(lines))}
+    while len(lines) > 1 and step >= 1:
         # NB: distances could be used to tune the `step` at each iteration
         kept_indexes, distances = aux_get_closest_line_opt(point, lines, step)
+        # Update index directory
+        mapping_ = {}
+        for i in range(len(kept_indexes)):
+            mapping_[i] = mapping[kept_indexes[i]]
+        mapping = mapping_
         lines = [lines[i] for i in kept_indexes]
-        step = step // 2
-
-    line = lines[0]  # NB: Could return a list of all lines at equal distance also
+        step = step // factor
+    ind = mapping[0]  # NB: Could return a list of all lines at equal distance also
+    line = lines[0]
     d = distance_point_pixel_line(point, line, step=1)
-    return line, d
-
-
-# def get_closest_lines_with_error(
-#     point: coord, lines: List[List[coord]], step=1
-# ) -> Tuple[List[int], List[float]]:
-#     """
-#     """
-#     error = 1.4142
-#     l = []
-#     for i in range(len(lines)):
-#         d = distance_point_pixel_line(point, lines[i], step=step)
-#         if d < limit:
-#             bisect.insort(l, (d, i))
-#             potential_new_limit = d + error * step
-#             limit = np.min(
-#                 limit, potential_new_limit
-#             )  # changes only if d is the new min
-#     return [index for index, _ in l], [distance for _, distance in l]
+    return ind, d
 
 
 def generate_index_along_sequence(n: int, resolution=3, offset=5) -> List[int]:
