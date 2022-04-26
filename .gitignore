@@ -13,7 +13,7 @@ Results/
 .virtual_documents/
 core.12631
 .idea/
-amftrack/pipeline/scripts/stitching_loops/
+
 *.json
 *.pick
 *.npy

@@ -1,16 +1,15 @@
 from path import path_code_dir
 import sys
+import os
 
-sys.path.insert(0, path_code_dir)
+sys.path.insert(0, os.getenv("HOME") + "/pycode/MscThesis/")
 import numpy as np
 from scipy import sparse
 import cv2
 from pymatreader import read_mat
 
 # from extract_graph import dic_to_sparse
-from amftrack.pipeline.functions.image_processing.extract_graph import (
-    generate_skeleton,
-)
+from amftrack.pipeline.functions.image_processing.extract_graph import generate_skeleton
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_sparse_to_graph,
     generate_nx_graph,
@@ -22,6 +21,7 @@ import scipy.sparse
 import scipy.io as sio
 from amftrack.pipeline.paths.directory import directory_scratch
 import pandas as pd
+from amftrack.pipeline.functions.image_processing.node_id import remove_spurs
 
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
@@ -41,7 +41,10 @@ skeleton = scipy.sparse.dok_matrix(skel)
 # poss_aligned=[nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
 # nx_graph_pruned=[clean_degree_4(prune_graph(nx_graph),poss_aligned[i])[0] for i,nx_graph in enumerate(nx_graphs_aligned)]
 nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
+nx_graph, pos = remove_spurs(nx_graph, pos)
+
 nx_graph_pruned = clean_degree_4(prune_graph(nx_graph, threshold), pos)[0]
+
 skeleton = generate_skeleton(nx_graph_pruned, (30000, 60000))
 skel = scipy.sparse.csc_matrix(skeleton, dtype=np.uint8)
 sio.savemat(path_snap + "/Analysis/skeleton_pruned.mat", {"skeleton": skel})

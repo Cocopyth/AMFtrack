@@ -80,6 +80,11 @@ Install Fiji:
 Chose a location on the computer and download:
 https://imagej.net/software/fiji/downloads
 
+Install anisotropic filtering:
+
+Chose a location on the computer and download:
+http://forge.cbp.ens-lyon.fr/redmine/projects/anifilters
+
 ### Install the package in editable mode
 
 For better display:
@@ -102,9 +107,13 @@ Create a text file named `local.env` in the base folder
 And fill the file with the following lines and adapt them to your situation:
 
 ```
-DATA_PATH=/home/felix//Wks/amolf/data_info.json
-FIJI_PATH=/home/felix/usr/fiji-linux64/Fiji.app/ImageJ-linux64
-TEMP_PATH=/home/felix/Wks/amolf/TEMP   # Careful no backslash at the end here
+DATA_PATH=/home/cbisot/pycode/data_info.json
+FIJI_PATH=/home/cbisot/Fiji.app/ImageJ-linux64
+TEMP_PATH=/scratch-shared/amftrack/temp #careful no backslash here
+STORAGE_PATH=/scratch-shared/amftrack/temp #careful no backslash here
+PASTIS_PATH=/home/cbisot/anis_filter/anifilters/bin/ani2D 
+#the path to the executable of anisotropic filtering
+SLURM_PATH=/scratch-shared/amftrack/slurm #this is for parallelizez job on snellius
 API_KEY=
 ```
 
