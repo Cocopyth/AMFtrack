@@ -41,6 +41,18 @@ class TestExperiment(unittest.TestCase):
         get_random_edge(self.exp)
         get_random_edge(self.exp)
 
+    def test_plot_edge(self):
+        edge = get_random_edge(self.exp)
+        plot_edge(edge, 0)
+
+    def test_plot_edge_mask(self):
+        edge = get_random_edge(self.exp)
+        plot_edge_mask(edge, 0)
+
+    def test_plot_edge_cropped(self):
+        edge = get_random_edge(self.exp)
+        plot_edge_cropped(edge, 0)
+
 
 class TestExperimentLight(unittest.TestCase):
     def test_distance_point_edge(self):
@@ -56,15 +68,3 @@ class TestExperimentLight(unittest.TestCase):
             distance_point_edge([2, 3], edge, 0, step=1),
             0,
         )
-
-    def test_plot_edge(self):
-        edge = get_random_edge(self.exp)
-        plot_edge(edge, 0)
-
-    def test_plot_edge_mask(self):
-        edge = get_random_edge(self.exp)
-        plot_edge_mask(edge, 0)
-
-    def test_plot_edge_cropped(self):
-        edge = get_random_edge(self.exp)
-        plot_edge_cropped(edge, 0)
