@@ -14,6 +14,7 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     distance_point_edge,
     plot_edge,
     plot_edge_mask,
+    plot_edge_cropped,
 )
 from test import helper
 
@@ -63,3 +64,7 @@ class TestExperimentLight(unittest.TestCase):
     def test_plot_edge_mask(self):
         edge = get_random_edge(self.exp)
         plot_edge_mask(edge, 0)
+
+    def test_plot_edge_cropped(self):
+        edge = get_random_edge(self.exp)
+        plot_edge_cropped(edge, 0)

@@ -46,7 +46,9 @@ def distance_point_edge(point: coord, edge: Edge, t: int, step=1):
     return distance_point_pixel_line(point, pixel_list, step)
 
 
-def aux_plot_edge(edge: Edge, t: int, mode=0) -> Tuple[np.array, List[coord]]:
+def aux_plot_edge(
+    edge: Edge, t: int, mode=0, points=10
+) -> Tuple[np.array, List[coord]]:
     """
     This intermediary function returns the data that will be plotted.
     See plot_edge for more information.
@@ -79,16 +81,41 @@ def aux_plot_edge(edge: Edge, t: int, mode=0) -> Tuple[np.array, List[coord]]:
     return im, list_of_coord_im
 
 
-def plot_edge(edge: Edge, t: int, mode=0):
+def plot_edge(edge: Edge, t: int, mode=2, points=10):
     """
     Plot the Edge in its source images, if one exists.
-    :WARNING: If the edge is accros two image, only a part of the edge will be plotted
+    :WARNING: If the edge is accross two image, only a part of the edge will be plotted
     :param mode:
     - mode 0: only begin end end
     - mode 1: plot whole edge
-    - mode 2: plot only 100 points
+    - mode 2: plot only a number of points
+    :param points: number of points to plot
     """
-    im, list_of_coord_im = aux_plot_edge(edge, t, mode)
+    im, list_of_coord_im = aux_plot_edge(edge, t, mode, points)
+    plt.imshow(im)
+    for i in range(len(list_of_coord_im)):
+        plt.plot(
+            list_of_coord_im[i][0], list_of_coord_im[i][1], marker="x", color="red"
+        )
+
+
+def plot_edge_cropped(edge: Edge, t: int, mode=2, points=10, margin=50):
+    """
+    Same as plot_edge but the image is cropped.
+    """
+    im, list_of_coord_im = aux_plot_edge(edge, t, mode, points)
+    x_min = np.min([list_of_coord_im[i][0] for i in range(len(list_of_coord_im))])
+    x_max = np.max([list_of_coord_im[i][0] for i in range(len(list_of_coord_im))])
+    y_min = np.min([list_of_coord_im[i][1] for i in range(len(list_of_coord_im))])
+    y_max = np.max([list_of_coord_im[i][1] for i in range(len(list_of_coord_im))])
+
+    x_min = np.max([0, x_min - margin])
+    x_max = np.min([im.shape[1], x_max + margin])  # NB: Careful: inversion (
+    y_min = np.max([0, y_min - margin])
+    y_max = np.min([im.shape[0], y_max + margin])
+
+    list_of_coord_im = [[p[0] - x_min, p[1] - y_min] for p in list_of_coord_im]
+    im = im[int(y_min) : int(y_max), int(x_min) : int(x_max)]
     plt.imshow(im)
     for i in range(len(list_of_coord_im)):
         plt.plot(

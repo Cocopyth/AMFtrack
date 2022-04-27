@@ -54,6 +54,79 @@ def compute_section_coordinates(
     return list_of_segments
 
 
+# def find_source_images_(
+#     section_coord_list: List[Tuple[coord_int]],
+#     image_coord_list: List[Tuple[coord_int]],
+#     mode=1,
+# ):
+#     """
+#     In this function we determine (and chose) an image for each section.
+#     This image will then be used to extract the profile section.
+#     There are two modes:
+#     - mode 1: segments that aren't fully contained in an image are removed
+#     - mode 2: no segment is removed, thus some segment will have so part out of the image
+#     :return
+#     - List of image indexes for each section
+#     - List of coordinates of the segment in their respective image
+#     NB: This implementation suppose that the section are close to one another
+#     and that there are often in the same image as the previous one
+#     """
+#     image_indexes = []  # image index for each segment
+#     new_section_coord_list = []  # segment list filtered and converted to the image ref
+
+#     current_image = [np.inf, np.inf]
+#     current_index = 0
+#     for sec in section_coord_list:
+#         (point1, point2) = sec
+#         # check if the current image contains the segment
+#         if is_in_image(
+#             current_image[0], current_image[1], point1[0], point1[1]
+#         ) and is_in_image(current_image[0], current_image[1], point2[0], point2[1]):
+#             # Case 1: same image as previous section
+#             image_indexes.append(current_index)
+#             new_sec = [
+#                 [point[0] - current_image[0], [point[1] - current_image[1]]]
+#                 for point in sec
+#             ]
+#             new_section_coord_list.append(new_sec)
+#         else:
+#             logging.debug("New image needed")
+#             images1 = find_image_indexes(image_coord_list, point1[0], point1[1])
+#             images2 = find_image_indexes(image_coord_list, point2[0], point2[1])
+#             possible_choices = list(set(images1) & set(images2))
+#             if possible_choices == []:
+#                 logger.debug(
+#                     "This section is not contained in a single original image."
+#                 )
+#                 if mode == 1:
+#                     logger.debug("Removing the section..")
+#                     continue
+#                 elif mode == 2:
+#                     logger.debug("Choosing an image anyway")
+#                     possible_choices = list(set(images1) | set(images2))
+#                     if possible_choices == []:
+#                         logger.debug("No image containing the extremity of the segment")
+#                         logger.debug("Choosing a random image")
+#                         image_indexes.append(current_index)
+#                         new_sec = [
+#                             [point[0] - current_image[0], [point[1] - current_image[1]]]
+#                             for point in sec
+#                         ]
+#                         # TODO(FK): still a small problem with case where first section is failing
+#                         new_section_coord_list.append(new_sec)
+#             else:
+#                 index = possible_choices[0]  # NB(FK): we choose randomly
+#                 current_image = image_coord_list[index]
+#                 current_index = index
+#                 image_indexes.append(index)
+#                 new_sec = [
+#                     [point[0] - current_image[0], [point[1] - current_image[1]]]
+#                     for point in sec
+#                 ]
+#                 new_section_coord_list.append(new_sec)
+#     return image_indexes, new_section_coord_list
+
+
 def find_source_images_filtered(
     section_coord_list: List[Tuple[coord_int]], image_coord_list: List[Tuple[coord_int]]
 ) -> Tuple[List[int], List[Tuple[coord, coord]]]:
