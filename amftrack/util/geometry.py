@@ -20,7 +20,7 @@ def distance_point_pixel_line(point: coord, line: List[coord], step=1) -> float:
     NB: With a high n, the error will be mostly important for lines that are closed to the point.
     A point on a line, that should have a distance of 0 could have a distance of n for example.
     """
-
+    # NB: Could maybe speed up by generating a np array of all the relevant points before using `sum` and `square`
     pixel_indexes = generate_index_along_sequence(len(line), resolution=step, offset=0)
 
     # NB: we don't need norm here, the square root is expensive
