@@ -39,7 +39,7 @@ def run_stitch(directory: str, folders: pd.DataFrame) -> None:
     :param directory: is the folder containing the directories for each acquisition
     :param folder: is a pandas dataframe with information on the folder
     """
-    # TODO(FK): use a str not a pandas dataframe
+    # TODO(FK): Should encapsulate and factorize to have a version working with str instead of pd frame
     folder_list = list(folders["folder"])
     folder_list.sort()
     with tqdm(total=len(folder_list), desc="stitched") as pbar:

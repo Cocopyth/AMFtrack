@@ -394,7 +394,7 @@ class Experiment:
         trans = skel["t"]
         rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
 
-        ys, xs = round(rottrans[0]), round(rottrans[1])  # !!!!!!!!
+        ys, xs = round(rottrans[0]), round(rottrans[1])  # beware switching (y, x)
         tileconfig = pd.read_table(
             path_tile,
             sep=";",
