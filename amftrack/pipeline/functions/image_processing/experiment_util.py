@@ -70,7 +70,7 @@ def distance_point_edge(point: coord, edge: Edge, t: int, step=1):
 
 
 def aux_plot_edge(
-    edge: Edge, t: int, mode=0, points=10
+    edge: Edge, t: int, mode=0, points=10, f=None
 ) -> Tuple[np.array, List[coord]]:
     """
     This intermediary function returns the data that will be plotted.
@@ -90,6 +90,9 @@ def aux_plot_edge(
             l = [list_of_coord[i * pace] for i in range(number_points)]
             l.append(list_of_coord[-1])
             list_of_coord = l
+        elif mode == 3:
+            indexes = f(len(list_of_coord))
+            list_of_coord = [list_of_coord[i] for i in indexes]
 
     # Image index: we take the first one we find for the first node
     x, y = list_of_coord[0]
@@ -104,7 +107,7 @@ def aux_plot_edge(
     return im, list_of_coord_im
 
 
-def plot_edge(edge: Edge, t: int, mode=2, points=10, save_path=None):
+def plot_edge(edge: Edge, t: int, mode=2, points=10, save_path=None, f=None):
     """
     Plot the Edge in its source images, if one exists.
     :WARNING: If the edge is accross two image, only a part of the edge will be plotted
@@ -112,10 +115,12 @@ def plot_edge(edge: Edge, t: int, mode=2, points=10, save_path=None):
     - mode 0: only begin end end
     - mode 1: plot whole edge
     - mode 2: plot only a number of points
+    - mode 3: specify a function that chooses point indexes based on the length
     :param points: number of points to plot
     :param save_path: doesn't save if None, else save the image as `save_path`
+    :param f: function of the signature f(n:int)->List[int]
     """
-    im, list_of_coord_im = aux_plot_edge(edge, t, mode, points)
+    im, list_of_coord_im = aux_plot_edge(edge, t, mode, points, f)
     plt.imshow(im)
     for i in range(len(list_of_coord_im)):
         plt.plot(
@@ -125,11 +130,13 @@ def plot_edge(edge: Edge, t: int, mode=2, points=10, save_path=None):
         plt.savefig(save_path)
 
 
-def plot_edge_cropped(edge: Edge, t: int, mode=2, points=10, margin=50, save_path=None):
+def plot_edge_cropped(
+    edge: Edge, t: int, mode=2, points=10, margin=50, f=None, save_path=None
+):
     """
     Same as plot_edge but the image is cropped.
     """
-    im, list_of_coord_im = aux_plot_edge(edge, t, mode, points)
+    im, list_of_coord_im = aux_plot_edge(edge, t, mode, points, f)
     x_min = np.min([list_of_coord_im[i][0] for i in range(len(list_of_coord_im))])
     x_max = np.max([list_of_coord_im[i][0] for i in range(len(list_of_coord_im))])
     y_min = np.min([list_of_coord_im[i][1] for i in range(len(list_of_coord_im))])
@@ -142,7 +149,9 @@ def plot_edge_cropped(edge: Edge, t: int, mode=2, points=10, margin=50, save_pat
 
     list_of_coord_im = [[p[0] - x_min, p[1] - y_min] for p in list_of_coord_im]
     im = im[int(y_min) : int(y_max), int(x_min) : int(x_max)]
-    plt.imshow(im)
+
+    fig = plt.figure()
+    plt.imshow(im)  # TODO(FK): shouldn't plot in save mode
     for i in range(len(list_of_coord_im)):
         plt.plot(
             list_of_coord_im[i][0], list_of_coord_im[i][1], marker="x", color="red"
