@@ -43,12 +43,23 @@ class TestExperiment(unittest.TestCase):
         image_coord = self.exp.get_image_coords(0)
         self.assertIsNotNone(image_coord)
 
-    def test_general_to_image_coords(self):
+    def test_general_to_timestep_coords(self):
         self.exp.general_to_timestep([145, 345], 0)
         self.exp.timestep_to_general([12, 23], 0)
         a = np.array([12, 12.3])
-        b = self.exp.timestep_to_general(self.exp.timestep_to_general(a, 0), 0)
+        b = self.exp.timestep_to_general(self.exp.general_to_timestep(a, 0), 0)
+        c = self.exp.general_to_timestep(self.exp.timestep_to_general(a, 0), 0)
         np.testing.assert_array_almost_equal(a, b, 2)
+        np.testing.assert_array_almost_equal(a, c, 2)
+
+    def test_general_to_image_coords(self):
+        self.exp.image_to_general([145, 345], 0, 12)
+        self.exp.general_to_image([12, 23], 0, 15)
+        a = np.array([12, 12.3])
+        b = self.exp.image_to_general(self.exp.general_to_image(a, 0, 12), 0, 12)
+        c = self.exp.general_to_image(self.exp.image_to_general(a, 0, 15), 0, 15)
+        np.testing.assert_array_almost_equal(a, b, 2)
+        np.testing.assert_array_almost_equal(a, c, 2)
 
     def test_get_image(self):
         self.exp.get_image(0, 4)
