@@ -320,20 +320,20 @@ class Experiment:
         Take as input float coordinates `coord` the referential of timestep t
         and convert them into the general referential.
         """
-        old_coord = np.array(point).astype(dtype=np.float)
+        # WARNING: x an y must be inversed first
+        coord_reversed = np.array([point[1], point[0]]).astype(dtype=np.float)
         if self.image_transformation is None:
             raise Exception("Must load directories first")
         if self.image_transformation[t] is None:
             self.image_transformation[t] = self.load_image_transformation(t)
         R, t = self.image_transformation[t]
-        new_coord = np.dot(R, np.array(old_coord)) + t
+        new_coord = np.dot(R, np.array(coord_reversed)) + t
         return new_coord
 
     def general_to_image(self, point: coord, t: int, i: int) -> coord:
         """
-        Take as input float coordinates `coord` the general referential
-        and convert them into the coordinates in the source image `i`
-        of timestep t.
+        Take as input float coordinates of a `point` in the general referential
+        and convert them into the coordinates in the source image `i` of timestep t.
         """
         coord_timestep = self.general_to_timestep(point, t)
         image_position = self.get_image_coords(t)[i]
@@ -344,6 +344,10 @@ class Experiment:
         return new_coord
 
     def image_to_general(self, point: coord, t: int, i: int) -> coord:
+        """
+        Take as input float coordinates of a `point` in the image `i` at timestep `t`.
+        And return the coordinates of point in the general referential.
+        """
         image_position = self.get_image_coords(t)[i]
         coord_timestep = [
             point[0] + image_position[0],
