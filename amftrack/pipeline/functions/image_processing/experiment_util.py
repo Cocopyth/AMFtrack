@@ -104,7 +104,7 @@ def aux_plot_edge(
     return im, list_of_coord_im
 
 
-def plot_edge(edge: Edge, t: int, mode=2, points=10):
+def plot_edge(edge: Edge, t: int, mode=2, points=10, save_path=None):
     """
     Plot the Edge in its source images, if one exists.
     :WARNING: If the edge is accross two image, only a part of the edge will be plotted
@@ -113,6 +113,7 @@ def plot_edge(edge: Edge, t: int, mode=2, points=10):
     - mode 1: plot whole edge
     - mode 2: plot only a number of points
     :param points: number of points to plot
+    :param save_path: doesn't save if None, else save the image as `save_path`
     """
     im, list_of_coord_im = aux_plot_edge(edge, t, mode, points)
     plt.imshow(im)
@@ -120,9 +121,11 @@ def plot_edge(edge: Edge, t: int, mode=2, points=10):
         plt.plot(
             list_of_coord_im[i][0], list_of_coord_im[i][1], marker="x", color="red"
         )
+    if save_path is not None:
+        plt.savefig(save_path)
 
 
-def plot_edge_cropped(edge: Edge, t: int, mode=2, points=10, margin=50):
+def plot_edge_cropped(edge: Edge, t: int, mode=2, points=10, margin=50, save_path=None):
     """
     Same as plot_edge but the image is cropped.
     """
@@ -144,6 +147,8 @@ def plot_edge_cropped(edge: Edge, t: int, mode=2, points=10, margin=50):
         plt.plot(
             list_of_coord_im[i][0], list_of_coord_im[i][1], marker="x", color="red"
         )
+    if save_path is not None:
+        plt.savefig(save_path)
 
 
 def plot_edge_mask(edge: Edge, t: int):
