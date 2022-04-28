@@ -337,11 +337,20 @@ class Experiment:
         """
         coord_timestep = self.general_to_timestep(point, t)
         image_position = self.get_image_coords(t)[i]
-        new_coord = (
+        new_coord = [
             coord_timestep[0] - image_position[0],
             coord_timestep[1] - image_position[1],
-        )
+        ]
         return new_coord
+
+    def image_to_general(self, point: coord, t: int, i: int) -> coord:
+        image_position = self.get_image_coords(t)[i]
+        coord_timestep = [
+            point[0] + image_position[0],
+            point[1] + image_position[1],
+        ]
+        coord_general = self.timestep_to_general(coord_timestep, t)
+        return coord_general
 
     def get_image_coords(self, t: int) -> List[coord_int]:
         """
