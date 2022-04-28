@@ -2,23 +2,36 @@ import os
 import random
 import json
 import numpy as np
+import logging
+import pandas as pd
 
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Edge,
 )
+from amftrack.util.geometry import generate_index_along_sequence
 from amftrack.util.sys import data_path
 from typing import Dict, List
 from amftrack.util.aliases import coord
 from amftrack.util.image_analysis import convert_to_micrometer
 from amftrack.pipeline.functions.image_processing.experiment_util import (
     find_nearest_edge,
+    plot_edge_cropped,
 )
+from amftrack.pipeline.functions.image_processing.extract_width_fun import (
+    extract_section_profiles_for_edge,
+)
+from amftrack.util.sys import data_path
+import cv2
+
+logger = logging.getLogger(os.path.basename(__file__))
+logger.setLevel(logging.DEBUG)
 
 
 def fetch_labels(directory: str) -> Dict[str, List[coord]]:
     """
-    Go fetch the labels in the directory.
+    Go fetch the labels of width in the `directory`.
+    The labels are set with `line_segment` of `labelme` labelling application.
     :return: directory with image names as key and list of segments as values
     """
 
@@ -46,10 +59,10 @@ def fetch_labels(directory: str) -> Dict[str, List[coord]]:
 
 def label_edges(exp: Experiment, t: int) -> Dict[Edge, float]:
     """
-    NB: the label are supposed to be in the same folder as the images
-    :return: each labeled edge with its width
+    Fetch the labels, process them and attribute them to their respective edge.
+    NB: labels are supposed to be in the same folder as the images
+    :return: a dictionnary associating edges with their width
     """
-    # TODO(FK): fix error, coordinates are weird
 
     label_directory = os.path.join(
         exp.directory, "20220325_1423_Plate907", "Img"
@@ -81,7 +94,78 @@ def label_edges(exp: Experiment, t: int) -> Dict[Edge, float]:
                 edges_widths[edge] = [width]
 
     edges_width_mean = {}
-    for key, list_of_width in edges_width_mean.items():
+    for key, list_of_width in edges_widths.items():
         edges_width_mean[key] = np.mean(list_of_width)
 
     return edges_width_mean
+
+
+def make_extended_dataset(exp: Experiment, t: 0, dataset_name="dataset_test"):
+    """
+    This function proceeds with the following steps:
+    - fetching the labels and processing them from segment to a width value
+    - assign each label to its respective edge
+    - extract slices along each labeled edge and assign them the width of the edge as label
+    - create and save the data set
+    :dataset_name: name of the dataset folder, it will be placed in the `data_path`
+    NB: the images must have been labeled fist
+    At the end the dataset contains
+    - `Preview` folder contains the original hypha image with the points where slices where extracted
+    - `Img` contains the slices, grouped per hypha
+    - `data.csv` contains the label and other information
+    """
+    # Parameters
+    resolution = 5
+    offset = 5
+    edge_length_limit = 30
+
+    # Make the dataset repository structure
+    dataset_directory = os.path.join(data_path, dataset_name)
+    if not os.path.isdir(dataset_directory):
+        os.mkdir(dataset_directory)
+    image_directory = os.path.join(dataset_directory, "Img")
+    if not os.path.isdir(image_directory):
+        os.mkdir(image_directory)
+    preview_directory = os.path.join(dataset_directory, "Preview")
+    if not os.path.isdir(preview_directory):
+        os.mkdir(preview_directory)
+
+    # Fect edges and labels
+    edges_width_mean = label_edges(exp, t)
+
+    data = {"edge": [], "width": []}  # TODO(FK): add (x, y for each slice)
+
+    f = lambda n: generate_index_along_sequence(n, resolution, offset)
+
+    for edge, width in edges_width_mean.items():
+        if len(edge.pixel_list(t)) > edge_length_limit:
+            edge_name = f"{str(edge.begin)}-{str(edge.end)}"
+            # Extracting and saving profiles
+            profiles = extract_section_profiles_for_edge(
+                exp,
+                t,
+                edge,
+                resolution=resolution,
+                offset=offset,
+                step=5,
+                target_length=120,
+            )
+            image_name = edge_name + ".png"
+            image_path = os.path.join(image_directory, image_name)
+            cv2.imwrite(image_path, profiles)
+            # Add information to the csv
+            data["edge"].append(edge_name)
+            data["width"].append(width)
+            # Create preview
+            plot_edge_cropped(
+                edge,
+                t,
+                mode=3,
+                f=f,
+                save_path=os.path.join(preview_directory, edge_name),
+            )
+        else:
+            logging.debug("Removing small root..")
+
+    info_df = pd.DataFrame(data)
+    info_df.to_csv(os.path.join(dataset_directory, "data.csv"))
