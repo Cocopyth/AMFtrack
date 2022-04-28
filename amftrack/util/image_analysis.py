@@ -28,7 +28,8 @@ def find_image_index(im_coord_list, x: float, y: float):
 
 def find_image_indexes(im_coord_list, x: float, y: float):
     """
-    Find the images that contain the coordinates (x, y)
+    Find the images that contain the coordinates
+    contained in the list of (x, y) coordinates.
     """
     l = []
     for (i, (x_im, y_im)) in enumerate(im_coord_list):

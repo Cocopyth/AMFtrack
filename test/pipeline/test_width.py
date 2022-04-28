@@ -11,12 +11,42 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 from amftrack.pipeline.functions.image_processing.extract_width_fun import (
     generate_pivot_indexes,
     compute_section_coordinates,
-    find_source_images,
     extract_section_profiles_for_edge,
+    find_source_images_filtered,
 )
 from amftrack.pipeline.functions.image_processing.experiment_util import get_random_edge
 
 from test import helper
+
+
+class TestWidthLight(unittest.TestCase):
+    def test_find_source_images_filtered(self):
+        sec1 = [[1500, 1500], [1500, 1600]]  # in image 1
+        sec2 = [[1500, 1500], [4000, 1500]]  # in image 1 and partially in 3
+        sec3 = [[4000, 1500], [4500, 1500]]  # in image 3 and partially in 1
+        sec4 = [[5000, 1500], [0, 1500]]  # in no image
+        image1 = [0, 0]
+        image2 = [10000, 10000]
+        image3 = [3900, 0]
+
+        im_indexes, sections = find_source_images_filtered(
+            [sec1, sec2, sec3, sec4], [image1, image2, image3]
+        )
+        self.assertListEqual(im_indexes, [0, 0, 2])
+        self.assertListEqual(sections[2][0], [100, 1500])
+
+    def test_compute_section_coordinates(self):
+        pixel_list = [
+            [1, 2],
+            [1, 3],
+            [3, 3],
+            [11, 2],
+            [11, 4],
+            [15, 15],
+            [16, 16],
+            [22, 4],
+        ]
+        compute_section_coordinates(pixel_list, pivot_indexes=[3, 4], step=2)
 
 
 class TestWidth(unittest.TestCase):
@@ -34,27 +64,6 @@ class TestWidth(unittest.TestCase):
         cls.exp = Experiment(plate, directory)
         cls.exp.load(
             selected_df.loc[selected_df["folder"] == directory_name], labeled=False
-        )
-
-    def test_compute_section_coordinates(self):
-        pixel_list = [
-            [1, 2],
-            [1, 3],
-            [3, 3],
-            [11, 2],
-            [11, 4],
-            [15, 15],
-            [16, 16],
-            [22, 4],
-        ]
-        compute_section_coordinates(pixel_list, pivot_indexes=[3, 4], step=2)
-
-    def test_find_source_images(self):
-        edge = get_random_edge(self.exp, 0)
-        pixel_list = edge.pixel_list(0)
-        pixel_indexes = [len(pixel_list) // 2]
-        find_source_images(
-            compute_section_coordinates(pixel_list, pixel_indexes, step=2), self.exp, 0
         )
 
     def test_extract_section_profiles_for_edge(self):

@@ -12,6 +12,9 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_random_edge,
     distance_point_edge,
+    plot_edge,
+    plot_edge_mask,
+    plot_edge_cropped,
 )
 from test import helper
 
@@ -37,6 +40,18 @@ class TestExperiment(unittest.TestCase):
     def test_get_random_edge(self):
         get_random_edge(self.exp)
         get_random_edge(self.exp)
+
+    def test_plot_edge(self):
+        edge = get_random_edge(self.exp)
+        plot_edge(edge, 0)
+
+    def test_plot_edge_mask(self):
+        edge = get_random_edge(self.exp)
+        plot_edge_mask(edge, 0)
+
+    def test_plot_edge_cropped(self):
+        edge = get_random_edge(self.exp)
+        plot_edge_cropped(edge, 0)
 
 
 class TestExperimentLight(unittest.TestCase):
