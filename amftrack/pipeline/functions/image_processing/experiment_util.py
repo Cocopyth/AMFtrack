@@ -16,6 +16,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 from amftrack.util.geometry import (
     generate_index_along_sequence,
     distance_point_pixel_line,
+    get_closest_line_opt,
 )
 
 
@@ -25,6 +26,28 @@ def get_random_edge(exp: Experiment, t=0) -> Edge:
     edge_coord = choice(list(G.edges))
     edge = Edge(Node(edge_coord[0], exp), Node(edge_coord[1], exp), exp)
     return edge
+
+
+def get_all_edges(exp: Experiment, t: int) -> List[Edge]:
+    """
+    Return a list of all Edge objects at timestep t in the `experiment`
+    """
+    (G, pos) = exp.nx_graph[t], exp.positions[t]
+    return [
+        Edge(Node(edge_coord[0], exp), Node(edge_coord[1], exp), exp)
+        for edge_coord in list(G.edges)
+    ]
+
+
+def find_nearest_edge(point: coord, exp: Experiment, t: int) -> Edge:
+    """
+    Find the nearest edge to `point` in `exp` at timestep `t`.
+    The coordonates are given in the GENERAL ref.
+    :return: Edge object
+    """
+    edges = get_all_edges(exp, t)
+    l = [edge.pixel_list(t) for edge in edges]
+    return edges[get_closest_line_opt(point, l)[0]]
 
 
 def distance_point_edge(point: coord, edge: Edge, t: int, step=1):
