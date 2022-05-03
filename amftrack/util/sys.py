@@ -183,6 +183,7 @@ def update_plate_info_local(directory: str) -> None:
     listdir = os.listdir(directory)
     source = f"/data_info.json"
 
+    # TODO(FK): Crashes when data_info is empty or not present
     with open(target) as f:
         plate_info = json.load(f)
 
