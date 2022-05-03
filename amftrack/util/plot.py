@@ -34,3 +34,22 @@ def pixel_list_to_matrix(pixels: List[coord_int], margin=0) -> np.array:
     for pixel in pixels:
         M[pixel[0] - x_min + margin][pixel[1] - y_min + margin] = 1
     return M
+
+
+def crop_image(matrix: np.array, region: List[coord_int]):
+    """
+    Crops the image to the given region.
+    This is a robust function to avoid error when regions are out of bound.
+    The coords are supposed to be this way: image[y][x]
+    Thus the shape is (dim_y, dim_x)
+    :param region: [[1, 2], [10, 10]] for example
+    """
+
+    dim_x = matrix.shape[1]
+    dim_y = matrix.shape[0]
+    x_min = np.min([np.max([0, np.min([region[0][0], region[1][0]])]), dim_x])
+    x_max = np.max([np.min([dim_x, np.max([region[0][0], region[1][0]])]), 0])
+    y_min = np.min([np.max([0, np.min([region[0][1], region[1][1]])]), dim_y])
+    y_max = np.max([np.min([dim_y, np.max([region[0][1], region[1][1]])]), 0])
+
+    return matrix[y_min:y_max, x_min:x_max]
