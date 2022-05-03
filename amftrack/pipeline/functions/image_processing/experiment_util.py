@@ -1,23 +1,24 @@
 from random import choice
 import numpy as np
 from typing import List, Tuple
-
-from amftrack.util.aliases import coord_int, coord
+import cv2 as cv
 import matplotlib.pyplot as plt
 
 from amftrack.util.aliases import coord_int, coord
-
+from amftrack.util.param import DIM_X, DIM_Y
 from amftrack.util.image_analysis import is_in_image
-from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
-    Experiment,
-    Node,
-    Edge,
-)
 from amftrack.util.geometry import (
     generate_index_along_sequence,
     distance_point_pixel_line,
     get_closest_line_opt,
 )
+from amftrack.util.plot import crop_image
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
+    Experiment,
+    Node,
+    Edge,
+)
+
 
 
 def get_random_edge(exp: Experiment, t=0) -> Edge:
@@ -110,6 +111,7 @@ def aux_plot_edge(
 def plot_edge(edge: Edge, t: int, mode=2, points=10, save_path=None, f=None):
     """
     Plot the Edge in its source images, if one exists.
+    It plots the points of the pixel list (after the hypha has been thined).
     :WARNING: If the edge is accross two image, only a part of the edge will be plotted
     :param mode:
     - mode 0: only begin end end
@@ -134,7 +136,7 @@ def plot_edge_cropped(
     edge: Edge, t: int, mode=2, points=10, margin=50, f=None, save_path=None
 ):
     """
-    Same as plot_edge but the image is cropped.
+    Same as plot_edge but the image is cropped with a margin around points of interest.
     """
     im, list_of_coord_im = aux_plot_edge(edge, t, mode, points, f)
     x_min = np.min([list_of_coord_im[i][0] for i in range(len(list_of_coord_im))])
@@ -143,7 +145,7 @@ def plot_edge_cropped(
     y_max = np.max([list_of_coord_im[i][1] for i in range(len(list_of_coord_im))])
 
     x_min = np.max([0, x_min - margin])
-    x_max = np.min([im.shape[1], x_max + margin])  # NB: Careful: inversion (
+    x_max = np.min([im.shape[1], x_max + margin])  # NB: Careful: inversion
     y_min = np.max([0, y_min - margin])
     y_max = np.min([im.shape[0], y_max + margin])
 
@@ -172,3 +174,77 @@ def plot_edge_mask(edge: Edge, t: int):
         if is_in_image(0, 0, x, y):
             im[int(y)][int(x)] = 250  # Careful with the order
     plt.imshow(im)
+
+
+
+def reconstruct_image(exp: Experiment, t: int, downsizing=1) -> np.array:
+    """
+    This function reconstructs the full size image at timestep t and return it as an np array.
+    :param downsizing: factor by which the image is downsized, 1 returns the original image
+    WARNING: the image is a very heavy object (2 Go)
+    NB: To plot objects in this image, the TIMESTEP referential must be used
+    """
+    if exp.image_coordinates is None:
+        exp.load_tile_information(t)
+
+    image_coodinates = exp.image_coordinates[t]
+
+    # Find the maximum dimension
+    m_x = np.max([c[0] for c in image_coodinates])
+    m_y = np.max([c[1] for c in image_coodinates])
+
+    # Dimensions
+    d_x = int(m_x + DIM_X)
+    d_y = int(m_y + DIM_Y)
+
+    # Create the general image frame
+    full_im = np.ones((d_y, d_x), dtype=np.uint8)
+
+    # Copy each image into the frame
+    for i, im_coord in enumerate(image_coodinates):
+        im = exp.get_image(t, i)
+        im_coord = [
+            int(im_coord[0]),
+            int(im_coord[1]),
+        ]  # original im coordinates are float
+        full_im[
+            im_coord[1] : im_coord[1] + DIM_Y, im_coord[0] : im_coord[0] + DIM_X
+        ] = im
+
+    full_im = cv.resize(
+        full_im, (full_im.shape[0] // downsizing, full_im.shape[1] // downsizing)
+    )
+
+    return full_im
+
+
+def plot_full_image(
+    exp: Experiment, t: int, downsizing=10, save="", region: List[coord_int] = None
+) -> np.array:
+    """
+    This function plots the full size image at timestep t.
+    :param downsizing: factor by which the image is downsized
+    :param save: path (including the file name) where we want to store the image
+    :param region: two points that delimit a square to extract from the image.
+    NB: the two points for region are given in the TIMESTEP referential
+    WARNING: the image is a very heavy object (2 Go), without downsizing it can crash
+    """
+    full_im = reconstruct_image(exp, t, downsizing=downsizing)
+    dim_x = full_im.shape[1]  # careful with the order
+    dim_y = full_im.shape[0]
+
+    if region != None:
+        for i in range(2):
+            for j in range(2):
+                region[i][j] = region[i][j] // downsizing
+        full_im = crop_image(full_im, region)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.imshow(full_im, cmap="gray", interpolation="none")
+    if save:
+        plt.savefig(save)
+        plt.close(fig)
+    else:
+        plt.show()
+
