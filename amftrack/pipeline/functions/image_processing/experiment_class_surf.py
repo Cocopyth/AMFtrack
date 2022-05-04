@@ -768,7 +768,8 @@ class Node:
         If tp1 is not provided:
         This function plots the original image from time t containing the node.
         As there can be several original images (because of overlap), the
-        darker image is choosen
+        darker image is choosen. This behavior is for consistency, to have the most chance
+        of choosing the same image.
         If tp1 is provided:
         This function plots the original images from time t and tp1 on one another
         """
