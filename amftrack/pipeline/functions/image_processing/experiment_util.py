@@ -18,6 +18,8 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Node,
     Edge,
 )
+from amftrack.util.sparse import dilate_coord_list
+from random import randrange
 
 
 
@@ -162,18 +164,46 @@ def plot_edge_cropped(
         plt.savefig(save_path)
 
 
-def plot_edge_mask(edge: Edge, t: int):
+def plot_edge_skeleton(edge: Edge, t: int, downsizing=5, dilation=50):
     """
-    Plot the Edge skeletton in its source images.
-    TODO(FK): not working for now, we don't see anything
+    PROV
+    This function plots an edge on the original image.
+    :param downsizing: factor by which we reduce the image resolution (5 -> image 25 times lighter)
+    :param dilation: thickness of the hyphas
     """
-    im, list_of_coord_im = aux_plot_edge(edge, t, mode=1)
-    m = np.max(im)
-    for coord in list_of_coord_im:
-        x, y = coord[0], coord[1]
-        if is_in_image(0, 0, x, y):
-            im[int(y)][int(x)] = 250  # Careful with the order
-    plt.imshow(im)
+    # TODO(FK): plot better
+    exp = edge.experiment
+    f = lambda c: list(
+        (np.array(exp.general_to_timestep(c, t)) / downsizing).astype(int)
+    )
+    # Construct the edge
+    # kernel = np.ones((dilation, dilation), np.uint8)
+    # skel = pixel_list_to_matrix(edge.pixel_list(t), margin=dilation)
+    # dilated_skel = cv.dilate(skel.astype(np.uint8), kernel, iterations=1)
+    # ------------------
+    skel = [f(coordinates) for coordinates in edge.pixel_list(t)]
+    # TODO(FK): add dilation warning with np coordinates
+    size = int(dilation / downsizing)
+    dilated_skel = dilate_coord_list(skel, iteration=size)
+    # Chose a color
+    color = np.array(
+        [randrange(255), randrange(255), randrange(255)]
+    )  # TODO (FK): make it prettier
+    # ------------------
+    # Generate the full image and convert it to a
+    im = reconstruct_image(exp, t, downsizing=downsizing)  # greyscale image downsided
+    im_ = np.reshape(im, (im.shape[0], im.shape[1], 1))
+    im_rgb = np.concatenate((im_, im_, im_), axis=2)  # QUICKFIX
+    # Add the edge on it
+
+    # Plot
+    for c in dilated_skel:
+        # TODO check if out of bound here
+        x, y = c[0], c[1]
+        im_rgb[x][y][:] = color
+
+    plt.imshow(im_rgb)
+
 
 
 
