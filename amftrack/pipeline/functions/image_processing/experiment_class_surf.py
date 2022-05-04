@@ -769,7 +769,6 @@ class Node:
         This function plots the original image from time t containing the node.
         As there can be several original images (because of overlap), the
         darker image is choosen
-        TODO(FK): (why?)
         If tp1 is provided:
         This function plots the original images from time t and tp1 on one another
         """
