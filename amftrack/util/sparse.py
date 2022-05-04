@@ -4,10 +4,11 @@ from amftrack.util.aliases import coord_int
 
 def dilate_coord_list(coordinates: List[coord_int], iteration=1) -> List[coord_int]:
     """
-    This functions add to the list of coordinates all points that are neigboors to
-    points in the original coord list.
-    It is equivalent to cv.dilate with a kernel of 3.
+    This functions adds to the list of coordinates all points that are neighbors to
+    points in the original coord list. It is equivalent to cv.dilate with a kernel of 3.
+    Iteration enables to do this operation recursively to dilate several times.
     :param iteration: iteration of 2 is like a kernel of 5, 3 is a kernel of 7, ..
+    WARNING: This function doesn't work with a list of np.array.
     """
 
     if iteration == 0:
