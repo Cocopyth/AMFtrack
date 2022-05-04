@@ -1,4 +1,5 @@
 from random import choice
+from cv2 import edgePreservingFilter
 import numpy as np
 from typing import List, Tuple
 import cv2 as cv
@@ -18,6 +19,8 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Node,
     Edge,
 )
+from amftrack.util.sparse import dilate_coord_list
+from random import randrange
 
 # Prov
 from pymatreader import read_mat
@@ -166,29 +169,66 @@ def plot_edge_cropped(
         plt.savefig(save_path)
 
 
-def plot_edge_skeleton(edge: Edge, t: int, dilation=5):
+def plot_full_image_with_features(
+    exp: Experiment, edges: List[Edge], t: int, downsizing=5, dilation=50
+):
     """
-    TODO(FK): not working for now, we don't see anything
+    PROV
+    This function plots an edge on the original image.
+    :param downsizing: factor by which we reduce the image resolution (5 -> image 25 times lighter)
+    :param dilation: thickness of the hyphas
     """
+    # TODO(FK): plot better
+    f = lambda c: list(
+        (np.array(exp.general_to_timestep(c, t)) / downsizing).astype(int)
+    )  # TODO(FK) could be simplified (less)
+    im = reconstruct_image(exp, t, downsizing=downsizing)  # greyscale image downsided
     # Construct the edge
-    kernel = np.ones((dilation, dilation), np.uint8)
-    skel = pixel_list_to_matrix(edge.pixel_list(t), margin=dilation)
-    dilated_skel = cv.dilate(skel.astype(np.uint8), kernel, iterations=1)
+    # kernel = np.ones((dilation, dilation), np.uint8)
+    # skel = pixel_list_to_matrix(edge.pixel_list(t), margin=dilation)
+    # dilated_skel = cv.dilate(skel.astype(np.uint8), kernel, iterations=1)
 
-    skel_pixel = edge.pixel_list(t)
+    # Construct edge layer
+    # Generate the full image and convert it to a
+    # TODO(FK): make another layer
+    im_ = np.reshape(im, (im.shape[0], im.shape[1], 1))
+    im_rgb = np.concatenate((im_, im_, im_), axis=2)  # QUICKFIX
+    for edge in edges:
+        skel = [f(coordinates) for coordinates in edge.pixel_list(t)]
+        # TODO(FK): add dilation warning with np coordinates
+        size = int(dilation / downsizing)
+        dilated_skel = dilate_coord_list(skel, iteration=size)
+        # Chose a color
+        color = np.array(
+            [randrange(255), randrange(255), randrange(255)]
+        )  # TODO (FK): make it prettier
+        # ------------------
+        # Add the edge on it
 
-    # Find its coordinates in the image
+        # Plot
+        for c in dilated_skel:
+            # TODO check if out of bound here
+            x, y = c[0], c[1]
+            im_rgb[x][y][:] = color
 
-    # Generate the full image
-    # Add the edge on it
-    # Plot
-    im, list_of_coord_im = aux_plot_edge(edge, t, mode=1)
-    m = np.max(im)
-    for coord in list_of_coord_im:
-        x, y = coord[0], coord[1]
-        if is_in_image(0, 0, x, y):
-            im[int(y)][int(x)] = 250  # Careful with the order
-    plt.imshow(im)
+    plt.imshow(im_rgb)
+
+
+def plot_full_image_with_skel(exp: Experiment, t: int, downsizing=5) -> None:
+    # PROV
+    """
+    This funtions
+    Using plot_t_tp1
+    Display the full image, image quality lowered and with the skeletton on top
+    """
+    directory = os.path.join(exp.directory, "20220325_1423_Plate907")
+    kernel = np.ones((5, 5), np.uint8)
+    skel_info = read_mat(directory + "/Analysis/skeleton_pruned_compressed.mat")
+    skel = skel_info["skeleton"]
+    dilated = cv2.dilate(skel.astype(np.uint8), kernel, iterations=1)
+    im = read_mat(directory + "/Analysis/raw_image.mat")["raw"]
+    plt.close("all")
+    plot_t_tp1([], [], None, None, dilated, im)
 
 
 def plot_full_image_with_skel(exp: Experiment, t: int, downsizing=5) -> None:
@@ -288,6 +328,7 @@ def plot_full_image_with_edges(
     save="",
     region: List[coord_int] = None,
 ) -> np.array:
+    # BROUILLON
     full_im = reconstruct_image(exp, t, downsizing=downsizing)
 
     for edge in edges:
@@ -320,12 +361,12 @@ if __name__ == "__main__":
     )
     import os
 
-    # directory_name = "width1"
-    # plate_name = "20220325_1423_Plate907"
-    # directory = os.path.join(data_path, directory_name, "full_plates") + "/"
+    directory_name = "width1"
+    plate_name = "20220325_1423_Plate907"
+    directory = os.path.join(data_path, directory_name, "full_plates") + "/"
 
-    plate_name = "20220330_2357_Plate19"
-    directory = data_path + "/"
+    # plate_name = "20220330_2357_Plate19"
+    # directory = data_path + "/"
 
     update_plate_info_local(directory)
     folder_df = get_current_folders_local(directory)
@@ -340,4 +381,6 @@ if __name__ == "__main__":
     # plot_full_image(exp, 0)
 
     # plot_full_image(exp, 0, downsizing=10, region=([1000, 1000], [10000, 10000]))
-    plot_full_image(exp, 0, downsizing=10, region=[[1000, 1000], [10000, 10000]])
+    # plot_full_image(exp, 0, downsizing=10, region=[[1000, 1000], [10000, 10000]])
+    edges = [get_random_edge(exp, 0) for _ in range(10)]
+    plot_full_image_with_features(exp, edges, 0, 5, 50)

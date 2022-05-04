@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 from amftrack.util.sys import data_path
-from amftrack.ml.width_training import fetch_labels, label_edges
+from amftrack.ml.width_training import fetch_labels, label_edges, make_extended_dataset
 from amftrack.util.sys import (
     update_plate_info_local,
     get_current_folders_local,
@@ -17,14 +17,14 @@ from test import helper
 
 class TestWidthTrainingLight(unittest.TestCase):
 
-    path = "/media/felix/KINGSTON/20220325_1423_Plate907/Img"
+    path = "/media/kahane/KINGSTON/20220325_1423_Plate907/Img"
     fetch_labels(path)
 
 
 class TestWidthTraining(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        directory = "/media/felix/KINGSTON/"
+        directory = "/media/kahane/KINGSTON/"
         plate_name = "20220325_1423_Plate907"
         update_plate_info_local(directory)
         folder_df = get_current_folders_local(directory)
@@ -41,3 +41,6 @@ class TestWidthTraining(unittest.TestCase):
 
     def test_label_egdes(self):
         label_edges(self.exp, 0)
+
+    def test_make_extended_dataset(self):
+        make_extended_dataset(self.exp, 0)

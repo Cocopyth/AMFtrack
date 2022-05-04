@@ -16,6 +16,7 @@ import dropbox
 from time import time_ns
 from decouple import Config, RepositoryEnv
 from pymatreader import read_mat
+import shutil
 
 DOTENV_FILE = (
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -183,9 +184,16 @@ def update_plate_info_local(directory: str) -> None:
     listdir = os.listdir(directory)
     source = f"/data_info.json"
 
-    # TODO(FK): Crashes when data_info is empty or not present
-    with open(target) as f:
-        plate_info = json.load(f)
+    # TODO(FK): Crashes when there is no basic file
+    try:
+        with open(target) as f:
+            plate_info = json.load(f)
+    except:
+        s = "/home/ipausers/kahane/Wks/AMFtrack/template_data_info.json"
+        dest = os.path.join(data_path, "data_info.json")
+        shutil.copy(s, dest)
+        with open(target) as f:
+            plate_info = json.load(f)
 
     # plate_info = json.load(open(target, "r"))
     with tqdm(total=len(listdir), desc="analysed") as pbar:
