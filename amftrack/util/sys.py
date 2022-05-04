@@ -185,15 +185,17 @@ def update_plate_info_local(directory: str) -> None:
     source = f"/data_info.json"
 
     # TODO(FK): Crashes when there is no basic file
-    try:
-        with open(target) as f:
-            plate_info = json.load(f)
-    except:
-        s = "/home/ipausers/kahane/Wks/AMFtrack/template_data_info.json"
-        dest = os.path.join(data_path, "data_info.json")
-        shutil.copy(s, dest)
-        with open(target) as f:
-            plate_info = json.load(f)
+    # try:
+    #     with open(target) as f:
+    #         plate_info = json.load(f)
+    # except:
+    #     s = "/home/ipausers/kahane/Wks/AMFtrack/template_data_info.json"
+    #     dest = os.path.join(data_path, "data_info.json")
+    #     shutil.copy(s, dest)
+    #     with open(target) as f:
+    #         plate_info = json.load(f)
+    with open(target) as f:
+        plate_info = json.load(f)
 
     # plate_info = json.load(open(target, "r"))
     with tqdm(total=len(listdir), desc="analysed") as pbar:
