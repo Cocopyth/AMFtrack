@@ -283,7 +283,7 @@ def reconstruct_image(exp: Experiment, t: int, downsizing=1) -> np.array:
         ] = im
 
     full_im = cv.resize(
-        full_im, (full_im.shape[0] // downsizing, full_im.shape[1] // downsizing)
+        full_im, (full_im.shape[1] // downsizing, full_im.shape[0] // downsizing)
     )
 
     return full_im
