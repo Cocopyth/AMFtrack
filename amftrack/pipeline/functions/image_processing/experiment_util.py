@@ -12,13 +12,17 @@ from amftrack.util.geometry import (
     distance_point_pixel_line,
     get_closest_line_opt,
 )
-from amftrack.util.plot import crop_image
+from amftrack.util.plot import crop_image, pixel_list_to_matrix
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Node,
     Edge,
 )
 
+# Prov
+from pymatreader import read_mat
+import cv2
+from amftrack.plotutil import plot_t_tp1
 
 
 def get_random_edge(exp: Experiment, t=0) -> Edge:
@@ -162,11 +166,22 @@ def plot_edge_cropped(
         plt.savefig(save_path)
 
 
-def plot_edge_mask(edge: Edge, t: int):
+def plot_edge_skeleton(edge: Edge, t: int, dilation=5):
     """
-    Plot the Edge skeletton in its source images.
     TODO(FK): not working for now, we don't see anything
     """
+    # Construct the edge
+    kernel = np.ones((dilation, dilation), np.uint8)
+    skel = pixel_list_to_matrix(edge.pixel_list(t), margin=dilation)
+    dilated_skel = cv.dilate(skel.astype(np.uint8), kernel, iterations=1)
+
+    skel_pixel = edge.pixel_list(t)
+
+    # Find its coordinates in the image
+
+    # Generate the full image
+    # Add the edge on it
+    # Plot
     im, list_of_coord_im = aux_plot_edge(edge, t, mode=1)
     m = np.max(im)
     for coord in list_of_coord_im:
@@ -175,6 +190,22 @@ def plot_edge_mask(edge: Edge, t: int):
             im[int(y)][int(x)] = 250  # Careful with the order
     plt.imshow(im)
 
+
+def plot_full_image_with_skel(exp: Experiment, t: int, downsizing=5) -> None:
+    # PROV
+    """
+    This funtions
+    Using plot_t_tp1
+    Display the full image, image quality lowered and with the skeletton on top
+    """
+    directory = os.path.join(exp.directory, "20220325_1423_Plate907")
+    kernel = np.ones((5, 5), np.uint8)
+    skel_info = read_mat(directory + "/Analysis/skeleton_pruned_compressed.mat")
+    skel = skel_info["skeleton"]
+    dilated = cv2.dilate(skel.astype(np.uint8), kernel, iterations=1)
+    im = read_mat(directory + "/Analysis/raw_image.mat")["raw"]
+    plt.close("all")
+    plot_t_tp1([], [], None, None, dilated, im)
 
 
 def reconstruct_image(exp: Experiment, t: int, downsizing=1) -> np.array:
@@ -248,3 +279,65 @@ def plot_full_image(
     else:
         plt.show()
 
+
+def plot_full_image_with_edges(
+    exp: Experiment,
+    t: int,
+    edges: List[Edge],
+    downsizing=10,
+    save="",
+    region: List[coord_int] = None,
+) -> np.array:
+    full_im = reconstruct_image(exp, t, downsizing=downsizing)
+
+    for edge in edges:
+        a = 1
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.imshow(full_im, cmap="gray", interpolation="none")
+    if save:
+        plt.savefig(save)
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+
+    # directory = "/data/felix/width1/full_plates/"  # careful: must have the / at the end
+    # # update_plate_info(directory)
+    # folder_df = get_current_folders(directory)
+    # folders = folder_df.loc[folder_df["Plate"] == "907"]
+    # time = "3:00:00"
+    # threshold = 0.1
+    # args = [threshold, directory]
+    # run("prune_skel.py", args, folders)
+    from amftrack.util.sys import (
+        update_plate_info_local,
+        get_current_folders_local,
+        data_path,
+    )
+    import os
+
+    # directory_name = "width1"
+    # plate_name = "20220325_1423_Plate907"
+    # directory = os.path.join(data_path, directory_name, "full_plates") + "/"
+
+    plate_name = "20220330_2357_Plate19"
+    directory = data_path + "/"
+
+    update_plate_info_local(directory)
+    folder_df = get_current_folders_local(directory)
+    selected_df = folder_df.loc[folder_df["folder"] == plate_name]
+    i = 0
+    plate = int(list(selected_df["folder"])[i].split("_")[-1][5:])
+    folder_list = list(selected_df["folder"])
+    directory_name = folder_list[i]
+    exp = Experiment(plate, directory)
+    exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
+    exp.load_tile_information(0)
+    # plot_full_image(exp, 0)
+
+    # plot_full_image(exp, 0, downsizing=10, region=([1000, 1000], [10000, 10000]))
+    plot_full_image(exp, 0, downsizing=10, region=[[1000, 1000], [10000, 10000]])
