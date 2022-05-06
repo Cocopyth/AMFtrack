@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import unittest
+import matplotlib.pyplot as plt
 from amftrack.util.sys import (
     update_plate_info_local,
     get_current_folders_local,
@@ -13,10 +14,10 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_random_edge,
     distance_point_edge,
     plot_edge,
-    plot_edge_mask,
     plot_edge_cropped,
+    find_nearest_edge,
 )
-from amftrack.util.sys import data_path
+from amftrack.util.sys import test_path
 from test import helper
 
 
@@ -24,19 +25,7 @@ from test import helper
 class TestExperiment(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        directory = test_path + "/"  # TODO(FK): fix this error
-        plate_name = "20220330_2357_Plate19"
-        update_plate_info_local(directory)
-        folder_df = get_current_folders_local(directory)
-        selected_df = folder_df.loc[folder_df["folder"] == plate_name]
-        i = 0
-        plate = int(list(selected_df["folder"])[i].split("_")[-1][5:])
-        folder_list = list(selected_df["folder"])
-        directory_name = folder_list[i]
-        cls.exp = Experiment(plate, directory)
-        cls.exp.load(
-            selected_df.loc[selected_df["folder"] == directory_name], labeled=False
-        )
+        cls.exp = helper.make_experiment_object()
 
     def test_get_random_edge(self):
         get_random_edge(self.exp)
@@ -45,32 +34,21 @@ class TestExperiment(unittest.TestCase):
     def test_plot_edge(self):
         edge = get_random_edge(self.exp)
         plot_edge(edge, 0)
+        plt.close()
 
     def test_plot_edge_save(self):
         edge = get_random_edge(self.exp)
-        plot_edge(edge, 0, save_path=os.path.join(data_path, "test", "plot_edge"))
-
-    def test_plot_edge_mask(self):
-        edge = get_random_edge(self.exp)
-        plot_edge_mask(edge, 0)
+        plot_edge(edge, 0, save_path=os.path.join(test_path, "plot_edge_1"))
 
     def test_plot_edge_cropped(self):
         edge = get_random_edge(self.exp)
-        plot_edge_cropped(
-            edge, 0, save_path=os.path.join(data_path, "test", "plot_edge")
-        )
+        plot_edge_cropped(edge, 0, save_path=os.path.join(test_path, "plot_edge_2"))
 
 
 class TestExperimentLight(unittest.TestCase):
     def test_distance_point_edge(self):
-        class EdgeMock:
-            def __init__(self, list_coord):
-                self.list_coord = list_coord
 
-            def pixel_list(self, t):
-                return self.list_coord
-
-        edge = EdgeMock([[2, 3], [3, 3], [3, 4], [4, 5], [5, 5], [6, 6], [7, 7]])
+        edge = helper.EdgeMock([[2, 3], [3, 3], [3, 4], [4, 5], [5, 5], [6, 6], [7, 7]])
         self.assertEqual(
             distance_point_edge([2, 3], edge, 0, step=1),
             0,

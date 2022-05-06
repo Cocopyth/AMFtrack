@@ -177,7 +177,7 @@ All test files must start with `test`. All test function and classes must start 
 
 And all testing classes must be subclass from the unittest base test class and must start with Test.
 
-The file **helper.py** contains utils for testing.
+The file **helper.py** contains utils for testing: mock object, skipping functions, ..
 
 ### 2/ Launching tests
 Tests can be launched with the following command:
@@ -200,6 +200,10 @@ For some tests, a processed Prince plate is required. Or other types of files.
 The data file must be stored at the following path:
 **data_path** + "**test**".
 If the data is not present, the tests will be skipped.
+The tests can be safely run even if to test/ directory is present.
+
+Some tests create and save plots in the **test** directory.
+These files don't accumulate (they are just replace at each test).
 
 ### 4/ Getting test coverage
 The coverage gives an idea of the portion of code which is covered by the tests.

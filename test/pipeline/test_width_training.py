@@ -15,12 +15,15 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 from test import helper
 
 
+@unittest.skip("In progress")
 class TestWidthTrainingLight(unittest.TestCase):
+    # TODO(FK): fix paths
+    def setUpClass(cls):
+        path = "/media/kahane/KINGSTON/20220325_1423_Plate907/Img"
+        fetch_labels(path)
 
-    path = "/media/kahane/KINGSTON/20220325_1423_Plate907/Img"
-    fetch_labels(path)
 
-
+@unittest.skip("In progress")
 class TestWidthTraining(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
