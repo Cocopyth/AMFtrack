@@ -79,7 +79,7 @@ class Experiment:
             print(date)
 
             directory_name = get_dirname(date, self.plate)
-            path_snap = self.directory + directory_name
+            path_snap = os.path.join(self.directory, directory_name)
             if labeled:
                 suffix = "/Analysis/nx_graph_pruned_labeled.p"
             else:

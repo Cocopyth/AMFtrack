@@ -49,7 +49,7 @@ def has_video():
 
 def make_experiment_object():
     "Build an experiment object using the plate that is in the test repository."
-    directory = test_path + "/"  # TODO(FK): fix this error
+    directory = test_path
     plate_name = "20220330_2357_Plate19"  # TODO(FK): find the name automaticaly (can be different based on the person)
     update_plate_info_local(directory)
     folder_df = get_current_folders_local(directory)
@@ -57,9 +57,10 @@ def make_experiment_object():
     i = 0
     plate = int(list(selected_df["folder"])[i].split("_")[-1][5:])
     folder_list = list(selected_df["folder"])
-    directory_name = folder_list[i]
+    # directory_name = folder_list[i]
     exp = Experiment(plate, directory)
-    exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
+    # exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
+    exp.load(selected_df, labeled=False)
     exp.load_tile_information(0)
     return exp
 
