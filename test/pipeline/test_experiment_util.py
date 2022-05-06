@@ -16,6 +16,7 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_edge,
     plot_edge_cropped,
     find_nearest_edge,
+    get_edge_from_node_labels,
 )
 from amftrack.util.sys import test_path
 from test import helper
@@ -30,6 +31,18 @@ class TestExperiment(unittest.TestCase):
     def test_get_random_edge(self):
         get_random_edge(self.exp)
         get_random_edge(self.exp)
+
+    def test_get_edge_from_node_labels(self):
+        # Valid edge
+        edge = get_random_edge(self.exp)
+        self.assertIsNotNone(
+            get_edge_from_node_labels(self.exp, 0, edge.begin.label, edge.end.label)
+        )
+        self.assertIsNotNone(
+            get_edge_from_node_labels(self.exp, 0, edge.end.label, edge.begin.label)
+        )
+        # Invalid case
+        self.assertIsNone(get_edge_from_node_labels(self.exp, 0, 100, 100))
 
     def test_plot_edge(self):
         edge = get_random_edge(self.exp)

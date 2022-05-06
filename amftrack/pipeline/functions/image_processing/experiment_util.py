@@ -1,7 +1,6 @@
 from random import choice
-from cv2 import edgePreservingFilter
 import numpy as np
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import cv2 as cv
 import matplotlib.pyplot as plt
 
@@ -32,8 +31,8 @@ from amftrack.plotutil import plot_t_tp1
 def get_random_edge(exp: Experiment, t=0) -> Edge:
     "Select randomly an edge of Experiment at timestep t"
     (G, pos) = exp.nx_graph[t], exp.positions[t]
-    edge_coord = choice(list(G.edges))
-    edge = Edge(Node(edge_coord[0], exp), Node(edge_coord[1], exp), exp)
+    edge_nodes = choice(list(G.edges))
+    edge = Edge(Node(edge_nodes[0], exp), Node(edge_nodes[1], exp), exp)
     return edge
 
 
@@ -57,6 +56,22 @@ def find_nearest_edge(point: coord, exp: Experiment, t: int) -> Edge:
     edges = get_all_edges(exp, t)
     l = [edge.pixel_list(t) for edge in edges]
     return edges[get_closest_line_opt(point, l)[0]]
+
+
+def get_edge_from_node_labels(
+    exp: Experiment, t: int, start_node: int, end_node: int
+) -> Optional[Edge]:
+    (G, pos) = exp.nx_graph[t], exp.positions[t]
+    # Verify that the edge exists
+    edge_nodes = list(G.edges)
+    if (start_node, end_node) in edge_nodes:
+        edge = Edge(Node(start_node, exp), Node(end_node, exp), exp)
+        return edge
+    if (end_node, start_node) in edge_nodes:
+        edge = Edge(Node(end_node, exp), Node(start_node, exp), exp)
+        return edge
+    else:
+        return None
 
 
 def distance_point_edge(point: coord, edge: Edge, t: int, step=1):
