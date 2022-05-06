@@ -754,7 +754,7 @@ class Node:
             for neighbour in self.neighbours(t)
         ]
 
-    def pos(self, t) -> coord_int:
+    def pos(self, t: int) -> np.array:
         "Return coordinates in the general referential at timestep t"
         return self.experiment.positions[t][self.label]
 

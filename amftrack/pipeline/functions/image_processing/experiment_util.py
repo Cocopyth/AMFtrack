@@ -99,9 +99,8 @@ def aux_plot_edge(
     """
     This intermediary function returns the data that will be plotted.
     See plot_edge for more information.
-    :return: image, coordinate of all the points in image
+    :return: np binary image, coordinate of all the points in image
     """
-    # TODO(FK): use a mask instead of points
     exp = edge.experiment
     number_points = 10
     # Fetch coordinates of edge points in general referential
@@ -137,10 +136,10 @@ def plot_edge(edge: Edge, t: int, mode=2, points=10, save_path=None, f=None):
     It plots the points of the pixel list (after the hypha has been thined).
     :WARNING: If the edge is accross two image, only a part of the edge will be plotted
     :param mode:
-    - mode 0: only begin end end
-    - mode 1: plot whole edge
-    - mode 2: plot only a number of points
-    - mode 3: specify a function that chooses point indexes based on the length
+    - mode 0: only beginning and end of the edge
+    - mode 1: plot every edge point
+    - mode 2: plot only a number of points equal to `points`
+    - mode 3: specify a function `f` that chooses point indexes based on the length
     :param points: number of points to plot
     :param save_path: doesn't save if None, else save the image as `save_path`
     :param f: function of the signature f(n:int)->List[int]
@@ -161,6 +160,7 @@ def plot_edge_cropped(
     """
     Same as plot_edge but the image is cropped with a margin around points of interest.
     """
+    # TODO(FK): merge with plot_edge
     im, list_of_coord_im = aux_plot_edge(edge, t, mode, points, f)
     x_min = np.min([list_of_coord_im[i][0] for i in range(len(list_of_coord_im))])
     x_max = np.max([list_of_coord_im[i][0] for i in range(len(list_of_coord_im))])
@@ -192,8 +192,9 @@ def plot_full_image_with_features(
     edges: List[Edge] = [],
     points: List[coord_int] = [],
     segments: List[List[coord_int]] = [],
+    nodes: List[Node] = [],
     downsizing=5,
-    dilation=50,
+    dilation=1,
     save="",
 ) -> None:
     """
@@ -205,14 +206,16 @@ def plot_full_image_with_features(
 
     :param region: [[100, 100], [2000,2000]] a choosen region in the full image (reduces computation also)
     :param edges: list of edges to plot, it is the pixel list that is plotted, not a straight line
+    :param nodes: list of nodes to plot
     :param points: points such as [123, 234] to plot with a white cross on the image
     :param segments: plot lines between two points that are provided
     :param downsizing: factor by which we reduce the image resolution (5 -> image 25 times lighter)
     :param dilation: only for edges: thickness of the edges (dilation applied to the pixel list)
+    :param save: full path to the location where the plot will be saved
     """
-    # TODO(FK): saving image, nodes, caching the images
-    # 1/ Full size image
-    # TODO(FK): move all of this in the reconstruct image function
+    # TODO(FK): saving image, add nodes, caching the images
+    # TODO(FK): move the cropping part and function for changing the coodinates in the reconstruct image function
+    # 1/ Image layer
     im = reconstruct_image(exp, t, downsizing=downsizing)
 
     if region != None:
@@ -221,12 +224,14 @@ def plot_full_image_with_features(
                 region[i][j] = region[i][j] // downsizing
         im = crop_image(im, region)
 
+    if region is None:
+        region = [0, 0]
     f = lambda c: list(
         (np.array(exp.general_to_timestep(c, t)) / downsizing).astype(int)
         - np.array(region[0], dtype=int)
     )
     # 2/ Edge layer
-    # TODO(FK): use a dilation instead
+    # TODO(FK): use a dilation instead, this is a QUICKFIX
     # kernel = np.ones((dilation, dilation), np.uint8)
     # skel = pixel_list_to_matrix(edge.pixel_list(t), margin=dilation)
     # dilated_skel = cv.dilate(skel.astype(np.uint8), kernel, iterations=1)
@@ -245,28 +250,32 @@ def plot_full_image_with_features(
             except:
                 None
 
-    # Plotting all the layers
+    # Plotting the two layers
     fig = plt.figure(figsize=(12, 8))  # width: 30 cm height: 20 cm
     ax = fig.add_subplot(111)
     ax.imshow(im, cmap="gray", alpha=0.3, interpolation="none")
     ax.imshow(edge_layer, alpha=0.7, interpolation="none")
 
     # 3/ Plotting the Nodes
-    # for node in nodes:
-    #     t = ax.text(
-    #         (pos_t[node][1] - shift[1]) // compress,
-    #         (pos_t[node][0] - shift[0]) // compress,
-    #         str(relabel_t(node)),
-    #         ha="center",
-    #         va="center",
-    #         size=size,
-    #         bbox=bbox_props1,
-    #     )
+    size = 5
+    bbox_props = dict(boxstyle="circle", fc="white")
+    for node in nodes:
+        c = f(list(node.pos(t)))  # TODO(FK): decide betwenn list and np.array
+        node_text = ax.text(
+            c[0],
+            c[1],
+            str(node.label),
+            ha="center",
+            va="center",
+            size=size,
+            bbox=bbox_props,
+        )  # TODO(FK): fix taille inégale des nodes
 
     # 4/ Plotting coordinates
     points = [f(c) for c in points]
     for c in points:
-        plt.plot(c[1], c[0], marker="x", color="white")
+        # TODO(FK): which order for the coordinates here
+        plt.plot(c[1], c[0], marker="x", color="red")
 
     # 5/ Plotting segments
     segments = [[f(segment[0]), f(segment[1])] for segment in segments]
@@ -281,42 +290,7 @@ def plot_full_image_with_features(
     plt.show()
 
 
-# def plot_full_image_with_skel(exp: Experiment, t: int, downsizing=5) -> None:
-#     # PROV
-#     """
-#     This funtions
-#     Using plot_t_tp1
-#     Display the full image, image quality lowered and with the skeletton on top
-#     """
-#     directory = os.path.join(exp.directory, "20220325_1423_Plate907")
-#     kernel = np.ones((5, 5), np.uint8)
-#     skel_info = read_mat(directory + "/Analysis/skeleton_pruned_compressed.mat")
-#     skel = skel_info["skeleton"]
-#     dilated = cv2.dilate(skel.astype(np.uint8), kernel, iterations=1)
-#     im = read_mat(directory + "/Analysis/raw_image.mat")["raw"]
-#     plt.close("all")
-#     plot_t_tp1([], [], None, None, dilated, im)
-
-
-# def plot_full_image_with_skel(exp: Experiment, t: int, downsizing=5) -> None:
-#     # PROV
-#     """
-#     This funtions
-#     Using plot_t_tp1
-#     Display the full image, image quality lowered and with the skeletton on top
-#     """
-#     directory = os.path.join(exp.directory, "20220330_2357_Plate19")
-#     kernel = np.ones((5, 5), np.uint8)
-#     skel_info = read_mat(directory + "/Analysis/skeleton_pruned_compressed.mat")
-#     skel = skel_info["skeleton"]
-#     dilated = cv2.dilate(skel.astype(np.uint8), kernel, iterations=1)
-#     im = read_mat(directory + "/Analysis/raw_image.mat")["raw"]
-#     plt.close("all")
-#     plot_t_tp1([], [], None, None, dilated, im)
-
-
-# TODO(FK)
-# @lru_cache(maxsize=1)
+# @lru_cache(maxsize=1)  # TODO(FK): make a custom decorator
 def reconstruct_image(exp: Experiment, t: int, downsizing=1) -> np.array:
     """
     This function reconstructs the full size image at timestep t and return it as an np array.
@@ -325,7 +299,7 @@ def reconstruct_image(exp: Experiment, t: int, downsizing=1) -> np.array:
     NB: To plot objects in this image, the TIMESTEP referential must be used
     """
     # TODO(FK): add window here, return function for plotting
-    # TODO(FK): make a decorator to store in TEMP
+    # TODO(FK): make a decorator to store in TEMP or cache with
     if exp.image_coordinates is None:
         exp.load_tile_information(t)
 
@@ -412,8 +386,12 @@ if __name__ == "__main__":
     # plate_name = "20220325_1423_Plate907"
     # directory = os.path.join(data_path, directory_name, "full_plates") + "/"
 
-    plate_name = "20220330_2357_Plate19"
-    directory = data_path + "/"
+    # plate_name = "20220330_2357_Plate19"
+    # directory = data_path + "/"
+
+    plate_name = "20220325_1423_Plate907"
+    directory_name = "width1"
+    directory = os.path.join(data_path, directory_name, "full_plates") + "/"
 
     update_plate_info_local(directory)
     folder_df = get_current_folders_local(directory)
@@ -430,15 +408,26 @@ if __name__ == "__main__":
     # plot_full_image(exp, 0, downsizing=10, region=([1000, 1000], [10000, 10000]))
     # plot_full_image(exp, 0, downsizing=10, region=[[1000, 1000], [10000, 10000]])
     # edges = [get_random_edge(exp, 0) for _ in range(50)]
-    edges = get_all_edges(exp, 0)
+    # edges = get_all_edges(exp, 0)
+    # plot_full_image_with_features(
+    #     exp,
+    #     edges,
+    #     0,
+    #     5,
+    #     4,
+    #     region=[[10000, 10000], [20000, 20000]],
+    #     coordinates=[[15000, 15000], [17000, 17000]],
+    #     segments=[[[15000, 15000], [17000, 17000]]],
+    # )
+    # plot_full_image_with_skel(exp, 0)
+
+    # c = [35000, 20000]  # General ref
+    # edge = find_nearest_edge(c, exp, 0)
+    a = 1
+
     plot_full_image_with_features(
         exp,
-        edges,
         0,
-        5,
-        4,
-        region=[[10000, 10000], [20000, 20000]],
-        coordinates=[[15000, 15000], [17000, 17000]],
-        segments=[[[15000, 15000], [17000, 17000]]],
+        points=[[11191, 39042], [11923, 45165]],
+        nodes=[Node(10, exp), Node(100, exp), Node(200, exp)],
     )
-    # plot_full_image_with_skel(exp, 0)
