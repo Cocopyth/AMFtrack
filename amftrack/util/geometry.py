@@ -93,7 +93,7 @@ def get_closest_line_opt(
     - the first closest line is much closer than the second (then we stop before reaching a small resolution)
     - a lot of lines are far from the point and will be removed early in the iterations
     """
-    # The length of lines evolve over time, d dict keeps track of the original indexes
+    # The length of lines evolves over time, d dict keeps track of the original indexes
     mapping = {i: i for i in range(len(lines))}
     while len(lines) > 1 and step >= 1:
         # NB: distances could be used to tune the `step` at each iteration
