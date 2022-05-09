@@ -213,3 +213,22 @@ Getting test coverage:
 `coverage report -m`
 (https://coverage.readthedocs.io/en/6.3.2/)
 
+
+## Coordinates
+
+The general choice of coordinates is:
+x -> for the small vertical axis (3000 for prince images)
+y -> for the long horizontal axis
+
+This choice is consistent accross `general`, `timestep` and `image` referential in the `exp` object.
+As a result:
+- we write coordinates as `[x, y]`
+- np.arrays have the shape (dim_x, dim_y) and can be shown with plt.imshow()
+- to access a coordinate in an image we use `im[x][y]`
+
+CAREFUL: the following coordinate usage have a different convention:
+- coordinates with Loreto microscope joystick: x and y are inversed (x is for the long horizontal axis)
+- image coordinates in the fiji tile file: x and y are inversed (x is for the long horizontal axis)
+- plt.plot() uses a different convention. We will always have to inverse coordinates when using plt.plot
+Ex: plt.plot(x[1], x[0], ..)
+- cv.resize takes the shape reversed compared to numpy

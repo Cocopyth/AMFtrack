@@ -1,20 +1,20 @@
 import numpy as np
 from typing import Tuple, List
+from amftrack.util.param import DIM_X, DIM_Y, CAMERA_RES
 
 
 def convert_to_micrometer(pixel_length, magnification=2):
     """
     Converts pixels into micrometers, based on the magnification of the microscope.
     """
-    camera_res = 3.45
-    return pixel_length * camera_res / magnification
+    return pixel_length * CAMERA_RES / magnification
 
 
 def is_in_image(x_im: float, y_im: float, x: float, y: float) -> bool:
     """
     Determines if (x,y) is in the image of coordinates (x_im, y_im)
     """
-    return x >= x_im and x < x_im + 4096 and y >= y_im and y < y_im + 3000
+    return x >= x_im and x < x_im + DIM_X and y >= y_im and y < y_im + DIM_Y
 
 
 def find_image_index(im_coord_list, x: float, y: float):

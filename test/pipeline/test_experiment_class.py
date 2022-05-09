@@ -24,9 +24,6 @@ class TestExperiment(unittest.TestCase):
     def setUpClass(cls):
         cls.exp = helper.make_experiment_object()
 
-    def test_find_pos(self):
-        r = self.exp.find_image_pos(10000, 5000, t=0)
-
     def test_get_image_coords(self):
         image_coord = self.exp.get_image_coords(0)
         self.assertIsNotNone(image_coord)
@@ -52,11 +49,13 @@ class TestExperiment(unittest.TestCase):
     def test_get_image(self):
         self.exp.get_image(0, 4)
 
+    # @unittest.skip("To fix later")
     def test_show_source_images(self):
         random.seed(10)
         edge = get_random_edge(self.exp)
         edge.begin.show_source_image(0)
 
+    # @unittest.skip("To fix later")
     def test_find_image_pos(self):
         self.exp.find_image_pos(21980, 30916, 0)
 

@@ -36,7 +36,7 @@ class TestPlot(unittest.TestCase):
         )
 
         assert_array_equal(
-            crop_image(a, [[0, 0], [3, 2]]),
+            crop_image(a, [[0, 0], [2, 3]]),
             np.array([[1.0, 2.3, 12.0], [4.5, 2.3, 0.0]]),
         )
 

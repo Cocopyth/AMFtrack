@@ -214,11 +214,8 @@ def extract_section_profiles_for_edge(
     l = []
     for i, sect in enumerate(new_section_coord_list):
         im = images[image_indexes[i]]
-        # WARNING: profile_line has a different order for x an y
-        # This is way point1 and point2 have shape (y, x)
-        # TODO(FK)
-        point1 = np.array([sect[0][1], sect[0][0]])
-        point2 = np.array([sect[1][1], sect[1][0]])
+        point1 = np.array([sect[0][0], sect[0][1]])
+        point2 = np.array([sect[1][0], sect[1][1]])
         profile = profile_line(im, point1, point2, mode="constant")[:target_length]
         profile = profile.reshape((1, len(profile)))
         # TODO(FK): Add thickness of the profile here

@@ -16,9 +16,9 @@ def show_image(image_path: str) -> None:
 def show_image_with_segment(image_path: str, x1, y1, x2, y2):
     """Show the image with a segment drawn on top of it"""
     show_image(image_path)
-    plt.plot(x1, y1, marker="x", color="white")
-    plt.plot(x2, y2, marker="x", color="white")
-    plt.plot([x1, x2], [y1, y2], color="white", linewidth=2)
+    plt.plot(y1, x1, marker="x", color="white")
+    plt.plot(y2, x2, marker="x", color="white")
+    plt.plot([y1, y2], [x1, x2], color="white", linewidth=2)
 
 
 def pixel_list_to_matrix(pixels: List[coord_int], margin=0) -> np.array:
@@ -40,16 +40,16 @@ def crop_image(matrix: np.array, region: List[coord_int]):
     """
     Crops the image to the given region.
     This is a robust function to avoid error when regions are out of bound.
-    The coords are supposed to be this way: image[y][x]
-    Thus the shape is (dim_y, dim_x)
+    Coordinates of region are in the form [x, y]
+    The lower bound are included, the upper bound is not.
     :param region: [[1, 2], [10, 10]] for example
     """
 
-    dim_x = matrix.shape[1]
-    dim_y = matrix.shape[0]
+    dim_x = matrix.shape[0]
+    dim_y = matrix.shape[1]
     x_min = np.min([np.max([0, np.min([region[0][0], region[1][0]])]), dim_x])
     x_max = np.max([np.min([dim_x, np.max([region[0][0], region[1][0]])]), 0])
     y_min = np.min([np.max([0, np.min([region[0][1], region[1][1]])]), dim_y])
     y_max = np.max([np.min([dim_y, np.max([region[0][1], region[1][1]])]), 0])
 
-    return matrix[y_min:y_max, x_min:x_max]
+    return matrix[x_min:x_max, y_min:y_max]
