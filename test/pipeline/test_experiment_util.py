@@ -9,6 +9,8 @@ from amftrack.util.sys import (
 )
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
+    Node,
+    Edge,
 )
 from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_random_edge,
@@ -17,6 +19,8 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_edge_cropped,
     find_nearest_edge,
     get_edge_from_node_labels,
+    plot_full_image_with_features,
+    get_all_edges,
 )
 from amftrack.util.sys import test_path
 from test import helper
@@ -56,6 +60,22 @@ class TestExperiment(unittest.TestCase):
     def test_plot_edge_cropped(self):
         edge = get_random_edge(self.exp)
         plot_edge_cropped(edge, 0, save_path=os.path.join(test_path, "plot_edge_2"))
+
+    def test_plot_full_image_with_features(self):
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            downsizing=10,
+            points=[[11191, 39042], [11923, 45165]],
+            segments=[[[11191, 39042], [11923, 45165]]],
+            nodes=[Node(10, self.exp), Node(100, self.exp), Node(200, self.exp)],
+            edges=[get_random_edge(self.exp), get_random_edge(self.exp)],
+            dilation=1,
+            save_path=os.path.join(test_path, "plot_full"),
+        )
+
+    def test_get_all_edges(self):
+        get_all_edges(self.exp, t=0)
 
 
 class TestExperimentLight(unittest.TestCase):

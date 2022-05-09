@@ -195,7 +195,7 @@ def plot_full_image_with_features(
     nodes: List[Node] = [],
     downsizing=5,
     dilation=1,
-    save="",
+    save_path="",
 ) -> None:
     """
     This is the general purpose function to plot the full image, downsized by a chosen factor
@@ -211,7 +211,7 @@ def plot_full_image_with_features(
     :param segments: plot lines between two points that are provided
     :param downsizing: factor by which we reduce the image resolution (5 -> image 25 times lighter)
     :param dilation: only for edges: thickness of the edges (dilation applied to the pixel list)
-    :param save: full path to the location where the plot will be saved
+    :param save_path: full path to the location where the plot will be saved
     """
     # TODO(FK): saving image, add nodes, caching the images
     # TODO(FK): move the cropping part and function for changing the coodinates in the reconstruct image function
@@ -287,7 +287,10 @@ def plot_full_image_with_features(
             linewidth=2,
         )
 
-    plt.show()
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
 
 
 # @lru_cache(maxsize=1)  # TODO(FK): make a custom decorator
