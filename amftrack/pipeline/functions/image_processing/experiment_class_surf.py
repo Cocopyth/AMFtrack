@@ -145,10 +145,12 @@ class Experiment:
         )
         raw_coordinates = list(tileconfig[2])
         n_im = len(raw_coordinates)
+        # Warning: Fiji writtes image coordinates like (y, x) compared to us
         cmin = np.min([raw_coordinates[i][0] for i in range(n_im)])
         rmin = np.min([raw_coordinates[i][1] for i in range(n_im)])
+        # As a result, here we inverse x and y to comply with our own referential norm
         coordinates = [
-            [raw_coordinates[i][0] - cmin, raw_coordinates[i][1] - rmin]
+            [raw_coordinates[i][1] - rmin, raw_coordinates[i][0] - cmin]
             for i in range(n_im)
         ]
         self.image_coordinates[t] = coordinates
@@ -162,7 +164,11 @@ class Experiment:
             paths.append(path)
         self.image_paths[t] = paths
 
-    def load_image_transformation(self, t):
+    def load_image_transformation(self, t) -> Tuple[np.array, np.array]:
+        """
+        Loads the transformation to switch from general to timestep referential.
+        If not loaded these transformation will be loaded upon calls to convert coordinates
+        """
         date = self.dates[t]
         directory_name = get_dirname(date, self.plate)
         skel = read_mat(
@@ -191,6 +197,7 @@ class Experiment:
         return final_picture >= 1
 
     def copy(self, experiment):
+        # TODO(FK): this is not coopying all the features
         self.folders = experiment.folders
         self.positions = experiment.positions
         self.nx_graph = experiment.nx_graph
@@ -224,7 +231,7 @@ class Experiment:
     def get_node(self, label: str):
         return Node(label, self)
 
-    def get_edge(self, begin, end) -> "Edge":
+    def get_edge(self, begin: "Node", end: "Node") -> "Edge":
         return Edge(begin, end, self)
 
     def get_growing_tips(self, t, threshold=80):
@@ -311,8 +318,6 @@ class Experiment:
 
         R, t = self.image_transformation[t]
         new_coord = np.dot(np.linalg.inv(R), old_coord - t)
-        # WARNING: x an y must also be inversed
-        new_coord[0], new_coord[1] = new_coord[1], new_coord[0]
         return new_coord
 
     def timestep_to_general(self, point: coord, t: int) -> coord:
@@ -320,14 +325,13 @@ class Experiment:
         Take as input float coordinates `coord` the referential of timestep t
         and convert them into the general referential.
         """
-        # WARNING: x an y must be inversed first
-        coord_reversed = np.array([point[1], point[0]]).astype(dtype=np.float)
+        point = np.array(point)
         if self.image_transformation is None:
             raise Exception("Must load directories first")
         if self.image_transformation[t] is None:
             self.image_transformation[t] = self.load_image_transformation(t)
         R, t = self.image_transformation[t]
-        new_coord = np.dot(R, np.array(coord_reversed)) + t
+        new_coord = np.dot(R, np.array(point)) + t
         return new_coord
 
     def general_to_image(self, point: coord, t: int, i: int) -> coord:
@@ -378,7 +382,6 @@ class Experiment:
         Take as input coordinates in the TIMESTEP referential.
         And determine the index of the image.
         """
-        # TODO(FK): change to general coordinates?
         return find_image_indexes(self.get_image_coords(t), xs, ys)
 
     def find_im_indexes_from_general(self, x: float, y: float, t: int) -> List[int]:
@@ -393,70 +396,17 @@ class Experiment:
         self, xs: int, ys: int, t: int, local=False
     ) -> Tuple[List, List[coord]]:
         """
-        For coordinates (xs, yx) in the full size stiched image,
-        returns a list of original images (before stiching) that contain the coordinate.
-        And for each found image, returns the coordinates of the point of interest in
-        the image.
+        For (xs, ys) coordinates in the GENERAL referential.
+        Returns a list of np.array images containing the point.
+        And returns the new coordinates of the point in the images.
         """
-        date = self.dates[t]
-        directory_name = get_dirname(date, self.plate)
-        path_snap = self.directory + directory_name
-        path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
-        skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
-        Rot = skel["R"]
-        trans = skel["t"]
-        rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
-
-        ys, xs = round(rottrans[0]), round(rottrans[1])  # beware switching (y, x)
-        tileconfig = pd.read_table(
-            path_tile,
-            sep=";",
-            skiprows=4,
-            header=None,
-            converters={2: ast.literal_eval},
-            skipinitialspace=True,
-        )
-        xs_yss = list(tileconfig[2])
-        xes = [xs_ys[0] for xs_ys in xs_yss]
-        yes = [xs_ys[1] for xs_ys in xs_yss]
-        cmin = np.min(xes)
-        cmax = np.max(xes)
-        rmin = np.min(yes)
-        rmax = np.max(yes)
-        ximg = xs
-        yimg = ys
-
-        def find(xsub: List, ysub: List, x: float, y: float):
-            """
-            :param x: x coordinate of point of interest
-            :param xsub: List of x coordinate of all the images
-            :return: list of indexes of images which contain (x,y)
-            """
-            indexes = []
-            for i in range(len(xsub)):
-                if (
-                    x >= xsub[i] - cmin
-                    and x < xsub[i] - cmin + 4096
-                    and y >= ysub[i] - rmin
-                    and y < ysub[i] - rmin + 3000
-                ):
-                    indexes.append(i)
-            return indexes
-
-        indsImg = find(xes, yes, ximg, yimg)
-        possImg = [
-            ximg - np.array(xes)[indsImg] + cmin + 1,
-            yimg - np.array(yes)[indsImg] + rmin + 1,
-        ]
-        paths = []
-        for index in indsImg:
-            name = tileconfig[0][index]
-            imname = "/Img/" + name.split("/")[-1]
-            directory_name = get_dirname(date, self.plate)
-            path = self.directory + directory_name + imname
-            paths.append(path)
-        ims = [imageio.imread(path) for path in paths]
-        return (ims, possImg)
+        indexes = self.find_im_indexes_from_general(xs, ys, t)
+        images = []
+        coord_in_image = []
+        for i in indexes:
+            images.append(self.get_image(t, i))
+            coord_in_image.append(self.general_to_image([xs, ys], t, i))
+        return images, coord_in_image
 
     def plot_raw(self, t, figsize=(10, 9)):
         """Plot the full stiched image compressed (otherwise too heavy)"""

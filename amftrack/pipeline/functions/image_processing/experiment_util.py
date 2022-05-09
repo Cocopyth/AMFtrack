@@ -148,7 +148,7 @@ def plot_edge(edge: Edge, t: int, mode=2, points=10, save_path=None, f=None):
     plt.imshow(im)
     for i in range(len(list_of_coord_im)):
         plt.plot(
-            list_of_coord_im[i][0], list_of_coord_im[i][1], marker="x", color="red"
+            list_of_coord_im[i][1], list_of_coord_im[i][0], marker="x", color="red"
         )
     if save_path is not None:
         plt.savefig(save_path)
@@ -168,18 +168,18 @@ def plot_edge_cropped(
     y_max = np.max([list_of_coord_im[i][1] for i in range(len(list_of_coord_im))])
 
     x_min = np.max([0, x_min - margin])
-    x_max = np.min([im.shape[1], x_max + margin])  # NB: Careful: inversion
+    x_max = np.min([im.shape[0], x_max + margin])
     y_min = np.max([0, y_min - margin])
-    y_max = np.min([im.shape[0], y_max + margin])
+    y_max = np.min([im.shape[1], y_max + margin])
 
     list_of_coord_im = [[p[0] - x_min, p[1] - y_min] for p in list_of_coord_im]
-    im = im[int(y_min) : int(y_max), int(x_min) : int(x_max)]
+    im = im[int(x_min) : int(x_max), int(y_min) : int(y_max)]
 
     fig = plt.figure()
     plt.imshow(im)  # TODO(FK): shouldn't plot in save mode
     for i in range(len(list_of_coord_im)):
         plt.plot(
-            list_of_coord_im[i][0], list_of_coord_im[i][1], marker="x", color="red"
+            list_of_coord_im[i][1], list_of_coord_im[i][0], marker="x", color="red"
         )
     if save_path is not None:
         plt.savefig(save_path)
@@ -246,7 +246,7 @@ def plot_full_image_with_features(
             # TODO check if out of bound here
             x, y = c[0], c[1]
             try:  # TODO(FK): use is_in_image
-                edge_layer[y][x][:] = color
+                edge_layer[x][y][:] = color
             except:
                 None
 
@@ -262,8 +262,8 @@ def plot_full_image_with_features(
     for node in nodes:
         c = f(list(node.pos(t)))  # TODO(FK): decide betwenn list and np.array
         node_text = ax.text(
-            c[0],
             c[1],
+            c[0],
             str(node.label),
             ha="center",
             va="center",
@@ -314,7 +314,7 @@ def reconstruct_image(exp: Experiment, t: int, downsizing=1) -> np.array:
     d_y = int(m_y + DIM_Y)
 
     # Create the general image frame
-    full_im = np.ones((d_y, d_x), dtype=np.uint8)
+    full_im = np.ones((d_x, d_y), dtype=np.uint8)
 
     # Copy each image into the frame
     for i, im_coord in enumerate(image_coodinates):
@@ -324,9 +324,10 @@ def reconstruct_image(exp: Experiment, t: int, downsizing=1) -> np.array:
             int(im_coord[1]),
         ]  # original im coordinates are float
         full_im[
-            im_coord[1] : im_coord[1] + DIM_Y, im_coord[0] : im_coord[0] + DIM_X
+            im_coord[0] : im_coord[0] + DIM_X, im_coord[1] : im_coord[1] + DIM_Y
         ] = im
 
+    # WARNING: cv2 inverses the shape compared to numpy
     full_im = cv.resize(
         full_im, (full_im.shape[1] // downsizing, full_im.shape[0] // downsizing)
     )
@@ -429,5 +430,6 @@ if __name__ == "__main__":
         exp,
         0,
         points=[[11191, 39042], [11923, 45165]],
+        segments=[[[11191, 39042], [11923, 45165]]],
         nodes=[Node(10, exp), Node(100, exp), Node(200, exp)],
     )
