@@ -30,9 +30,11 @@ logger.setLevel(logging.DEBUG)
 
 def fetch_labels(directory: str) -> Dict[str, List[coord]]:
     """
-    Go fetch the labels of width in the `directory`.
+    Fetch the labels of width in the `directory`.
     The labels are set with `line_segment` of `labelme` labelling application.
+    :param directory: full path to a directory
     :return: directory with image names as key and list of segments as values
+    NB: an image usually has several segment of annotation
     """
 
     def is_valid(name):
@@ -60,13 +62,14 @@ def fetch_labels(directory: str) -> Dict[str, List[coord]]:
 def label_edges(exp: Experiment, t: int) -> Dict[Edge, float]:
     """
     Fetch the labels, process them and attribute them to their respective edge.
-    NB: labels are supposed to be in the same folder as the images
+    At a certain timestep t.
+    NB: labels are in the same folder as the images
     :return: a dictionnary associating edges with their width
     """
-
     label_directory = os.path.join(
         exp.directory, "20220325_1423_Plate907", "Img"
     )  # QUICKFIX
+
     segment_labels = fetch_labels(label_directory)
 
     edges_widths = {}
@@ -74,6 +77,7 @@ def label_edges(exp: Experiment, t: int) -> Dict[Edge, float]:
     for image_name in segment_labels.keys():
         # Identify image
         image_path = os.path.join(label_directory, image_name)
+        # TODO: introduce this function in Experiment
         image_index = exp.image_paths[t].index(image_path)
         for [point1, point2] in segment_labels[image_name]:
             point1 = np.array(point1)  # in image ref
@@ -86,6 +90,13 @@ def label_edges(exp: Experiment, t: int) -> Dict[Edge, float]:
             # Identify corresponding edge
             middle_point_ = exp.image_to_general(middle_point, t, image_index)
             edge = find_nearest_edge(middle_point_, exp, t)
+            distance = distance_point_pixel_line(
+                middle_point, [edge.pixel_list(t) for edge in edges], step=1
+            )
+            if distance > 20:
+                logging.warning(
+                    f"WARNING: The edge {edge} has a distance of {distance} to its label."
+                )
             # Add to the dataset
             if edge in edges_widths:
                 # NB: could also keep the point of the section for further use
