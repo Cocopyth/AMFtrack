@@ -59,15 +59,11 @@ else:
         print(index)
         nx_graph_pos = []
         stop = index
-        # print(begin,end)
-        # print(folder_list[begin:end])
         for i, directory_name in enumerate(folder_list[start:stop]):
             print(i)
             path_snap = directory + directory_name
             path_save = path_snap + "/Analysis/nx_graph_pruned_width.p"
-            # pickle.load(open(path_save, "rb"))
             nx_graph_pos.append(pickle.load(open(path_save, "rb")))
-
         nx_graph_pruned = [c[0] for c in nx_graph_pos]
         poss_aligned = [c[1] for c in nx_graph_pos]
         downstream_graphs = []
@@ -78,8 +74,6 @@ else:
 
         for i in range(begin - 1, -1, -1):
             print(i)
-            # upload(API, path_save, f'/{dir_drop}/test{i}', chunk_size=256 * 1024 * 1024)
-
             print("i=", i)
             new_graphs, new_poss = second_identification(
                 nx_graph_pruned[i],
