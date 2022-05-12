@@ -40,7 +40,7 @@ def find_image_indexes(im_coord_list, x: float, y: float):
 
 def find_transformation(old_coord_list: List, new_coord_list: List):
     """
-    Compute the rotation and translation to transform the old plane into the new one.
+    Computes the rotation and translation to transform the old plane into the new one.
     old_coord_list and new_coord_list must contain at least 2 points.
     Ex:
     find_transformation([[16420,26260],[17120, 28480]], [[15760, 26500],[16420, 28780]])

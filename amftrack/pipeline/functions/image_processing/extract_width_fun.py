@@ -191,6 +191,7 @@ def extract_section_profiles_for_edge(
     :param offset: distance at the end and the start where no point is taken
     :param step: step in pixel to compute the tangent to the hypha
     :target_length: length of the section extracted in pixels
+    :return: np.array of sections, list of segments in TIMESTEP referential
     """
     pixel_list = edge.pixel_list(t)
     offset = max(
@@ -220,7 +221,7 @@ def extract_section_profiles_for_edge(
         profile = profile.reshape((1, len(profile)))
         # TODO(FK): Add thickness of the profile here
         l.append(profile)
-    return np.concatenate(l, axis=0)
+    return np.concatenate(l, axis=0), list_of_segments, new_section_coord_list
 
 
 def get_source_image(
