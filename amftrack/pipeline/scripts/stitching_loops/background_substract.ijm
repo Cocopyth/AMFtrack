@@ -37,6 +37,7 @@ for (i=0; i<=list.length-1; i=i+1){
 
         for (j=0; j<=listImg.length-1; j++){
             if(startsWith(listImg[j],"Img_r")){
+                print(inputDirectory + File.separator + listImg[j]);
                 open(inputDirectory + File.separator + listImg[j]);
                 run("Subtract Background...", "rolling=15 light sliding");
                 wait(100);
