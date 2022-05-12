@@ -29,7 +29,8 @@ temp_path = env_config.get("TEMP_PATH")
 target = env_config.get("DATA_PATH")
 data_path = env_config.get("STORAGE_PATH")
 fiji_path = env_config.get("FIJI_PATH")
-pastis_path = env_config.get("PASTIS_PATH")   
+test_path = os.path.join(data_path, "test")  # repository used for tests
+pastis_path = env_config.get("PASTIS_PATH")
 API = env_config.get("API_KEY")
 
 os.environ["TEMP"] = temp_path
@@ -175,7 +176,41 @@ def get_param(
     return ldict
 
 
-def update_plate_info(directory: str,local = False) -> None:
+def update_plate_info_local(directory: str) -> None:
+    """
+    An acquisition repositorie has a param.m file inside it.
+    """
+    listdir = os.listdir(directory)
+    source = f"/data_info.json"
+
+    with open(target) as f:
+        plate_info = json.load(f)
+
+    # plate_info = json.load(open(target, "r"))
+    with tqdm(total=len(listdir), desc="analysed") as pbar:
+        for folder in listdir:
+            path_snap = os.path.join(directory, folder)
+            if os.path.isfile(os.path.join(path_snap, "param.m")):
+                params = get_param(folder, directory)
+                ss = folder.split("_")[0]
+                ff = folder.split("_")[1]
+                date = datetime(
+                    year=int(ss[:4]),
+                    month=int(ss[4:6]),
+                    day=int(ss[6:8]),
+                    hour=int(ff[0:2]),
+                    minute=int(ff[2:4]),
+                )
+                params["date"] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
+                params["folder"] = folder
+                total_path = os.path.join(directory, folder)
+                plate_info[total_path] = params
+            pbar.update(1)
+    with open(target, "w") as jsonf:
+        json.dump(plate_info, jsonf, indent=4)
+
+
+def update_plate_info(directory: str, local=False) -> None:
     """*
     1/ Download `data_info.json` file containing all information about acquisitions.
     2/ Add all acquisition files in the `directory` path to the `data_info.json`.
@@ -230,7 +265,21 @@ def get_data_info(local=False):
     return data_info
 
 
-def get_current_folders(directory: str, file_metadata=False,local=False) -> pd.DataFrame:
+def get_current_folders_local(directory: str) -> pd.DataFrame:
+
+    plate_info = pd.read_json(target, convert_dates=True).transpose()
+    plate_info.index.name = "total_path"
+    plate_info.reset_index(inplace=True)
+    listdir = os.listdir(directory)
+    return plate_info.loc[
+        np.isin(plate_info["folder"], listdir)
+        & (plate_info["total_path"] == directory + plate_info["folder"])
+    ]  # TODO(FK): use os.join here
+
+
+def get_current_folders(
+    directory: str, file_metadata=False, local=False
+) -> pd.DataFrame:
     """
     Returns a pandas data frame with all informations about the acquisition files
     inside the directory. The information is only taken from the dropbox
