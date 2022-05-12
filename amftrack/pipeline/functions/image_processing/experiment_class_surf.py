@@ -73,6 +73,11 @@ class Experiment:
             for index, row in folders.iterrows()
         ]
         self.dates = dates_datetime
+        # Reindexing the dataframe based on time order
+        self.folders["datetime"] = pd.to_datetime(
+            self.folders["date"], format="%d.%m.%Y, %H:%M:"
+        )
+        self.folders = self.folders.sort_values(by=["datetime"], ignore_index=True)
         self.dates.sort()
         nx_graph_poss = []
         for date in self.dates:
@@ -227,6 +232,10 @@ class Experiment:
 
     def pickle_load(self, path):
         self = pickle.load(open(path + f"experiment.pick", "rb"))
+
+    def folder_name(self, i) -> str:
+        "From the index of the timestep, return the name of the subdirectory"
+        return os.path.basename(self.folders.iloc[i]["total_path"])
 
     def get_node(self, label: str):
         return Node(label, self)
@@ -1149,8 +1158,11 @@ if __name__ == "__main__":
     directory_name = folder_list[i]
     exp = Experiment(plate, directory)
     exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
+    exp.load_tile_information(0)
 
-    r = exp.find_image_pos(10000, 5000, t=0)
-    print(r)
+    a = 0
 
-    print(exp.get_image_coordinates(0))
+    # r = exp.find_image_pos(10000, 5000, t=0)
+    # print(r)
+
+    # print(exp.get_image_coordinates(0))
