@@ -6,6 +6,7 @@ from amftrack.util.sys import get_skeleton
 
 
 def get_time(exp, t, tp1):  # redefined here to avoid loop in import
+    """Return time between date t and date tp1"""
     seconds = (exp.dates[tp1] - exp.dates[t]).total_seconds()
     return seconds / 3600
 

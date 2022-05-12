@@ -5,7 +5,8 @@ networkx
 matplotlib
 pymatreader
 numpy
-opencv-python # Modification
+opencv-contrib-python #TODO(FK): change to headless?
+# https://stackoverflow.com/questions/57427233/module-cv2-cv2-has-no-attribute-ximgproc
 imageio
 jupyterlab
 pycpd
@@ -19,6 +20,6 @@ dropbox
 ipympl
 nodejs
 jupyter-fs # New
-setuptools  # New
+setuptools
 python-decouple
 typing

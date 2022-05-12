@@ -1,53 +1,247 @@
 from skimage.measure import profile_line
-from amftrack.notebooks.analysis.util import *
-from scipy.optimize import curve_fit
 import numpy as np
+from scipy.optimize import curve_fit
+from typing import Tuple, List, Dict
+import os
+import logging
+from random import choice
+
+from amftrack.notebooks.analysis.util import *
+from amftrack.util.aliases import coord, coord_int
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
+    Edge,
 )
+from amftrack.util.geometry import get_section_segment, generate_index_along_sequence
+from amftrack.util.image_analysis import is_in_image, find_image_indexes
+
+logger = logging.getLogger(os.path.basename(__file__))
 
 a = 2.3196552
-from scipy import special
 
 
-def func2(x, lapse, lapse2, c, d, e):
-    return (
-        -c * (special.erf(e * (x - lapse)) - special.erf(e * (x - lapse - lapse2))) + d
+def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
+    """
+    From the length of the pixel list, determine which pixel will be chosen to compute width
+    :param n: length of the list of pixels
+    :param resolution: step between two chosen points
+    :param offset: offset at the begining and at the end where no points will be selected
+    """
+    return generate_index_along_sequence(n, resolution, offset)
+
+
+def compute_section_coordinates(
+    pixel_list: List[coord_int], pivot_indexes: List, step: int, target_length=120
+) -> List[Tuple[coord_int, coord_int]]:
+    """
+    Compute the coordinates of each segment section where the width will be computed
+    :param pivot_indexes: list of indexes in the pixel_list
+    :param step: this determine which neibooring points to use for computing the tangent
+    :param target_length: the approximate target_length that we want for the segment
+    WARNING: taget_length is not exact as the coordinates are ints
+    NB: the coordinates are all in the general referential
+    """
+    # TODO(FK): handle case where the step is bigger than the offset, raise error instead of logging
+    if step > pivot_indexes[0]:
+        logger.error("The step is bigger than the offset. Offset should be raised")
+    list_of_segments = []
+    for i in pivot_indexes:
+        pivot = pixel_list[i]
+        before = pixel_list[i - step]
+        after = pixel_list[i + step]
+        orientation = np.array(before) - np.array(after)
+        list_of_segments.append(get_section_segment(orientation, pivot, target_length))
+    return list_of_segments
+
+
+# def find_source_images_(
+#     section_coord_list: List[Tuple[coord_int]],
+#     image_coord_list: List[Tuple[coord_int]],
+#     mode=1,
+# ):
+#     """
+#     In this function we determine (and chose) an image for each section.
+#     This image will then be used to extract the profile section.
+#     There are two modes:
+#     - mode 1: segments that aren't fully contained in an image are removed
+#     - mode 2: no segment is removed, thus some segment will have so part out of the image
+#     :return
+#     - List of image indexes for each section
+#     - List of coordinates of the segment in their respective image
+#     NB: This implementation suppose that the section are close to one another
+#     and that there are often in the same image as the previous one
+#     """
+#     image_indexes = []  # image index for each segment
+#     new_section_coord_list = []  # segment list filtered and converted to the image ref
+
+#     current_image = [np.inf, np.inf]
+#     current_index = 0
+#     for sec in section_coord_list:
+#         (point1, point2) = sec
+#         # check if the current image contains the segment
+#         if is_in_image(
+#             current_image[0], current_image[1], point1[0], point1[1]
+#         ) and is_in_image(current_image[0], current_image[1], point2[0], point2[1]):
+#             # Case 1: same image as previous section
+#             image_indexes.append(current_index)
+#             new_sec = [
+#                 [point[0] - current_image[0], [point[1] - current_image[1]]]
+#                 for point in sec
+#             ]
+#             new_section_coord_list.append(new_sec)
+#         else:
+#             logging.debug("New image needed")
+#             images1 = find_image_indexes(image_coord_list, point1[0], point1[1])
+#             images2 = find_image_indexes(image_coord_list, point2[0], point2[1])
+#             possible_choices = list(set(images1) & set(images2))
+#             if possible_choices == []:
+#                 logger.debug(
+#                     "This section is not contained in a single original image."
+#                 )
+#                 if mode == 1:
+#                     logger.debug("Removing the section..")
+#                     continue
+#                 elif mode == 2:
+#                     logger.debug("Choosing an image anyway")
+#                     possible_choices = list(set(images1) | set(images2))
+#                     if possible_choices == []:
+#                         logger.debug("No image containing the extremity of the segment")
+#                         logger.debug("Choosing a random image")
+#                         image_indexes.append(current_index)
+#                         new_sec = [
+#                             [point[0] - current_image[0], [point[1] - current_image[1]]]
+#                             for point in sec
+#                         ]
+#                         # TODO(FK): still a small problem with case where first section is failing
+#                         new_section_coord_list.append(new_sec)
+#             else:
+#                 index = possible_choices[0]  # NB(FK): we choose randomly
+#                 current_image = image_coord_list[index]
+#                 current_index = index
+#                 image_indexes.append(index)
+#                 new_sec = [
+#                     [point[0] - current_image[0], [point[1] - current_image[1]]]
+#                     for point in sec
+#                 ]
+#                 new_section_coord_list.append(new_sec)
+#     return image_indexes, new_section_coord_list
+
+
+def find_source_images_filtered(
+    section_coord_list: List[Tuple[coord_int]], image_coord_list: List[Tuple[coord_int]]
+) -> Tuple[List[int], List[Tuple[coord, coord]]]:
+    """
+    For each segment in section_coord_list, determine the index of an
+    image in `image_coord_list` which contains the segment.
+    If no image contains fully the segment, the segment is removed.
+    :return:
+    - List of image indexes for each section
+    - List of coordinates of the segment in their respective image
+    NB: This implementation suppose that the section are close to one another
+    and that there are often in the same image as the previous one
+    """
+    image_indexes = []  # image index for each segment
+    new_section_coord_list = []  # segment list filtered and converted to the image ref
+
+    current_image = [np.inf, np.inf]
+    current_index = 0
+    for sec in section_coord_list:
+        (point1, point2) = sec
+        if not (
+            is_in_image(current_image[0], current_image[1], point1[0], point1[1])
+            and is_in_image(current_image[0], current_image[1], point2[0], point2[1])
+        ):
+            logging.debug("New image needed")
+            images1 = find_image_indexes(image_coord_list, point1[0], point1[1])
+            images2 = find_image_indexes(image_coord_list, point2[0], point2[1])
+            possible_choices = list(set(images1) & set(images2))
+            if possible_choices == []:
+                logger.debug(
+                    "This section is not contained in a single original image. Skipping.."
+                )
+                continue
+            else:
+                index = possible_choices[0]  # NB(FK): we choose randomly
+                current_index = index
+                current_image = image_coord_list[index]
+        # Adding the new point and its image index
+        image_indexes.append(current_index)
+        new_sec = [
+            [point[0] - current_image[0], point[1] - current_image[1]] for point in sec
+        ]
+        new_section_coord_list.append(new_sec)
+    return image_indexes, new_section_coord_list
+
+
+def extract_section_profiles_for_edge(
+    exp: Experiment,
+    t: int,
+    edge: Edge,
+    resolution=5,
+    offset=4,
+    step=3,
+    target_length=120,
+) -> np.array:
+    """
+    Main function to extract section profiles of an edge.
+    Given an Edge of Experiment at timestep t, returns a np array
+    of dimension (target_length, m) where m is the number of section
+    taken on the hypha.
+    :param resolution: distance between two measure points along the hypha
+    :param offset: distance at the end and the start where no point is taken
+    :param step: step in pixel to compute the tangent to the hypha
+    :target_length: length of the section extracted in pixels
+    """
+    pixel_list = edge.pixel_list(t)
+    offset = max(
+        offset, step
+    )  # avoiding index out of range at start and end of pixel_list
+    pixel_list_ts = [exp.general_to_timestep(point, t) for point in pixel_list]
+    pixel_indexes = generate_pivot_indexes(
+        len(pixel_list), resolution=resolution, offset=offset
     )
-
-
-def func3(x, lapse, lapse2, c, d, e, lapse4):
-    return (
-        -c * (special.erf(e * (x - lapse)) - special.erf(e * (x - (lapse + lapse2))))
-        + d
-        + c
-        * (
-            special.erf(e * (x - (lapse + lapse2)))
-            - special.erf(e * (x - (lapse + lapse2 + lapse4)))
-        )
+    list_of_segments = compute_section_coordinates(
+        pixel_list_ts, pixel_indexes, step=step, target_length=target_length + 1
+    )  # target_length + 1 to be sure to have length all superior to target_length when cropping
+    # TODO (FK): is a +1 enough?
+    image_coord_list = exp.get_image_coords(t)
+    image_indexes, new_section_coord_list = find_source_images_filtered(
+        list_of_segments, image_coord_list
     )
+    images = {}
+    for im_index in set(image_indexes):
+        images[im_index] = exp.get_image(t, im_index)
+    l = []
+    for i, sect in enumerate(new_section_coord_list):
+        im = images[image_indexes[i]]
+        # WARNING: profile_line has a different order for x an y
+        # This is way point1 and point2 have shape (y, x)
+        # TODO(FK)
+        point1 = np.array([sect[0][1], sect[0][0]])
+        point2 = np.array([sect[1][1], sect[1][0]])
+        profile = profile_line(im, point1, point2, mode="constant")[:target_length]
+        profile = profile.reshape((1, len(profile)))
+        # TODO(FK): Add thickness of the profile here
+        l.append(profile)
+    return np.concatenate(l, axis=0)
 
 
-def func4(x, lapse, lapse2, c, d, e, lapse4):
-    return (
-        -c * (special.erf(e * (x - lapse)) - special.erf(e * (x - (lapse + lapse2))))
-        + d
-        + c * (special.erf(e * (x - (lapse - lapse4))) - special.erf(e * (x - (lapse))))
-    )
-
-
-def func5(x, sigma, mean, fact, offset):
-    return -fact * np.exp(-((x - mean) ** 2) / sigma**2) + offset
-
-
-def func5(x, sigma, mean, fact, offset):
-    return -fact * np.exp(-((x - mean) ** 2) / sigma**2) + offset
-
-
-def get_source_image(experiment: Experiment, pos, t, local, force_selection=None):
-
+def get_source_image(
+    experiment: Experiment, pos: coord, t: int, local: bool, force_selection=None
+):
+    """
+    Return a source image from the Experiment object for the position `pos`.
+    If force_selection is None, it returns the image in which the point is
+    further away from the border.
+    Otherwise, it returns the image the closest to the `force_selection` coordinates
+    :param pos: (x,y) position
+    :param local: useless parameter boolean
+    :param force_selection: (x,y) position
+    :return: image along with its coordinates
+    """
     x, y = pos[0], pos[1]
     ims, posimg = experiment.find_image_pos(x, y, t, local)
+
     if force_selection is None:
         dist_border = [
             min([posimg[1][i], 3000 - posimg[1][i], posimg[0][i], 4096 - posimg[0][i]])
@@ -62,33 +256,41 @@ def get_source_image(experiment: Experiment, pos, t, local, force_selection=None
             for i in range(posimg[0].shape[0])
         ]
         j = np.argmin(dist_last)
+    logger.info("Getting images")
     return (ims[j], (posimg[1][j], posimg[0][j]))
 
 
 def get_width_pixel(
-    edge,
+    edge: Edge,
     index,
     im,
     pivot,
-    before,
-    after,
+    before: coord,
+    after: coord,
     t,
     size=20,
     width_factor=60,
     averaging_size=100,
     threshold_averaging=10,
 ):
+    """
+    Get a width value for a given pixel on the hypha
+    :param index: TO REMOVE
+    :param im:
+    :param pivot:
+    :param before, after: coordinates of point after and before to compute the tangent
+    :param size:
+    :param width_factor:
+    :param averaging_size:
+    :param threshold_averaging:
+    :return: the width computed
+    """
+    # TODO(FK): remove this line
     imtab = im
     #     print(imtab.shape)
     #     print(int(max(0,pivot[0]-averaging_size)),int(pivot[0]+averaging_size))
-    threshold = np.mean(
-        imtab[
-            int(max(0, pivot[0] - averaging_size)) : int(pivot[0] + averaging_size),
-            int(max(0, pivot[1] - averaging_size)) : int(pivot[1] + averaging_size),
-        ]
-        - threshold_averaging
-    )
     orientation = np.array(before) - np.array(after)
+    # TODO(FK): all this into another function
     perpendicular = (
         [1, -orientation[0] / orientation[1]] if orientation[1] != 0 else [0, 1]
     )
@@ -99,101 +301,48 @@ def get_width_pixel(
     point2 = np.around(np.array(pivot) - width_factor * perpendicular_norm)
     point1 = point1.astype(int)
     point2 = point2.astype(int)
-    p = profile_line(imtab, point1, point2, mode="constant")
+    p = profile_line(imtab, point1, point2, mode="constant")  # TODO(FK): solve error
     xdata = np.array(range(len(p)))
     ydata = np.array(p)
-    # #     fig = plt.figure()
-    # #     ax = fig.add_subplot(111)
-    # #     ax.plot(xdata,ydata)
-    # #     ax.plot(xdata, func5(xdata, *popt0), 'g-')
-    #     try:
-    #         p00=[10,60,60,160]
-    #         popt0, pcov = curve_fit(func5, xdata, ydata,bounds = ([0,0,0,0],4*[np.inf]),p0=p00)
-    #         p0a=[60,10,100,180,0.1]
-    #         popt1, pcov = curve_fit(func2, xdata, ydata,bounds = ([0,0,0,0,0],[120,120,200]+2*[np.inf]),p0=p0a)
-    #         p0b=list(popt1)+[10]
-    #         popt2, pcov = curve_fit(func3, xdata, ydata,bounds = ([0,0,0,0,0,0],[120,120,200]+2*[np.inf]+[120]),p0=p0b)
-    #         residuals = ydata- func3(xdata, *popt2)
-    #         ss_res = np.sum(residuals**2)
-    #         ss_tot = np.sum((ydata-np.mean(ydata))**2)
-    #         r_squared1 = 1 - (ss_res / ss_tot)
-    #         popt3, pcov = curve_fit(func4, xdata, ydata,bounds = ([0,0,0,0,0,0],[120,120,200]+2*[np.inf]+[120]),p0=p0b)
-    #         residuals = ydata- func4(xdata, *popt3)
-    #         ss_res = np.sum(residuals**2)
-    #         ss_tot = np.sum((ydata-np.mean(ydata))**2)
-    #         r_squared2 = 1 - (ss_res / ss_tot)
-    #     #     ax.plot(xdata, func2(xdata, *popt1), 'r-')
-    #         if r_squared1>r_squared2:
-    #     #         ax.plot(xdata, func3(xdata, *popt2), 'b-')
-    #             popt=popt2
-    #         else:
-    #     #         ax.plot(xdata, func4(xdata, *popt3), 'b-')
-    #             popt=popt3
-    #         background = popt[3]
-    #     except RuntimeError:
-    #         print('failed')
-    #         background = np.mean(p)
-    # #     print(popt[3],popt0[3])
-    # #     width_pix = popt0[0]*popt0[2]
+
     background = np.mean(
         (np.mean(p[: width_factor // 6]), np.mean(p[-width_factor // 6 :]))
     )
     width_pix = -np.sum(
         (np.log10(np.array(p) / background) <= 0) * np.log10(np.array(p) / background)
     )
-    #     print(width_pix)
-    #     p0=[165,100,165,45,10,10,10]
-    #     popt, pcov = curve_fit(func, xdata, ydata,bounds = ([-np.inf,-np.inf,-np.inf,-np.inf,0,0,0],np.inf),p0=p0)
-    #     width_pix = popt[-2]
-    #     ax.plot(xdata, func(xdata, *popt), 'r-')
-    #     derivative = [p[i+1]-p[i] for i in range(len(p)-1)]
-    #     fig = plt.figure()
-    #     ax = fig.add_subplot(111)
-    #     ax.plot([np.mean(derivative[5*i:5*i+5]) for i in range(len(derivative)//5)])
-    #     problem=False
-    #     arg = len(p)//2
-    #     if p[arg]>threshold:
-    #         arg = np.argmin(p)
-    # #     we_plot=randrange(1000)
-    #     while  p[arg]<=threshold:
-    #         if arg<=0:
-    # #             we_plot=50
-    #             problem=True
-    #             break
-    #         arg-=1
-    #     begin = arg
-    #     arg = len(p)//2
-    #     if p[arg]>threshold:
-    #         arg = np.argmin(p)
-    #     while  p[arg]<=threshold:
-    #         if arg>=len(p)-1:
-    # #             we_plot=50
-    #             problem=True
-    #             break
-    #         arg+=1
-    #     end = arg
-    # #     print(end-begin,threshold)
-    #     print(np.linalg.norm(point1-point2),len(p),width_pix)
+
     return a * np.sqrt(max(0, np.linalg.norm(point1 - point2) * (width_pix) / len(p)))
 
 
-def get_width_edge(edge, resolution, t, local=False, threshold_averaging=10):
-    pixel_conversion_factor = 1.725
+def get_width_edge(
+    edge: Edge, resolution: int, t: int, local=False, threshold_averaging=10
+) -> Dict[coord, float]:
+    """
+    Compute the width of the given edge for each point that is chosen on the hypha.
+    :param resolution: if resolution = 3 the width is computed every 3 pixel on the edge
+    :return: a dictionnary with the width for each point chosen on the hypha
+    """
+    pixel_conversion_factor = 1.725  # TODO(FK): use the designated function instead
     pixel_list = edge.pixel_list(t)
     pixels = []
     indexes = []
     source_images = []
     poss = []
     widths = {}
+    # Long edges
     if len(pixel_list) > 3 * resolution:
         for i in range(0, len(pixel_list) // resolution):
             index = i * resolution
             indexes.append(index)
             pixel = pixel_list[index]
             pixels.append(pixel)
-            source_img, pos = get_source_image(edge.experiment, pixel, t, local)
+            source_img, pos = get_source_image(
+                edge.experiment, pixel, t, local
+            )  # TODO(FK): very not efficient
             source_images.append(source_img)
             poss.append(pos)
+    # Small edges
     else:
         indexes = [0, len(pixel_list) // 2, len(pixel_list) - 1]
         for index in indexes:
@@ -249,3 +398,43 @@ def get_width_info(experiment, t, resolution=50, skip=False):
             # Maybe change to Nan if it doesnt break the rest
             edge_width[edge] = 40
     return edge_width
+
+
+if __name__ == "__main__":
+
+    from amftrack.util.sys import (
+        update_plate_info_local,
+        update_plate_info,
+        get_current_folders,
+        get_current_folders_local,
+        data_path,
+    )
+    from amftrack.pipeline.functions.image_processing.experiment_util import (
+        get_random_edge,
+    )
+    import os
+    from random import choice
+
+    plate_name = "20220330_2357_Plate19"
+
+    directory = data_path + "/"
+    ## Set up experiment object
+    update_plate_info_local(directory)
+    # update_plate_info(data_path)
+    folder_df = get_current_folders_local(directory)
+    selected_df = folder_df.loc[folder_df["folder"] == plate_name]
+    i = 0
+    plate = 19
+    folder_list = list(selected_df["folder"])
+    directory_name = folder_list[i]
+    exp = Experiment(plate, directory)
+    exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
+
+    ## Select a random Edge at time 0
+    (G, pos) = exp.nx_graph[0], exp.positions[0]
+    edge = choice(list(G.edges))
+    edge_exp = Edge(Node(edge[0], exp), Node(edge[1], exp), exp)
+
+    ## Run the width function
+    edge = get_random_edge(exp, 0)
+    extract_section_profiles_for_edge(exp, 0, edge)
