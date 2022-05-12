@@ -232,3 +232,4 @@ CAREFUL: the following coordinate usage have a different convention:
 - plt.plot() uses a different convention. We will always have to inverse coordinates when using plt.plot
 Ex: plt.plot(x[1], x[0], ..)
 - cv.resize takes the shape reversed compared to numpy
+- labelme also uses inversed x and y
