@@ -320,26 +320,20 @@ def second_identification(
     downstream_pos=[],
     tolerance=50,
 ):
-    path = os.getenv("HOME") + "/pycode/API_drop.npy"
     reconnect_degree_2(nx_graph_t, pos_t)
     t = time()
     corresp, to_remove = first_identification(
         nx_graph_tm1, nx_graph_t, pos_tm1, pos_t, tolerance
     )
     print("first_id", time() - t)
-    # upload(API, path, f'/{dir_drop}/test_first_id{int(time() - t)}', chunk_size=256 * 1024 * 1024)
 
     t = time()
-    #     nx_graph_tm1=clean_nodes(nx_graph_tm1,to_remove,pos_tm1)
-    #     print("clean_node",time()-t)
-    #     t=time()
     downstream_graphs = [nx_graph_t] + downstream_graphs
     downstream_pos = [pos_t] + downstream_pos
     new_graphs, new_poss = relabel_nodes_downstream(
         corresp, downstream_graphs, downstream_pos
     )
     print("relabel", time() - t)
-    # upload(API, path, f'/{dir_drop}/relabel{int(time() - t)}', chunk_size=256 * 1024 * 1024)
 
     t = time()
     pos_t = new_poss[0]
@@ -358,7 +352,6 @@ def second_identification(
         Sedge[pixela[0], pixela[1]] = edge[0]
         Sedge[pixelb[0], pixelb[1]] = edge[1]
     for i, tip in enumerate(tips):
-        #         print(i/len(tips))
         mini1 = np.inf
         posanchor = pos_tm1[tip]
         window = 1000
@@ -366,15 +359,6 @@ def second_identification(
             max(0, posanchor[0] - 2 * window) : posanchor[0] + 2 * window,
             max(0, posanchor[1] - 2 * window) : posanchor[1] + 2 * window,
         ]
-        #         potential_surrounding_t=Sedge
-        #         for edge in nx_graph_t.edges:
-        #             pixel_list=nx_graph_t.get_edge_data(*edge)['pixel_list']
-        #             if np.linalg.norm(np.array(pixel_list[0])-np.array(pos_tm1[tip]))<=5000:
-        #                 distance=np.min(np.linalg.norm(np.array(pixel_list)-np.array(pos_tm1[tip]),axis=1))
-        #                 if distance<mini1:
-        #                     mini1=distance
-        #                     right_edge1 = edge
-        #         print('t1 re',right_edge)
         mini = np.inf
         for node_root in potential_surrounding_t.data:
             for edge in nx_graph_t.edges(int(node_root)):
@@ -391,10 +375,6 @@ def second_identification(
                     if distance < mini:
                         mini = distance
                         right_edge = edge
-        #         print('t2 re',right_edge)
-        #         if right_edge!=right_edge1:
-        #             print('alaba',right_edge,right_edge1)
-        #             print('len(surrounding)',len(potential_surrounding_t.data))
         if mini == np.inf:
             print(f"didnt find a tip to match tip in pos {posanchor}")
             continue
@@ -534,17 +514,11 @@ def second_identification(
 
     downstream_pos = new_poss
     downstream_graphs = new_graphs
-    #     print("second relabeling")
-    #     print(len(nx_graph_tm1.nodes),len(new_graphs[0].nodes))
     t = time()
 
     new_graphs, new_poss = reduce_labels(
         [nx_graph_tm1] + downstream_graphs, [pos_tm1] + downstream_pos
     )
-    # upload(API, path, f'/{dir_drop}/reduce{int(time() - t)}', chunk_size=256 * 1024 * 1024)
-
-    #     print("third relabeling")
-    #     print(len(new_graphs[0].nodes),len(new_graphs[1].nodes))
     return (new_graphs, new_poss)
 
 
