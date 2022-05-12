@@ -8,8 +8,29 @@ from os.path import basename
 import requests
 # create a ZipFile object
 from subprocess import call
-
 from time import sleep
+from decouple import Config, RepositoryEnv
+
+DOTENV_FILE = (
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    + "/local.env"
+)
+env_config = Config(RepositoryEnv(DOTENV_FILE))
+
+path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
+
+app_key = env_config.get("APP_KEY")
+app_secret = env_config.get("APP_SECRET")
+refresh_token = env_config.get("REFRESH_TOKEN")
+folder_id = env_config.get("FOLDER_ID")
+user_id = env_config.get("USER_ID")
+
+dbx = dropbox.DropboxTeam(app_key = app_key,
+            app_secret = app_secret, oauth2_refresh_token = refresh_token)
+p = dropbox.common.PathRoot.namespace_id(folder_id)
+dbx = dbx.with_path_root(p)
+dbx = dbx.as_user(user_id)
+
 def zip_file(origin,target,depth=2):
     with ZipFile(target, 'w',compression=ZIP_DEFLATED) as zipObj:
        # Iterate over all the files in directory
