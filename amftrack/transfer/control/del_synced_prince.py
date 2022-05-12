@@ -61,11 +61,12 @@ directory_target = (
 )
 directory_target = r"/mnt/sun-temp/TEMP/PRINCE_syncing/"
 
-update_plate_info(directory_origin)
-update_plate_info(directory_target)
+update_plate_info(directory_origin,local=True)
+all_folders_origin = get_current_folders(directory_origin,local=True)
+update_plate_info(directory_target,local=True)
 
-all_folders_origin = get_current_folders(directory_origin)
-all_folders_target = get_current_folders(directory_target)
+
+all_folders_target = get_current_folders(directory_target,local=True)
 run_info = all_folders_target.copy()
 folder_list = list(run_info["folder"])
 with tqdm(total=len(folder_list), desc="deleted") as pbar:

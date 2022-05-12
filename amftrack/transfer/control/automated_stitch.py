@@ -134,11 +134,11 @@ directory_origin = r"/mnt/sun-temp/TEMP/PRINCE_syncing/"
 # directory_target = r'/mnt/sun/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE_analysis/'
 directory_target = r"/mnt/sun-temp/TEMP/PRINCE_analysis/"
 
-update_plate_info(directory_origin)
-update_plate_info(directory_target)
+update_plate_info(directory_origin,local=True)
+all_folders_origin = get_current_folders(directory_origin,local=True)
+update_plate_info(directory_target,local=True)
+all_folders_target = get_current_folders(directory_target,local=True)
 
-all_folders_origin = get_current_folders(directory_origin)
-all_folders_target = get_current_folders(directory_target)
 all_folders_origin["date_datetime"] = pd.to_datetime(
     all_folders_origin["date"].astype(str), format="%d.%m.%Y, %H:%M:"
 )
