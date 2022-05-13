@@ -1,4 +1,3 @@
-from path import path_code_dir
 import sys
 import os
 
@@ -16,10 +15,9 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
     prune_graph,
     clean_degree_4,
 )
-from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
+from amftrack.util.sys import temp_path
 import scipy.sparse
 import scipy.io as sio
-from amftrack.pipeline.paths.directory import directory_scratch
 import pandas as pd
 from amftrack.pipeline.functions.image_processing.node_id import remove_spurs
 

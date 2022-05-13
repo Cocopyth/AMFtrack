@@ -1,62 +1,21 @@
 import sys
 
 sys.path.insert(0, "/home/cbisot/pycode/MscThesis/")
-import pandas as pd
-from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
-import ast
-from amftrack.plotutil import plot_t_tp1
-from scipy import sparse
-from datetime import datetime
-from amftrack.pipeline.functions.image_processing.node_id import orient
-import pickle
-import scipy.io as sio
+from amftrack.util.sys import get_dirname
 from pymatreader import read_mat
-from matplotlib import colors
 import cv2
-import imageio
 import matplotlib.pyplot as plt
-import numpy as np
-from skimage.filters import frangi
-from skimage import filters
-from random import choice
-import scipy.sparse
 import os
 from amftrack.pipeline.functions.image_processing.extract_graph import (
-    from_sparse_to_graph,
-    generate_nx_graph,
     sparse_to_doc,
 )
-from skimage.feature import hessian_matrix_det
-from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
-    Experiment,
-    Edge,
-    Node,
-    Hyphae,
-    plot_raw_plus,
-)
-from amftrack.pipeline.paths.directory import (
-    run_parallel,
-    find_state,
-    directory_scratch,
-    directory_project,
-)
 from amftrack.notebooks.analysis.util import *
-from scipy import stats
-from scipy.ndimage.filters import uniform_filter1d
-from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
-    get_pixel_growth_and_new_children,
-    get_hyphae,
-)
-from collections import Counter
-from IPython.display import clear_output
-from amftrack.notebooks.analysis.data_info import *
 from IPython.core.interactiveshell import InteractiveShell
 
 InteractiveShell.ast_node_interactivity = "all"
 plt.rcParams.update(
     {"font.family": "verdana", "font.weight": "normal", "font.size": 20}
 )
-from amftrack.plotutil import plot_node_skel
 
 
 def transform_skeleton_final_for_show(skeleton_doc, Rot, trans):

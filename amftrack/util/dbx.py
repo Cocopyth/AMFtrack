@@ -157,6 +157,57 @@ def sync_fold(origin,target):
     # print(cmd)
     call(cmd,shell=True)
 
+def get_dropbox_folders(
+    dir_dop: str, file_metadata=False
+) -> pd.DataFrame:
+    data = []
+    dbx = load_dbx()
+    response = dbx.files_list_folder(dir_dop, recursive=True)
+    # for fil in response.entries:
+    listfiles = []
+    listjson = []
+    while response.has_more:
+        listfiles += [
+            file for file in response.entries if file.name.split(".")[-1] == "zip"
+        ]
+        listjson += [
+            file.path_lower
+            for file in response.entries
+            if file.name.split(".")[-1] == "json"
+        ]
+
+        response = dbx.files_list_folder_continue(response.cursor)
+    listfiles += [
+        file for file in response.entries if file.name.split(".")[-1] == "zip"
+    ]
+    listjson += [
+        file.path_lower
+        for file in response.entries
+        if file.name.split(".")[-1] == "json"
+    ]
+    # print([((file.path_lower.split(".")[0]) + "_info.json") for file in listfiles if (file.name.split(".")[-1] == "zip") &
+    #        (((file.path_lower.split(".")[0]) + "_info.json") not in listjson)])
+    listfiles.reverse()
+    if file_metadata:
+        names = [file.name.split(".")[0] for file in listfiles]
+        sizes = [file.size / 10 ** 9 for file in listfiles]
+        modified = [file.client_modified for file in listfiles]
+        df = pd.DataFrame((names, sizes, modified)).transpose()
+        df = df.rename(columns={0: "folder", 1: "size", 2: "change_date"})
+        return df
+    with tqdm(total=len(listfiles), desc="analysed") as pbar:
+        for file in listfiles:
+            source = (file.path_lower.split(".")[0]) + "_info.json"
+            target = f'{os.getenv("TEMP")}/{file.name.split(".")[0]}.json'
+            # print(source,target)
+            download(source, target)
+            # print(target)
+            data.append(pd.read_json(target))
+            os.remove(target)
+            pbar.update(1)
+        infos = pd.concat(data)
+    return infos
+
 def upload_folders(folders: pd.DataFrame,dir_drop = 'DATA',catch_exception=True):
     '''
     Upload all the folders in the dataframe to a location on dropbox
