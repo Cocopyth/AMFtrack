@@ -7,8 +7,7 @@ import os
 from amftrack.util.dbx import upload_folders
 from amftrack.util.sys import temp_path
 
-directory = str(sys.argv[1])
-dir_drop = str(sys.argv[2])
+dir_drop = str(sys.argv[1])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 

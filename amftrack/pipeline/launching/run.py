@@ -80,7 +80,7 @@ def run(code: str, args: List, folders: pd.DataFrame, loc_code='pipeline/scripts
     folder_list.sort()
     args_str = [str(arg) for arg in args]
     arg_str = " ".join(args_str)
-    with tqdm(total=len(folder_list), desc="stitched") as pbar:
+    with tqdm(total=len(folder_list), desc="folder_treated") as pbar:
         for index, folder in enumerate(folder_list):
             command = (
                 ["python3", f"{path_code}{loc_code}{code}"]
