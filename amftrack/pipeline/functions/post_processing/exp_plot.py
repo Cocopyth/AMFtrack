@@ -11,7 +11,7 @@ from amftrack.pipeline.functions.post_processing.area_hulls import *
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     plot_raw_plus,
 )
-from amftrack.util.dbx import temp_path
+from amftrack.util.sys import temp_path
 
 API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))
 dir_drop = "prince_data"

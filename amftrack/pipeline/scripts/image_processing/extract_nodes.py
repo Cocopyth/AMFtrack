@@ -2,7 +2,7 @@ from path import path_code_dir
 import sys
 
 sys.path.insert(0, path_code_dir)
-from amftrack.util.dbx import temp_path
+from amftrack.util.sys import temp_path
 from amftrack.pipeline.functions.image_processing.node_id import (
     second_identification,
 )
