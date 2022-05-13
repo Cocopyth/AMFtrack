@@ -3,7 +3,7 @@
 from scipy import sparse
 import numpy as np
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     sparse_to_doc,
 )
@@ -16,6 +16,7 @@ from time import time_ns
 from decouple import Config, RepositoryEnv
 from pymatreader import read_mat
 
+
 DOTENV_FILE = (
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     + "/local.env"
@@ -23,15 +24,13 @@ DOTENV_FILE = (
 env_config = Config(RepositoryEnv(DOTENV_FILE))
 
 path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
-slurm_path = env_config.get("SLURM_PATH")
-temp_path = env_config.get("TEMP_PATH")
 target = env_config.get("DATA_PATH")
 storage_path = env_config.get("STORAGE_PATH")
 fiji_path = env_config.get("FIJI_PATH")
 test_path = os.path.join(storage_path, "test")  # repository used for tests
 pastis_path = env_config.get("PASTIS_PATH")
+temp_path = env_config.get("TEMP_PATH")
 
-os.environ["TEMP"] = temp_path
 
 
 def pad_number(number):

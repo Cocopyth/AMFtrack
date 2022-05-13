@@ -18,7 +18,7 @@ import pandas as pd
 from amftrack.pipeline.paths.directory import directory_scratch
 import json
 from time import time_ns
-from amftrack.util.sys import temp_path
+from amftrack.util.dbx import temp_path
 
 directory = str(sys.argv[1])
 limit = int(sys.argv[2])

@@ -2,10 +2,10 @@ import os
 import pandas as pd
 from amftrack.util.sys import (
     path_code,
-    temp_path,
     update_plate_info,
     get_current_folders,
 )
+from amftrack.util.dbx import temp_path
 from typing import List
 
 from time import time_ns

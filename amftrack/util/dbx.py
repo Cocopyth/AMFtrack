@@ -10,6 +10,7 @@ import requests
 from subprocess import call
 from time import sleep
 from decouple import Config, RepositoryEnv
+from time import time_ns
 
 DOTENV_FILE = (
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -24,6 +25,8 @@ app_secret = env_config.get("APP_SECRET")
 refresh_token = env_config.get("REFRESH_TOKEN")
 folder_id = env_config.get("FOLDER_ID")
 user_id = env_config.get("USER_ID")
+
+temp_path = env_config.get("TEMP_PATH")
 
 def load_dbx():
     dbx = dropbox.DropboxTeam(app_key = app_key,
@@ -55,7 +58,7 @@ def unzip_file(origin,target,depth=2):
     with ZipFile(origin, 'r') as zipy:
         zipy.extractall(target)
         
-def upload(file_path, target_path, chunk_size=4 * 1024 * 1024):
+def upload(file_path, target_path, chunk_size=4 * 1024 * 1024, catch_exception=True):
     dbx = load_dbx()
     with open(file_path, "rb") as f:
         file_size = os.path.getsize(file_path)
@@ -90,9 +93,12 @@ def upload(file_path, target_path, chunk_size=4 * 1024 * 1024):
                                     cursor.offset = f.tell()
                                 pbar.update(chunk_size)
             except (requests.exceptions.RequestException,dropbox.exceptions.ApiError) as e:
-                print("error")
-                sleep(60)
-                continue
+                if catch_exception:
+                    print("error")
+                    sleep(60)
+                    continue
+                else:
+                    return(None)
             break
             
                 
@@ -108,8 +114,45 @@ def download(file_path, target_path, end=''):
             sleep(60)
             continue
         break
-        
+
+def upload_zip(path_total,target,trhesh = 4 * 1024 * 1024):
+    if os.path.isdir(path_total):
+        stamp = time_ns()
+        path_zip = f'{temp_path}/{stamp}.zip'
+        zip_file(path_total, path_zip)
+        upload(path_zip, target,
+               chunk_size=256 * 1024 * 1024)
+        os.remove(path_zip)
+
+    else:
+        upload(path_total, target,
+               chunk_size=256 * 1024 * 1024)
+
 def sync_fold(origin,target):
     cmd = f'rsync --update -avh {origin} {target}'
     # print(cmd)
     call(cmd,shell=True)
+
+def upload_folders(folders,dir_drop = 'DATA',catch_exception=True):
+    run_info = folders.copy()
+    folder_list = list(run_info['folder'])
+    with tqdm(total=len(folder_list), desc="transferred") as pbar:
+        for folder in folder_list:
+            directory_name = folder
+            run_info['unique_id'] = run_info['Plate'].astype(str) + "_" + run_info['CrossDate'].astype(str)
+            line = run_info.loc[run_info['folder'] == directory_name]
+            id_unique = line['unique_id'].iloc[0]
+
+            path_snap = line['total_path'].iloc[0]
+            path_info = f'{temp_path}/{directory_name}_info.json'
+
+            for subfolder in ["Img", "Analysis"]:
+                path_zip = f'{temp_path}/{directory_name}_{subfolder}.zip'
+                line.to_json(path_info)
+                zip_file(os.path.join(path_snap, subfolder), path_zip)
+                upload(path_zip, f'/{dir_drop}/{id_unique}/{directory_name}/{subfolder}.zip',chunk_size=256 * 1024 * 1024,catch_exception=catch_exception)
+            upload(path_info, f'/{dir_drop}/{id_unique}/{directory_name}_info.json', chunk_size=256 * 1024 * 1024,
+                   catch_exception=catch_exception)
+            os.remove(path_info)
+            os.remove(path_zip)
+            pbar.update(1)
