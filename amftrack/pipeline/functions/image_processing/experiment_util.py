@@ -401,20 +401,20 @@ if __name__ == "__main__":
     from amftrack.util.sys import (
         update_plate_info_local,
         get_current_folders_local,
-        data_path,
+        storage_path,
     )
     import os
 
     # directory_name = "width1"
     # plate_name = "20220325_1423_Plate907"
-    # directory = os.path.join(data_path, directory_name, "full_plates") + "/"
+    # directory = os.path.join(storage_path, directory_name, "full_plates") + "/"
 
     # plate_name = "20220330_2357_Plate19"
-    # directory = data_path + "/"
+    # directory = storage_path + "/"
 
     plate_name = "20220325_1423_Plate907"
     directory_name = "width1"
-    directory = os.path.join(data_path, directory_name, "full_plates") + "/"
+    directory = os.path.join(storage_path, directory_name, "full_plates") + "/"
 
     update_plate_info_local(directory)
     folder_df = get_current_folders_local(directory)

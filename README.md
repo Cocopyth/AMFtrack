@@ -204,7 +204,7 @@ pytest test_file.py -k test_function
 ### 3/ Special tests
 For some tests, a processed Prince plate is required. Or other types of files.
 The data file must be stored at the following path:
-**data_path** + "**test**".
+**storage_path** + "**test**".
 If the data is not present, the tests will be skipped.
 The tests can be safely run even if to test/ directory is present.
 
