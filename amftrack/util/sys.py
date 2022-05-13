@@ -189,7 +189,7 @@ def update_plate_info_local(directory: str) -> None:
     #         plate_info = json.load(f)
     # except:
     #     s = "/home/ipausers/kahane/Wks/AMFtrack/template_data_info.json"
-    #     dest = os.path.join(data_path, "data_info.json")
+    #     dest = os.path.join(storage_path, "data_info.json")
     #     shutil.copy(s, dest)
     #     with open(target) as f:
     #         plate_info = json.load(f)
@@ -272,7 +272,7 @@ def get_current_folders_local(directory: str) -> pd.DataFrame:
     :param directory: full path to a directory containing acquisition files
     """
     plate_info = pd.read_json(
-        os.path.join(data_path, "data_info.json"), convert_dates=True
+        os.path.join(storage_path, "data_info.json"), convert_dates=True
     ).transpose()
     plate_info.index.name = "total_path"
     plate_info.reset_index(inplace=True)

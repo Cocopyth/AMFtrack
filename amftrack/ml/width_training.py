@@ -25,7 +25,7 @@ from amftrack.pipeline.functions.image_processing.extract_width_fun import (
     extract_section_profiles_for_edge,
     compute_section_coordinates,
 )
-from amftrack.util.sys import data_path
+from amftrack.util.sys import storage_path
 import cv2
 
 logger = logging.getLogger(os.path.basename(__file__))
@@ -130,7 +130,7 @@ def make_extended_dataset(exp: Experiment, t: 0, dataset_name="dataset_test"):
     - assign each label to its respective edge
     - extract slices along each labeled edge and assign them the width of the edge as label
     - create and save the data set
-    :dataset_name: name of the dataset folder, it will be placed in the `data_path`
+    :dataset_name: name of the dataset folder, it will be placed in the `storage_path`
     NB: the images must have been labeled fist
     At the end the dataset contains
     - `Preview` folder contains the original hypha image with the points where slices where extracted
@@ -143,7 +143,7 @@ def make_extended_dataset(exp: Experiment, t: 0, dataset_name="dataset_test"):
     edge_length_limit = 30
 
     # Make the dataset repository structure
-    dataset_directory = os.path.join(data_path, dataset_name)
+    dataset_directory = os.path.join(storage_path, dataset_name)
     if not os.path.isdir(dataset_directory):
         os.mkdir(dataset_directory)
     image_directory = os.path.join(dataset_directory, "Img")
@@ -233,10 +233,10 @@ if __name__ == "__main__":
         update_plate_info_local,
         get_current_folders_local,
         test_path,
-        data_path,
+        storage_path,
     )
 
-    directory = os.path.join(data_path, "width1", "full_plates")
+    directory = os.path.join(storage_path, "width1", "full_plates")
     plate_name = "20220325_1423_Plate907"
     update_plate_info_local(directory)
     folder_df = get_current_folders_local(directory)

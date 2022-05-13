@@ -418,7 +418,7 @@ if __name__ == "__main__":
     directory = storage_path + "/"
     ## Set up experiment object
     update_plate_info_local(directory)
-    # update_plate_info(data_path)
+    # update_plate_info(storage_path)
     folder_df = get_current_folders_local(directory)
     selected_df = folder_df.loc[folder_df["folder"] == plate_name]
     i = 0
