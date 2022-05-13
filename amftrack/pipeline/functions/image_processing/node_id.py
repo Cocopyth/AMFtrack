@@ -7,8 +7,6 @@ from copy import deepcopy
 from amftrack.sparse_util import dilate
 from scipy.optimize import minimize
 from time import time
-from amftrack.transfer.functions.transfer import upload, download
-import os
 
 
 def node_dist(
