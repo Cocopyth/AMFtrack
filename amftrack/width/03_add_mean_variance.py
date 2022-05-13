@@ -7,10 +7,10 @@ import shutil
 import pandas as pd
 import json
 import numpy as np
-from amftrack.util.sys import data_path
+from amftrack.util.sys import storage_path
 
-source = os.path.join(data_path, "width1/measures/data_width_907_2.json")
-destination = os.path.join(data_path, "width1/measures/data_width_907_3.json")
+source = os.path.join(storage_path, "width1/measures/data_width_907_2.json")
+destination = os.path.join(storage_path, "width1/measures/data_width_907_3.json")
 
 # Get the json
 with open(source) as f:

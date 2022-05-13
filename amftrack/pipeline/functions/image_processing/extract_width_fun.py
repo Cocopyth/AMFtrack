@@ -405,7 +405,7 @@ if __name__ == "__main__":
         update_plate_info,
         get_current_folders,
         get_current_folders_local,
-        data_path,
+        storage_path,
     )
     from amftrack.pipeline.functions.image_processing.experiment_util import (
         get_random_edge,
@@ -415,7 +415,7 @@ if __name__ == "__main__":
 
     plate_name = "20220330_2357_Plate19"
 
-    directory = data_path + "/"
+    directory = storage_path + "/"
     ## Set up experiment object
     update_plate_info_local(directory)
     # update_plate_info(data_path)

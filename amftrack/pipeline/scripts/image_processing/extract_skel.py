@@ -2,33 +2,20 @@ from path import path_code_dir
 import sys
 
 sys.path.insert(0, path_code_dir)
-from amftrack.util.sys import get_dirname
+from amftrack.util.sys import temp_path
 import pandas as pd
 import ast
 from scipy import sparse
-from datetime import datetime
-from amftrack.pipeline.functions.image_processing.node_id import orient
 import scipy.io as sio
 import cv2
 import imageio
 import numpy as np
-from skimage.filters import frangi
-from skimage import filters
 import scipy.sparse
 import os
 from time import time
-from skimage.feature import hessian_matrix_det
-from amftrack.pipeline.functions.image_processing.extract_graph import (
-    from_sparse_to_graph,
-    generate_nx_graph,
-)
 from amftrack.pipeline.functions.image_processing.extract_skel import (
     extract_skel_tip_ext,
 )
-from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
-from amftrack.pipeline.paths.directory import directory_scratch
-from subprocess import call
-from path import path_code_dir
 
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])

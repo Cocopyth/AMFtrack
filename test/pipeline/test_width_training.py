@@ -2,7 +2,7 @@ import unittest
 import os
 import numpy as np
 
-from amftrack.util.sys import data_path
+from amftrack.util.sys import storage_path
 from amftrack.ml.width_training import fetch_labels, label_edges, make_extended_dataset
 from amftrack.util.sys import (
     update_plate_info_local,

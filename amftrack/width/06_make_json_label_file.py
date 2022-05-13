@@ -3,10 +3,10 @@
 import os
 import random
 import json
-from amftrack.util.sys import data_path
+from amftrack.util.sys import storage_path
 
-source = os.path.join(data_path, "width1/labels")
-destination = os.path.join(data_path, "width1/labels/labels.json")
+source = os.path.join(storage_path, "width1/labels")
+destination = os.path.join(storage_path, "width1/labels/labels.json")
 
 
 def is_valid(name):

@@ -2,11 +2,11 @@ import os
 import re
 import random
 import shutil
-from amftrack.util.sys import data_path
+from amftrack.util.sys import storage_path
 from amftrack.util.file import chose_file
 
 source_folder = "/mnt/sun/shimizu-tmp/TEMP/Transport"
-target_folder = os.path.join(data_path, "width2/labels")
+target_folder = os.path.join(storage_path, "width2/labels")
 
 model = re.compile(r"\d\d\d_\d\d\d")  # d is for decimal
 
