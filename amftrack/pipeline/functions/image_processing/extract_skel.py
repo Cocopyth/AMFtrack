@@ -3,7 +3,8 @@ import sys
 path_code_dir = "/home/cbisot/pycode/MscThesis"
 
 sys.path.insert(0, path_code_dir)
-from amftrack.util.sys import get_dirname,temp_path,pastis_path, fiji_path, path_code
+from amftrack.util.sys import get_dirname, pastis_path, fiji_path, path_code
+from amftrack.util.dbx import temp_path
 import pandas as pd
 import ast
 from scipy import sparse

@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as pltlines
 from pymatreader import read_mat
 import cv2
-from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
+from amftrack.util.sys import get_dates_datetime, get_dirname
+from amftrack.util.dbx import temp_path
 
 
 def find_center_orth(directory, row):
