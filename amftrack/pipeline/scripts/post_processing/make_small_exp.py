@@ -4,26 +4,11 @@ import sys
 sys.path.insert(0, path_code_dir)
 from amftrack.pipeline.functions.image_processing.extract_width_fun import *
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
-    Experiment,
     save_graphs,
-    load_graphs,
 )
-from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
+from amftrack.util.sys import temp_path
 import pickle
-import networkx as nx
 import pandas as pd
-from amftrack.pipeline.paths.directory import directory_scratch
-from path import path_code_dir
-import os
-import json
-from datetime import datetime
-from pymatreader import read_mat
-import cv2
-import matplotlib.pyplot as plt
-from IPython.display import clear_output
-from amftrack.plotutil import plot_t_tp1
-from amftrack.notebooks.analysis.util import directory_scratch
-import imageio
 
 directory = str(sys.argv[1])
 overwrite = eval(sys.argv[2])
