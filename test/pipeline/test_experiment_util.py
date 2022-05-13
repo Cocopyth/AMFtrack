@@ -21,6 +21,7 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_edge_from_node_labels,
     plot_full_image_with_features,
     get_all_edges,
+    find_neighboring_edges,
 )
 from amftrack.util.sys import test_path
 from test import helper
@@ -76,6 +77,19 @@ class TestExperiment(unittest.TestCase):
 
     def test_get_all_edges(self):
         get_all_edges(self.exp, t=0)
+
+    def test_get_nearest_edge(self):
+        edge = get_random_edge(self.exp)
+        edge_coords = edge.pixel_list(0)
+        middle_coord = edge_coords[len(edge_coords) // 2]
+
+        found_edge = find_nearest_edge(middle_coord, self.exp, 0)
+        found_edges = find_neighboring_edges(
+            middle_coord, self.exp, 0, n_nearest=5, step=50
+        )
+
+        self.assertEqual(edge, found_edge)
+        self.assertIn(edge, found_edges)
 
 
 class TestExperimentLight(unittest.TestCase):

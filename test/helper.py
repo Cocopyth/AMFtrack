@@ -5,6 +5,8 @@ There are several sorts of utils for tests:
 - function that create complicate objects like Experiment or Mock objects
 """
 
+import cv2
+import numpy as np
 import os
 from amftrack.util.sys import (
     test_path,
@@ -14,6 +16,34 @@ from amftrack.util.sys import (
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
 )
+
+video_path = os.path.join(test_path, "video")
+
+
+def has_video():
+    """
+    Check if there is a video present to run tests on videos.
+    The video should be several images of the same size in directory `video`.
+    """
+    video_path = os.path.join(test_path, "video")
+    if os.path.isdir(video_path):
+        return True
+    return False
+
+
+def make_video() -> None:
+    """
+    Makes a fake video and a video directory used to test video utils
+    """
+    video_path = os.path.join(test_path, "video")
+    if not os.path.isdir(video_path):
+        os.mkdir(video_path)
+
+        im1 = np.triu(np.ones((10, 10)) * 100)
+        im2 = np.triu(np.ones((10, 10)) * 10)
+        for i in range(2):
+            cv2.imwrite(os.path.join(video_path, f"image{i}.png"), im1)
+        cv2.imwrite(os.path.join(video_path, f"image{2}.png"), im2)
 
 
 def has_test_repo():
@@ -34,17 +64,6 @@ def has_test_plate():
             return True
     else:
         return False
-
-
-def has_video():
-    """
-    Check if there is a video present to run tests on videos.
-    The video should be several images of the same size in directory `video`.
-    """
-    video_path = os.path.join(test_path, "video")
-    if os.path.isdir(video_path):
-        return True
-    return False
 
 
 def make_experiment_object():

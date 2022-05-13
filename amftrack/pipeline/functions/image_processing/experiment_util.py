@@ -11,6 +11,7 @@ from amftrack.util.geometry import (
     generate_index_along_sequence,
     distance_point_pixel_line,
     get_closest_line_opt,
+    get_closest_lines,
 )
 from amftrack.util.plot import crop_image, pixel_list_to_matrix
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
@@ -56,6 +57,23 @@ def find_nearest_edge(point: coord, exp: Experiment, t: int) -> Edge:
     edges = get_all_edges(exp, t)
     l = [edge.pixel_list(t) for edge in edges]
     return edges[get_closest_line_opt(point, l)[0]]
+
+
+def find_neighboring_edges(
+    point: coord, exp: Experiment, t: int, n_nearest=5, step=50
+) -> List[Edge]:
+    """
+    Find the nearest edges to `point` in `exp` at timestep `t`.
+    The coordonates are given in the GENERAL ref.
+    :return: List of Edge object
+    :param n_nearest: number of neihgboring edges to select
+    :param step: step along edge to compute the distance. step = 1 yield exact result but expensive
+    """
+    edges = get_all_edges(exp, t)
+    l = [edge.pixel_list(t) for edge in edges]
+    indexes = get_closest_lines(point, l, step=50, n_nearest=10)[0]
+    kept_edges = [edges[i] for i in indexes]
+    return kept_edges
 
 
 def get_edge_from_node_labels(
@@ -183,6 +201,7 @@ def plot_edge_cropped(
         )
     if save_path is not None:
         plt.savefig(save_path)
+        plt.close()
 
 
 def plot_full_image_with_features(
