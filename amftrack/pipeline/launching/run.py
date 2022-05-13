@@ -3,9 +3,8 @@ import pandas as pd
 from amftrack.util.sys import (
     path_code,
     update_plate_info,
-    get_current_folders,
+    get_current_folders, temp_path,
 )
-from amftrack.util.dbx import temp_path
 from typing import List
 
 from time import time_ns

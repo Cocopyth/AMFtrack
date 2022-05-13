@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, path_code_dir)
 import pandas as pd
-from amftrack.util.dbx import temp_path
+from amftrack.util.sys import temp_path
 from amftrack.util.dbx import zip_file
 
 directory = str(sys.argv[1])

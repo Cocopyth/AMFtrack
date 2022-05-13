@@ -2,7 +2,7 @@ from path import path_code_dir
 import sys
 
 sys.path.insert(0, path_code_dir)
-from amftrack.util.sys import get_dirname
+from amftrack.util.sys import get_dirname, temp_path
 import pandas as pd
 import ast
 from scipy import sparse
@@ -26,7 +26,6 @@ from amftrack.pipeline.functions.image_processing.extract_skel import (
     extract_skel_tip_ext,
 )
 from amftrack.util.sys import get_dates_datetime, get_dirname
-from amftrack.util.dbx import temp_path
 from amftrack.pipeline.paths.directory import directory_scratch
 from subprocess import call
 from path import path_code_dir
