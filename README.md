@@ -114,7 +114,13 @@ STORAGE_PATH=/scratch-shared/amftrack/temp #careful no backslash here
 PASTIS_PATH=/home/cbisot/anis_filter/anifilters/bin/ani2D 
 #the path to the executable of anisotropic filtering
 SLURM_PATH=/scratch-shared/amftrack/slurm #this is for parallelizez job on snellius
-API_KEY=
+
+#For Dropbox transfers, ask dropbox admin for these values
+APP_KEY=___
+APP_SECRET=___
+REFRESH_TOKEN = ___
+FOLDER_ID=___
+USER_ID=___
 ```
 
 To have access to a path: 

@@ -1,33 +1,20 @@
-from amftrack.pipeline.functions.image_processing.extract_width_fun import *
-
-import os
-
-from pymatreader import read_mat
 import cv2
 import matplotlib.pyplot as plt
 from IPython.display import clear_output
 from amftrack.plotutil import plot_t_tp1
 from amftrack.notebooks.analysis.util import directory_scratch
 import imageio
-from amftrack.transfer.functions.transfer import upload, zip_file
+from amftrack.util.dbx import upload, zip_file
 import matplotlib
 from amftrack.util.sys import *
-from amftrack.pipeline.functions.post_processing.util import (
-    get_length_um_edge,
-    is_in_study_zone,
-)
 from matplotlib import cm
 import matplotlib as mpl
-from shapely.geometry import Polygon, shape, Point
 from shapely.affinity import affine_transform, rotate
 from scipy import spatial
 import geopandas as gpd
 from amftrack.pipeline.functions.post_processing.area_hulls import *
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
-    Experiment,
     save_graphs,
-    load_graphs,
-    load_skel,
     plot_raw_plus,
 )
 from amftrack.util.sys import temp_path
@@ -73,20 +60,10 @@ def make_movie_raw(directory, folders, plate_num, exp, id_unique, args=None):
 
     path_movie = f"{temp_path}/{plate_num}.gif"
     imageio.mimsave(path_movie, img_array, duration=1)
-    upload(
-        API,
-        path_movie,
-        f"/{dir_drop}/{id_unique}/movie_raw.gif",
-        chunk_size=256 * 1024 * 1024,
-    )
+    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_raw.gif", chunk_size=256 * 1024 * 1024)
     path_movie = f"{temp_path}/{plate_num}.mp4"
     imageio.mimsave(path_movie, img_array)
-    upload(
-        API,
-        path_movie,
-        f"/{dir_drop}/{id_unique}/movie_raw.mp4",
-        chunk_size=256 * 1024 * 1024,
-    )
+    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_raw.mp4", chunk_size=256 * 1024 * 1024)
 
 
 def make_movie_aligned(directory, folders, plate_num, exp, id_unique, args=None):
@@ -122,20 +99,10 @@ def make_movie_aligned(directory, folders, plate_num, exp, id_unique, args=None)
         img_array.append(img)
     path_movie = f"{temp_path}/{plate_num}.gif"
     imageio.mimsave(path_movie, img_array, duration=1)
-    upload(
-        API,
-        path_movie,
-        f"/{dir_drop}/{id_unique}/movie_aligned.gif",
-        chunk_size=256 * 1024 * 1024,
-    )
+    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_aligned.gif", chunk_size=256 * 1024 * 1024)
     path_movie = f"{temp_path}/{plate_num}.mp4"
     imageio.mimsave(path_movie, img_array)
-    upload(
-        API,
-        path_movie,
-        f"/{dir_drop}/{id_unique}/movie_aligned.mp4",
-        chunk_size=256 * 1024 * 1024,
-    )
+    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_aligned.mp4", chunk_size=256 * 1024 * 1024)
 
 
 def make_movie_RH_BAS(directory, folders, plate_num, exp, id_unique, args=None):
@@ -217,20 +184,10 @@ def make_movie_RH_BAS(directory, folders, plate_num, exp, id_unique, args=None):
         img_array.append(img)
     path_movie = f"{temp_path}/{plate_num}_rhbas.gif"
     imageio.mimsave(path_movie, img_array, duration=1)
-    upload(
-        API,
-        path_movie,
-        f"/{dir_drop}/{id_unique}/movie_rhbas.gif",
-        chunk_size=256 * 1024 * 1024,
-    )
+    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_rhbas.gif", chunk_size=256 * 1024 * 1024)
     path_movie = f"{temp_path}/{plate_num}.mp4"
     imageio.mimsave(path_movie, img_array)
-    upload(
-        API,
-        path_movie,
-        f"/{dir_drop}/{id_unique}/movie_rhbas.mp4",
-        chunk_size=256 * 1024 * 1024,
-    )
+    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_rhbas.mp4", chunk_size=256 * 1024 * 1024)
 
 
 def make_movie_dens(directory, folders, plate_num, exp, id_unique, args=None):
@@ -306,20 +263,10 @@ def make_movie_dens(directory, folders, plate_num, exp, id_unique, args=None):
         img_array.append(img)
     path_movie = f"{temp_path}/{plate_num}_dens.gif"
     imageio.mimsave(path_movie, img_array, duration=1)
-    upload(
-        API,
-        path_movie,
-        f"/{dir_drop}/{id_unique}/movie_dens.gif",
-        chunk_size=256 * 1024 * 1024,
-    )
+    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_dens.gif", chunk_size=256 * 1024 * 1024)
     path_movie = f"{temp_path}/{plate_num}_dens.mp4"
     imageio.mimsave(path_movie, img_array)
-    upload(
-        API,
-        path_movie,
-        f"/{dir_drop}/{id_unique}/movie_dens.mp4",
-        chunk_size=256 * 1024 * 1024,
-    )
+    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_dens.mp4", chunk_size=256 * 1024 * 1024)
 
 
 def plot_anastomosis(directory, folders, plate_num, exp, id_unique, args=None):
@@ -378,9 +325,5 @@ def plot_anastomosis(directory, folders, plate_num, exp, id_unique, args=None):
             path_save = f"{temp_path}/{plate_num}_anas_im{t}_tip{tip.label}"
             plt.savefig(path_save + ".png")
             plt.close(fig)
-            upload(
-                API,
-                path_save + ".png",
-                f"/{dir_drop}/{id_unique}/anastomosis/{t}_tip{tip.label}.png",
-                chunk_size=256 * 1024 * 1024,
-            )
+            upload(path_save + ".png", f"/{dir_drop}/{id_unique}/anastomosis/{t}_tip{tip.label}.png",
+                   chunk_size=256 * 1024 * 1024)

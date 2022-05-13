@@ -48,7 +48,7 @@ from amftrack.pipeline.paths.directory import (
     directory_archive,
 )
 import dropbox
-from amftrack.transfer.functions.transfer import upload, zip_file, sync_fold
+from amftrack.util.dbx import upload, zip_file, sync_fold
 from subprocess import call
 from tqdm.autonotebook import tqdm
 

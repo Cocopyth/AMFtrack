@@ -5,10 +5,10 @@ import random
 import shutil
 import pandas as pd
 import json
-from amftrack.util.sys import data_path
+from amftrack.util.sys import storage_path
 
-folder = os.path.join(data_path, "width1/groundtruth")
-target = os.path.join(data_path, "measures/data_width.json")
+folder = os.path.join(storage_path, "width1/groundtruth")
+target = os.path.join(storage_path, "measures/data_width.json")
 
 plates = {}
 
