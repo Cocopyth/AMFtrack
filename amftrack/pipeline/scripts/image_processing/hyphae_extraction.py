@@ -4,9 +4,6 @@ import sys
 sys.path.insert(0, path_code_dir)
 import os
 from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
-    get_mother,
-    save_hyphaes,
-    width_based_cleaning,
     resolve_anastomosis_crossing_by_root,
 )
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
@@ -15,7 +12,6 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 )
 
 import pandas as pd
-from amftrack.pipeline.paths.directory import directory_scratch
 import json
 from time import time_ns
 from amftrack.util.sys import temp_path

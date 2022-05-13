@@ -273,66 +273,16 @@ def get_current_folders(
 ) -> pd.DataFrame:
     """
     Returns a pandas data frame with all informations about the acquisition files
-    inside the directory. The information is only taken from the dropbox
-    If directory == dropbox, the information is taken from the dropbox.
+    inside the directory.
     WARNING: directory must finish with '/'
     """
     # TODO(FK): solve the / problem
-    if directory == "dropbox":
-        data = []
-        dbx = load_dbx()
-        response = dbx.files_list_folder("", recursive=True)
-        # for fil in response.entries:
-        listfiles = []
-        listjson = []
-        while response.has_more:
-            listfiles += [
-                file for file in response.entries if file.name.split(".")[-1] == "zip"
-            ]
-            listjson += [
-                file.path_lower
-                for file in response.entries
-                if file.name.split(".")[-1] == "json"
-            ]
-
-            response = dbx.files_list_folder_continue(response.cursor)
-        listfiles += [
-            file for file in response.entries if file.name.split(".")[-1] == "zip"
-        ]
-        listjson += [
-            file.path_lower
-            for file in response.entries
-            if file.name.split(".")[-1] == "json"
-        ]
-        # print([((file.path_lower.split(".")[0]) + "_info.json") for file in listfiles if (file.name.split(".")[-1] == "zip") &
-        #        (((file.path_lower.split(".")[0]) + "_info.json") not in listjson)])
-        listfiles.reverse()
-        if file_metadata:
-            names = [file.name.split(".")[0] for file in listfiles]
-            sizes = [file.size / 10**9 for file in listfiles]
-            modified = [file.client_modified for file in listfiles]
-            df = pd.DataFrame((names, sizes, modified)).transpose()
-            df = df.rename(columns={0: "folder", 1: "size", 2: "change_date"})
-            return df
-        with tqdm(total=len(listfiles), desc="analysed") as pbar:
-            for file in listfiles:
-                source = (file.path_lower.split(".")[0]) + "_info.json"
-                target = f'{os.getenv("TEMP")}/{file.name.split(".")[0]}.json'
-                # print(source,target)
-                download(source, target)
-                # print(target)
-                data.append(pd.read_json(target))
-                os.remove(target)
-                pbar.update(1)
-            infos = pd.concat(data)
-        return infos
-    else:
-        plate_info = get_data_info(local)
-        listdir = os.listdir(directory)
-        return plate_info.loc[
-            np.isin(plate_info["folder"], listdir)
-            & (plate_info["total_path"] == directory + plate_info["folder"])
-        ]
+    plate_info = get_data_info(local)
+    listdir = os.listdir(directory)
+    return plate_info.loc[
+        np.isin(plate_info["folder"], listdir)
+        & (plate_info["total_path"] == directory + plate_info["folder"])
+    ]
 
 
 def get_folders_by_plate_id(plate_id, begin=0, end=-1, directory=None):

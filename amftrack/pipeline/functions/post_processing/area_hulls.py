@@ -1,17 +1,10 @@
 import os.path
 
-from shapely.geometry import Polygon, shape, Point
+from shapely.geometry import Polygon, Point
 from scipy import spatial
-import networkx as nx
 from amftrack.pipeline.functions.post_processing.util import (
-    get_length_um_edge,
     is_in_study_zone,
 )
-from amftrack.pipeline.paths.directory import directory_scratch
-import numpy as np
-from time import time_ns
-import pickle
-import geopandas as gpd
 from amftrack.notebooks.analysis.util import *
 from amftrack.util.sys import *
 

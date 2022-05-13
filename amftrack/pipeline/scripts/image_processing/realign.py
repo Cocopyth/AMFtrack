@@ -2,7 +2,7 @@ from path import path_code_dir
 import sys
 
 sys.path.insert(0, path_code_dir)
-from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
+from amftrack.util.sys import temp_path
 from scipy import sparse
 import scipy.io as sio
 from pymatreader import read_mat
@@ -15,7 +15,6 @@ import scipy.sparse
 from amftrack.pipeline.functions.image_processing.realign import (
     transform_skeleton_final,
 )
-from amftrack.pipeline.paths.directory import directory_scratch
 import pandas as pd
 
 

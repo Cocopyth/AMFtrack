@@ -2,7 +2,7 @@ from path import path_code_dir
 import sys
 
 sys.path.insert(0, path_code_dir)
-from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
+from amftrack.util.sys import temp_path
 import pandas as pd
 import ast
 from scipy import sparse
@@ -14,7 +14,6 @@ import numpy as np
 import scipy.sparse
 import os
 from time import time
-from amftrack.pipeline.paths.directory import directory_scratch
 
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
