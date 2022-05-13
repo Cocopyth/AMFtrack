@@ -848,7 +848,7 @@ class Edge:
         "Return a list of timesteps in Experimant at which this Edge is present"
         return [t for t in range(self.experiment.ts) if self.is_in(t)]
 
-    def pixel_list(self, t: int) -> Tuple[List[coord_int], coord_int]:
+    def pixel_list(self, t: int) -> List[coord_int]:
         """
         Return a list of pixels coordinates that make the edge.
         These coordinates are in the general referential.
