@@ -2,7 +2,7 @@ from path import path_code_dir
 import sys
 
 sys.path.insert(0, path_code_dir)
-from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
+from amftrack.util.sys import temp_path
 from amftrack.pipeline.functions.image_processing.node_id import (
     second_identification,
 )
@@ -12,8 +12,6 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
 import scipy.io as sio
 import pickle
 import pandas as pd
-from amftrack.pipeline.paths.directory import directory_scratch
-from amftrack.transfer.functions.transfer import upload, download
 import numpy as np
 import os
 

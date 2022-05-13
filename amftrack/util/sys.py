@@ -10,9 +10,8 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
 import cv2
 import json
 import pandas as pd
-from amftrack.transfer.functions.transfer import download, upload
+from amftrack.util.dbx import download, upload,load_dbx
 from tqdm.autonotebook import tqdm
-import dropbox
 from time import time_ns
 from decouple import Config, RepositoryEnv
 from pymatreader import read_mat
@@ -27,11 +26,10 @@ path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 slurm_path = env_config.get("SLURM_PATH")
 temp_path = env_config.get("TEMP_PATH")
 target = env_config.get("DATA_PATH")
-data_path = env_config.get("STORAGE_PATH")
+storage_path = env_config.get("STORAGE_PATH")
 fiji_path = env_config.get("FIJI_PATH")
-test_path = os.path.join(data_path, "test")  # repository used for tests
+test_path = os.path.join(storage_path, "test")  # repository used for tests
 pastis_path = env_config.get("PASTIS_PATH")
-API = env_config.get("API_KEY")
 
 os.environ["TEMP"] = temp_path
 
@@ -185,7 +183,6 @@ def update_plate_info_local(directory: str) -> None:
 
     with open(target) as f:
         plate_info = json.load(f)
-
     # plate_info = json.load(open(target, "r"))
     with tqdm(total=len(listdir), desc="analysed") as pbar:
         for folder in listdir:
@@ -223,7 +220,7 @@ def update_plate_info(directory: str, local=False) -> None:
     if local:
         plate_info = {}
     else:
-        download(API, source, target, end="")
+        download(source, target, end="")
         plate_info = json.load(open(target, "r"))
     with tqdm(total=len(listdir), desc="analysed") as pbar:
         for folder in listdir:
@@ -247,18 +244,13 @@ def update_plate_info(directory: str, local=False) -> None:
     with open(target, "w") as jsonf:
         json.dump(plate_info, jsonf, indent=4)
     if not local:
-        upload(
-            API,
-            target,
-            f"{source}",
-            chunk_size=256 * 1024 * 1024,
-        )
+        upload(target, f"{source}", chunk_size=256 * 1024 * 1024)
 
 
 def get_data_info(local=False):
     source = f"/data_info.json"
     if not local:
-        download(API, source, target, end="")
+        download(source, target, end="")
     data_info = pd.read_json(target, convert_dates=True).transpose()
     data_info.index.name = "total_path"
     data_info.reset_index(inplace=True)
@@ -289,7 +281,7 @@ def get_current_folders(
     # TODO(FK): solve the / problem
     if directory == "dropbox":
         data = []
-        dbx = dropbox.Dropbox(API)
+        dbx = load_dbx()
         response = dbx.files_list_folder("", recursive=True)
         # for fil in response.entries:
         listfiles = []
@@ -328,7 +320,7 @@ def get_current_folders(
                 source = (file.path_lower.split(".")[0]) + "_info.json"
                 target = f'{os.getenv("TEMP")}/{file.name.split(".")[0]}.json'
                 # print(source,target)
-                download(API, source, target)
+                download(source, target)
                 # print(target)
                 data.append(pd.read_json(target))
                 os.remove(target)
@@ -413,11 +405,11 @@ def get_data_tables(op_id=time_ns(), redownload=True):
     # op_id = time_ns()
     if redownload:
         path_save = f"{root}global_hypha_info{op_id}.pick"
-        download(API, f"/{dir_drop}/global_hypha_infos.pick", path_save)
+        download(f"/{dir_drop}/global_hypha_infos.pick", path_save)
         path_save = f"{root}time_plate_infos{op_id}.pick"
-        download(API, f"/{dir_drop}/time_plate_infos.pick", path_save)
+        download(f"/{dir_drop}/time_plate_infos.pick", path_save)
         path_save = f"{root}time_hypha_info{op_id}.pick"
-        download(API, f"/{dir_drop}/time_hypha_infos.pick", path_save)
+        download(f"/{dir_drop}/time_hypha_infos.pick", path_save)
     path_save = f"{root}time_plate_infos{op_id}.pick"
     time_plate_info = pd.read_pickle(path_save)
     path_save = f"{root}global_hypha_info{op_id}.pick"

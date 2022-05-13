@@ -2,21 +2,11 @@ from path import path_code_dir
 import sys
 
 sys.path.insert(0, path_code_dir)
-from amftrack.util.sys import get_dirname
 import pandas as pd
-import ast
-from scipy import sparse
-from datetime import datetime
-import cv2
-import imageio
 import numpy as np
 import os
-from time import time
-from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
-from amftrack.pipeline.paths.directory import directory_scratch
-from subprocess import call
-from amftrack.transfer.functions.transfer import download, zip_file, unzip_file
-from zipfile import ZipFile
+from amftrack.util.sys import temp_path
+from amftrack.util.dbx import download, unzip_file
 
 directory = str(sys.argv[1])
 dir_drop = str(sys.argv[2])
@@ -54,8 +44,7 @@ else:
 source = f"/{dir_drop}/{id_unique}/{directory_name}.zip"
 print(path_zip, source)
 
-
-download(API, source, path_zip)
+download(source, path_zip)
 if unzip:
     unzip_file(path_zip, path_snap)
     print(path_snap, path_zip)

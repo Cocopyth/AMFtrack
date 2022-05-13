@@ -6,11 +6,11 @@ import random
 import shutil
 import pandas as pd
 import json
-from amftrack.util.sys import data_path
+from amftrack.util.sys import storage_path
 
-excel_file_path = os.path.join(data_path, "width1/220324_Plate907.xls")
-raw_data = os.path.join(data_path, "width1/measures/data_width_907.json")
-new_data = os.path.join(data_path, "width1/measures/data_width_907_2.json")
+excel_file_path = os.path.join(storage_path, "width1/220324_Plate907.xls")
+raw_data = os.path.join(storage_path, "width1/measures/data_width_907.json")
+new_data = os.path.join(storage_path, "width1/measures/data_width_907_2.json")
 
 # Get x and y
 df = pd.read_excel(excel_file_path)
