@@ -8,7 +8,7 @@ from time import time
 from joblib import Parallel, delayed
 from time import sleep
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment
-from amftrack.util.sys import temp_path
+from amftrack.util.dbx import temp_path
 
 directory = directory_project
 skip = False
