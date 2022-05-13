@@ -68,8 +68,7 @@ def run_stitch(directory: str, folders: pd.DataFrame) -> None:
             process = subprocess.run(command)
             pbar.update(1)
 
-
-def run(code: str, args: List, folders: pd.DataFrame) -> None:
+def run(code: str, args: List, folders: pd.DataFrame, loc_code='pipeline/scripts/image_processing/') -> None:
     """
     Run the chosen script `code` localy.
     :param code: name of the script file such as "prune.py", it has to be in the image_processing file
@@ -84,7 +83,7 @@ def run(code: str, args: List, folders: pd.DataFrame) -> None:
     with tqdm(total=len(folder_list), desc="stitched") as pbar:
         for index, folder in enumerate(folder_list):
             command = (
-                ["python3", f"{path_code}pipeline/scripts/image_processing/{code}"]
+                ["python3", f"{path_code}{loc_code}{code}"]
                 + args_str
                 + [f"{op_id}", f"{index}"]
             )
@@ -92,6 +91,13 @@ def run(code: str, args: List, folders: pd.DataFrame) -> None:
             process = subprocess.run(command)
             pbar.update(1)
 
+def run_transfer(code: str, args: List, folders: pd.DataFrame) -> None:
+    """
+    Run the chosen script `code` localy.
+    :param code: name of the script file such as "prune.py", it has to be in the transfer/scripts/ folder
+    :param args: list of arguments used by the script
+    """
+    run(code, args, folders,loc_code='transfer/scripts/')
 
 if __name__ == "__main__":
     # directory = "/data/felix/width1/full_plates/"  # careful: must have the / at the end
