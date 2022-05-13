@@ -1,8 +1,7 @@
 import sys  
 sys.path.insert(0, '/home/cbisot/pycode/MscThesis/')
-import networkx as nx
 import pandas as pd
-from amftrack.pipeline.paths.directory import directory_scratch,directory_project
+from amftrack.pipeline.launching.run_super import directory_project
 from time import time 
 # import multiprocessing
 from joblib import Parallel, delayed

@@ -10,7 +10,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Edge,
 )
 from amftrack.util.geometry import generate_index_along_sequence
-from amftrack.util.sys import data_path
+from amftrack.util.sys import storage_path
 from typing import Dict, List
 from amftrack.util.aliases import coord
 from amftrack.util.image_analysis import convert_to_micrometer
