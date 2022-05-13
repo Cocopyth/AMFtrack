@@ -9,7 +9,8 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     load_graphs,
 )
 
-from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
+from amftrack.util.sys import get_dates_datetime, get_dirname
+from amftrack.util.dbx import temp_path
 import pickle
 import networkx as nx
 import pandas as pd
