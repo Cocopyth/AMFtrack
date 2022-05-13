@@ -22,3 +22,6 @@ core.12631
 AMFTrack.egg-info
 venv
 *.svg
+*.gitconfig
+*.ipython/
+*.jupyter/

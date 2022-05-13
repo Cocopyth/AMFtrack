@@ -1,4 +1,4 @@
-from amftrack.util.sys import get_dirname
+import os
 import pandas as pd
 import networkx as nx
 import numpy as np
@@ -8,10 +8,6 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_nx_to_tab,
     prune_graph,
 )
-from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
-import ast
-from amftrack.plotutil import plot_t_tp1
-from amftrack.pipeline.functions.image_processing.node_id import orient
 import pickle
 from matplotlib.widgets import CheckButtons
 import scipy.io as sio
@@ -21,24 +17,46 @@ from matplotlib import colors
 from collections import Counter
 from datetime import datetime, timedelta
 import cv2
-from typing import List
-from amftrack.util.aliases import node_coord_dict, binary_image, coord, image
+from typing import List, Tuple
+import ast
 from scipy import sparse
+
+from amftrack.util.sys import get_dirname
+from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
+from amftrack.plotutil import plot_t_tp1
+from amftrack.pipeline.functions.image_processing.node_id import orient
+from amftrack.util.aliases import node_coord_dict, binary_image, coord, coord_int
+from amftrack.util.image_analysis import find_image_indexes
 
 
 class Experiment:
-    """Represents a single plate experiment over time."""
+    """
+    Represents a single plate experiment over time.
+    For coordinates we distinguish between:
+    - general referential: it is shared along the timestep
+    - timestep referential
+    - image referential: it is the referential of one particular source image at a certain timestep
+    """
 
     def __init__(self, plate: int, directory: str):
-        self.plate = plate
-        self.directory = directory
+        self.plate = plate  # plate number in Prince
+        self.directory = directory  # full directory path
 
-        self.folders: List[str]
-        self.dates: List[datetime]
-        self.positions: List[node_coord_dict]
-        self.nx_graph: List[nx.Graph]
-        self.skeletons: List[sparse.dok_matrix]
-        self.compressed: List[binary_image]
+        self.folders: List[pd.DataFrame]  # one dataframe per timestep
+        self.dates: List[datetime]  # dates for each timestep
+        self.positions: List[
+            node_coord_dict
+        ]  # coordinates of nodes in the general referential for each timestep
+        self.nx_graph: List[nx.Graph]  # graph extracted from each timestep
+        self.skeletons: List[sparse.dok_matrix]  # one skeletton per timestep
+        self.compressed: List[binary_image]  # compressed image for visualisation
+        self.image_coordinates: List[
+            List[coord_int]
+        ]  # Coordinates of stiched images at each t in the referential of the timestep
+        self.image_transformation: List[
+            Tuple[np.array, np.array]
+        ]  # (R, t) transformation to go from timestep referential to general referential
+        self.image_paths: List[List[str]]  # full paths to each images for each timestep
         self.hyphaes = None
 
     def __repr__(self):
@@ -47,6 +65,9 @@ class Experiment:
     def load(self, folders: pd.DataFrame, labeled=True):
         """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
+        self.image_coordinates = [None] * len(folders)
+        self.image_transformation = [None] * len(folders)
+        self.image_paths = [None] * len(folders)
         dates_datetime = [
             datetime.strptime(row["date"], "%d.%m.%Y, %H:%M:")
             for index, row in folders.iterrows()
@@ -100,6 +121,61 @@ class Experiment:
             compressed_images.append(self.compress_skeleton(t, factor))
         self.compressed = compressed_images
 
+    def load_tile_information(self, t: int) -> None:
+        """
+        This function loads the informations regarding the stiching of timestep t.
+        It consist of two steps:
+        - loading the coordinates of each image in the timestep referential
+        - loading the paths of each image
+        WARNING: the plate has to be fully processed
+        """
+        # Loading coordinates of each image in its timestep referential
+        date = self.dates[t]
+        directory_name = get_dirname(date, self.plate)
+        path_tile = os.path.join(
+            self.directory, directory_name, "Img/TileConfiguration.txt.registered"
+        )
+        tileconfig = pd.read_table(
+            path_tile,
+            sep=";",
+            skiprows=4,
+            header=None,
+            converters={2: ast.literal_eval},
+            skipinitialspace=True,
+        )
+        raw_coordinates = list(tileconfig[2])
+        n_im = len(raw_coordinates)
+        cmin = np.min([raw_coordinates[i][0] for i in range(n_im)])
+        rmin = np.min([raw_coordinates[i][1] for i in range(n_im)])
+        coordinates = [
+            [raw_coordinates[i][0] - cmin, raw_coordinates[i][1] - rmin]
+            for i in range(n_im)
+        ]
+        self.image_coordinates[t] = coordinates
+        # Loading names of the images at timestep t
+        paths = []
+        for i in range(n_im):
+            name = tileconfig[0][i]
+            path = os.path.join(
+                self.directory, directory_name, "Img", name.split("/")[-1]
+            )
+            paths.append(path)
+        self.image_paths[t] = paths
+
+    def load_image_transformation(self, t):
+        date = self.dates[t]
+        directory_name = get_dirname(date, self.plate)
+        skel = read_mat(
+            os.path.join(
+                self.directory,
+                directory_name,
+                "Analysis/skeleton_pruned_realigned.mat",
+            )
+        )
+        R = skel["R"]
+        t = skel["t"]
+        return R, t
+
     def compress_skeleton(self, t: int, factor: int) -> binary_image:
         """
         Computes an image, reduced in size by 'factor', from a the sparse squeleton matrix
@@ -148,7 +224,7 @@ class Experiment:
     def get_node(self, label: str):
         return Node(label, self)
 
-    def get_edge(self, begin, end):
+    def get_edge(self, begin, end) -> "Edge":
         return Edge(begin, end, self)
 
     def get_growing_tips(self, t, threshold=80):
@@ -222,9 +298,96 @@ class Experiment:
                 number_anastomosis += 1 / 2
         return (anastomosis, origins, number_anastomosis)
 
+    def general_to_timestep(self, point: coord, t: int) -> coord:
+        """
+        Take as input float coordinates `coord` in the general referential
+        and convert them into the referential of timestep t.
+        """
+        old_coord = np.array(point).astype(dtype=np.float)
+        if self.image_transformation is None:
+            raise Exception("Must load directories first")
+        if self.image_transformation[t] is None:
+            self.image_transformation[t] = self.load_image_transformation(t)
+
+        R, t = self.image_transformation[t]
+        new_coord = np.dot(np.linalg.inv(R), old_coord - t)
+        # WARNING: x an y must also be inversed
+        new_coord[0], new_coord[1] = new_coord[1], new_coord[0]
+        return new_coord
+
+    def timestep_to_general(self, point: coord, t: int) -> coord:
+        """
+        Take as input float coordinates `coord` the referential of timestep t
+        and convert them into the general referential.
+        """
+        old_coord = np.array(point).astype(dtype=np.float)
+        if self.image_transformation is None:
+            raise Exception("Must load directories first")
+        if self.image_transformation[t] is None:
+            self.image_transformation[t] = self.load_image_transformation(t)
+        R, t = self.image_transformation[t]
+        new_coord = np.dot(R, np.array(old_coord)) + t
+        return new_coord
+
+    def general_to_image(self, point: coord, t: int, i: int) -> coord:
+        """
+        Take as input float coordinates `coord` the general referential
+        and convert them into the coordinates in the source image `i`
+        of timestep t.
+        """
+        coord_timestep = self.general_to_timestep(point, t)
+        image_position = self.get_image_coords(t)[i]
+        new_coord = [
+            coord_timestep[0] - image_position[0],
+            coord_timestep[1] - image_position[1],
+        ]
+        return new_coord
+
+    def image_to_general(self, point: coord, t: int, i: int) -> coord:
+        image_position = self.get_image_coords(t)[i]
+        coord_timestep = [
+            point[0] + image_position[0],
+            point[1] + image_position[1],
+        ]
+        coord_general = self.timestep_to_general(coord_timestep, t)
+        return coord_general
+
+    def get_image_coords(self, t: int) -> List[coord_int]:
+        """
+        For a time step t, return the coordinates of all the images in the general referential.
+        """
+        if self.image_coordinates is None:
+            raise Exception("Must load directories first")
+        if self.image_coordinates[t] is None:
+            self.load_tile_information(t)
+        return self.image_coordinates[t]
+
+    def get_image(self, t: int, i: int) -> np.array:
+        "Return ith image at timestep t"
+        if self.image_paths[t] is None:
+            self.load_tile_information(t)
+        im_path = self.image_paths[t][i]
+        return imageio.imread(im_path)
+
+    def find_im_indexes(self, xs: float, ys: float, t: int) -> List[int]:
+        """
+        Take as input coordinates in the TIMESTEP referential.
+        And determine the index of the image.
+        """
+        # TODO(FK): change to general coordinates?
+        return find_image_indexes(self.get_image_coords(t), xs, ys)
+
+    def find_im_indexes_from_general(self, x: float, y: float, t: int) -> List[int]:
+        """
+        Take as input coordinates in the GENERAL referential.
+        And determine the index of the image.
+        """
+        xt, yt = self.general_to_timestep([x, y], t)
+        return find_image_indexes(self.get_image_coords(t), xt, yt)
+
     def find_image_pos(
         self, xs: int, ys: int, t: int, local=False
-    ) -> (List[image], List[coord]):
+    ) -> Tuple[List, List[coord]]:
         """
         For coordinates (xs, yx) in the full size stiched image,
         returns a list of original images (before stiching) that contain the coordinate.
@@ -239,7 +402,8 @@ class Experiment:
         Rot = skel["R"]
         trans = skel["t"]
         rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
-        ys, xs = round(rottrans[0]), round(rottrans[1])
+
+        ys, xs = round(rottrans[0]), round(rottrans[1])  # beware switching (y, x)
         tileconfig = pd.read_table(
             path_tile,
             sep=";",
@@ -258,7 +422,12 @@ class Experiment:
         ximg = xs
         yimg = ys
 
-        def find(xsub, ysub, x, y):
+        def find(xsub: List, ysub: List, x: float, y: float):
+            """
+            :param x: x coordinate of point of interest
+            :param xsub: List of x coordinate of all the images
+            :return: list of indexes of images which contain (x,y)
+            """
             indexes = []
             for i in range(len(xsub)):
                 if (
@@ -433,9 +602,9 @@ def load_skel(exp, ts):
 
 
 def plot_raw_plus(
-    exp,
-    t0,
-    node_list,
+    exp: Experiment,
+    t0: int,
+    node_list: List[int],
     shift=(0, 0),
     n=0,
     compress=5,
@@ -523,16 +692,14 @@ def plot_raw_plus(
                 bbox=bbox,
             )
     return (fig, ax, center, radius)
-    # return(im,Rot,trans)
-    # plt.show()
 
 
 class Node:
     """Represents a single node, through time in an experiment."""
 
-    def __init__(self, label, experiment):
+    def __init__(self, label: int, experiment: Experiment):
         self.experiment: Experiment = experiment
-        self.label: str = label
+        self.label: int = label
 
     def __eq__(self, other):
         return self.label == other.label
@@ -572,30 +739,34 @@ class Node:
         """Determines if the node is present at timestep t in the graph."""
         return self.label in self.experiment.nx_graph[t].nodes
 
-    def degree(self, t):
+    def degree(self, t) -> int:
+        """Return the degree of the node."""
         return self.experiment.nx_graph[t].degree(self.label)
 
-    def edges(self, t):
+    def edges(self, t) -> List["Edge"]:
+        """Return all the edges connected to this node"""
         return [
             self.experiment.get_edge(self, neighbour)
             for neighbour in self.neighbours(t)
         ]
 
-    def pos(self, t):
+    def pos(self, t) -> coord_int:
+        "Return coordinates in the general referential at timestep t"
         return self.experiment.positions[t][self.label]
 
     def ts(self) -> List[int]:
         """Returns a list of all the timestep at which the node is present."""
         return [t for t in range(len(self.experiment.nx_graph)) if self.is_in(t)]
 
-    def show_source_image(self, t: int, tp1: int):
+    def show_source_image(self, t: int, tp1=None):
         """
         Two use cases:
-        If t==tp1:
+        If tp1 is not provided:
         This function plots the original image from time t containing the node.
         As there can be several original images (because of overlap), the
-        darker image is choosen (why?)
-        If t!=tp1:
+        darker image is choosen
+        TODO(FK): (why?)
+        If tp1 is provided:
         This function plots the original images from time t and tp1 on one another
         """
         pos = self.pos(t)
@@ -603,7 +774,7 @@ class Node:
         ims, posimg = self.experiment.find_image_pos(x, y, t)
         # Choosing which image to show
         i = np.argmax([np.mean(im) for im in ims])
-        if t != tp1:
+        if tp1 is not None and tp1 > t:
             posp1 = self.pos(tp1)
             xp1, yp1 = posp1[0], posp1[1]
             imsp1, posimgp1 = self.experiment.find_image_pos(xp1, yp1, tp1)
@@ -689,8 +860,8 @@ class Edge:
     """Edge object through time in an experiment."""
 
     def __init__(self, begin: Node, end: Node, experiment: Experiment):
-        self.begin = begin
-        self.end = end
+        self.begin = begin  # Starting Node
+        self.end = end  # Ending Node
         self.experiment = experiment
 
     def __eq__(self, other):
@@ -711,9 +882,15 @@ class Edge:
         return (self.begin.label, self.end.label) in self.experiment.nx_graph[t].edges
 
     def ts(self):
+        "Return a list of timesteps in Experimant at which this Edge is present"
         return [t for t in range(self.experiment.ts) if self.is_in(t)]
 
-    def pixel_list(self, t):
+    def pixel_list(self, t: int) -> Tuple[List[coord_int], coord_int]:
+        """
+        Return a list of pixels coordinates that make the edge.
+        These coordinates are in the general referential.
+        Also returns the starting position of the Edge.
+        """
         return orient(
             self.experiment.nx_graph[t].get_edge_data(self.begin.label, self.end.label)[
                 "pixel_list"
@@ -999,5 +1176,27 @@ class Hyphae:
 
 
 if __name__ == "__main__":
-    exp = Experiment(4, "directory")
-    print(exp)
+    # exp = Experiment(4, "directory")
+    # print(exp)
+    from amftrack.util.sys import (
+        update_plate_info_local,
+        get_current_folders_local,
+        test_path,
+    )
+
+    directory = test_path + "/"  # TODO(FK): fix this error
+    plate_name = "20220330_2357_Plate19"
+    update_plate_info_local(directory)
+    folder_df = get_current_folders_local(directory)
+    selected_df = folder_df.loc[folder_df["folder"] == plate_name]
+    i = 0
+    plate = int(list(selected_df["folder"])[i].split("_")[-1][5:])
+    folder_list = list(selected_df["folder"])
+    directory_name = folder_list[i]
+    exp = Experiment(plate, directory)
+    exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
+
+    r = exp.find_image_pos(10000, 5000, t=0)
+    print(r)
+
+    print(exp.get_image_coordinates(0))

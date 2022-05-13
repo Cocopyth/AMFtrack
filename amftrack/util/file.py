@@ -1,3 +1,7 @@
+"""
+Utils to handle files and directories.
+"""
+
 import os
 import random
 

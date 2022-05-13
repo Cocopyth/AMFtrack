@@ -3,19 +3,19 @@
 from scipy import sparse
 import numpy as np
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     sparse_to_doc,
 )
 import cv2
 import json
 import pandas as pd
-from amftrack.transfer.functions.transfer import download, upload
+from amftrack.util.dbx import download, upload, load_dbx, env_config
 from tqdm.autonotebook import tqdm
-import dropbox
 from time import time_ns
 from decouple import Config, RepositoryEnv
 from pymatreader import read_mat
+
 
 DOTENV_FILE = (
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -24,15 +24,13 @@ DOTENV_FILE = (
 env_config = Config(RepositoryEnv(DOTENV_FILE))
 
 path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
-slurm_path = env_config.get("SLURM_PATH")
-temp_path = env_config.get("TEMP_PATH")
 target = env_config.get("DATA_PATH")
-data_path = env_config.get("STORAGE_PATH")
+storage_path = env_config.get("STORAGE_PATH")
 fiji_path = env_config.get("FIJI_PATH")
-pastis_path = env_config.get("PASTIS_PATH")   
-API = env_config.get("API_KEY")
-
-os.environ["TEMP"] = temp_path
+test_path = os.path.join(storage_path, "test")  # repository used for tests
+pastis_path = env_config.get("PASTIS_PATH")
+temp_path = env_config.get("TEMP_PATH")
+slurm_path = env_config.get("SLURM_PATH")
 
 
 def pad_number(number):
@@ -175,7 +173,40 @@ def get_param(
     return ldict
 
 
-def update_plate_info(directory: str,local = False) -> None:
+def update_plate_info_local(directory: str) -> None:
+    """
+    An acquisition repositorie has a param.m file inside it.
+    """
+    listdir = os.listdir(directory)
+    source = f"/data_info.json"
+
+    with open(target) as f:
+        plate_info = json.load(f)
+    # plate_info = json.load(open(target, "r"))
+    with tqdm(total=len(listdir), desc="analysed") as pbar:
+        for folder in listdir:
+            path_snap = os.path.join(directory, folder)
+            if os.path.isfile(os.path.join(path_snap, "param.m")):
+                params = get_param(folder, directory)
+                ss = folder.split("_")[0]
+                ff = folder.split("_")[1]
+                date = datetime(
+                    year=int(ss[:4]),
+                    month=int(ss[4:6]),
+                    day=int(ss[6:8]),
+                    hour=int(ff[0:2]),
+                    minute=int(ff[2:4]),
+                )
+                params["date"] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
+                params["folder"] = folder
+                total_path = os.path.join(directory, folder)
+                plate_info[total_path] = params
+            pbar.update(1)
+    with open(target, "w") as jsonf:
+        json.dump(plate_info, jsonf, indent=4)
+
+
+def update_plate_info(directory: str, local=False) -> None:
     """*
     1/ Download `data_info.json` file containing all information about acquisitions.
     2/ Add all acquisition files in the `directory` path to the `data_info.json`.
@@ -188,7 +219,7 @@ def update_plate_info(directory: str,local = False) -> None:
     if local:
         plate_info = {}
     else:
-        download(API, source, target, end="")
+        download(source, target, end="")
         plate_info = json.load(open(target, "r"))
     with tqdm(total=len(listdir), desc="analysed") as pbar:
         for folder in listdir:
@@ -212,25 +243,34 @@ def update_plate_info(directory: str,local = False) -> None:
     with open(target, "w") as jsonf:
         json.dump(plate_info, jsonf, indent=4)
     if not local:
-        upload(
-            API,
-            target,
-            f"{source}",
-            chunk_size=256 * 1024 * 1024,
-        )
+        upload(target, f"{source}", chunk_size=256 * 1024 * 1024)
 
 
 def get_data_info(local=False):
     source = f"/data_info.json"
     if not local:
-        download(API, source, target, end="")
+        download(source, target, end="")
     data_info = pd.read_json(target, convert_dates=True).transpose()
     data_info.index.name = "total_path"
     data_info.reset_index(inplace=True)
     return data_info
 
 
-def get_current_folders(directory: str, file_metadata=False,local=False) -> pd.DataFrame:
+def get_current_folders_local(directory: str) -> pd.DataFrame:
+
+    plate_info = pd.read_json(target, convert_dates=True).transpose()
+    plate_info.index.name = "total_path"
+    plate_info.reset_index(inplace=True)
+    listdir = os.listdir(directory)
+    return plate_info.loc[
+        np.isin(plate_info["folder"], listdir)
+        & (plate_info["total_path"] == directory + plate_info["folder"])
+    ]  # TODO(FK): use os.join here
+
+
+def get_current_folders(
+    directory: str, file_metadata=False, local=False
+) -> pd.DataFrame:
     """
     Returns a pandas data frame with all informations about the acquisition files
     inside the directory. The information is only taken from the dropbox
@@ -240,7 +280,7 @@ def get_current_folders(directory: str, file_metadata=False,local=False) -> pd.D
     # TODO(FK): solve the / problem
     if directory == "dropbox":
         data = []
-        dbx = dropbox.Dropbox(API)
+        dbx = load_dbx()
         response = dbx.files_list_folder("", recursive=True)
         # for fil in response.entries:
         listfiles = []
@@ -279,7 +319,7 @@ def get_current_folders(directory: str, file_metadata=False,local=False) -> pd.D
                 source = (file.path_lower.split(".")[0]) + "_info.json"
                 target = f'{os.getenv("TEMP")}/{file.name.split(".")[0]}.json'
                 # print(source,target)
-                download(API, source, target)
+                download(source, target)
                 # print(target)
                 data.append(pd.read_json(target))
                 os.remove(target)
@@ -364,11 +404,11 @@ def get_data_tables(op_id=time_ns(), redownload=True):
     # op_id = time_ns()
     if redownload:
         path_save = f"{root}global_hypha_info{op_id}.pick"
-        download(API, f"/{dir_drop}/global_hypha_infos.pick", path_save)
+        download(f"/{dir_drop}/global_hypha_infos.pick", path_save)
         path_save = f"{root}time_plate_infos{op_id}.pick"
-        download(API, f"/{dir_drop}/time_plate_infos.pick", path_save)
+        download(f"/{dir_drop}/time_plate_infos.pick", path_save)
         path_save = f"{root}time_hypha_info{op_id}.pick"
-        download(API, f"/{dir_drop}/time_hypha_infos.pick", path_save)
+        download(f"/{dir_drop}/time_hypha_infos.pick", path_save)
     path_save = f"{root}time_plate_infos{op_id}.pick"
     time_plate_info = pd.read_pickle(path_save)
     path_save = f"{root}global_hypha_info{op_id}.pick"
