@@ -5,7 +5,7 @@ sys.path.insert(0, path_code_dir)
 import pandas as pd
 import numpy as np
 import os
-from amftrack.util.dbx import temp_path
+from amftrack.util.sys import temp_path
 from amftrack.util.dbx import download, unzip_file
 
 directory = str(sys.argv[1])

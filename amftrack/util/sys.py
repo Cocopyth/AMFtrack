@@ -10,7 +10,7 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
 import cv2
 import json
 import pandas as pd
-from amftrack.util.dbx import download, upload,load_dbx
+from amftrack.util.dbx import download, upload, load_dbx, env_config
 from tqdm.autonotebook import tqdm
 from time import time_ns
 from decouple import Config, RepositoryEnv
@@ -30,7 +30,7 @@ fiji_path = env_config.get("FIJI_PATH")
 test_path = os.path.join(storage_path, "test")  # repository used for tests
 pastis_path = env_config.get("PASTIS_PATH")
 temp_path = env_config.get("TEMP_PATH")
-
+slurm_path = env_config.get("SLURM_PATH")
 
 
 def pad_number(number):

@@ -1,16 +1,17 @@
 from tqdm.autonotebook import tqdm
 import dropbox
-import os
 
 from zipfile import ZipFile, ZIP_DEFLATED
 import os
-from os.path import basename
 import requests
 # create a ZipFile object
 from subprocess import call
 from time import sleep
 from decouple import Config, RepositoryEnv
 from time import time_ns
+import pandas as pd
+
+from amftrack.util.sys import temp_path
 
 DOTENV_FILE = (
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -26,7 +27,6 @@ refresh_token = env_config.get("REFRESH_TOKEN")
 folder_id = env_config.get("FOLDER_ID")
 user_id = env_config.get("USER_ID")
 
-temp_path = env_config.get("TEMP_PATH")
 
 def load_dbx():
     dbx = dropbox.DropboxTeam(app_key = app_key,
@@ -59,6 +59,10 @@ def unzip_file(origin,target,depth=2):
         zipy.extractall(target)
         
 def upload(file_path, target_path, chunk_size=4 * 1024 * 1024, catch_exception=True):
+    '''Uploads a file placed in file path to a target path in dropbox. The dropbox path is relative to root
+     of the team folder and should start with \
+     If catch exception is True, the function runs in no error mode and retry uploading if uploading fails'''
+    # TODO (CB) rewrite the catch exception with a decorator to make it more elegant
     dbx = load_dbx()
     with open(file_path, "rb") as f:
         file_size = os.path.getsize(file_path)
@@ -98,12 +102,19 @@ def upload(file_path, target_path, chunk_size=4 * 1024 * 1024, catch_exception=T
                     sleep(60)
                     continue
                 else:
-                    return(None)
+                    print(e)
+                    return(e)
             break
             
                 
                     
-def download(file_path, target_path, end=''):
+def download(file_path, target_path, end='', catch_exception=True):
+    '''
+    Downloads a file placed in file path on dropbox to a local target path. The dropbox path is relative to root
+     of the team folder and should start with \
+     If catch exception is True, the function runs in no error mode and retry uploading if uploading fails
+     '''
+    # TODO (CB) rewrite the catch exception with a decorator to make it more elegant
     dbx = load_dbx()
     while True:
         try:
@@ -111,29 +122,45 @@ def download(file_path, target_path, end=''):
                 metadata, res = dbx.files_download(path=f'{file_path}{end}')
                 f.write(res.content)
         except (requests.exceptions.RequestException,dropbox.exceptions.ApiError) as e:
-            sleep(60)
-            continue
+            if catch_exception:
+                print("error")
+                sleep(60)
+                continue
+            else:
+                print(e)
+                return (e)
         break
 
-def upload_zip(path_total,target,trhesh = 4 * 1024 * 1024):
+def upload_zip(path_total,target,catch_exception=True):
+    '''
+    Handles upload of files and folders taking only a path as an argument. If the total path is a
+    file it is uploaded directly. Otherwise the folder is zipped and uploaded. Upload of individual files is
+    inneficient.
+     '''
     if os.path.isdir(path_total):
         stamp = time_ns()
         path_zip = f'{temp_path}/{stamp}.zip'
         zip_file(path_total, path_zip)
         upload(path_zip, target,
-               chunk_size=256 * 1024 * 1024)
+               chunk_size=256 * 1024 * 1024,catch_exception=catch_exception)
         os.remove(path_zip)
 
     else:
         upload(path_total, target,
-               chunk_size=256 * 1024 * 1024)
+               chunk_size=256 * 1024 * 1024,catch_exception=catch_exception)
 
 def sync_fold(origin,target):
+    '''
+    Launches a sync between two directory. Will only work on linux system.
+     '''
     cmd = f'rsync --update -avh {origin} {target}'
     # print(cmd)
     call(cmd,shell=True)
 
-def upload_folders(folders,dir_drop = 'DATA',catch_exception=True):
+def upload_folders(folders: pd.DataFrame,dir_drop = 'DATA',catch_exception=True):
+    '''
+    Upload all the folders in the dataframe to a location on dropbox
+     '''
     run_info = folders.copy()
     folder_list = list(run_info['folder'])
     with tqdm(total=len(folder_list), desc="transferred") as pbar:
@@ -145,14 +172,12 @@ def upload_folders(folders,dir_drop = 'DATA',catch_exception=True):
 
             path_snap = line['total_path'].iloc[0]
             path_info = f'{temp_path}/{directory_name}_info.json'
-
-            for subfolder in ["Img", "Analysis"]:
-                path_zip = f'{temp_path}/{directory_name}_{subfolder}.zip'
+            for subfolder in os.listdir(path_snap):
                 line.to_json(path_info)
-                zip_file(os.path.join(path_snap, subfolder), path_zip)
-                upload(path_zip, f'/{dir_drop}/{id_unique}/{directory_name}/{subfolder}.zip',chunk_size=256 * 1024 * 1024,catch_exception=catch_exception)
-            upload(path_info, f'/{dir_drop}/{id_unique}/{directory_name}_info.json', chunk_size=256 * 1024 * 1024,
-                   catch_exception=catch_exception)
+                path_total = os.path.join(path_snap, subfolder)
+                suffix = '.zip' if os.path.isdir(path_total) else ''
+                target = f'/{dir_drop}/{id_unique}/{directory_name}/{subfolder}{suffix}'
+                upload_zip(path_total,target,catch_exception=catch_exception)
+            upload(path_info, f'/{dir_drop}/{id_unique}/{directory_name}_info.json', chunk_size=256 * 1024 * 1024,catch_exception=catch_exception)
             os.remove(path_info)
-            os.remove(path_zip)
             pbar.update(1)

@@ -5,8 +5,7 @@ sys.path.insert(0, path_code_dir)
 from scipy import sparse
 from pymatreader import read_mat
 
-from amftrack.util.sys import get_dates_datetime, get_dirname
-from amftrack.util.dbx import temp_path
+from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_sparse_to_graph,
     generate_nx_graph,
