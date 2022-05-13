@@ -11,7 +11,6 @@ from decouple import Config, RepositoryEnv
 from time import time_ns
 import pandas as pd
 
-from amftrack.util.sys import temp_path
 
 DOTENV_FILE = (
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -26,6 +25,7 @@ app_secret = env_config.get("APP_SECRET")
 refresh_token = env_config.get("REFRESH_TOKEN")
 folder_id = env_config.get("FOLDER_ID")
 user_id = env_config.get("USER_ID")
+temp_path = env_config.get("TEMP_PATH")
 
 
 def load_dbx():
