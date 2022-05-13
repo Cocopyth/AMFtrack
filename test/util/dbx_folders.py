@@ -8,7 +8,8 @@ class TestFolder(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         directory = test_path + "/"  # TODO(FK): fix this error
-        plate_name = "20220330_2357_Plate19"
+        #create an sparse or empty folder structure to avoid test running forever
+        plate_name = "20220330_2357_Plate19_empty"
         update_plate_info_local(directory)
         folder_df = get_current_folders_local(directory)
         selected_df = folder_df.loc[folder_df["folder"] == plate_name]
