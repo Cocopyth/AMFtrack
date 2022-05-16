@@ -1,3 +1,5 @@
+from logging.config import valid_ident
+from sklearn.model_selection import train_test_split
 import tensorflow as tf
 import numpy as np
 import os
@@ -6,6 +8,7 @@ import pathlib
 import logging
 import sys
 from typing import Tuple
+import random
 
 from amftrack.util.sys import storage_path
 from amftrack.util.file import chose_file
@@ -21,10 +24,12 @@ BUFFERSIZE = 12
 INPUTSIZE = 120
 SHUFFLE_BUFFER = 10
 dataset_path = os.path.join(storage_path, "width3", "dataset_2")
+edge_data_path = os.path.join(dataset_path, "Data")  # TO REMOVE AS GLOBAL
 
 ##### EAGER MODE #####
-# tf.config.functions_run_eagerly()
-# tf.config.run_functions_eagerly(True)
+tf.config.run_functions_eagerly(
+    False
+)  # Can be checked with: tf.config.functions_run_eagerly()
 # tf.data.experimental.enable_debug_mode()  # statement above doesn't apply to tf.data
 
 
@@ -116,7 +121,10 @@ def reader_dataset(
     Take as input a list of the paths to the data files.
     And return a tf.Dataset object iterating through the batches.
     """
-    path_dataset = tf.data.Dataset.list_files(filepaths)  # yield file names randomly
+    # NB: other option with use of patterns instead of file names: tf.data.Dataset.list_files
+    path_dataset = tf.data.Dataset.from_tensor_slices(
+        filepaths
+    )  # yield file names randomly
     # TODO: make buffer size to size of the dataset
     # TODO: get a dataset object from one file
     general_dataset = path_dataset.interleave(load_image, cycle_length=n_readers)
@@ -124,11 +132,37 @@ def reader_dataset(
     return general_dataset.batch(batch_size).prefetch(1)
 
 
-if __name__ == "__main__":
+def get_sets(dataset_path: str, proportion=[0.6, 0.2, 0.2]):
+    """
+    Take as input the full path to a width dataset.
+    And the respective proportion of training, validation and test sets.
+    Returns the 3 datasets (each as tuple (feature, label))
+    """
+    if sum(proportion) != 1.0:
+        raise Exception("Sum of proportion for all set must be equal to 1")
+    slices_directory_path = os.path.join(dataset_path, "Img")
+    slices_data_directory_path = os.path.join(dataset_path, "Data")
+    slices_paths = [
+        os.path.join(slices_directory_path, file)
+        for file in os.listdir(slices_directory_path)
+    ]
+    # Splitting the list of files in 3 sets
+    random.shuffle(slices_paths)
+    l = len(slices_paths)
+    slices_paths_train = slices_paths[0 : int(l * proportion[0])]
+    slices_paths_valid = slices_paths[
+        int(l * proportion[0]) : int(l * (proportion[1] + proportion[0]))
+    ]
+    slices_paths_test = slices_paths[int(l * (proportion[1] + proportion[0])) :]
 
-    section_path = os.path.join(dataset_path, "Img")
-    edge_data_path = os.path.join(dataset_path, "Data")
-    filepaths = [os.path.join(section_path, file) for file in os.listdir(section_path)]
+    return (
+        reader_dataset(slices_paths_train),
+        reader_dataset(slices_paths_valid),
+        reader_dataset(slices_paths_test),
+    )
+
+
+if __name__ == "__main__":
 
     # test1 = "/media/kahane/AMFtopology02/storage/width3/dataset_2/Img/1122-1227.png"
     # test2 = "/media/kahane/AMFtopology02/storage/width3/dataset_2/Img/1122.png"
@@ -150,6 +184,10 @@ if __name__ == "__main__":
 
     # general_dataset = general_dataset.shuffle(shuffle_buffer_size).repeat(repeat)
 
-    a = reader_dataset(filepaths)
+    # a = reader_dataset(filepaths)
 
-    a = 1
+    # a = 1
+
+    a, b, c = get_sets(dataset_path)
+
+    e = 0
