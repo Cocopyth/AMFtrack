@@ -73,13 +73,18 @@ class Experiment:
             for index, row in folders.iterrows()
         ]
         self.dates = dates_datetime
+        # Reindexing the dataframe based on time order
+        self.folders["datetime"] = pd.to_datetime(
+            self.folders["date"], format="%d.%m.%Y, %H:%M:"
+        )
+        self.folders = self.folders.sort_values(by=["datetime"], ignore_index=True)
         self.dates.sort()
         nx_graph_poss = []
         for date in self.dates:
             print(date)
 
             directory_name = get_dirname(date, self.plate)
-            path_snap = self.directory + directory_name
+            path_snap = os.path.join(self.directory, directory_name)
             if labeled:
                 suffix = "/Analysis/nx_graph_pruned_labeled.p"
             else:
@@ -145,10 +150,12 @@ class Experiment:
         )
         raw_coordinates = list(tileconfig[2])
         n_im = len(raw_coordinates)
+        # Warning: Fiji writtes image coordinates like (y, x) compared to us
         cmin = np.min([raw_coordinates[i][0] for i in range(n_im)])
         rmin = np.min([raw_coordinates[i][1] for i in range(n_im)])
+        # As a result, here we inverse x and y to comply with our own referential norm
         coordinates = [
-            [raw_coordinates[i][0] - cmin, raw_coordinates[i][1] - rmin]
+            [raw_coordinates[i][1] - rmin, raw_coordinates[i][0] - cmin]
             for i in range(n_im)
         ]
         self.image_coordinates[t] = coordinates
@@ -162,7 +169,11 @@ class Experiment:
             paths.append(path)
         self.image_paths[t] = paths
 
-    def load_image_transformation(self, t):
+    def load_image_transformation(self, t) -> Tuple[np.array, np.array]:
+        """
+        Loads the transformation to switch from general to timestep referential.
+        If not loaded these transformation will be loaded upon calls to convert coordinates
+        """
         date = self.dates[t]
         directory_name = get_dirname(date, self.plate)
         skel = read_mat(
@@ -191,6 +202,7 @@ class Experiment:
         return final_picture >= 1
 
     def copy(self, experiment):
+        # TODO(FK): this is not coopying all the features
         self.folders = experiment.folders
         self.positions = experiment.positions
         self.nx_graph = experiment.nx_graph
@@ -221,10 +233,14 @@ class Experiment:
     def pickle_load(self, path):
         self = pickle.load(open(path + f"experiment.pick", "rb"))
 
+    def folder_name(self, i) -> str:
+        "From the index of the timestep, return the name of the subdirectory"
+        return os.path.basename(self.folders.iloc[i]["total_path"])
+
     def get_node(self, label: str):
         return Node(label, self)
 
-    def get_edge(self, begin, end) -> "Edge":
+    def get_edge(self, begin: "Node", end: "Node") -> "Edge":
         return Edge(begin, end, self)
 
     def get_growing_tips(self, t, threshold=80):
@@ -311,8 +327,6 @@ class Experiment:
 
         R, t = self.image_transformation[t]
         new_coord = np.dot(np.linalg.inv(R), old_coord - t)
-        # WARNING: x an y must also be inversed
-        new_coord[0], new_coord[1] = new_coord[1], new_coord[0]
         return new_coord
 
     def timestep_to_general(self, point: coord, t: int) -> coord:
@@ -320,20 +334,19 @@ class Experiment:
         Take as input float coordinates `coord` the referential of timestep t
         and convert them into the general referential.
         """
-        old_coord = np.array(point).astype(dtype=np.float)
+        point = np.array(point)
         if self.image_transformation is None:
             raise Exception("Must load directories first")
         if self.image_transformation[t] is None:
             self.image_transformation[t] = self.load_image_transformation(t)
         R, t = self.image_transformation[t]
-        new_coord = np.dot(R, np.array(old_coord)) + t
+        new_coord = np.dot(R, np.array(point)) + t
         return new_coord
 
     def general_to_image(self, point: coord, t: int, i: int) -> coord:
         """
-        Take as input float coordinates `coord` the general referential
-        and convert them into the coordinates in the source image `i`
-        of timestep t.
+        Take as input float coordinates of a `point` in the general referential
+        and convert them into the coordinates in the source image `i` of timestep t.
         """
         coord_timestep = self.general_to_timestep(point, t)
         image_position = self.get_image_coords(t)[i]
@@ -344,6 +357,10 @@ class Experiment:
         return new_coord
 
     def image_to_general(self, point: coord, t: int, i: int) -> coord:
+        """
+        Take as input float coordinates of a `point` in the image `i` at timestep `t`.
+        And return the coordinates of point in the general referential.
+        """
         image_position = self.get_image_coords(t)[i]
         coord_timestep = [
             point[0] + image_position[0],
@@ -374,7 +391,6 @@ class Experiment:
         Take as input coordinates in the TIMESTEP referential.
         And determine the index of the image.
         """
-        # TODO(FK): change to general coordinates?
         return find_image_indexes(self.get_image_coords(t), xs, ys)
 
     def find_im_indexes_from_general(self, x: float, y: float, t: int) -> List[int]:
@@ -389,70 +405,17 @@ class Experiment:
         self, xs: int, ys: int, t: int, local=False
     ) -> Tuple[List, List[coord]]:
         """
-        For coordinates (xs, yx) in the full size stiched image,
-        returns a list of original images (before stiching) that contain the coordinate.
-        And for each found image, returns the coordinates of the point of interest in
-        the image.
+        For (xs, ys) coordinates in the GENERAL referential.
+        Returns a list of np.array images containing the point.
+        And returns the new coordinates of the point in the images.
         """
-        date = self.dates[t]
-        directory_name = get_dirname(date, self.plate)
-        path_snap = self.directory + directory_name
-        path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
-        skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
-        Rot = skel["R"]
-        trans = skel["t"]
-        rottrans = np.dot(np.linalg.inv(Rot), np.array([xs, ys] - trans))
-
-        ys, xs = round(rottrans[0]), round(rottrans[1])  # beware switching (y, x)
-        tileconfig = pd.read_table(
-            path_tile,
-            sep=";",
-            skiprows=4,
-            header=None,
-            converters={2: ast.literal_eval},
-            skipinitialspace=True,
-        )
-        xs_yss = list(tileconfig[2])
-        xes = [xs_ys[0] for xs_ys in xs_yss]
-        yes = [xs_ys[1] for xs_ys in xs_yss]
-        cmin = np.min(xes)
-        cmax = np.max(xes)
-        rmin = np.min(yes)
-        rmax = np.max(yes)
-        ximg = xs
-        yimg = ys
-
-        def find(xsub: List, ysub: List, x: float, y: float):
-            """
-            :param x: x coordinate of point of interest
-            :param xsub: List of x coordinate of all the images
-            :return: list of indexes of images which contain (x,y)
-            """
-            indexes = []
-            for i in range(len(xsub)):
-                if (
-                    x >= xsub[i] - cmin
-                    and x < xsub[i] - cmin + 4096
-                    and y >= ysub[i] - rmin
-                    and y < ysub[i] - rmin + 3000
-                ):
-                    indexes.append(i)
-            return indexes
-
-        indsImg = find(xes, yes, ximg, yimg)
-        possImg = [
-            ximg - np.array(xes)[indsImg] + cmin + 1,
-            yimg - np.array(yes)[indsImg] + rmin + 1,
-        ]
-        paths = []
-        for index in indsImg:
-            name = tileconfig[0][index]
-            imname = "/Img/" + name.split("/")[-1]
-            directory_name = get_dirname(date, self.plate)
-            path = self.directory + directory_name + imname
-            paths.append(path)
-        ims = [imageio.imread(path) for path in paths]
-        return (ims, possImg)
+        indexes = self.find_im_indexes_from_general(xs, ys, t)
+        images = []
+        coord_in_image = []
+        for i in indexes:
+            images.append(self.get_image(t, i))
+            coord_in_image.append(self.general_to_image([xs, ys], t, i))
+        return images, coord_in_image
 
     def plot_raw(self, t, figsize=(10, 9)):
         """Plot the full stiched image compressed (otherwise too heavy)"""
@@ -750,7 +713,7 @@ class Node:
             for neighbour in self.neighbours(t)
         ]
 
-    def pos(self, t) -> coord_int:
+    def pos(self, t: int) -> np.array:
         "Return coordinates in the general referential at timestep t"
         return self.experiment.positions[t][self.label]
 
@@ -764,8 +727,8 @@ class Node:
         If tp1 is not provided:
         This function plots the original image from time t containing the node.
         As there can be several original images (because of overlap), the
-        darker image is choosen
-        TODO(FK): (why?)
+        darker image is choosen. This behavior is for consistency, to have the most chance
+        of choosing the same image.
         If tp1 is provided:
         This function plots the original images from time t and tp1 on one another
         """
@@ -885,7 +848,7 @@ class Edge:
         "Return a list of timesteps in Experimant at which this Edge is present"
         return [t for t in range(self.experiment.ts) if self.is_in(t)]
 
-    def pixel_list(self, t: int) -> Tuple[List[coord_int], coord_int]:
+    def pixel_list(self, t: int) -> List[coord_int]:
         """
         Return a list of pixels coordinates that make the edge.
         These coordinates are in the general referential.
@@ -1195,8 +1158,11 @@ if __name__ == "__main__":
     directory_name = folder_list[i]
     exp = Experiment(plate, directory)
     exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
+    exp.load_tile_information(0)
 
-    r = exp.find_image_pos(10000, 5000, t=0)
-    print(r)
+    a = 0
 
-    print(exp.get_image_coordinates(0))
+    # r = exp.find_image_pos(10000, 5000, t=0)
+    # print(r)
+
+    # print(exp.get_image_coordinates(0))
