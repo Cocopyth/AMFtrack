@@ -2,9 +2,8 @@
 Utils to handle files and directories.
 """
 
-import os
 import random
-import hashlib
+
 
 def chose_file(directory_path: str) -> str:
     """
@@ -42,22 +41,7 @@ def hash_file(filename):
    return h.hexdigest()
 
 
-import hashlib
-import math
-import os
 
-DROPBOX_HASH_CHUNK_SIZE = 4*1024*1024
-
-def compute_dropbox_hash(filename):
-    file_size = os.stat(filename).st_size
-    with open(filename, 'rb') as f:
-        block_hashes = b''
-        while True:
-            chunk = f.read(DROPBOX_HASH_CHUNK_SIZE)
-            if not chunk:
-                break
-            block_hashes += hashlib.sha256(chunk).digest()
-        return hashlib.sha256(block_hashes).hexdigest()
 
 if __name__ == "__main__":
     print(chose_file("."))
