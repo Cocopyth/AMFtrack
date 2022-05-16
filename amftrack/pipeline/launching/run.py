@@ -3,8 +3,11 @@ import pandas as pd
 from amftrack.util.sys import (
     path_code,
     update_plate_info,
-    get_current_folders, temp_path,
+    get_current_folders,
+    temp_path,
+    fiji_path,
 )
+import imageio
 from typing import List
 
 from time import time_ns
@@ -68,7 +71,13 @@ def run_stitch(directory: str, folders: pd.DataFrame) -> None:
             process = subprocess.run(command)
             pbar.update(1)
 
-def run(code: str, args: List, folders: pd.DataFrame, loc_code='pipeline/scripts/image_processing/') -> None:
+
+def run(
+    code: str,
+    args: List,
+    folders: pd.DataFrame,
+    loc_code="pipeline/scripts/image_processing/",
+) -> None:
     """
     Run the chosen script `code` localy.
     :param code: name of the script file such as "prune.py", it has to be in the image_processing file
@@ -80,7 +89,7 @@ def run(code: str, args: List, folders: pd.DataFrame, loc_code='pipeline/scripts
     folder_list.sort()
     args_str = [str(arg) for arg in args]
     arg_str = " ".join(args_str)
-    with tqdm(total=len(folder_list), desc="stitched") as pbar:
+    with tqdm(total=len(folder_list), desc="folder_treated") as pbar:
         for index, folder in enumerate(folder_list):
             command = (
                 ["python3", f"{path_code}{loc_code}{code}"]
@@ -91,13 +100,15 @@ def run(code: str, args: List, folders: pd.DataFrame, loc_code='pipeline/scripts
             process = subprocess.run(command)
             pbar.update(1)
 
+
 def run_transfer(code: str, args: List, folders: pd.DataFrame) -> None:
     """
     Run the chosen script `code` localy.
     :param code: name of the script file such as "prune.py", it has to be in the transfer/scripts/ folder
     :param args: list of arguments used by the script
     """
-    run(code, args, folders,loc_code='transfer/scripts/')
+    run(code, args, folders, loc_code="transfer/scripts/")
+
 
 if __name__ == "__main__":
     # directory = "/data/felix/width1/full_plates/"  # careful: must have the / at the end

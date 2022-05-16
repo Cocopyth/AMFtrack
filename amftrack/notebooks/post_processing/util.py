@@ -2,20 +2,11 @@ import sys
 
 sys.path.insert(0, "/home/cbisot/pycode/MscThesis/")
 import numpy as np
-from amftrack.util.sys import get_dates_datetime
-import pickle
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Edge,
     Node,
 )
-from random import choice
-import networkx as nx
-from amftrack.pipeline.paths.directory import directory_scratch, path_code
-from scipy import sparse
-from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
-    get_pixel_growth_and_new_children,
-)
-from shapely.geometry import Polygon, shape
+from shapely.geometry import Polygon
 from scipy import spatial
 from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
     get_pixel_growth_and_new_children,
