@@ -6,12 +6,10 @@ from amftrack.pipeline.functions.image_processing.extract_width_fun import *
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
 )
-from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path
+from amftrack.util.sys import temp_path
 import pickle
 import networkx as nx
 import pandas as pd
-from amftrack.pipeline.paths.directory import directory_scratch
-from path import path_code_dir
 
 directory = str(sys.argv[1])
 skip = eval(sys.argv[2])

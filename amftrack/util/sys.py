@@ -15,6 +15,7 @@ from tqdm.autonotebook import tqdm
 from time import time_ns
 from decouple import Config, RepositoryEnv
 from pymatreader import read_mat
+import shutil
 
 
 DOTENV_FILE = (
@@ -146,8 +147,9 @@ def get_skeleton(exp, boundaries, t, directory):
 def get_param(
     folder, directory
 ):  # Very ugly but because interfacing with Matlab so most elegant solution.
+    # TODO(FK)
     path_snap = os.path.join(directory, folder)
-    file1 = open(path_snap + "/param.m", "r")
+    file1 = open(os.path.join(path_snap, "param.m"), "r")
     Lines = file1.readlines()
     ldict = {}
     for line in Lines:
@@ -169,39 +171,48 @@ def get_param(
         "/Analysis/nx_graph_pruned_labeled.p",
     ]
     for file in files:
-        ldict[file] = os.path.isfile(path_snap + file)
+        ldict[file] = os.path.isfile(path_snap + file)  # TODO(FK) change here
     return ldict
 
 
 def update_plate_info_local(directory: str) -> None:
     """
     An acquisition repositorie has a param.m file inside it.
+    :param directory: full path to a directory containing acquisition directories
     """
     listdir = os.listdir(directory)
-    source = f"/data_info.json"
+    info_path = os.path.join(storage_path, "data_info.json")
 
-    with open(target) as f:
+    # TODO(FK): Crashes when there is no basic file
+    # try:
+    #     with open(target) as f:
+    #         plate_info = json.load(f)
+    # except:
+    #     s = "/home/ipausers/kahane/Wks/AMFtrack/template_data_info.json"
+    #     dest = os.path.join(storage_path, "data_info.json")
+    #     shutil.copy(s, dest)
+    #     with open(target) as f:
+    #         plate_info = json.load(f)
+    with open(info_path) as f:
         plate_info = json.load(f)
-    # plate_info = json.load(open(target, "r"))
-    with tqdm(total=len(listdir), desc="analysed") as pbar:
-        for folder in listdir:
-            path_snap = os.path.join(directory, folder)
-            if os.path.isfile(os.path.join(path_snap, "param.m")):
-                params = get_param(folder, directory)
-                ss = folder.split("_")[0]
-                ff = folder.split("_")[1]
-                date = datetime(
-                    year=int(ss[:4]),
-                    month=int(ss[4:6]),
-                    day=int(ss[6:8]),
-                    hour=int(ff[0:2]),
-                    minute=int(ff[2:4]),
-                )
-                params["date"] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
-                params["folder"] = folder
-                total_path = os.path.join(directory, folder)
-                plate_info[total_path] = params
-            pbar.update(1)
+
+    # TOFIX
+    for folder in listdir:
+        if os.path.isfile(os.path.join(directory, folder, "param.m")):
+            params = get_param(folder, directory)
+            ss = folder.split("_")[0]
+            ff = folder.split("_")[1]
+            date = datetime(
+                year=int(ss[:4]),
+                month=int(ss[4:6]),
+                day=int(ss[6:8]),
+                hour=int(ff[0:2]),
+                minute=int(ff[2:4]),
+            )
+            params["date"] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
+            params["folder"] = folder
+            total_path = os.path.join(directory, folder)
+            plate_info[total_path] = params
     with open(target, "w") as jsonf:
         json.dump(plate_info, jsonf, indent=4)
 
@@ -257,15 +268,25 @@ def get_data_info(local=False):
 
 
 def get_current_folders_local(directory: str) -> pd.DataFrame:
-
-    plate_info = pd.read_json(target, convert_dates=True).transpose()
+    """
+    :param directory: full path to a directory containing acquisition files
+    """
+    plate_info = pd.read_json(
+        os.path.join(storage_path, "data_info.json"), convert_dates=True
+    ).transpose()
     plate_info.index.name = "total_path"
     plate_info.reset_index(inplace=True)
     listdir = os.listdir(directory)
-    return plate_info.loc[
-        np.isin(plate_info["folder"], listdir)
-        & (plate_info["total_path"] == directory + plate_info["folder"])
-    ]  # TODO(FK): use os.join here
+    selected_df = plate_info.loc[
+        np.isin(plate_info["folder"], listdir)  # folder exist
+        & (
+            plate_info["total_path"]
+            == plate_info["folder"].apply(
+                lambda x: os.path.join(directory, x)
+            )  # folder is registered
+        )
+    ]
+    return selected_df
 
 
 def get_current_folders(
@@ -273,66 +294,16 @@ def get_current_folders(
 ) -> pd.DataFrame:
     """
     Returns a pandas data frame with all informations about the acquisition files
-    inside the directory. The information is only taken from the dropbox
-    If directory == dropbox, the information is taken from the dropbox.
+    inside the directory.
     WARNING: directory must finish with '/'
     """
     # TODO(FK): solve the / problem
-    if directory == "dropbox":
-        data = []
-        dbx = load_dbx()
-        response = dbx.files_list_folder("", recursive=True)
-        # for fil in response.entries:
-        listfiles = []
-        listjson = []
-        while response.has_more:
-            listfiles += [
-                file for file in response.entries if file.name.split(".")[-1] == "zip"
-            ]
-            listjson += [
-                file.path_lower
-                for file in response.entries
-                if file.name.split(".")[-1] == "json"
-            ]
-
-            response = dbx.files_list_folder_continue(response.cursor)
-        listfiles += [
-            file for file in response.entries if file.name.split(".")[-1] == "zip"
-        ]
-        listjson += [
-            file.path_lower
-            for file in response.entries
-            if file.name.split(".")[-1] == "json"
-        ]
-        # print([((file.path_lower.split(".")[0]) + "_info.json") for file in listfiles if (file.name.split(".")[-1] == "zip") &
-        #        (((file.path_lower.split(".")[0]) + "_info.json") not in listjson)])
-        listfiles.reverse()
-        if file_metadata:
-            names = [file.name.split(".")[0] for file in listfiles]
-            sizes = [file.size / 10**9 for file in listfiles]
-            modified = [file.client_modified for file in listfiles]
-            df = pd.DataFrame((names, sizes, modified)).transpose()
-            df = df.rename(columns={0: "folder", 1: "size", 2: "change_date"})
-            return df
-        with tqdm(total=len(listfiles), desc="analysed") as pbar:
-            for file in listfiles:
-                source = (file.path_lower.split(".")[0]) + "_info.json"
-                target = f'{os.getenv("TEMP")}/{file.name.split(".")[0]}.json'
-                # print(source,target)
-                download(source, target)
-                # print(target)
-                data.append(pd.read_json(target))
-                os.remove(target)
-                pbar.update(1)
-            infos = pd.concat(data)
-        return infos
-    else:
-        plate_info = get_data_info(local)
-        listdir = os.listdir(directory)
-        return plate_info.loc[
-            np.isin(plate_info["folder"], listdir)
-            & (plate_info["total_path"] == directory + plate_info["folder"])
-        ]
+    plate_info = get_data_info(local)
+    listdir = os.listdir(directory)
+    return plate_info.loc[
+        np.isin(plate_info["folder"], listdir)
+        & (plate_info["total_path"] == directory + plate_info["folder"])
+    ]
 
 
 def get_folders_by_plate_id(plate_id, begin=0, end=-1, directory=None):

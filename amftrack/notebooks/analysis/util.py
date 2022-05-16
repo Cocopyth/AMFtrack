@@ -12,7 +12,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 )
 from random import choice
 import networkx as nx
-from amftrack.pipeline.paths.directory import directory_scratch, path_code
+from amftrack.pipeline.launching.run_super import directory_scratch, path_code
 from scipy import sparse
 from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
     get_pixel_growth_and_new_children,
