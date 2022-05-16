@@ -191,6 +191,7 @@ def extract_section_profiles_for_edge(
     :param offset: distance at the end and the start where no point is taken
     :param step: step in pixel to compute the tangent to the hypha
     :target_length: length of the section extracted in pixels
+    :return: np.array of sections, list of segments in TIMESTEP referential
     """
     pixel_list = edge.pixel_list(t)
     offset = max(
@@ -214,16 +215,13 @@ def extract_section_profiles_for_edge(
     l = []
     for i, sect in enumerate(new_section_coord_list):
         im = images[image_indexes[i]]
-        # WARNING: profile_line has a different order for x an y
-        # This is way point1 and point2 have shape (y, x)
-        # TODO(FK)
-        point1 = np.array([sect[0][1], sect[0][0]])
-        point2 = np.array([sect[1][1], sect[1][0]])
+        point1 = np.array([sect[0][0], sect[0][1]])
+        point2 = np.array([sect[1][0], sect[1][1]])
         profile = profile_line(im, point1, point2, mode="constant")[:target_length]
         profile = profile.reshape((1, len(profile)))
         # TODO(FK): Add thickness of the profile here
         l.append(profile)
-    return np.concatenate(l, axis=0)
+    return np.concatenate(l, axis=0), list_of_segments, new_section_coord_list
 
 
 def get_source_image(
@@ -420,7 +418,7 @@ if __name__ == "__main__":
     directory = storage_path + "/"
     ## Set up experiment object
     update_plate_info_local(directory)
-    # update_plate_info(data_path)
+    # update_plate_info(storage_path)
     folder_df = get_current_folders_local(directory)
     selected_df = folder_df.loc[folder_df["folder"] == plate_name]
     i = 0
