@@ -8,6 +8,8 @@ from amftrack.util.dbx import upload_folders
 from amftrack.util.sys import temp_path
 
 dir_drop = str(sys.argv[1])
+delete = bool(sys.argv[2])
+
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
@@ -16,4 +18,4 @@ folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]
 line = run_info.loc[run_info["folder"] == directory_name]
-upload_folders(line,dir_drop=dir_drop)
+upload_folders(line,dir_drop=dir_drop,delete=delete)

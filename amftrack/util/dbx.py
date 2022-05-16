@@ -1,3 +1,5 @@
+import hashlib
+
 from tqdm.autonotebook import tqdm
 import dropbox
 
@@ -10,7 +12,8 @@ from time import sleep
 from decouple import Config, RepositoryEnv
 from time import time_ns
 import pandas as pd
-
+import hashlib
+import shutil
 
 DOTENV_FILE = (
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -131,23 +134,38 @@ def download(file_path, target_path, end='', catch_exception=True):
                 return (e)
         break
 
-def upload_zip(path_total,target,catch_exception=True):
+def upload_zip(path_total,target,catch_exception=True,delete=False):
     '''
     Handles upload of files and folders taking only a path as an argument. If the total path is a
     file it is uploaded directly. Otherwise the folder is zipped and uploaded. Upload of individual files is
     inneficient.
      '''
-    if os.path.isdir(path_total):
+    is_dir = os.path.isdir(path_total)
+    if is_dir:
         stamp = time_ns()
         path_zip = f'{temp_path}/{stamp}.zip'
         zip_file(path_total, path_zip)
         upload(path_zip, target,
                chunk_size=256 * 1024 * 1024,catch_exception=catch_exception)
-        os.remove(path_zip)
+        path_final = path_zip
 
     else:
         upload(path_total, target,
                chunk_size=256 * 1024 * 1024,catch_exception=catch_exception)
+        path_final = path_total
+    if delete:
+        dbx = load_dbx()
+        response = dbx.files_get_metadata(target)
+        hash_drop = response.content_hash
+        hash_local = compute_dropbox_hash(path_final)
+        if hash_drop == hash_local:
+            if is_dir:
+                shutil.rmtree(path_total)
+            else:
+                os.remove(path_total)
+    if is_dir:
+        os.remove(path_zip)
+
 
 def sync_fold(origin,target):
     '''
@@ -158,11 +176,11 @@ def sync_fold(origin,target):
     call(cmd,shell=True)
 
 def get_dropbox_folders(
-    dir_dop: str, file_metadata=False
+    dir_drop: str, file_metadata=False
 ) -> pd.DataFrame:
     data = []
     dbx = load_dbx()
-    response = dbx.files_list_folder(dir_dop, recursive=True)
+    response = dbx.files_list_folder(dir_drop, recursive=True)
     # for fil in response.entries:
     listfiles = []
     listjson = []
@@ -195,20 +213,21 @@ def get_dropbox_folders(
         df = pd.DataFrame((names, sizes, modified)).transpose()
         df = df.rename(columns={0: "folder", 1: "size", 2: "change_date"})
         return df
-    with tqdm(total=len(listfiles), desc="analysed") as pbar:
-        for file in listfiles:
-            source = (file.path_lower.split(".")[0]) + "_info.json"
-            target = f'{os.getenv("TEMP")}/{file.name.split(".")[0]}.json'
-            # print(source,target)
-            download(source, target)
-            # print(target)
-            data.append(pd.read_json(target))
-            os.remove(target)
-            pbar.update(1)
-        infos = pd.concat(data)
+    else:
+        with tqdm(total=len(listfiles), desc="analysed") as pbar:
+            for file in listfiles:
+                source = (file.path_lower.split(".")[0]) + "_info.json"
+                target = f'{os.getenv("TEMP")}/{file.name.split(".")[0]}.json'
+                # print(source,target)
+                download(source, target)
+                # print(target)
+                data.append(pd.read_json(target))
+                os.remove(target)
+                pbar.update(1)
+            infos = pd.concat(data)
     return infos
 
-def upload_folders(folders: pd.DataFrame,dir_drop = 'DATA',catch_exception=True):
+def upload_folders(folders: pd.DataFrame,dir_drop = 'DATA',catch_exception=True,delete=False):
     '''
     Upload all the folders in the dataframe to a location on dropbox
      '''
@@ -217,18 +236,32 @@ def upload_folders(folders: pd.DataFrame,dir_drop = 'DATA',catch_exception=True)
     with tqdm(total=len(folder_list), desc="transferred") as pbar:
         for folder in folder_list:
             directory_name = folder
-            run_info['unique_id'] = run_info['Plate'].astype(str) + "_" + run_info['CrossDate'].astype(str)
+            run_info['unique_id'] = run_info['Plate'].astype(int).astype(str) + "_" + \
+                                    run_info['CrossDate'].astype(str).str.replace(
+                "'", "").astype(int).astype(str)
             line = run_info.loc[run_info['folder'] == directory_name]
             id_unique = line['unique_id'].iloc[0]
-
             path_snap = line['total_path'].iloc[0]
-            path_info = f'{temp_path}/{directory_name}_info.json'
             for subfolder in os.listdir(path_snap):
-                line.to_json(path_info)
                 path_total = os.path.join(path_snap, subfolder)
                 suffix = '.zip' if os.path.isdir(path_total) else ''
                 target = f'/{dir_drop}/{id_unique}/{directory_name}/{subfolder}{suffix}'
-                upload_zip(path_total,target,catch_exception=catch_exception)
-            upload(path_info, f'/{dir_drop}/{id_unique}/{directory_name}_info.json', chunk_size=256 * 1024 * 1024,catch_exception=catch_exception)
-            os.remove(path_info)
+                upload_zip(path_total,target,catch_exception=catch_exception,delete=delete)
             pbar.update(1)
+            if delete:
+                os.rmdir(path_snap)
+
+
+def compute_dropbox_hash(filename):
+    file_size = os.stat(filename).st_size
+    with open(filename, 'rb') as f:
+        block_hashes = b''
+        while True:
+            chunk = f.read(DROPBOX_HASH_CHUNK_SIZE)
+            if not chunk:
+                break
+            block_hashes += hashlib.sha256(chunk).digest()
+        return hashlib.sha256(block_hashes).hexdigest()
+
+
+DROPBOX_HASH_CHUNK_SIZE = 4*1024*1024
