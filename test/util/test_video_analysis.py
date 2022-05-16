@@ -1,15 +1,30 @@
 import unittest
+import numpy as np
 import os
+from test import helper
 from amftrack.util.sys import test_path
 from amftrack.util.video_analysis import extract_kymograph
+from test.helper import has_video
+from numpy.testing import assert_array_equal
 
 
 class TestVideoAnalysis(unittest.TestCase):
-    def test_extract_kymograph(self):
-        path = os.path.join(test_path, "video")
+    @classmethod
+    def setUpClass(cls):
+        if not helper.has_video():
+            helper.make_video()
 
-        def f(name):
-            return name != "Felix_03_Image__2022-03-24__11-54-57.tiff"
+    def test_extract_kymograph_coordinates(self):
 
-        k = extract_kymograph(path, 10, 10, 30, 10, validation_fun=f)
-        self.assertSequenceEqual(k.shape, (5, 21))
+        # The goal of this test is mostly to test that the system coordinate is the right one
+
+        k = extract_kymograph(helper.video_path, 1, 5, 1, 9, validation_fun=None)
+
+        result = np.array(
+            [
+                [100.0, 100.0, 100.0, 100.0, 100.0],
+                [100.0, 100.0, 100.0, 100.0, 100.0],
+                [10.0, 10.0, 10.0, 10.0, 10.0],
+            ]
+        )
+        assert_array_equal(k, result)

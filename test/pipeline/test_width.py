@@ -21,19 +21,19 @@ from test import helper
 
 class TestWidthLight(unittest.TestCase):
     def test_find_source_images_filtered(self):
-        sec1 = [[1500, 1500], [1500, 1600]]  # in image 1
-        sec2 = [[1500, 1500], [4000, 1500]]  # in image 1 and partially in 3
-        sec3 = [[4000, 1500], [4500, 1500]]  # in image 3 and partially in 1
-        sec4 = [[5000, 1500], [0, 1500]]  # in no image
+        sec1 = [[1500, 1500], [1600, 1500]]  # in image 1
+        sec2 = [[1500, 1500], [1500, 4000]]  # in image 1 and partially in 3
+        sec3 = [[1500, 4000], [1500, 4500]]  # in image 3 and partially in 1
+        sec4 = [[1500, 5000], [1500, 0]]  # in no image
         image1 = [0, 0]
         image2 = [10000, 10000]
-        image3 = [3900, 0]
+        image3 = [0, 3900]
 
         im_indexes, sections = find_source_images_filtered(
             [sec1, sec2, sec3, sec4], [image1, image2, image3]
         )
         self.assertListEqual(im_indexes, [0, 0, 2])
-        self.assertListEqual(sections[2][0], [100, 1500])
+        self.assertListEqual(sections[2][0], [1500, 100])
 
     def test_compute_section_coordinates(self):
         pixel_list = [
@@ -52,19 +52,7 @@ class TestWidthLight(unittest.TestCase):
 class TestWidth(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        directory = test_path + "/"  # TODO(FK): fix this error
-        plate_name = "20220330_2357_Plate19"
-        update_plate_info_local(directory)
-        folder_df = get_current_folders_local(directory)
-        selected_df = folder_df.loc[folder_df["folder"] == plate_name]
-        i = 0
-        plate = int(list(selected_df["folder"])[i].split("_")[-1][5:])
-        folder_list = list(selected_df["folder"])
-        directory_name = folder_list[i]
-        cls.exp = Experiment(plate, directory)
-        cls.exp.load(
-            selected_df.loc[selected_df["folder"] == directory_name], labeled=False
-        )
+        self.exp = helper.make_experiment_object()
 
     def test_extract_section_profiles_for_edge(self):
         import random
