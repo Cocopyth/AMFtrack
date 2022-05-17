@@ -9,7 +9,7 @@ from amftrack.ml.width.models import MeanLearningModel, first_model
 from amftrack.util.sys import storage_path
 from tensorflow import keras
 
-### PARAMETERS ###
+### PARAMETERS ### TODO(FK)
 tensorboard_path = os.path.join(storage_path, "test", "model_test", "logs")
 other_path = os.path.join(storage_path, "test", "model_test", "training.log")
 last_path = os.path.join(storage_path, "test", "model_test", "directory")
@@ -40,6 +40,30 @@ callbacks = [
     tb_callback,
     plot_callback,
 ]
+
+### DATA TRANSFORMATIONS ###
+def random_invert_slice(x, p=0.5):
+    """Inversing blacks with whites"""
+    if tf.random.uniform([]) < p:
+        x = 255 - x
+    else:
+        x
+    return x
+
+
+def random_invert(factor=0.5) -> tf.keras.layers.Layer:
+    return tf.layers.Lambda(lambda x: random_invert_slice(x, factor))
+
+
+def random_mirror_slice(x, p=0.5):
+    """Mirror transformation with respect to the centered vertical"""
+    if tf.random.uniform([]) < p:
+        x = tf.reverse(x, axis=(0,))
+    return x
+
+
+def random_mirror(factor=0.5) -> tf.keras.layers.Layer:
+    return tf.layers.Lambda(lambda x: random_mirror_slice(x, factor))
 
 
 def main():
@@ -84,7 +108,12 @@ def main():
 
 if __name__ == "__main__":
     # main()
-    train, valid, test = get_sets(os.path.join(storage_path, "width3", "dataset_2"))
-    get_intel_on_dataset(train)
-    get_intel_on_dataset(valid)
-    get_intel_on_dataset(test)
+    # train, valid, test = get_sets(os.path.join(storage_path, "width3", "dataset_2"))
+    # get_intel_on_dataset(train)
+    # get_intel_on_dataset(valid)
+    # get_intel_on_dataset(test)
+
+    a = tf.constant([[2.3], [3.2], [4.5], [12.2], [0], [0.0], [1.0]])
+    b = tf.constant([2.0, 3.0, 4.3, 1.0, 1.0, 1.0, 1.0, 1.0])
+
+    c = 0
