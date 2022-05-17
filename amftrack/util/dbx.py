@@ -111,7 +111,7 @@ def upload(file_path, target_path, chunk_size=4 * 1024 * 1024, catch_exception=T
             
                 
                     
-def download(file_path, target_path, end='', catch_exception=True):
+def download(file_path, target_path, end='', catch_exception=True,unzip=False):
     '''
     Downloads a file placed in file path on dropbox to a local target path. The dropbox path is relative to root
      of the team folder and should start with \
@@ -133,6 +133,13 @@ def download(file_path, target_path, end='', catch_exception=True):
                 print(e)
                 return (e)
         break
+    if unzip:
+        path_snap = target_path.split('.')[0]
+        unzip_file(target_path, path_snap)
+        os.remove(target_path)
+
+class UploadError(Exception):
+    pass
 
 def upload_zip(path_total,target,catch_exception=True,delete=False):
     '''
@@ -153,7 +160,7 @@ def upload_zip(path_total,target,catch_exception=True,delete=False):
         upload(path_total, target,
                chunk_size=256 * 1024 * 1024,catch_exception=catch_exception)
         path_final = path_total
-    if delete:
+    if delete and path_total.split("/")[-1]!="param.m":
         dbx = load_dbx()
         response = dbx.files_get_metadata(target)
         hash_drop = response.content_hash
@@ -163,6 +170,8 @@ def upload_zip(path_total,target,catch_exception=True,delete=False):
                 shutil.rmtree(path_total)
             else:
                 os.remove(path_total)
+        else:
+            raise(UploadError)
     if is_dir:
         os.remove(path_zip)
 
@@ -208,10 +217,16 @@ def get_dropbox_folders(
     listfiles.reverse()
     if file_metadata:
         names = [file.name.split(".")[0] for file in listfiles]
+        path_drop = [file.path_lower for file in listfiles]
+        id_uniques = [path.split('/')[-2] for path in path_drop]
+        plate_num = [id.split('_')[0] for id in id_uniques]
+        date_cross = [id.split('_')[1] for id in id_uniques]
         sizes = [file.size / 10 ** 9 for file in listfiles]
         modified = [file.client_modified for file in listfiles]
-        df = pd.DataFrame((names, sizes, modified)).transpose()
-        df = df.rename(columns={0: "folder", 1: "size", 2: "change_date"})
+        df = pd.DataFrame((names, sizes, modified,path_drop,plate_num,date_cross
+                           ,id_uniques)).transpose()
+        df = df.rename(columns={0: "folder", 1: "size", 2: "change_date"
+                                , 3: "tot_path_drop", 4: "Plate" , 5: "CrossDate",6:"unique_id"})
         return df
     else:
         with tqdm(total=len(listfiles), desc="analysed") as pbar:
@@ -249,8 +264,14 @@ def upload_folders(folders: pd.DataFrame,dir_drop = 'DATA',catch_exception=True,
                 upload_zip(path_total,target,catch_exception=catch_exception,delete=delete)
             pbar.update(1)
             if delete:
+                os.remove(os.path.join(path_snap,'param.m'))
                 os.rmdir(path_snap)
 
+def download_folders_old(folders_drop: pd.DataFrame,directory_target):
+    for index, row in folders_drop.iterrows():
+        path = row['tot_path_drop']
+        folder = row['folder']
+        download(path, os.path.join(directory_target, f'{folder}.zip'), unzip=True)
 
 def compute_dropbox_hash(filename):
     file_size = os.stat(filename).st_size
