@@ -9,11 +9,37 @@ SLICE_LENGTH = 120
 BATCHSIZE = 32
 
 
-def dummy_model():
-    a = 0
+class MeanLearningModel:
+    """
+    This model learns the mean of the labels.
+    And use it to predict the width.
+    It is the baseline.
+    """
+
+    def __init__(self):
+        self.values = []
+        self.mean = 0
+
+    def fit(self, train_dataset):
+        "Learn the mean of the dataset labels"
+        self.values = []
+        for _, label in train_dataset:
+            new_labels = np.ndarray.flatten(np.array(label))
+            for new in new_labels:
+                self.values.append(new)
+        self.mean = np.sum(self.values) / len(self.values)
+
+    def evaluate(self, test_dataset, metric=tf.metrics.mean_squared_error):
+        "Evaluate the chosen error on the test dataset"
+        values = []
+        for _, label in test_dataset:
+            labels = np.ndarray.flatten(np.array(label))
+            for new in labels:
+                values.append(new)
+        return metric(np.ones(len(values)) * self.mean, np.array(values))
 
 
-def first_model():
+def first_model() -> keras.Model:
     # input = keras.Input(shape=(BATCHSIZE, SLICE_LENGTH))
     input = keras.Input(shape=(SLICE_LENGTH,))
     reshaped = keras.layers.Reshape((120, 1), input_shape=(120,))(input)
@@ -44,6 +70,11 @@ if __name__ == "__main__":
     model = first_model()
     # model.summary()
 
+    dummy_model = MeanLearningModel()
+
+    ### Baseline
+    train, valid, test = get_sets(os.path.join(storage_path, "width3", "dataset_2"))
+
     model.compile(
         optimizer=keras.optimizers.RMSprop(),  # Optimizer
         # Loss function to minimize
@@ -51,8 +82,6 @@ if __name__ == "__main__":
         # List of metrics to monitor
         metrics=[tf.keras.metrics.mean_squared_error],
     )
-
-    train, valid, test = get_sets(os.path.join(storage_path, "width3", "dataset_2"))
 
     history = model.fit(
         train,
@@ -65,3 +94,9 @@ if __name__ == "__main__":
     )
 
     test_loss, test_acc = model.evaluate(test, verbose=2)
+
+    dummy_model.fit(train)
+    test_acc_dummy = dummy_model.evaluate(test, tf.keras.metrics.mean_squared_error)
+
+    print(f"First model: Loss {test_loss} Acc: {test_acc}")
+    print(f"Baseline: Acc: {test_acc_dummy}")
