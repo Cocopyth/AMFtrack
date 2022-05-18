@@ -13,35 +13,36 @@ import random
 from amftrack.util.sys import storage_path
 from amftrack.util.file import chose_file
 
-##### LOGING #####
-logger = logging.getLogger("notebook")
+logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
 
-##### PARAMETERS #####
 # Move elsewhere
-BATCHSIZE = 32
-BUFFERSIZE = 12
-INPUTSIZE = 120
-SHUFFLE_BUFFER = 10
 dataset_path = os.path.join(storage_path, "width3", "dataset_2")
 edge_data_path = os.path.join(dataset_path, "Data")  # TO REMOVE AS GLOBAL
 
-##### EAGER MODE #####
 tf.config.run_functions_eagerly(
     False
 )  # Can be checked with: tf.config.functions_run_eagerly()
 # tf.data.experimental.enable_debug_mode()  # statement above doesn't apply to tf.data
 
 
-def get_nodes(ch: str) -> Tuple[str, str]:
-    """
-    Return the names of the nodes
-    Ex: 12-32 -> (12, 32)
+# def image_path_to_df_path(path: tf.Tensor) -> str:
+#     """
+#     Gives the path to the edge dataframe from the path to the edge slices.
+#     :param path: full path to the slices of one edge
+#     :return: the path to the dataframe containing information on the slices of this edge
+#     """
+#     path = str(path)  # NB: the convertion is necessary to use os module
+#     file_name = os.path.basename(path)
+#     dir1 = os.path.dirname(path)
+#     dir2 = os.path.dirname(dir1)
+#     edge_df_directory = os.path.join(dir2, "Data")
+#     edge_df_name = os.path.splitext(file_name)[0] + ".csv"
 
-    """
-    nodes = ch.split("-")
-    print(nodes)
-    return nodes[0], nodes[1]
+#     edge_df_path = os.path.join(edge_df_directory, edge_df_name)
+#     print(edge_df_path)
+#     print(os.path.join(edge_data_path, edge_df_name))
+#     return edge_df_path
 
 
 def image_path_to_df_path(path: str) -> str:
@@ -71,18 +72,12 @@ def tf_image_path_to_df_path(path):
 # @tf.function
 def load_image(filename):
     "From one file name (corresponding to an edge). Loads the data associated with this one file/edge."
-    logger.info(f"Type of file: {type(filename)}")
-    logger.info(f"File name: {filename}")
     # 1/ Slices from the edge
     raw = tf.io.read_file(filename)  # open the file
     image = tf.image.decode_png(raw, channels=1, dtype=tf.uint8)
     image = tf.cast(image, tf.float32)
-    logger.debug(f"Initial shape: {image.shape}")
-    # image = image.set_shape([None, 120, 1])
     image = tf.squeeze(image)  # removing the last axis
     # TODO (FK): chose here only part of the array
-    logger.debug(f"Final shape: {image.shape}")
-    # TODO (FK): why don't I get the shape
     slice_dataset = tf.data.Dataset.from_tensor_slices(image)
 
     # 2/ Information on the edge
@@ -188,6 +183,14 @@ if __name__ == "__main__":
     # a = reader_dataset(filepaths)
 
     # a = 1
+    test1 = "/media/kahane/AMFtopology02/storage/width3/dataset_2/Img/1122-1227.png"
+    # image_path_to_df_path(os.path.join(dataset_path, "Img", "34-32.png"))
+    # load_image(test1)
 
     a, b, c = get_sets(dataset_path)
+    feature, label = next(iter(a))
+    print(feature)
+    from amftrack.ml.util import get_intel_on_dataset
+
+    # get_intel_on_dataset(a)
     e = 0
