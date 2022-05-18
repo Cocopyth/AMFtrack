@@ -1,4 +1,5 @@
 import tensorflow as tf
+from typing import Tuple
 
 
 def get_intel_on_dataset(dataset: tf.data.Dataset) -> None:
@@ -15,3 +16,18 @@ def get_intel_on_dataset(dataset: tf.data.Dataset) -> None:
     print(f"Feature batch shape: {shape_feature}")
     print(f"Label batch shape: {shape_label}")
     print(f"Number of batch: {c}")
+
+
+def get_nodes(ch: str) -> Tuple[str, str]:
+    """
+    Return the names of the nodes
+    Ex: 12-32 -> (12, 32)
+    """
+    nodes = ch.split("-")
+    print(nodes)
+    return nodes[0], nodes[1]
+
+
+def display(dataset):
+    feature, label = next(iter(dataset))
+    print(feature)
