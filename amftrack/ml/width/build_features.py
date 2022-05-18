@@ -76,6 +76,7 @@ def load_image(filename):
     # 1/ Slices from the edge
     raw = tf.io.read_file(filename)  # open the file
     image = tf.image.decode_png(raw, channels=1, dtype=tf.uint8)
+    image = tf.cast(image, tf.float32)
     logger.debug(f"Initial shape: {image.shape}")
     # image = image.set_shape([None, 120, 1])
     image = tf.squeeze(image)  # removing the last axis
@@ -189,5 +190,4 @@ if __name__ == "__main__":
     # a = 1
 
     a, b, c = get_sets(dataset_path)
-
     e = 0
