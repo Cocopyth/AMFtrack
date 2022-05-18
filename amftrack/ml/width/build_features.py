@@ -1,131 +1,81 @@
-from logging.config import valid_ident
-from sklearn.model_selection import train_test_split
 import tensorflow as tf
-import numpy as np
 import os
-import pandas as pd
-import pathlib
 import logging
-import sys
-from typing import Tuple
+from typing import List
 import random
-
-from amftrack.util.sys import storage_path
 from amftrack.util.file import chose_file
 
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
 
-# Move elsewhere
-dataset_path = os.path.join(storage_path, "width3", "dataset_2")
-edge_data_path = os.path.join(dataset_path, "Data")  # TO REMOVE AS GLOBAL
-
-tf.config.run_functions_eagerly(
-    False
-)  # Can be checked with: tf.config.functions_run_eagerly()
-# tf.data.experimental.enable_debug_mode()  # statement above doesn't apply to tf.data
+tf.config.run_functions_eagerly(False)
 
 
-# def image_path_to_df_path(path: tf.Tensor) -> str:
-#     """
-#     Gives the path to the edge dataframe from the path to the edge slices.
-#     :param path: full path to the slices of one edge
-#     :return: the path to the dataframe containing information on the slices of this edge
-#     """
-#     path = str(path)  # NB: the convertion is necessary to use os module
-#     file_name = os.path.basename(path)
-#     dir1 = os.path.dirname(path)
-#     dir2 = os.path.dirname(dir1)
-#     edge_df_directory = os.path.join(dir2, "Data")
-#     edge_df_name = os.path.splitext(file_name)[0] + ".csv"
-
-#     edge_df_path = os.path.join(edge_df_directory, edge_df_name)
-#     print(edge_df_path)
-#     print(os.path.join(edge_data_path, edge_df_name))
-#     return edge_df_path
-
-
-def image_path_to_df_path(path: str) -> str:
+def data_path_from_slice_path(path: str) -> str:
     """
-    Gives the path to the edge dataframe from the path to the edge slices.
+    Transform the full path to slices from an edge to the full path to
+    its associated dataframe.
+    :param path: full path to the slices of one edge
+    :return: full path to the dataframe
+    :ex: "/some/repository/dataset/Img/12-34.png" -> "/some/repository/dataset/Data/12-34.csv"
     """
-    image_name = os.path.basename(str(path))
-    image_name_without_ext = os.path.splitext(image_name)[0]
-    df_name = image_name_without_ext + ".csv"
-    edge_data_full_path = os.path.join(edge_data_path, df_name)
-    return edge_data_full_path
+    file_name = os.path.basename(path)
+    edge_df_directory = os.path.join(os.path.dirname(os.path.dirname(path)), "Data")
+    edge_df_name = os.path.splitext(file_name)[0] + ".csv"
+    edge_df_path = os.path.join(edge_df_directory, edge_df_name)
+    return edge_df_path
 
 
-def tf_image_path_to_df_path(path):
+@tf.function
+def single_slice_dataset(paths) -> tf.data.Dataset:
     """
-    Equivalent of image_path_to_df_path, but wrapped as a tf function to be used
-    in the pipeline
+    From a tf.Tensor of shape (2,) containing the paths to the slice and to the dataframe,
+    returns a dataset yielding labeled slices only from this edge.
     """
-    im_shape = path.shape
-    [
-        path,
-    ] = tf.py_function(image_path_to_df_path, [path], [tf.string])
-    path.set_shape(im_shape)
-    return path
+    slice_path = paths[0]
+    df_path = paths[1]
 
-
-# @tf.function
-def load_image(filename):
-    "From one file name (corresponding to an edge). Loads the data associated with this one file/edge."
-    # 1/ Slices from the edge
-    raw = tf.io.read_file(filename)  # open the file
+    raw = tf.io.read_file(slice_path)
     image = tf.image.decode_png(raw, channels=1, dtype=tf.uint8)
     image = tf.cast(image, tf.float32)
-    image = tf.squeeze(image)  # removing the last axis
-    # TODO (FK): chose here only part of the array
+    image = tf.squeeze(image)  # TODO(FK): stop removing last axis here
     slice_dataset = tf.data.Dataset.from_tensor_slices(image)
 
-    # 2/ Information on the edge
-    # TODO (FK): verify order for the edge dataframe
-    # edge_name = os.path.splitext(os.path.basename(str(filename)))[0] + ".csv" # PB: not a tensor
-    # edge_data_full_path = os.path.join(edge_data_path, edge_name)
-    edge_data_full_path = tf_image_path_to_df_path(filename)
-
-    l_dataset = tf.data.experimental.CsvDataset(
-        edge_data_full_path,
+    label_dataset = tf.data.experimental.CsvDataset(
+        df_path,
         [tf.float32],
-        select_cols=[9],  # Only parse last three columns
+        select_cols=[9],
         header=True,
     )
     # TODO(FK): how to select column by name
-    # TODO(FK): how to combine columns of features
+    # NB(FK): could add other features here
 
-    # edge_data_full_path = tf.map_fn(filename, image_path_to_df_path)
-    # logger.debug(edge_data_full_path)
-    # edge_df = pd.read_csv(edge_data_full_path)
-    # logger.debug(edge_df.columns)
-    # feature_dataset = edge_df[["x1_image", "y2_image"]]
-
-    # 3/ Labels
-    # label_dataset = tf.data.Dataset.from_tensor_slices(
-    #     tf.convert_to_tensor(edge_df[["width"]])
-    # )
-
-    return tf.data.Dataset.zip((slice_dataset, l_dataset))
-    # return slice_dataset
+    return tf.data.Dataset.zip((slice_dataset, label_dataset))
 
 
 def reader_dataset(
-    filepaths, repeat=1, n_readers=5, shuffle_buffer_size=1000, batch_size=32
+    file_paths: List[str],
+    repeat=1,
+    n_readers=5,
+    shuffle_buffer_size=1000,  # TODO: make buffer size to size of the dataset
+    batch_size=32,  # TODO: remove the batch_size from here
 ):
     """
-    Take as input a list of the paths to the data files.
-    And return a tf.Dataset object iterating through the batches.
+    Take as input a list of the paths to the data files. (one file per edge)
+    And return a tf.Dataset yielding (randomly) couples (slice, label) slice being of
+    shape (120, 1)
     """
     # NB: other option with use of patterns instead of file names: tf.data.Dataset.list_files
-    path_dataset = tf.data.Dataset.from_tensor_slices(
-        filepaths
-    )  # yield file names randomly
-    # TODO: make buffer size to size of the dataset
-    # TODO: get a dataset object from one file
-    general_dataset = path_dataset.interleave(load_image, cycle_length=n_readers)
+    file_path_features = [data_path_from_slice_path(path) for path in file_paths]
+
+    both_path = tf.data.Dataset.from_tensor_slices(
+        [list(couple) for couple in zip(file_paths, file_path_features)]
+    )
+    general_dataset = both_path.interleave(single_slice_dataset, cycle_length=n_readers)
     general_dataset = general_dataset.shuffle(shuffle_buffer_size).repeat(repeat)
-    return general_dataset.batch(batch_size).prefetch(1)
+    return general_dataset.batch(batch_size).prefetch(
+        1
+    )  # TODO(FK): remove the batching here and the prefetch
 
 
 def get_sets(dataset_path: str, proportion=[0.6, 0.2, 0.2]):
@@ -136,20 +86,27 @@ def get_sets(dataset_path: str, proportion=[0.6, 0.2, 0.2]):
     """
     if sum(proportion) != 1.0:
         raise Exception("Sum of proportion for all set must be equal to 1")
+    # TODO(FK): take as input several dataset_paths instead of one
+    # Making a list of all the datafiles
     slices_directory_path = os.path.join(dataset_path, "Img")
-    slices_data_directory_path = os.path.join(dataset_path, "Data")
     slices_paths = [
         os.path.join(slices_directory_path, file)
         for file in os.listdir(slices_directory_path)
     ]
     # Splitting the list of files in 3 sets
-    random.shuffle(slices_paths)
+    random.shuffle(slices_paths)  # TODO(FK): set seed here
+
     l = len(slices_paths)
-    slices_paths_train = slices_paths[0 : int(l * proportion[0])]
-    slices_paths_valid = slices_paths[
-        int(l * proportion[0]) : int(l * (proportion[1] + proportion[0]))
-    ]
-    slices_paths_test = slices_paths[int(l * (proportion[1] + proportion[0])) :]
+    bound1 = int(l * proportion[0])
+    bound2 = int(l * (proportion[1] + proportion[0]))
+
+    slices_paths_train = slices_paths[0:bound1]
+    slices_paths_valid = slices_paths[bound1:bound2]
+    slices_paths_test = slices_paths[bound2:]
+
+    logger.info(
+        f"Dataset has the following shape: \n\rTrain: {bound1} edges \n\rValid: {bound2-bound1} edges \n\rTest: {l - bound2} edges"
+    )
 
     return (
         reader_dataset(slices_paths_train),
@@ -160,37 +117,9 @@ def get_sets(dataset_path: str, proportion=[0.6, 0.2, 0.2]):
 
 if __name__ == "__main__":
 
-    # test1 = "/media/kahane/AMFtopology02/storage/width3/dataset_2/Img/1122-1227.png"
-    # test2 = "/media/kahane/AMFtopology02/storage/width3/dataset_2/Img/1122.png"
+    from amftrack.util.sys import storage_path
 
-    # test3 = tf.constant([test1, test2], dtype=tf.string)
-
-    # image_path_to_df_path(txt)
-
-    # b = load_image(chose_file(section_path))
-    # for elem in b:
-    #     print(elem)
-
-    # path_dataset = tf.data.Dataset.list_files(filepaths)
-
-    # for e in path_dataset:
-    #     print(e)
-
-    # general_dataset = path_dataset.interleave(load_image, cycle_length=3)
-
-    # general_dataset = general_dataset.shuffle(shuffle_buffer_size).repeat(repeat)
-
-    # a = reader_dataset(filepaths)
-
-    # a = 1
-    test1 = "/media/kahane/AMFtopology02/storage/width3/dataset_2/Img/1122-1227.png"
-    # image_path_to_df_path(os.path.join(dataset_path, "Img", "34-32.png"))
-    # load_image(test1)
-
+    dataset_path = os.path.join(storage_path, "width3", "dataset_2")
     a, b, c = get_sets(dataset_path)
     feature, label = next(iter(a))
     print(feature)
-    from amftrack.ml.util import get_intel_on_dataset
-
-    # get_intel_on_dataset(a)
-    e = 0
