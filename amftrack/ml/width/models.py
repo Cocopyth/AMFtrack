@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn import preprocessing
 import tensorflow as tf
 from tensorflow import keras
 from amftrack.ml.width.build_features import get_sets
@@ -42,7 +43,11 @@ class MeanLearningModel:
 def first_model() -> keras.Model:
     # input = keras.Input(shape=(BATCHSIZE, SLICE_LENGTH))
     input = keras.Input(shape=(SLICE_LENGTH,))
-    reshaped = keras.layers.Reshape((120, 1), input_shape=(120,))(input)
+
+    scaling = keras.layers.Rescaling(1.0 / 255)
+    # preprocess_layer = keras.layers.Normalization()
+
+    reshaped = keras.layers.Reshape((120, 1), input_shape=(120,))(scaling(input))
 
     # x = keras.layers.Dense(64, activation="relu")(x)
     conv1 = keras.layers.Conv1D(
@@ -80,7 +85,7 @@ if __name__ == "__main__":
         # Loss function to minimize
         loss=keras.losses.MeanSquaredError(name="mean_squared_error"),
         # List of metrics to monitor
-        metrics=[tf.keras.metrics.mean_squared_error],
+        metrics=[tf.keras.metrics.mean_absolute_error],
     )
 
     history = model.fit(
@@ -94,9 +99,11 @@ if __name__ == "__main__":
     )
 
     test_loss, test_acc = model.evaluate(test, verbose=2)
+    train_loss, train_acc = model.evaluate(train, verbose=2)
 
     dummy_model.fit(train)
-    test_acc_dummy = dummy_model.evaluate(test, tf.keras.metrics.mean_squared_error)
+    test_acc_dummy = dummy_model.evaluate(test, tf.keras.metrics.mean_absolute_error)
 
-    print(f"First model: Loss {test_loss} Acc: {test_acc}")
+    print(f"First model (test): Loss {test_loss} Acc: {test_acc}")
+    print(f"First model (train): Loss {train_loss} Acc: {train_acc}")
     print(f"Baseline: Acc: {test_acc_dummy}")
