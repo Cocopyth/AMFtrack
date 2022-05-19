@@ -2,7 +2,7 @@ from amftrack.ml.width.data_augmentation import *
 import tensorflow as tf
 import numpy as np
 import unittest
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_raises
 
 
 class TestDataAugmentation(unittest.TestCase):
@@ -17,6 +17,12 @@ class TestDataAugmentation(unittest.TestCase):
             ],
             dtype=tf.float32,
         )
+        cls.c = tf.constant(
+            [[[34.0], [35.0], [50.0]], [[12.0], [11.0], [10.0]]], dtype=tf.float32
+        )
+        data_point = np.ones((2, 120, 1))
+        data_point[0, 50, 0] = 2.0
+        cls.d = tf.constant(data_point, dtype=tf.float32)
 
     def test_random_invert(self):
         layer = random_invert(1)
@@ -28,20 +34,30 @@ class TestDataAugmentation(unittest.TestCase):
 
     def test_random_mirror(self):
         layer = random_mirror(1)
-        a_ = layer(self.a)
-        b_ = layer(self.b)
+        c_ = layer(self.c)
 
         assert_array_equal(
-            np.array(a_),
-            np.array([[50.0, 35, 34], [10, 11, 12]]),
+            np.array(c_),
+            np.array([[[50.0], [35.0], [34.0]], [[10.0], [11.0], [12.0]]]),
         )
 
-        assert_array_equal(
-            np.array(b_),
-            np.array(
-                [
-                    [[50, 35, 34], [10, 11, 12]],
-                    [[5, 3, 3], [1, 1, 1]],
-                ]
-            ),
-        )
+    def test_random_brightness(self):
+
+        # checking that a different seed is used at each call
+        layer = random_brightness(10)
+        c_1 = layer(self.c)
+        c_2 = layer(self.c)
+        assert_raises(AssertionError, assert_array_equal, np.array(c_1), np.array(c_2))
+
+    def test_random_crop(self):
+        layer = random_crop(10)
+        c_1 = layer(self.d)
+        c_2 = layer(self.d)
+        assert_raises(AssertionError, assert_array_equal, np.array(c_1), np.array(c_2))
+
+    def test_augmentation_pipeline(self):
+        data_augmentation(self.d)
+
+
+# class TestDataAugmentationOnDataset(unittest.TestCase):
+#     a = 1

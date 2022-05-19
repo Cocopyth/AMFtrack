@@ -38,7 +38,7 @@ def single_slice_dataset(paths) -> tf.data.Dataset:
     raw = tf.io.read_file(slice_path)
     image = tf.image.decode_png(raw, channels=1, dtype=tf.uint8)
     image = tf.cast(image, tf.float32)
-    image = tf.squeeze(image)  # TODO(FK): stop removing last axis here
+    # image = tf.squeeze(image)  # TODO(FK): stop removing last axis here
     slice_dataset = tf.data.Dataset.from_tensor_slices(image)
 
     label_dataset = tf.data.experimental.CsvDataset(
@@ -73,9 +73,8 @@ def reader_dataset(
     )
     general_dataset = both_path.interleave(single_slice_dataset, cycle_length=n_readers)
     general_dataset = general_dataset.shuffle(shuffle_buffer_size).repeat(repeat)
-    return general_dataset.batch(batch_size).prefetch(
-        1
-    )  # TODO(FK): remove the batching here and the prefetch
+    return general_dataset.batch(1)  # Output shape: (1, 120, 1)
+    # TODO(FK): remove the batching here and the prefetch  .prefetch(1)
 
 
 def get_sets(dataset_path: str, proportion=[0.6, 0.2, 0.2]):

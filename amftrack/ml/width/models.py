@@ -44,10 +44,10 @@ def first_model() -> keras.Model:
     # input = keras.Input(shape=(BATCHSIZE, SLICE_LENGTH))
     input = keras.Input(shape=(SLICE_LENGTH,))
 
-    scaling = keras.layers.Rescaling(1.0 / 255)
+    scaling = keras.layers.Rescaling(1.0 / 255)  # TODO(FK): center the data
     # preprocess_layer = keras.layers.Normalization()
 
-    reshaped = keras.layers.Reshape((120, 1), input_shape=(120,))(scaling(input))
+    # reshaped = keras.layers.Reshape((120, 1), input_shape=(120,))(scaling(input))
 
     # x = keras.layers.Dense(64, activation="relu")(x)
     conv1 = keras.layers.Conv1D(
