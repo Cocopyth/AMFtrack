@@ -285,11 +285,10 @@ def upload_folders(folders: pd.DataFrame,dir_drop = 'DATA',catch_exception=True,
     with tqdm(total=len(folder_list), desc="transferred") as pbar:
         for folder in folder_list:
             directory_name = folder
-            run_info['unique_id'] = run_info['Plate'].astype(int).astype(str) + "_" + \
-                                    run_info['CrossDate'].astype(str).str.replace(
-                "'", "").astype(int).astype(str)
             line = run_info.loc[run_info['folder'] == directory_name]
-            id_unique = line['unique_id'].iloc[0]
+            id_unique = (str(int(line['Plate'].iloc[0])) + "_" + \
+                         str(int(str(line['CrossDate'].iloc[0]).replace(
+                             "'", ""))))
             path_snap = line['total_path'].iloc[0]
             for subfolder in os.listdir(path_snap):
                 path_total = os.path.join(path_snap, subfolder)

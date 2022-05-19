@@ -1,5 +1,5 @@
 from datetime import datetime
-from subprocess import call
+from subprocess import call, DEVNULL
 from amftrack.util.sys import get_dates_datetime, get_dirname, path_code, temp_path, slurm_path
 import os
 from copy import copy
@@ -278,7 +278,7 @@ def run_parallel_transfer(
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job}", shell=True)
+        call(f"sbatch {path_job}", shell=True,stdout=DEVNULL)
 
 
 def run_parallel_transfer_to_archive(
