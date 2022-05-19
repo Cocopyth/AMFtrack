@@ -31,11 +31,18 @@ https://stackoverflow.com/questions/68923942/how-to-use-tf-data-in-tensorflow-to
 Tutorial with several methods:
 https://www.tensorflow.org/tutorials/load_data/csv
 
+### Data augmentation
+https://www.tensorflow.org/tutorials/images/data_augmentation
+As we have several custom data augmentation transformation, we have to use lambda layers that can't be serialized well. As a result, we apply those layers on the dataset but don't add the layers to the model.
+Lambda layers: https://www.tensorflow.org/api_docs/python/tf/keras/layers/Lambda
+
 ### Training data
 As the slices look a lot alike along edges, we use different edges for training, validation, and test sets.
 We use several transformations to augment the data.
 
 ## Important remarks
+- for now the don't use the coordinates of the edge in the picture as well as its orientation in the model. This could maybe give better performance but would hamper use of the model for plates that haven't been segmented.
+- we extract more slices from long edges which are thus over represented.
 
 ## Other ideas
 - use Prince to generate several images with different focus of the same region for learning

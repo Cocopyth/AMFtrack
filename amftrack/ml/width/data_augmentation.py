@@ -49,6 +49,17 @@ def random_crop(output_size):
     return tf.keras.layers.Lambda(lambda x: tf.image.random_crop(x, size=size))
 
 
+@tf.function
+def center_crop_slice(x, margin):
+    return x[..., margin:-margin, :]
+
+
+def center_crop(input_size=120, output_size=80):
+    return tf.keras.layers.Lambda(
+        lambda x: center_crop_slice(x, (input_size - output_size) // 2)
+    )
+
+
 data_augmentation = tf.keras.Sequential(
     [
         tf.keras.Input(shape=(120, 1)),  # TODO(FK): change here the shape
@@ -56,6 +67,13 @@ data_augmentation = tf.keras.Sequential(
         random_invert(p=0.5),  # TODO(FK): keep?
         random_mirror(p=0.5),
         random_brightness(50),
+    ]
+)
+
+data_preparation = tf.keras.Sequential(
+    [
+        tf.keras.Input(shape=(120, 1)),  # TODO(FK): change here the shape
+        center_crop(120, 80),
     ]
 )
 
@@ -73,6 +91,7 @@ if __name__ == "__main__":
     c = tf.constant(np.ones((5, 5, 5, 5)))
     d = tf.constant(np.ones((1, 120, 1)))
 
+    layer0 = center_crop()
     layer1 = random_crop(80)
     layer2 = random_invert(1)
 
