@@ -40,11 +40,11 @@ class MeanLearningModel:
         return metric(np.ones(len(values)) * self.mean, np.array(values))
 
 
-def first_model() -> keras.Model:
+def first_model(SLICE_LENGTH) -> keras.Model:
     # input = keras.Input(shape=(BATCHSIZE, SLICE_LENGTH))
-    input = keras.Input(shape=(SLICE_LENGTH,))
+    input = keras.Input(shape=(SLICE_LENGTH, 1))
 
-    scaling = keras.layers.Rescaling(1.0 / 255)  # TODO(FK): center the data
+    scaling = keras.layers.Rescaling(1.0 / 255)(input)  # TODO(FK): center the data
     # preprocess_layer = keras.layers.Normalization()
 
     # reshaped = keras.layers.Reshape((120, 1), input_shape=(120,))(scaling(input))
@@ -52,7 +52,7 @@ def first_model() -> keras.Model:
     # x = keras.layers.Dense(64, activation="relu")(x)
     conv1 = keras.layers.Conv1D(
         filters=64, kernel_size=8, strides=3, activation="relu", name="conv1"
-    )(reshaped)
+    )(scaling)
     conv2 = keras.layers.Conv1D(
         filters=32,
         kernel_size=3,
@@ -72,7 +72,7 @@ def first_model() -> keras.Model:
 if __name__ == "__main__":
 
     # Get the model
-    model = first_model()
+    model = first_model(80)
     # model.summary()
 
     dummy_model = MeanLearningModel()
