@@ -20,5 +20,8 @@ class SavePlots(keras.callbacks.Callback):
             os.mkdir(self.directory_path)
         for key in history.history.keys():
             plt.plot(history.history[key])
+            plt.title(key)
+            plt.xlabel("Epochs")
+            plt.ylabel(key)
             plt.savefig(os.path.join(self.directory_path, key))
             plt.close()
