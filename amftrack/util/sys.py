@@ -32,6 +32,9 @@ test_path = os.path.join(storage_path, "test")  # repository used for tests
 pastis_path = env_config.get("PASTIS_PATH")
 temp_path = env_config.get("TEMP_PATH")
 slurm_path = env_config.get("SLURM_PATH")
+ml_path = os.path.join(storage_path, "models")
+if not os.path.isdir(ml_path):
+    os.mkdir(ml_path)
 
 
 def pad_number(number):

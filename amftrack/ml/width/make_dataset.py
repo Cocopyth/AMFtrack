@@ -27,6 +27,7 @@ from amftrack.pipeline.functions.image_processing.extract_width_fun import (
 )
 from amftrack.util.sys import storage_path
 import cv2
+from amftrack.ml.width.config import ORIGINALSIZE
 
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
@@ -189,7 +190,7 @@ def make_extended_dataset(exp: Experiment, t: 0, dataset_name="dataset_test"):
                 resolution=resolution,
                 offset=offset,
                 step=5,
-                target_length=120,
+                target_length=ORIGINALSIZE,
             )
             for segment in list_of_segments:
                 edge_data["x1_timestep"].append(segment[0][0])

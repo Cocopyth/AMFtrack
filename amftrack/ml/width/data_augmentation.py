@@ -3,6 +3,8 @@ import tensorflow as tf
 from typing import List
 import numpy as np
 
+from amftrack.ml.width.config import INPUTSIZE, ORIGINALSIZE
+
 
 @tf.function
 def random_invert_slice(x, p=0.5):
@@ -62,8 +64,8 @@ def center_crop(input_size=120, output_size=80):
 
 data_augmentation = tf.keras.Sequential(
     [
-        tf.keras.Input(shape=(120, 1)),  # TODO(FK): change here the shape
-        random_crop(80),
+        tf.keras.Input(shape=(ORIGINALSIZE, 1)),
+        random_crop(INPUTSIZE),
         random_invert(p=0.5),  # TODO(FK): keep?
         random_mirror(p=0.5),
         random_brightness(50),
@@ -72,8 +74,8 @@ data_augmentation = tf.keras.Sequential(
 
 data_preparation = tf.keras.Sequential(
     [
-        tf.keras.Input(shape=(120, 1)),  # TODO(FK): change here the shape
-        center_crop(120, 80),
+        tf.keras.Input(shape=(ORIGINALSIZE, 1)),
+        center_crop(ORIGINALSIZE, INPUTSIZE),
     ]
 )
 
@@ -89,7 +91,7 @@ if __name__ == "__main__":
         dtype=tf.float32,
     )
     c = tf.constant(np.ones((5, 5, 5, 5)))
-    d = tf.constant(np.ones((1, 120, 1)))
+    d = tf.constant(np.ones((1, ORIGINALSIZE, 1)))
 
     layer0 = center_crop()
     layer1 = random_crop(80)
