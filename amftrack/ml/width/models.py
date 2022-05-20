@@ -1,13 +1,11 @@
 import numpy as np
+import os
 from sklearn import preprocessing
 import tensorflow as tf
 from tensorflow import keras
 from amftrack.ml.width.build_features import get_sets
-import os
 from amftrack.util.sys import storage_path
-
-SLICE_LENGTH = 120
-BATCHSIZE = 32
+from amftrack.ml.width.config import INPUTSIZE
 
 
 class MeanLearningModel:
@@ -40,9 +38,37 @@ class MeanLearningModel:
         return metric(np.ones(len(values)) * self.mean, np.array(values))
 
 
-def first_model(SLICE_LENGTH) -> keras.Model:
-    # input = keras.Input(shape=(BATCHSIZE, SLICE_LENGTH))
-    input = keras.Input(shape=(SLICE_LENGTH, 1))
+def first_model() -> keras.Model:
+
+    input = keras.Input(shape=(INPUTSIZE, 1))
+    scaling = keras.layers.Rescaling(1.0 / 255)(input)  # TODO(FK): center the data
+    # preprocess_layer = keras.layers.Normalization()
+
+    # reshaped = keras.layers.Reshape((120, 1), input_shape=(120,))(scaling(input))
+
+    # x = keras.layers.Dense(64, activation="relu")(x)
+    conv1 = keras.layers.Conv1D(
+        filters=64, kernel_size=8, strides=3, activation="relu", name="conv1"
+    )(scaling)
+    conv2 = keras.layers.Conv1D(
+        filters=32,
+        kernel_size=3,
+        strides=3,
+        activation="relu",
+        name="conv2",
+    )(conv1)
+    flatten = tf.keras.layers.Flatten()(conv2)
+    dense1 = keras.layers.Dense(64, activation="relu", name="dense1")(flatten)
+    dense2 = keras.layers.Dense(32, activation="relu", name="dense2")(dense1)
+    output = keras.layers.Dense(1, activation=None)(dense2)
+
+    model = keras.Model(inputs=input, outputs=output)
+    return model
+
+
+def model_builder(hp):
+
+    input = keras.Input(shape=(80, 1))
 
     scaling = keras.layers.Rescaling(1.0 / 255)(input)  # TODO(FK): center the data
     # preprocess_layer = keras.layers.Normalization()
@@ -66,6 +92,18 @@ def first_model(SLICE_LENGTH) -> keras.Model:
     output = keras.layers.Dense(1, activation=None)(dense2)
 
     model = keras.Model(inputs=input, outputs=output)
+
+    # Tune the learning rate for the optimizer
+    # Choose an optimal value from 0.01, 0.001, or 0.0001
+    hp_learning_rate = hp.Choice(
+        "learning_rate", values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]
+    )
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=hp_learning_rate),
+        loss=keras.losses.MeanSquaredError(name="mean_squared_error"),
+        metrics=[tf.keras.metrics.mean_absolute_error],
+    )
     return model
 
 
