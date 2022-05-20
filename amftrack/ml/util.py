@@ -34,6 +34,13 @@ def get_intel_on_dataset(dataset: tf.data.Dataset) -> None:
     print(f"Number of batch: {c}")
 
 
+def count(dataset: tf.data.Dataset):
+    c = 0
+    for feature, label in dataset:
+        c += 1
+    return c
+
+
 def get_nodes(ch: str) -> Tuple[str, str]:
     """
     Return the names of the nodes
