@@ -1,9 +1,8 @@
-import tensorflow as tf
 import os
 import logging
 from typing import List
 import random
-from amftrack.util.file import chose_file
+import tensorflow as tf
 
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
