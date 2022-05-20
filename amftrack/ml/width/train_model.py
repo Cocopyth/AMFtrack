@@ -171,6 +171,13 @@ def main_hp():
         # project_name="intro_to_kt",
     )
 
+    early_stopping_callback = tf.keras.callbacks.EarlyStopping(
+        monitor="val_loss",
+        patience=4,
+        verbose=0,
+        restore_best_weights=True,
+    )
+
     tuner.search(
         train, epochs=50, validation_data=valid, callbacks=[early_stopping_callback]
     )
@@ -211,5 +218,5 @@ if __name__ == "__main__":
     # c = 0
 
     a = 0
-    main()
-    # main_hp()
+    # main()
+    main_hp()
