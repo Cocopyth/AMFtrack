@@ -16,6 +16,8 @@ class SavePlots(keras.callbacks.Callback):
 
     def on_train_end(self, logs=None):
         history = self.model.history
+        if not os.path.isdir(self.directory_path):
+            os.mkdir(self.directory_path)
         for key in history.history.keys():
             plt.plot(history.history[key])
             plt.savefig(os.path.join(self.directory_path, key))
