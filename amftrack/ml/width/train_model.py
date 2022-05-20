@@ -4,6 +4,7 @@ import os
 
 import numpy as np
 import tensorflow as tf
+import logging
 from amftrack.ml.callbacks import SavePlots
 from amftrack.ml.util import get_intel_on_dataset, make_directory_name
 from amftrack.ml.width.build_features import get_sets
@@ -53,6 +54,13 @@ def main():
     Training of a single model.
     """
     BATCHSIZE = 32
+    model_repository = os.path.join(ml_path, make_directory_name("test"))
+    os.mkdir(model_repository)
+
+    f_handler = logging.FileHandler(os.path.join(model_repository, "logs.log"))
+    f_handler.setLevel(logging.DEBUG)
+    f_logger = logging.getLogger("file_logger")
+    f_logger.addHandler(f_handler)
 
     # 0/ Datasets
     train, valid, test = get_sets(
@@ -91,8 +99,6 @@ def main():
     )
 
     # 3/ Training
-    model_repository = os.path.join(ml_path, make_directory_name("test"))
-    os.mkdir(model_repository)
 
     history = model.fit(
         train,
@@ -108,11 +114,8 @@ def main():
 
     model.save(os.path.join(model_repository, "saved_model.h5"))
 
-    # from contextlib import redirect_stdout
-
-    # with open(os.path.join(model_repository, "M.h5"), 'w') as f:
-    #     with redirect_stdout(f):
-    #         model.summary()
+    with open(os.path.join(model_repository, "model_summary.txt"), "w") as fh:
+        model.summary(print_fn=lambda x: fh.write(x + "\n"))
 
     # dummy_model.fit(train)
     # test_acc_dummy = dummy_model.evaluate(test, tf.keras.metrics.mean_absolute_error)
