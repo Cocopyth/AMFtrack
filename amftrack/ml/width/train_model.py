@@ -8,7 +8,11 @@ import logging
 from amftrack.ml.callbacks import SavePlots
 from amftrack.ml.util import get_intel_on_dataset, make_directory_name
 from amftrack.ml.width.build_features import get_sets
-from amftrack.ml.width.models import MeanLearningModel, first_model, model_builder
+from amftrack.ml.width.models import (
+    MeanLearningModel,
+    first_model,
+    hyper_model_builder_simple,
+)
 from amftrack.ml.width.data_augmentation import data_augmentation, data_preparation
 from amftrack.util.sys import storage_path, ml_path
 from tensorflow import keras
@@ -49,14 +53,14 @@ def get_callbacks(model_path: str):
     return callbacks
 
 
-def train_model(model: tf.keras.Model):
+def train_model(model: tf.keras.Model, name="test"):
     """
     Training of a single model.
     """
-    BATCHSIZE = 32
-    model_repository = os.path.join(ml_path, make_directory_name("small-model"))
-    proportions = [0.4, 0.2, 0.4]
-    lr = 0.0001
+    BATCHSIZE = 16
+    model_repository = os.path.join(ml_path, make_directory_name(name))
+    proportions = [0.5, 0.1, 0.4]
+    lr = 0.001
 
     os.mkdir(model_repository)
 
@@ -78,21 +82,21 @@ def train_model(model: tf.keras.Model):
         train.map(lambda x, y: (data_augmentation(x, training=True), y))
         .unbatch()
         .batch(BATCHSIZE)
-        .prefetch(1)
+        .prefetch(tf.data.AUTOTUNE)
     )
 
     valid = (
         valid.map(lambda x, y: (data_augmentation(x, training=True), y))
         .unbatch()
         .batch(BATCHSIZE)
-        .prefetch(1)
+        .prefetch(tf.data.AUTOTUNE)
     )
 
     test = (
         test.map(lambda x, y: (data_preparation(x, training=True), y))
         .unbatch()
         .batch(BATCHSIZE)
-        .prefetch(1)
+        .prefetch(tf.data.AUTOTUNE)
     )
 
     # 2/ Set the model
@@ -108,7 +112,6 @@ def train_model(model: tf.keras.Model):
 
     history = model.fit(
         train,
-        batch_size=BATCHSIZE,  # TODO(FK): DOUBLE BATCHING?
         epochs=10,
         validation_data=valid,
         callbacks=get_callbacks(model_repository),
@@ -129,33 +132,33 @@ def train_model(model: tf.keras.Model):
     f_logger.info(f"First model (train): Loss {train_loss} Acc: {train_acc}")
 
 
-def main_hp():
+def train_hyper_model():
     BATCHSIZE = 32
 
     # 0/ Datasets
     train, valid, test = get_sets(
-        os.path.join(storage_path, "width3", "dataset_2"), proportion=[0.4, 0.2, 0.4]
+        os.path.join(storage_path, "width3", "dataset_2"), proportion=[0.6, 0.35, 0.05]
     )
 
     train = (
         train.map(lambda x, y: (data_augmentation(x, training=True), y))
         .unbatch()
         .batch(BATCHSIZE)
-        .prefetch(1)
+        .prefetch(tf.data.AUTOTUNE)
     )
 
     valid = (
         valid.map(lambda x, y: (data_augmentation(x, training=True), y))
         .unbatch()
         .batch(BATCHSIZE)
-        .prefetch(1)
+        .prefetch(tf.data.AUTOTUNE)
     )
 
     test = (
         test.map(lambda x, y: (data_preparation(x, training=True), y))
         .unbatch()
         .batch(BATCHSIZE)
-        .prefetch(1)
+        .prefetch(tf.data.AUTOTUNE)
     )
 
     # tuner = kt.Hyperband(
@@ -167,24 +170,32 @@ def main_hp():
     #     project_name="intro_to_kt",
     # )
 
+    parameters = {
+        "learning_rate": [0.05, 0.07, 1e-2, 0.015, 1e-3, 1e-4, 1e-5],
+        "conv": [1, 2, 4, 8, 16],
+        "dense": [1, 2, 4, 8, 16],
+        # TODO(FK): add regularization parameter here
+    }
+
     tuner = kt.RandomSearch(
-        model_builder,
+        hyper_model_builder_simple(parameters),
         objective="val_mean_absolute_error",
-        max_trials=50,
-        # directory=os.path.join(storage_path, "test_test"),
-        # project_name="intro_to_kt",
+        max_trials=45,
+        directory=os.path.join(storage_path, "test_test"),
+        project_name="intro_to_kt",
+        overwrite=True,
     )
 
-    early_stopping_callback = tf.keras.callbacks.EarlyStopping(
-        monitor="val_loss",
-        patience=4,
-        verbose=0,
-        restore_best_weights=True,
-    )
+    # early_stopping_callback = tf.keras.callbacks.EarlyStopping(
+    #     monitor="val_loss",
+    #     patience=6,
+    #     verbose=0,
+    #     restore_best_weights=True,
+    # )
+    # callbacks=[early_stopping_callback]
+    callbacks = []
 
-    tuner.search(
-        train, epochs=50, validation_data=valid, callbacks=[early_stopping_callback]
-    )
+    tuner.search(train, epochs=30, validation_data=valid, callbacks=callbacks)
 
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
@@ -197,10 +208,8 @@ def main_hp():
 
 if __name__ == "__main__":
 
-    train_model(first_model())
+    from amftrack.ml.util import count, display
 
-    # main_hp()
-
-    # dummy_model.fit(train)
-    # test_acc_dummy = dummy_model.evaluate(test, tf.keras.metrics.mean_absolute_error)
-    # print(f"Baseline: Acc: {test_acc_dummy}")
+    # train_model(MeanLearningModel())
+    # train_model(first_model())
+    train_hyper_model()
