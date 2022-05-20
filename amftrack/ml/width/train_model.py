@@ -49,12 +49,15 @@ def get_callbacks(model_path: str):
     return callbacks
 
 
-def main():
+def train_model(model: tf.keras.Model):
     """
     Training of a single model.
     """
     BATCHSIZE = 32
-    model_repository = os.path.join(ml_path, make_directory_name("test"))
+    model_repository = os.path.join(ml_path, make_directory_name("small-model"))
+    proportions = [0.4, 0.2, 0.4]
+    lr = 0.0001
+
     os.mkdir(model_repository)
 
     f_handler = logging.FileHandler(os.path.join(model_repository, "logs.log"))
@@ -62,9 +65,13 @@ def main():
     f_logger = logging.getLogger("file_logger")
     f_logger.addHandler(f_handler)
 
+    f_logger.info(f"Batchsize: {BATCHSIZE}")
+    f_logger.info(f"Split proportions: {proportions}")
+    f_logger.info(f"Learning rate: {lr}")
+
     # 0/ Datasets
     train, valid, test = get_sets(
-        os.path.join(storage_path, "width3", "dataset_2"), proportion=[0.4, 0.2, 0.4]
+        os.path.join(storage_path, "width3", "dataset_2"), proportion=proportions
     )
 
     train = (
@@ -89,11 +96,10 @@ def main():
     )
 
     # 2/ Set the model
-    model = first_model()
 
     # dummy_model = MeanLearningModel()
     model.compile(
-        optimizer=keras.optimizers.RMSprop(learning_rate=0.0001),
+        optimizer=keras.optimizers.RMSprop(learning_rate=lr),
         loss=keras.losses.MeanSquaredError(name="mean_squared_error"),
         metrics=[tf.keras.metrics.mean_absolute_error],
     )
@@ -108,21 +114,19 @@ def main():
         callbacks=get_callbacks(model_repository),
     )
 
-    # 4/ Visualize performance
-    test_loss, test_acc = model.evaluate(test, verbose=2)
-    train_loss, train_acc = model.evaluate(train, verbose=2)
+    # 4/ Saving
 
     model.save(os.path.join(model_repository, "saved_model.h5"))
 
     with open(os.path.join(model_repository, "model_summary.txt"), "w") as fh:
         model.summary(print_fn=lambda x: fh.write(x + "\n"))
 
-    # dummy_model.fit(train)
-    # test_acc_dummy = dummy_model.evaluate(test, tf.keras.metrics.mean_absolute_error)
-    # print(f"Baseline: Acc: {test_acc_dummy}")
+    # 5/ Evaluate performance
+    test_loss, test_acc = model.evaluate(test, verbose=2)
+    train_loss, train_acc = model.evaluate(train, verbose=2)
 
-    print(f"First model (test): Loss {test_loss} Acc: {test_acc}")
-    print(f"First model (train): Loss {train_loss} Acc: {train_acc}")
+    f_logger.info(f"First model (test): Loss {test_loss} Acc: {test_acc}")
+    f_logger.info(f"First model (train): Loss {train_loss} Acc: {train_acc}")
 
 
 def main_hp():
@@ -192,31 +196,11 @@ def main_hp():
 
 
 if __name__ == "__main__":
-    # main()
-    # train, valid, test = get_sets(os.path.join(storage_path, "width3", "dataset_2"))
-    # # get_intel_on_dataset(train)
-    # # get_intel_on_dataset(valid)
-    # # get_intel_on_dataset(test)
-    # from amftrack.ml.width.data_augmentation import data_augmentation
-    # from amftrack.ml.util import display
-    # from amftrack.ml.width.data_augmentation import random_mirror
 
-    # stop = True
+    train_model(first_model())
 
-    # aug_train = train.map(
-    #     lambda x, y: (data_augmentation(x, training=True), y)
-    # )  # TODO(FK) training = True?
+    # main_hp()
 
-    # stop = True
-
-    # layer = random_mirror()
-    # new = train.map(lambda x, y: (layer(x), y))
-
-    # a = tf.constant([[2.3], [3.2], [4.5], [12.2], [0], [0.0], [1.0]])
-    # b = tf.constant([2.0, 3.0, 4.3, 1.0, 1.0, 1.0, 1.0, 1.0])
-
-    # c = 0
-
-    a = 0
-    # main()
-    main_hp()
+    # dummy_model.fit(train)
+    # test_acc_dummy = dummy_model.evaluate(test, tf.keras.metrics.mean_absolute_error)
+    # print(f"Baseline: Acc: {test_acc_dummy}")
