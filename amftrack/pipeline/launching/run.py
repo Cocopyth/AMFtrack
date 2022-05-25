@@ -122,11 +122,28 @@ if __name__ == "__main__":
     # run("prune_skel.py", args, folders)
 
     # directory = "/data/felix/width1/full_plates/"  # careful: must have the / at the end
-    directory = "/data/felix/plate1050/"
-    update_plate_info_local(directory)
-    folder_df = get_current_folders_local(directory)
-    folders = folder_df.loc[folder_df["Plate"] == "1050"]
-    run_stitch(directory, folders)
     # time = "2:00:00"
     # args = [directory]
     # run("extract_nx_graph.py", args, folders)
+
+    ### TEST 1
+    # directory = "/data/felix/plate1050/"
+    # update_plate_info_local(directory)
+    # folder_df = get_current_folders_local(directory)
+    # folders = folder_df.loc[folder_df["Plate"] == "1050"]
+    # run_stitch(directory, folders)
+
+    ### TEST 2
+    from amftrack.util.sys import storage_path
+
+    directory = os.path.join(storage_path, "plate1050")
+    update_plate_info_local(directory)
+    folder_df = get_current_folders_local(directory)
+    folders = folder_df.loc[folder_df["Plate"] == "1050"]
+
+    time = "3:00:00"
+    low = 30
+    high = 80
+    extend = 30
+    args = [low, high, extend, directory]
+    run("extract_skel.py", args, folders)
