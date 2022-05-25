@@ -44,8 +44,8 @@ def test():
     dates = dates_datetime
     date = dates[i]
     directory_name = get_dirname(date, plate)
-    path_snap = directory + directory_name
-    path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
+    path_snap = os.path.join(directory, directory_name)
+    path_tile = os.path.join(path_snap, "Img/TileConfiguration.txt.registered")
     try:
         tileconfig = pd.read_table(
             path_tile,
@@ -57,7 +57,7 @@ def test():
         )
     except:
         print("error_name")
-        path_tile = path_snap + "/Img/TileConfiguration.registered.txt"
+        path_tile = os.path.join(path_snap, "Img/TileConfiguration.registered.txt")
         tileconfig = pd.read_table(
             path_tile,
             sep=";",
