@@ -1,5 +1,6 @@
 from path import path_code_dir
 import sys
+import os
 
 sys.path.insert(0, path_code_dir)
 from amftrack.util.sys import get_dirname, temp_path
@@ -13,7 +14,10 @@ import numpy as np
 import scipy.sparse
 import os
 from time import time
-from amftrack.pipeline.functions.image_processing.extract_skel import extract_skel_new_prince,run_back_sub
+from amftrack.pipeline.functions.image_processing.extract_skel import (
+    extract_skel_new_prince,
+    run_back_sub,
+)
 
 from amftrack.util.sys import get_dates_datetime, get_dirname
 import shutil
@@ -29,9 +33,9 @@ run_info = pd.read_json(f"{temp_path}/{op_id}.json")
 folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]
-run_back_sub(directory,directory_name)
-path_snap = directory + directory_name
-path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
+run_back_sub(directory, directory_name)
+path_snap = os.path.join(directory, directory_name)
+path_tile = os.path.join(path_snap, "Img/TileConfiguration.txt.registered")
 try:
     tileconfig = pd.read_table(
         path_tile,
@@ -43,7 +47,7 @@ try:
     )
 except:
     print("error_name")
-    path_tile = path_snap + "/Img/TileConfiguration.registered.txt"
+    path_tile = os.path.join(path_snap, "Img/TileConfiguration.registered.txt")
     tileconfig = pd.read_table(
         path_tile,
         sep=";",
@@ -68,11 +72,11 @@ skel = np.zeros(dim, dtype=np.uint8)
 for index, name in enumerate(tileconfig[0]):
     imname = "/Img3/" + name.split("/")[-1]
     im = imageio.imread(directory + directory_name + imname)
-    segmented = extract_skel_new_prince(im, [hyph_width],perc_low,perc_high)
+    segmented = extract_skel_new_prince(im, [hyph_width], perc_low, perc_high)
     # low = np.percentile(-im+255, perc_low)
     # high = np.percentile(-im+255, perc_high)
     # segmented = filters.apply_hysteresis_threshold(-im+255, low, high)
-    
+
     boundaries = int(tileconfig[2][index][0] - np.min(xs)), int(
         tileconfig[2][index][1] - np.min(ys)
     )
@@ -90,6 +94,6 @@ sio.savemat(
 compressed = cv2.resize(skeletonized, (dim[1] // 5, dim[0] // 5))
 sio.savemat(path_snap + "/Analysis/skeleton_compressed.mat", {"skeleton": compressed})
 print("time=", time() - t)
-im_fold= "/Img3"
-to_delete = directory + directory_name+im_fold
+im_fold = "/Img3"
+to_delete = directory + directory_name + im_fold
 shutil.rmtree(to_delete)

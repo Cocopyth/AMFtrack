@@ -2,6 +2,7 @@ import sys
 
 sys.path.insert(0, "/home/cbisot/pycode/MscThesis/")
 sys.path.append("/home/cbisot/pycode/MscThesis/amftrack/pipeline/functions")
+import os
 
 from amftrack.notebooks.analysis.util import *
 from amftrack.pipeline.pipeline.paths.directory import (
@@ -111,8 +112,8 @@ def get_pos_baits_aligned(exp, t):
     pos_bait = get_pos_baits(exp, t)
     date = exp.dates[t]
     directory_name = get_dirname(date, exp.plate)
-    path_snap = exp.directory + directory_name
-    path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
+    path_snap = os.path.join(exp.directory, directory_name)
+    path_tile = os.path.join(path_snap, "Img/TileConfiguration.txt.registered")
     skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
     Rot = skel["R"]
     trans = skel["t"]
