@@ -86,10 +86,10 @@ class Experiment:
             directory_name = get_dirname(date, self.plate)
             path_snap = os.path.join(self.directory, directory_name)
             if labeled:
-                suffix = "/Analysis/nx_graph_pruned_labeled.p"
+                suffix = "Analysis/nx_graph_pruned_labeled.p"
             else:
-                suffix = "/Analysis/nx_graph_pruned.p"
-            path_save = path_snap + suffix
+                suffix = "Analysis/nx_graph_pruned.p"
+            path_save = os.path.join(path_snap,suffix)
             (g, pos) = pickle.load(open(path_save, "rb"))
             nx_graph_poss.append((g, pos))
 
@@ -745,8 +745,8 @@ class Node:
             plot_t_tp1(
                 [self.label],
                 [self.label],
-                {self.label: (posimg[1][i], posimg[0][i])},
-                {self.label: (posimgp1[1][ip1], posimgp1[0][ip1])},
+                {self.label: (posimg[i][0], posimg[i][1])},
+                {self.label: (posimgp1[ip1][0], posimgp1[ip1][1])},
                 ims[i],
                 imsp1[ip1],
             )
@@ -754,7 +754,7 @@ class Node:
             plot_t_tp1(
                 [self.label],
                 [],
-                {self.label: (posimg[1][i], posimg[0][i])},
+                {self.label: (posimg[i][0], posimg[i][1])},
                 None,
                 ims[i],
                 ims[i],
