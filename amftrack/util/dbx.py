@@ -14,6 +14,7 @@ from time import time_ns
 import pandas as pd
 import hashlib
 import shutil
+import numpy as np
 
 DOTENV_FILE = (
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -110,7 +111,20 @@ def upload(file_path, target_path, chunk_size=4 * 1024 * 1024, catch_exception=T
                     return(e)
             break
             
-                
+def get_size_dbx(path):
+    dbx = load_dbx()
+    response = dbx.files_list_folder(path, recursive=True)
+    listfiles = []
+    while response.has_more:
+        listfiles += [
+            file for file in response.entries if type(file)==dropbox.files.FileMetadata
+        ]
+        response = dbx.files_list_folder_continue(response.cursor)
+    listfiles += [
+        file for file in response.entries
+    ]
+    size = sum(file.size for file in listfiles)
+    return(size/10**9)
                     
 def download(file_path, target_path, end='', catch_exception=True,unzip=False):
     '''
@@ -244,7 +258,8 @@ def get_dropbox_folders(
     return infos
 
 def get_dropbox_folders_new(
-    dir_drop: str
+    dir_drop: str,
+    skip_size:bool =True
 ) -> pd.DataFrame:
     data = []
     dbx = load_dbx()
@@ -263,18 +278,29 @@ def get_dropbox_folders_new(
     # print([((file.path_lower.split(".")[0]) + "_info.json") for file in listfiles if (file.name.split(".")[-1] == "zip") &
     #        (((file.path_lower.split(".")[0]) + "_info.json") not in listjson)])
     listfiles.reverse()
-    names = [file.path_lower.split("/")[-2] for file in listfiles]
+    names = [file.path_display.split("/")[-2] for file in listfiles]
     path_drop = [os.path.join(*file.path_lower.split("/")[:-1]) for file in listfiles]
     id_uniques = [path.split('/')[-2] for path in path_drop]
     plate_num = [idi.split('_')[0] for idi in id_uniques]
     date_cross = [idi.split('_')[1] for idi in id_uniques]
-    sizes = [file.size / 10 ** 9 for file in listfiles]
+    if skip_size:
+        sizes = [np.nan for path in path_drop]
+    else:
+        sizes = []
+        with tqdm(total=len(path_drop), desc="sizes") as pbar:
+            for path in path_drop:
+                try:
+                    sizes.append(get_size_dbx("/"+path))
+                except:
+                    sizes.append(None)
+                pbar.update(1)
     modified = [file.client_modified for file in listfiles]
     df = pd.DataFrame((names, sizes, modified,path_drop,plate_num,date_cross
                        ,id_uniques)).transpose()
     df = df.rename(columns={0: "folder", 1: "size", 2: "change_date"
                             , 3: "tot_path_drop", 4: "Plate" , 5: "CrossDate",6:"unique_id"})
     return df
+
 
 def upload_folders(folders: pd.DataFrame,dir_drop = 'DATA',catch_exception=True,delete=False):
     '''

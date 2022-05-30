@@ -67,8 +67,8 @@ def first_identification(nx_graph_tm1, nx_graph_t, pos_tm1, pos_t, tolerance):
     degree_3sup_nodes_t = [
         node for node in nx_graph_t.nodes if nx_graph_t.degree(node) >= 3
     ]
-    Stm1 = sparse.csr_matrix((30000, 60000))
-    St = sparse.csr_matrix((30000, 60000))
+    Stm1 = sparse.csr_matrix((30000, 60000),dtype=int)
+    St = sparse.csr_matrix((30000, 60000),dtype=int)
     for node in degree_3sup_nodes_tm1:
         Stm1[pos_tm1[node][0], pos_tm1[node][1]] = node
     for node in degree_3sup_nodes_t:

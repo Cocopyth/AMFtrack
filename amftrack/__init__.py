@@ -12,7 +12,8 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=log_format)
 # Change loglevel here for specific logging
 matplotlib_logger = logging.getLogger("matplotlib")
 matplotlib_logger.setLevel(logging.WARNING)
-
+matplotlib_logger = logging.getLogger("amftrack.util.dbx")
+matplotlib_logger.setLevel(logging.WARNING)
 # Removed
 for logger_name in ["PIL.TiffImagePlugin"]:
     logger = logging.getLogger(logger_name)
