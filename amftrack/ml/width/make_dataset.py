@@ -235,7 +235,7 @@ def make_extended_dataset(exp: Experiment, t: 0, dataset_name="dataset_test"):
 
 
 def make_precise_dataset(
-    directories: List[str], target_length, dataset_name="test_precise"
+    directories: List[str], target_length, dataset_name="test_precise_1"
 ):
     """
     This function proceeds with the following steps:
@@ -287,7 +287,8 @@ def make_precise_dataset(
     logger.info(f"Slice array: {slice_array.shape} Label array: {label_array.shape}")
 
     cv2.imwrite(os.path.join(dataset_directory, "slices.png"), slice_array)
-    cv2.imwrite(os.path.join(dataset_directory, "labels.png"), label_array)
+    with open(os.path.join(dataset_directory, "labels.npy"), "wb") as f:
+        np.save(f, label_array)
 
     return slice_array, label_array
 
