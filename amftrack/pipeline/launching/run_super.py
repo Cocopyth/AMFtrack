@@ -134,19 +134,6 @@ def run_parallel_post(
         call(f"sbatch {path_job }", shell=True)
 
 
-def check_state(plate, begin, end, file, directory):
-    not_exist = []
-    dates_datetime = get_dates_datetime(directory, plate)
-    dates_datetime_chosen = dates_datetime[begin : end + 1]
-    dates = dates_datetime_chosen
-    for i, date in enumerate(dates):
-        directory_name = get_dirname(date, plate)
-        path_snap = directory + directory_name
-        stage = os.path.exists(path_snap + file)
-        if not stage:
-            not_exist.append((date, i + begin))
-    return not_exist
-
 
 def make_stitching_loop(directory, dirname, op_id):
     a_file = open(
@@ -195,47 +182,6 @@ def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="
         my_file.write("wait\n")
         my_file.close()
         call(f"sbatch {path_stitch}", shell=True)
-
-
-def find_state(plate, begin, end, directory, include_stitch=True):
-    files = [
-        "/Analysis/skeleton_compressed.mat",
-        "/Analysis/skeleton_masked_compressed.mat",
-        "/Analysis/skeleton_pruned_compressed.mat",
-        "/Analysis/transform.mat",
-        "/Analysis/skeleton_realigned_compressed.mat",
-    ]
-    if include_stitch:
-        files = ["/Img/TileConfiguration.txt.registered"] + files
-    not_present2 = check_state(
-        plate, begin + 1, end, "/Analysis/transform_corrupt.mat", directory
-    )
-    for file in files:
-        if file == "/Analysis/transform.mat":
-            not_present = check_state(plate, begin + 1, end, file, directory)
-            to_check = copy(not_present)
-            for datetme in to_check:
-                if datetme not in not_present2:
-                    print(datetme, "alignment failed")
-                    not_present.remove(datetme)
-        else:
-            not_present = check_state(plate, begin, end, file, directory)
-        if len(not_present) > 0:
-            return (file, not_present)
-    return "skeletonization is complete"
-
-
-def find_state_extract(plate, begin, end, directory):
-    files = [
-        "/Analysis/nx_graph_pruned.p",
-        "/Analysis/nx_graph_pruned_width.p",
-        "/Analysis/nx_graph_pruned_labeled.p",
-    ]
-    for file in files:
-        not_present = check_state(plate, begin, end, file, directory)
-        if len(not_present) > 0:
-            return (file, not_present)
-    return "extration is complete"
 
 
 def run_parallel_transfer(

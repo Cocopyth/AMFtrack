@@ -83,8 +83,11 @@ def get_dates_datetime(directory, plate):
     return dates_datetime
 
 
-def get_dirname(date, plate):
-    return f'{date.year}{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}_Plate{0 if plate<10 else ""}{plate}'
+def get_dirname(date, folders):
+    select = folders.loc[folders['datetime']==date]['folder']
+    print(len(select))
+    assert len(select)==1
+    return select.iloc[0]
 
 
 def shift_skeleton(skeleton, shift):
@@ -122,11 +125,11 @@ def transform_skeleton_final_for_show(skeleton_doc, Rot, trans):
 
 def get_skeleton(exp, boundaries, t, directory):
     i = t
-    plate = exp.plate
+    plate = exp.prince_pos
     listdir = os.listdir(directory)
     dates = exp.dates
     date = dates[i]
-    directory_name = get_dirname(date, plate)
+    directory_name = get_dirname(date, exp.folders)
     path_snap = directory + directory_name
     skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
     skelet = skel["skeleton"]
@@ -290,7 +293,7 @@ def get_current_folders_local(directory: str) -> pd.DataFrame:
 
 
 def get_current_folders(
-    directory: str, file_metadata=False, local=False
+    directory: str, file_metadata=False, local=True
 ) -> pd.DataFrame:
     """
     Returns a pandas data frame with all informations about the acquisition files

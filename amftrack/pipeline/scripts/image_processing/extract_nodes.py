@@ -9,10 +9,7 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
 import scipy.io as sio
 import pickle
 import pandas as pd
-import numpy as np
-import os
 
-API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))
 dir_drop = "trash"
 directory = str(sys.argv[1])
 print(directory)
