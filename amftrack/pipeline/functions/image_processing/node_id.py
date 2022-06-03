@@ -3,7 +3,7 @@ from scipy import sparse
 import networkx as nx
 from copy import deepcopy
 
-from amftrack.pipeline.functions.image_processing.experiment_util import orient
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
 from amftrack.pipeline.functions.image_processing.node_id_2 import reconnect_degree_2, node_dist
 from amftrack.sparse_util import dilate
 from scipy.optimize import minimize

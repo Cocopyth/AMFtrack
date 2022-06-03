@@ -6,14 +6,12 @@ import matplotlib.pyplot as plt
 
 from amftrack.util.aliases import coord_int, coord
 from amftrack.util.param import DIM_X, DIM_Y
-from amftrack.util.image_analysis import is_in_image
 from amftrack.util.geometry import (
-    generate_index_along_sequence,
     distance_point_pixel_line,
     get_closest_line_opt,
     get_closest_lines,
 )
-from amftrack.util.plot import crop_image, pixel_list_to_matrix
+from amftrack.util.plot import crop_image
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Node,
@@ -21,12 +19,9 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 )
 from amftrack.util.sparse import dilate_coord_list
 from random import randrange
-from functools import lru_cache
+
 
 # Prov
-from pymatreader import read_mat
-import cv2
-from amftrack.plotutil import plot_t_tp1
 
 
 def get_random_edge(exp: Experiment, t=0) -> Edge:
@@ -423,7 +418,7 @@ if __name__ == "__main__":
     plate = int(list(selected_df["folder"])[i].split("_")[-1][5:])
     folder_list = list(selected_df["folder"])
     directory_name = folder_list[i]
-    exp = Experiment(plate, directory)
+    exp = Experiment(directory)
     exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
     exp.load_tile_information(0)
     # plot_full_image(exp, 0, downsizing=20)
@@ -457,9 +452,3 @@ if __name__ == "__main__":
     )
 
 
-def orient(pixel_list, root_pos):
-    """Orients a pixel list with the root position at the begining"""
-    if np.all(root_pos == pixel_list[0]):
-        return pixel_list
-    else:
-        return list(reversed(pixel_list))
