@@ -5,7 +5,7 @@ import sys
 from amftrack.util.sys import temp_path
 import pandas as pd
 from amftrack.pipeline.functions.image_processing.node_id_2 import (
-    create_corresp,create_labeled_graph
+    create_corresp
 )
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment
 
