@@ -60,7 +60,7 @@ class Experiment:
     def __repr__(self):
         return f"Experiment({self.directory})"
 
-    def load(self, folders: pd.DataFrame, labeled=True):
+    def load(self, folders: pd.DataFrame, suffix='_labeled'):
         """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
         assert len(folders['unique_id'].unique()) == 1
@@ -80,11 +80,8 @@ class Experiment:
             print(date)
             directory_name = get_dirname(date, self.folders)
             path_snap = os.path.join(self.directory, directory_name)
-            if labeled:
-                suffix = "Analysis/nx_graph_pruned_labeled.p"
-            else:
-                suffix = "Analysis/nx_graph_pruned.p"
-            path_save = os.path.join(path_snap,suffix)
+            file = f"Analysis/nx_graph_pruned{suffix}.p"
+            path_save = os.path.join(path_snap,file)
             (g, pos) = pickle.load(open(path_save, "rb"))
             nx_graph_poss.append((g, pos))
 
@@ -104,7 +101,7 @@ class Experiment:
         xpos = [pos[0] for poss in self.positions for pos in poss.values()]
         ypos = [pos[1] for poss in self.positions for pos in poss.values()]
         self.ts = len(self.dates)
-        self.labeled = labeled
+        self.labeled = suffix == '_labeled'
 
     def load_compressed_skel(self, factor=5):
         """
@@ -1139,7 +1136,7 @@ if __name__ == "__main__":
     folder_list = list(selected_df["folder"])
     directory_name = folder_list[i]
     exp = Experiment(directory)
-    exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
+    exp.load(selected_df.loc[selected_df["folder"] == directory_name], suffix='')
     exp.load_tile_information(0)
 
     a = 0

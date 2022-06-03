@@ -19,7 +19,7 @@ plate = list(run_info['PrincePos'])[i]
 folder_list = list(run_info['folder'])
 directory_name = folder_list[i]
 exp = Experiment(plate,directory)
-exp.load(run_info.loc[run_info['folder']==directory_name],labeled=False)
+exp.load(run_info.loc[run_info['folder']==directory_name], suffix='')
 path_snap = directory + directory_name
 suffix = "/Analysis/nx_graph_pruned.p"
 
