@@ -17,9 +17,14 @@ path_bash = os.getenv("HOME") + "/bash/"
 path_job = os.getenv("HOME") + "/bash/job.sh"
 path_stitch = os.getenv("HOME") + "/bash/stitch.sh"
 
+def call_code(path_job,dependency):
+    if not dependency is None:
+        call(f"sbatch {path_job}", shell=True)
+    else:
+        call(f"sbatch --dependency=singleton {path_job}", shell=True)
 
-
-def run_parallel(code, args, folders, num_parallel, time, name, cpus=128, node="thin"):
+def run_parallel(code, args, folders, num_parallel, time, name, cpus=128, node="thin", dependency=None
+):
     op_id = time_ns()
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     length = len(folders)
@@ -48,11 +53,10 @@ def run_parallel(code, args, folders, num_parallel, time, name, cpus=128, node="
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job}", shell=True)
-
+        call_code(path_job,dependency)
 
 def run_parallel_all_time(
-    code, args, folders, num_parallel, time, name, cpus=128, node="thin"
+    code, args, folders, num_parallel, time, name, cpus=128, node="thin", dependency=None
 ):
     op_id = time_ns()
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
@@ -83,7 +87,7 @@ def run_parallel_all_time(
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job}", shell=True)
+        call_code(path_job,dependency)
 
 
 def run_parallel_post(
@@ -98,6 +102,7 @@ def run_parallel_post(
     cpus=128,
     node="thin",
     name_job="post",
+    dependency=None
 ):
     path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
@@ -132,7 +137,7 @@ def run_parallel_post(
         my_file.write("wait\n")
         my_file.close()
         call(f"sbatch {path_job }", shell=True)
-
+        call_code(path_job,dependency)
 
 
 def make_stitching_loop(directory, dirname, op_id):
@@ -234,9 +239,9 @@ def run_parallel_transfer_to_archive(
     name,
     cpus=1,
     node="staging",
-    name_job="transfer_archive.sh",
+    dependency="transfer_archive.sh",
 ):
-    path_job = f"{path_bash}{name_job}"
+    path_job = f"{path_bash}{dependency}"
     plates = set(folders["Plate"].values)
     length = len(plates)
     folders = folders.copy()
