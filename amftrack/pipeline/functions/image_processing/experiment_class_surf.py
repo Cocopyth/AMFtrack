@@ -80,7 +80,7 @@ class Experiment:
             print(date)
             directory_name = get_dirname(date, self.folders)
             path_snap = os.path.join(self.directory, directory_name)
-            file = f"Analysis/nx_graph_pruned{suffix}.p"
+            file = os.path.join(f"Analysis",f"nx_graph_pruned{suffix}.p")
             path_save = os.path.join(path_snap,file)
             (g, pos) = pickle.load(open(path_save, "rb"))
             nx_graph_poss.append((g, pos))
@@ -102,6 +102,17 @@ class Experiment:
         ypos = [pos[1] for poss in self.positions for pos in poss.values()]
         self.ts = len(self.dates)
         self.labeled = suffix == '_labeled'
+    def save_graphs(self,suffix):
+        for i,date in enumerate(self.dates):
+            print(date)
+            directory_name = get_dirname(date, self.folders)
+            path_snap = os.path.join(self.directory, directory_name)
+            file = os.path.join(f"Analysis",f"nx_graph_pruned{suffix}.p")
+            path_save = os.path.join(path_snap,file)
+            # print(path_save)
+            g = self.nx_graph[i]
+            pos = self.positions[i]
+            pickle.dump((g, pos), open(path_save, "wb"))
 
     def load_compressed_skel(self, factor=5):
         """
