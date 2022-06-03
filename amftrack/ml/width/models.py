@@ -112,6 +112,104 @@ def hyper_model_builder_simple(parameters):
     return model_builder
 
 
+def build_model_dense(hp):
+    """
+    This function generates models of type MLP of different size.
+    It is a small base line.
+    """
+    input_size = hp.Fixed("input_size", value=120)
+    inputs = tf.keras.Input(shape=(input_size, 1))
+    reshaping = tf.keras.layers.Reshape((input_size,))(inputs)
+    scaling = keras.layers.Rescaling(scale=1.0 / 127.5, offset=-1)(reshaping)
+    x = scaling
+    hidden_size = hp.Int("hidden_size", 10, 100, step=32, default=32)
+    regul = hp.Float("regul", 1e-5, 1e-1, sampling="log", default=1e-4)
+    for i in range(hp.Int("dense_blocks", 1, 10, default=3)):
+        x = tf.keras.layers.Dense(
+            hidden_size,
+            activation="relu",
+            kernel_regularizer=tf.keras.regularizers.L1(regul),
+        )(x)
+        x = tf.keras.layers.Dropout(hp.Float("dropout", 0, 0.5, step=0.1, default=0.5))(
+            x
+        )
+    outputs = tf.keras.layers.Dense(1)(x)
+    model = tf.keras.Model(inputs, outputs)
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(
+            learning_rate=hp.Float(
+                "learning_rate", 1e-5, 1e-1, sampling="log", default=1e-3
+            )
+        ),
+        loss=keras.losses.MeanSquaredError(name="mean_squared_error"),
+        metrics=[tf.keras.metrics.mean_absolute_error],
+    )
+    return model
+
+
+def build_model_conv(hp):
+    """
+    This function builds a model made of 1D convolutions followed by a dense network
+    """
+    input_size = hp.Fixed("input_size", value=120)
+    inputs = tf.keras.Input(shape=(input_size, 1))
+    scaling = keras.layers.Rescaling(scale=1.0 / 127.5, offset=-1)(inputs)
+    x = scaling
+    regul = hp.Float("regul", 1e-5, 1e-1, sampling="log", default=1e-4)
+    batch_normalization = hp.Boolean("batch_normalization", default=False)
+    for i in range(hp.Int("conv_blocks", 1, 3, default=2)):
+        filters = hp.Int("filters_" + str(i), 32, 256, step=32)
+        kernel_size = hp.Int("kernel_size" + str(i), 5, 20)
+        x = tf.keras.layers.Convolution1D(
+            filters, kernel_size=10, kernel_regularizer=tf.keras.regularizers.L1(regul)
+        )(x)
+        if batch_normalization:
+            x = tf.keras.layers.BatchNormalization()(x)
+        x = tf.keras.layers.ReLU()(x)
+    pooling = hp.Choice("pooling_" + str(i), ["avg", "max", "none"])
+    if pooling == "max":
+        x = tf.keras.layers.MaxPooling1D(pool_size=2)(x)
+    elif pooling == "avg":
+        x = tf.keras.layers.AveragePooling1D(pool_size=2)(x)
+    hidden_size = hp.Int("hidden_size", 10, 100, step=32, default=32)
+    for i in range(hp.Int("dense_blocks", 1, 3, default=1)):
+        x = tf.keras.layers.Dense(
+            hidden_size,
+            activation="relu",
+            kernel_regularizer=tf.keras.regularizers.L1(regul),
+        )(x)
+    x = tf.keras.layers.Dropout(hp.Float("dropout", 0, 0.5, step=0.1, default=0.5))(x)
+
+    outputs = tf.keras.layers.Dense(1)(x)
+    model = tf.keras.Model(inputs, outputs)
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(
+            learning_rate=hp.Float(
+                "learning_rate", 1e-5, 1e-1, sampling="log", default=1e-3
+            )
+        ),
+        loss=keras.losses.MeanSquaredError(name="mean_squared_error"),
+        metrics=[tf.keras.metrics.mean_absolute_error],
+    )
+    return model
+
+
+def build_model_main(hp):
+    """
+    This is the main function for generating models with different architechtures and hyper parameters
+    """
+    model_type = hp.Choice("model_type", ["dense", "conv"], default="type1")
+    if model_type == "dense":
+        with hp.conditional_scope("model_type", "dense"):
+            model = build_model_dense(hp)
+    if model_type == "conv":
+        with hp.conditional_scope("model_type", "conv"):
+            model = build_model_conv(hp)
+    return model
+
+
 if __name__ == "__main__":
 
     # Get the model
