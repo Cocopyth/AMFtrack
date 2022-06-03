@@ -17,7 +17,7 @@ from amftrack.util.sys import temp_path
 directory = str(sys.argv[1])
 limit = int(sys.argv[2])
 version = str(sys.argv[3])
-labeled = eval(sys.argv[4])
+suffix = eval(sys.argv[4])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
@@ -41,6 +41,7 @@ indexes = [index for index in indexes if index < limit]
 indexes.sort()
 indexes += [limit]
 start = 0
+labeled = suffix =='_labeled'
 for index in indexes:
     stop = index
     select_folder_names = folder_list[start:stop]
@@ -48,7 +49,7 @@ for index in indexes:
     # confusion between plate number and position in Prince
     exp = Experiment(directory)
     select_folders = run_info.loc[run_info["folder"].isin(select_folder_names)]
-    exp.load(select_folders, labeled)
+    exp.load(select_folders)
     exp.dates.sort()
     # when no width is included
     # width_based_cleaning(exp)

@@ -10,8 +10,8 @@ import numpy as np
 import os
 from amftrack.util.sys import (
     test_path,
-    get_current_folders_local,
-    update_plate_info_local,
+    get_current_folders,
+    update_plate_info,
 )
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
@@ -70,16 +70,13 @@ def make_experiment_object():
     "Build an experiment object using the plate that is in the test repository."
     directory = test_path
     plate_name = "20220330_2357_Plate19"  # TODO(FK): find the name automaticaly (can be different based on the person)
-    update_plate_info_local(directory)
-    folder_df = get_current_folders_local(directory)
+    update_plate_info(directory)
+    folder_df = get_current_folders(directory)
     selected_df = folder_df.loc[folder_df["folder"] == plate_name]
     i = 0
-    plate = int(list(selected_df["folder"])[i].split("_")[-1][5:])
-    folder_list = list(selected_df["folder"])
     # directory_name = folder_list[i]
     exp = Experiment(directory)
-    # exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
-    exp.load(selected_df, labeled=False)
+    exp.load(selected_df, suffix='')
     exp.load_tile_information(0)
     return exp
 
