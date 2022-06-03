@@ -22,9 +22,7 @@ import ast
 from scipy import sparse
 
 from amftrack.util.sys import get_dirname
-from amftrack.pipeline.functions.image_processing.node_id_2 import reconnect_degree_2
 from amftrack.plotutil import plot_t_tp1
-from amftrack.pipeline.functions.image_processing.experiment_util import orient
 from amftrack.util.aliases import node_coord_dict, binary_image, coord, coord_int
 from amftrack.util.image_analysis import find_image_indexes
 
@@ -506,16 +504,14 @@ class Experiment:
             plt.show()
 
 
-def save_graphs(exp):
-    nx_graph_poss = []
+def save_graphs(exp,suf=2):
     for i, date in enumerate(exp.dates):
         directory_name = get_dirname(date, exp.plate)
         path_snap = exp.directory + directory_name
         labeled = exp.labeled
         print(date, labeled)
-
         if labeled:
-            suffix = "/Analysis/nx_graph_pruned_labeled2.p"
+            suffix = f"/Analysis/nx_graph_pruned_labeled{suf}.p"
             path_save = path_snap + suffix
             # print(path_save)
             g = exp.nx_graph[i]
@@ -1166,3 +1162,11 @@ if __name__ == "__main__":
     # print(r)
 
     # print(exp.get_image_coordinates(0))
+
+
+def orient(pixel_list, root_pos):
+    """Orients a pixel list with the root position at the begining"""
+    if np.all(root_pos == pixel_list[0]):
+        return pixel_list
+    else:
+        return list(reversed(pixel_list))

@@ -8,7 +8,7 @@ def test():
     import ast
     from scipy import sparse
     from datetime import datetime
-    from amftrack.pipeline.functions.image_processing.experiment_util import orient
+    from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
     import scipy.io as sio
     import cv2
     import imageio
