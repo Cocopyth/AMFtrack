@@ -6,7 +6,7 @@ import cv2
 import itertools
 import json
 
-from amftrack.pipeline.functions.image_processing.experiment_util import orient
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
 from amftrack.util.sys import get_dirname
 import os
 
@@ -330,6 +330,7 @@ def create_labeled_graph(exp):
         reduced_poss_list.append(reduced_poss)
     exp.nx_graph = reduced_label_graph_list
     exp.positions = reduced_poss_list
+    exp.labeled = True
     return (reduced_label_graph_list, reduced_poss_list)
 
 

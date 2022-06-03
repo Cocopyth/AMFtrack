@@ -1,7 +1,5 @@
-from path import path_code_dir
 import sys
 
-sys.path.insert(0, path_code_dir)
 import os
 from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
     resolve_anastomosis_crossing_by_root,
