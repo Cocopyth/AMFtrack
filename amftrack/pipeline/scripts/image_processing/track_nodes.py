@@ -18,5 +18,5 @@ run_info["datetime"] = pd.to_datetime(run_info["date"], format="%d.%m.%Y, %H:%M:
 folders = run_info.sort_values('datetime')
 select = folders.iloc[i:i+2]
 exp = Experiment(directory)
-exp.load(select,labeled=False)
+exp.load(select,suffix='_width')
 create_corresp(exp)
