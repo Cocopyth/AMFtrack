@@ -199,7 +199,7 @@ def sync_fold(origin,target):
     # print(cmd)
     call(cmd,shell=True)
 
-def get_dropbox_folders(
+def get_dropbox_folders_old(
     dir_drop: str, file_metadata=False
 ) -> pd.DataFrame:
     data = []
@@ -257,7 +257,7 @@ def get_dropbox_folders(
             infos = pd.concat(data)
     return infos
 
-def get_dropbox_folders_new(
+def get_dropbox_folders(
     dir_drop: str,
     skip_size:bool =True
 ) -> pd.DataFrame:
