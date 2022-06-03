@@ -272,9 +272,9 @@ def relabel_pos(poss, mapping):
 
 def get_corresp_path(exp,t, tp1):
     date = exp.dates[t]
-    directory_name = get_dirname(date, exp.plate)
+    directory_name = get_dirname(date, exp.folders)
     datep1 = exp.dates[tp1]
-    directory_namep1 = get_dirname(datep1, exp.plate)
+    directory_namep1 = get_dirname(datep1, exp.folders)
     target = os.path.join(exp.directory, directory_name)
     suffix = f"Analysis/corresp{directory_name}_{directory_namep1}.json"
     target = os.path.join(target, suffix)

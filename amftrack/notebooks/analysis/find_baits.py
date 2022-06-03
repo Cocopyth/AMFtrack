@@ -75,7 +75,7 @@ def get_Pside(plate_number):
 
 def get_raw(exp, t):
     date = exp.dates[t]
-    directory_name = get_dirname(date, exp.plate)
+    directory_name = get_dirname(date, exp.folders)
     path_snap = exp.directory + directory_name
     im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
     return im
@@ -109,7 +109,7 @@ def get_pos_baits(exp, t):
 def get_pos_baits_aligned(exp, t):
     pos_bait = get_pos_baits(exp, t)
     date = exp.dates[t]
-    directory_name = get_dirname(date, exp.plate)
+    directory_name = get_dirname(date, exp.folders)
     path_snap = exp.directory + directory_name
     path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
     skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")

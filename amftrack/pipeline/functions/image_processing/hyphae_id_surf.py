@@ -167,16 +167,16 @@ def save_hyphaes(exp, path="Data/"):
                 }
             )
             growth_info = growth_info.append(new_line_growth, ignore_index=True)
-    hyphaes.to_csv(path + f"hyphaes_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.csv")
+    hyphaes.to_csv(path + f"hyphaes_{exp.prince_pos}_{exp.dates[0]}_{exp.dates[-1]}.csv")
     growth_info.to_csv(
-        path + f"growth_info_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.csv"
+        path + f"growth_info_{exp.prince_pos}_{exp.dates[0]}_{exp.dates[-1]}.csv"
     )
     sio.savemat(
-        path + f"hyphaes_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.mat",
+        path + f"hyphaes_{exp.prince_pos}_{exp.dates[0]}_{exp.dates[-1]}.mat",
         {name: col.values for name, col in hyphaes.items()},
     )
     sio.savemat(
-        path + f"growth_info_{exp.plate}_{exp.dates[0]}_{exp.dates[-1]}.mat",
+        path + f"growth_info_{exp.prince_pos}_{exp.dates[0]}_{exp.dates[-1]}.mat",
         {name: col.values for name, col in growth_info.items()},
     )
     return (hyphaes, growth_info)
