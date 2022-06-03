@@ -22,7 +22,6 @@ import ast
 from amftrack.plotutil import plot_t_tp1
 from scipy import sparse
 from datetime import datetime
-from amftrack.pipeline.functions.image_processing.experiment_util import orient
 import pickle
 import scipy.io as sio
 from pymatreader import read_mat
@@ -45,7 +44,7 @@ from skimage.feature import hessian_matrix_det
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Edge,
-    Node,
+    Node, orient,
 )
 from amftrack.pipeline.pipeline.paths.directory import (
     run_parallel,
@@ -76,7 +75,7 @@ def get_Pside(plate_number):
 
 def get_raw(exp, t):
     date = exp.dates[t]
-    directory_name = get_dirname(date, exp.plate)
+    directory_name = get_dirname(date, exp.folders)
     path_snap = exp.directory + directory_name
     im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
     return im
@@ -110,7 +109,7 @@ def get_pos_baits(exp, t):
 def get_pos_baits_aligned(exp, t):
     pos_bait = get_pos_baits(exp, t)
     date = exp.dates[t]
-    directory_name = get_dirname(date, exp.plate)
+    directory_name = get_dirname(date, exp.folders)
     path_snap = exp.directory + directory_name
     path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
     skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")

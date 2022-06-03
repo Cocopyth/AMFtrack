@@ -36,7 +36,7 @@ class TestWidthTraining(unittest.TestCase):
         plate = int(list(selected_df["folder"])[i].split("_")[-1][5:])
         folder_list = list(selected_df["folder"])
         directory_name = folder_list[i]
-        cls.exp = Experiment(plate, directory)
+        cls.exp = Experiment(directory)
         cls.exp.load(
             selected_df.loc[selected_df["folder"] == directory_name], labeled=False
         )

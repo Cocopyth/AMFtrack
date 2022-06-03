@@ -83,8 +83,11 @@ def get_dates_datetime(directory, plate):
     return dates_datetime
 
 
-def get_dirname(date, plate):
-    return f'{date.year}{0 if date.month<10 else ""}{date.month}{0 if date.day<10 else ""}{date.day}_{0 if date.hour<10 else ""}{date.hour}{0 if date.minute<10 else ""}{date.minute}_Plate{0 if plate<10 else ""}{plate}'
+def get_dirname(date, folders):
+    select = folders.loc[folders['datetime']==date]['folder']
+    print(len(select))
+    assert len(select)==1
+    return select.iloc[0]
 
 
 def shift_skeleton(skeleton, shift):
@@ -122,11 +125,11 @@ def transform_skeleton_final_for_show(skeleton_doc, Rot, trans):
 
 def get_skeleton(exp, boundaries, t, directory):
     i = t
-    plate = exp.plate
+    plate = exp.prince_pos
     listdir = os.listdir(directory)
     dates = exp.dates
     date = dates[i]
-    directory_name = get_dirname(date, plate)
+    directory_name = get_dirname(date, exp.folders)
     path_snap = directory + directory_name
     skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
     skelet = skel["skeleton"]
@@ -217,7 +220,7 @@ def update_plate_info_local(directory: str) -> None:
         json.dump(plate_info, jsonf, indent=4)
 
 
-def update_plate_info(directory: str, local=False) -> None:
+def update_plate_info(directory: str, local=True) -> None:
     """*
     1/ Download `data_info.json` file containing all information about acquisitions.
     2/ Add all acquisition files in the `directory` path to the `data_info.json`.
@@ -264,6 +267,9 @@ def get_data_info(local=False):
     data_info = pd.read_json(target, convert_dates=True).transpose()
     data_info.index.name = "total_path"
     data_info.reset_index(inplace=True)
+    data_info["unique_id"] = (
+        data_info["Plate"].astype(str) + "_" + data_info["CrossDate"].str.replace("'","").astype(str)
+    )
     return data_info
 
 
@@ -290,7 +296,7 @@ def get_current_folders_local(directory: str) -> pd.DataFrame:
 
 
 def get_current_folders(
-    directory: str, file_metadata=False, local=False
+    directory: str, file_metadata=False, local=True
 ) -> pd.DataFrame:
     """
     Returns a pandas data frame with all informations about the acquisition files

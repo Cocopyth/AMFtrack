@@ -6,7 +6,7 @@ import cv2
 import itertools
 import json
 
-from amftrack.pipeline.functions.image_processing.experiment_util import orient
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
 from amftrack.util.sys import get_dirname
 import os
 
@@ -272,9 +272,9 @@ def relabel_pos(poss, mapping):
 
 def get_corresp_path(exp,t, tp1):
     date = exp.dates[t]
-    directory_name = get_dirname(date, exp.plate)
+    directory_name = get_dirname(date, exp.folders)
     datep1 = exp.dates[tp1]
-    directory_namep1 = get_dirname(datep1, exp.plate)
+    directory_namep1 = get_dirname(datep1, exp.folders)
     target = os.path.join(exp.directory, directory_name)
     suffix = f"Analysis/corresp{directory_name}_{directory_namep1}.json"
     target = os.path.join(target, suffix)
@@ -330,6 +330,7 @@ def create_labeled_graph(exp):
         reduced_poss_list.append(reduced_poss)
     exp.nx_graph = reduced_label_graph_list
     exp.positions = reduced_poss_list
+    exp.labeled = True
     return (reduced_label_graph_list, reduced_poss_list)
 
 
