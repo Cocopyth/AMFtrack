@@ -217,7 +217,7 @@ def update_plate_info_local(directory: str) -> None:
         json.dump(plate_info, jsonf, indent=4)
 
 
-def update_plate_info(directory: str, local=False) -> None:
+def update_plate_info(directory: str, local=True) -> None:
     """*
     1/ Download `data_info.json` file containing all information about acquisitions.
     2/ Add all acquisition files in the `directory` path to the `data_info.json`.
