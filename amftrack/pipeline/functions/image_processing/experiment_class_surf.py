@@ -37,7 +37,7 @@ class Experiment:
     """
 
     def __init__(self, directory: str):
-        self.prince_pos: int
+        self.unique_id : str
         self.directory = directory  # full directory path
 
         self.folders: List[pd.DataFrame]  # one dataframe per timestep
@@ -63,7 +63,8 @@ class Experiment:
     def load(self, folders: pd.DataFrame, labeled=True):
         """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
-        assert len(folders["Plate"].unique()) == 1
+        assert len(folders['unique_id'].unique()) == 1
+        self.unique_id = folders['unique_id'].unique()[0]
         self.image_coordinates = [None] * len(folders)
         self.image_transformation = [None] * len(folders)
         self.image_paths = [None] * len(folders)
@@ -209,17 +210,6 @@ class Experiment:
         self.nodes = []
         for label in labels:
             self.nodes.append(Node(label, self))
-
-    def save(self, path=f"Data/"):
-        tabs_labeled = []
-        for i, date in enumerate(self.dates):
-            tabs_labeled.append(from_nx_to_tab(self.nx_graph[i], self.positions[i]))
-        for i, date in enumerate(self.dates):
-            #             tabs_labeled[i].to_csv(path + f"graph_{date}_{self.plate}_full_labeled.csv")
-            sio.savemat(
-                path + f"graph_{date}_{self.prince_pos}_full_labeled.mat",
-                {name: col.values for name, col in tabs_labeled[i].items()},
-            )
 
     def pickle_save(self, path):
         pickle.dump(self, open(path + f"experiment.pick", "wb"))

@@ -267,6 +267,9 @@ def get_data_info(local=False):
     data_info = pd.read_json(target, convert_dates=True).transpose()
     data_info.index.name = "total_path"
     data_info.reset_index(inplace=True)
+    data_info["unique_id"] = (
+        data_info["Plate"].astype(str) + "_" + data_info["CrossDate"].str.replace("'","").astype(str)
+    )
     return data_info
 
 
