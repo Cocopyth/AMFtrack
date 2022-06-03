@@ -13,7 +13,7 @@ import ast
 from amftrack.plotutil import plot_t_tp1
 from scipy import sparse
 from datetime import datetime
-from amftrack.pipeline.functions.image_processing.node_id import orient
+from amftrack.pipeline.functions.image_processing.experiment_util import orient
 import pickle
 import scipy.io as sio
 from pymatreader import read_mat

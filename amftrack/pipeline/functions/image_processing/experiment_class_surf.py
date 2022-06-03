@@ -22,9 +22,9 @@ import ast
 from scipy import sparse
 
 from amftrack.util.sys import get_dirname
-from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
+from amftrack.pipeline.functions.image_processing.node_id_2 import reconnect_degree_2
 from amftrack.plotutil import plot_t_tp1
-from amftrack.pipeline.functions.image_processing.node_id import orient
+from amftrack.pipeline.functions.image_processing.experiment_util import orient
 from amftrack.util.aliases import node_coord_dict, binary_image, coord, coord_int
 from amftrack.util.image_analysis import find_image_indexes
 
@@ -58,7 +58,7 @@ class Experiment:
         ]  # (R, t) transformation to go from timestep referential to general referential
         self.image_paths: List[List[str]]  # full paths to each images for each timestep
         self.hyphaes = None
-
+        self.corresps = {}
     def __repr__(self):
         return f"Experiment({self.directory}, {self.plate})"
 

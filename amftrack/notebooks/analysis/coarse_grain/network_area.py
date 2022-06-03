@@ -13,7 +13,7 @@ import ast
 from amftrack.plotutil import plot_t_tp1
 from scipy import sparse
 from datetime import datetime
-from amftrack.pipeline.functions.image_processing.node_id import orient
+from amftrack.pipeline.functions.image_processing.experiment_util import orient
 import pickle
 import scipy.io as sio
 from pymatreader import read_mat
@@ -59,7 +59,7 @@ from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
 from collections import Counter
 from IPython.display import clear_output
 from amftrack.notebooks.analysis.data_info import *
-from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
+from amftrack.pipeline.functions.image_processing.node_id_2 import reconnect_degree_2
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     generate_skeleton,
     from_nx_to_tab,
