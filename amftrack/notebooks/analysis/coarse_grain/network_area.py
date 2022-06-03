@@ -87,7 +87,7 @@ begin = 7
 end = 42
 dates_datetime = get_dates_datetime(directory, plate)
 dates = dates_datetime[begin : end + 1]
-exp = Experiment(plate, directory)
+exp = Experiment(directory)
 exp.load(dates)  # for method 2
 exp.load_compressed_skel()
 
