@@ -22,9 +22,9 @@ import ast
 from scipy import sparse
 
 from amftrack.util.sys import get_dirname
-from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
+from amftrack.pipeline.functions.image_processing.node_id_2 import reconnect_degree_2
 from amftrack.plotutil import plot_t_tp1
-from amftrack.pipeline.functions.image_processing.node_id import orient
+from amftrack.pipeline.functions.image_processing.experiment_util import orient
 from amftrack.util.aliases import node_coord_dict, binary_image, coord, coord_int
 from amftrack.util.image_analysis import find_image_indexes
 
@@ -58,7 +58,7 @@ class Experiment:
         ]  # (R, t) transformation to go from timestep referential to general referential
         self.image_paths: List[List[str]]  # full paths to each images for each timestep
         self.hyphaes = None
-
+        self.corresps = {}
     def __repr__(self):
         return f"Experiment({self.directory}, {self.plate})"
 
@@ -86,10 +86,10 @@ class Experiment:
             directory_name = get_dirname(date, self.plate)
             path_snap = os.path.join(self.directory, directory_name)
             if labeled:
-                suffix = "/Analysis/nx_graph_pruned_labeled.p"
+                suffix = "Analysis/nx_graph_pruned_labeled.p"
             else:
-                suffix = "/Analysis/nx_graph_pruned.p"
-            path_save = path_snap + suffix
+                suffix = "Analysis/nx_graph_pruned.p"
+            path_save = os.path.join(path_snap,suffix)
             (g, pos) = pickle.load(open(path_save, "rb"))
             nx_graph_poss.append((g, pos))
 
@@ -745,8 +745,8 @@ class Node:
             plot_t_tp1(
                 [self.label],
                 [self.label],
-                {self.label: (posimg[1][i], posimg[0][i])},
-                {self.label: (posimgp1[1][ip1], posimgp1[0][ip1])},
+                {self.label: (posimg[i][0], posimg[i][1])},
+                {self.label: (posimgp1[ip1][0], posimgp1[ip1][1])},
                 ims[i],
                 imsp1[ip1],
             )
@@ -754,7 +754,7 @@ class Node:
             plot_t_tp1(
                 [self.label],
                 [],
-                {self.label: (posimg[1][i], posimg[0][i])},
+                {self.label: (posimg[i][0], posimg[i][1])},
                 None,
                 ims[i],
                 ims[i],

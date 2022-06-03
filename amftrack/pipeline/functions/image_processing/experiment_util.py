@@ -455,3 +455,11 @@ if __name__ == "__main__":
         segments=[[[11191, 39042], [11923, 45165]]],
         nodes=[Node(10, exp), Node(100, exp), Node(200, exp)],
     )
+
+
+def orient(pixel_list, root_pos):
+    """Orients a pixel list with the root position at the begining"""
+    if np.all(root_pos == pixel_list[0]):
+        return pixel_list
+    else:
+        return list(reversed(pixel_list))
