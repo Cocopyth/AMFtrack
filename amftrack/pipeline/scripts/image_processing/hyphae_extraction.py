@@ -46,7 +46,7 @@ for index in indexes:
     select_folder_names = folder_list[start:stop]
     plate = int(folder_list[0].split("_")[-1][5:])
     # confusion between plate number and position in Prince
-    exp = Experiment(plate, directory)
+    exp = Experiment(directory)
     select_folders = run_info.loc[run_info["folder"].isin(select_folder_names)]
     exp.load(select_folders, labeled)
     exp.dates.sort()

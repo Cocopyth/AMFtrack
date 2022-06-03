@@ -23,7 +23,7 @@ folder_list.sort()
 directory_name = folder_list[i]
 plate = int(directory_name.split("_")[-1][5:])
 
-exp = Experiment(plate, directory)
+exp = Experiment(directory)
 exp.load(run_info.loc[run_info["folder"] == directory_name], labeled=False)
 path_snap = directory + directory_name
 suffix = "/Analysis/nx_graph_pruned.p"
