@@ -1,6 +1,6 @@
 from datetime import datetime
 from subprocess import call, DEVNULL
-from amftrack.util.sys import get_dates_datetime, get_dirname, path_code, temp_path, slurm_path
+from amftrack.util.sys import path_code, temp_path, slurm_path,slurm_path_transfer
 import os
 from copy import copy
 from time import time_ns
@@ -14,17 +14,17 @@ directory_sun = "/run/user/357100554/gvfs/smb-share:server=sun.amolf.nl,share=sh
 
 path_bash = os.getenv("HOME") + "/bash/"
 
-path_job = os.getenv("HOME") + "/bash/job.sh"
 path_stitch = os.getenv("HOME") + "/bash/stitch.sh"
 
 def call_code(path_job,dependency):
-    if not dependency is None:
+    if not dependency:
         call(f"sbatch {path_job}", shell=True)
     else:
         call(f"sbatch --dependency=singleton {path_job}", shell=True)
 
-def run_parallel(code, args, folders, num_parallel, time, name, cpus=128, node="thin", dependency=None
+def run_parallel(code, args, folders, num_parallel, time, name, cpus=128, node="thin", dependency=None,   name_job="job.sh"
 ):
+    path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     length = len(folders)
@@ -56,8 +56,10 @@ def run_parallel(code, args, folders, num_parallel, time, name, cpus=128, node="
         call_code(path_job,dependency)
 
 def run_parallel_all_time(
-    code, args, folders, num_parallel, time, name, cpus=128, node="thin", dependency=None
+    code, args, folders, num_parallel, time, name, cpus=128, node="thin", dependency=None,   name_job="job.sh",
+
 ):
+    path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     plates = set(folders["Plate"].values)
@@ -102,7 +104,7 @@ def run_parallel_post(
     cpus=128,
     node="thin",
     name_job="post",
-    dependency=None
+    dependency=False
 ):
     path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
@@ -218,7 +220,7 @@ def run_parallel_transfer(
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
         my_file.write(
-            f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
+            f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
         my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
         my_file.write(f"conda activate amftrack\n")

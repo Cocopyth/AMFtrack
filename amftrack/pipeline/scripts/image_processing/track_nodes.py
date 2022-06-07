@@ -16,6 +16,7 @@ run_info = pd.read_json(f"{temp_path}/{op_id}.json", convert_dates=True)
 run_info["datetime"] = pd.to_datetime(run_info["date"], format="%d.%m.%Y, %H:%M:"
 )
 folders = run_info.sort_values('datetime')
+print(folders.iloc[:10]["date"])
 select = folders.iloc[i:i+2]
 exp = Experiment(directory)
 exp.load(select,suffix='_width')
