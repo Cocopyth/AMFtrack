@@ -261,6 +261,7 @@ def second_identification(
     exp.corresps[t]=corresp_tips
     if save:
         target = get_corresp_path(exp,t,tp1)
+        print(target)
         with open(target, "w") as jsonf:
             json.dump(corresp_tips, jsonf, indent=4)
     return (corresp_tips)
@@ -284,15 +285,17 @@ def get_corresp_path(exp,t, tp1):
 def create_corresp(exp):
     for t in range(exp.ts - 1):
         tp1 = t + 1
-        corresp = second_identification(exp, t, tp1,
+        second_identification(exp, t, tp1,
                                         length_id=200,
                                         tolerance=50, save=True
                                         )
 
 
+
 def create_labeled_graph(exp):
     corresp_list = []
     for t in range(exp.ts - 1):
+        print(t,'ae')
         tp1 = t + 1
         corresp_path = get_corresp_path(exp,t, tp1)
         assert os.path.exists(corresp_path), "Not all corresp exist"

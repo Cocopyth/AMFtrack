@@ -32,6 +32,8 @@ test_path = os.path.join(storage_path, "test/",)  # repository used for tests
 pastis_path = env_config.get("PASTIS_PATH")
 temp_path = env_config.get("TEMP_PATH")
 slurm_path = env_config.get("SLURM_PATH")
+slurm_path = env_config.get("SLURM_PATH")
+slurm_path_transfer = env_config.get("SLURM_PATH_transfer")
 
 
 def pad_number(number):
@@ -270,6 +272,9 @@ def get_data_info(local=False):
     data_info["unique_id"] = (
         data_info["Plate"].astype(str) + "_" + data_info["CrossDate"].str.replace("'","").astype(str)
     )
+
+    data_info["datetime"] = pd.to_datetime(data_info["date"], format="%d.%m.%Y, %H:%M:"
+                                          )
     return data_info
 
 
