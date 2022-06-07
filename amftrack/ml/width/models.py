@@ -117,7 +117,7 @@ def build_model_dense(hp):
     This function generates models of type MLP of different size.
     It is a small base line.
     """
-    input_size = hp.Fixed("input_size", value=120)
+    input_size = hp.Fixed("input_size", value=80)
     inputs = tf.keras.Input(shape=(input_size, 1))
     reshaping = tf.keras.layers.Reshape((input_size,))(inputs)
     scaling = keras.layers.Rescaling(scale=1.0 / 127.5, offset=-1)(reshaping)
@@ -152,7 +152,7 @@ def build_model_conv(hp):
     """
     This function builds a model made of 1D convolutions followed by a dense network
     """
-    input_size = hp.Fixed("input_size", value=120)
+    input_size = hp.Fixed("input_size", value=80)
     inputs = tf.keras.Input(shape=(input_size, 1))
     scaling = keras.layers.Rescaling(scale=1.0 / 127.5, offset=-1)(inputs)
     x = scaling
@@ -172,6 +172,7 @@ def build_model_conv(hp):
         x = tf.keras.layers.MaxPooling1D(pool_size=2)(x)
     elif pooling == "avg":
         x = tf.keras.layers.AveragePooling1D(pool_size=2)(x)
+    x = tf.keras.layers.Flatten()(x)
     hidden_size = hp.Int("hidden_size", 10, 100, step=32, default=32)
     for i in range(hp.Int("dense_blocks", 1, 3, default=1)):
         x = tf.keras.layers.Dense(
