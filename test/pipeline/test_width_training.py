@@ -38,8 +38,8 @@ class TestWidthTraining(unittest.TestCase):
         directory_name = folder_list[i]
         cls.exp = Experiment(directory)
         cls.exp.load(
-            selected_df.loc[selected_df["folder"] == directory_name], suffix=''
-       )
+            selected_df.loc[selected_df["folder"] == directory_name], suffix=""
+        )
         cls.exp.load_tile_information(0)
 
     def test_label_egdes(self):

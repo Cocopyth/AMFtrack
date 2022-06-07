@@ -44,7 +44,8 @@ from skimage.feature import hessian_matrix_det
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Edge,
-    Node, orient,
+    Node,
+    orient,
 )
 from amftrack.pipeline.pipeline.paths.directory import (
     run_parallel,

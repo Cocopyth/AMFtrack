@@ -37,7 +37,7 @@ class Experiment:
     """
 
     def __init__(self, directory: str):
-        self.unique_id : str
+        self.unique_id: str
         self.directory = directory  # full directory path
 
         self.folders: List[pd.DataFrame]  # one dataframe per timestep
@@ -57,14 +57,15 @@ class Experiment:
         self.image_paths: List[List[str]]  # full paths to each images for each timestep
         self.hyphaes = None
         self.corresps = {}
+
     def __repr__(self):
         return f"Experiment({self.directory})"
 
-    def load(self, folders: pd.DataFrame, suffix='_labeled'):
+    def load(self, folders: pd.DataFrame, suffix="_labeled"):
         """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
-        assert len(folders['unique_id'].unique()) == 1
-        self.unique_id = folders['unique_id'].unique()[0]
+        assert len(folders["unique_id"].unique()) == 1
+        self.unique_id = folders["unique_id"].unique()[0]
         self.image_coordinates = [None] * len(folders)
         self.image_transformation = [None] * len(folders)
         self.image_paths = [None] * len(folders)
@@ -80,8 +81,8 @@ class Experiment:
             print(date)
             directory_name = get_dirname(date, self.folders)
             path_snap = os.path.join(self.directory, directory_name)
-            file = os.path.join(f"Analysis",f"nx_graph_pruned{suffix}.p")
-            path_save = os.path.join(path_snap,file)
+            file = os.path.join(f"Analysis", f"nx_graph_pruned{suffix}.p")
+            path_save = os.path.join(path_snap, file)
             (g, pos) = pickle.load(open(path_save, "rb"))
             nx_graph_poss.append((g, pos))
 
@@ -101,14 +102,15 @@ class Experiment:
         xpos = [pos[0] for poss in self.positions for pos in poss.values()]
         ypos = [pos[1] for poss in self.positions for pos in poss.values()]
         self.ts = len(self.dates)
-        self.labeled = suffix == '_labeled'
-    def save_graphs(self,suffix):
-        for i,date in enumerate(self.dates):
+        self.labeled = suffix == "_labeled"
+
+    def save_graphs(self, suffix):
+        for i, date in enumerate(self.dates):
             print(date)
             directory_name = get_dirname(date, self.folders)
             path_snap = os.path.join(self.directory, directory_name)
-            file = os.path.join(f"Analysis",f"nx_graph_pruned{suffix}.p")
-            path_save = os.path.join(path_snap,file)
+            file = os.path.join(f"Analysis", f"nx_graph_pruned{suffix}.p")
+            path_save = os.path.join(path_snap, file)
             # print(path_save)
             g = self.nx_graph[i]
             pos = self.positions[i]
@@ -498,7 +500,7 @@ class Experiment:
             plt.show()
 
 
-def save_graphs(exp,suf=2):
+def save_graphs(exp, suf=2):
     for i, date in enumerate(exp.dates):
         directory_name = get_dirname(date, exp.folders)
         path_snap = exp.directory + directory_name
@@ -1147,7 +1149,7 @@ if __name__ == "__main__":
     folder_list = list(selected_df["folder"])
     directory_name = folder_list[i]
     exp = Experiment(directory)
-    exp.load(selected_df.loc[selected_df["folder"] == directory_name], suffix='')
+    exp.load(selected_df.loc[selected_df["folder"] == directory_name], suffix="")
     exp.load_tile_information(0)
 
     a = 0

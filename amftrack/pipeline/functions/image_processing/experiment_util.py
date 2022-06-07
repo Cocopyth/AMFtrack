@@ -419,7 +419,7 @@ if __name__ == "__main__":
     folder_list = list(selected_df["folder"])
     directory_name = folder_list[i]
     exp = Experiment(directory)
-    exp.load(selected_df.loc[selected_df["folder"] == directory_name], suffix='')
+    exp.load(selected_df.loc[selected_df["folder"] == directory_name], suffix="")
     exp.load_tile_information(0)
     # plot_full_image(exp, 0, downsizing=20)
 
@@ -450,5 +450,3 @@ if __name__ == "__main__":
         segments=[[[11191, 39042], [11923, 45165]]],
         nodes=[Node(10, exp), Node(100, exp), Node(200, exp)],
     )
-
-

@@ -4,7 +4,10 @@ import networkx as nx
 from copy import deepcopy
 
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
-from amftrack.pipeline.functions.image_processing.node_id_2 import reconnect_degree_2, node_dist
+from amftrack.pipeline.functions.image_processing.node_id_2 import (
+    reconnect_degree_2,
+    node_dist,
+)
 from amftrack.sparse_util import dilate
 from scipy.optimize import minimize
 from time import time
@@ -21,8 +24,8 @@ def first_identification(nx_graph_tm1, nx_graph_t, pos_tm1, pos_t, tolerance):
     degree_3sup_nodes_t = [
         node for node in nx_graph_t.nodes if nx_graph_t.degree(node) >= 3
     ]
-    Stm1 = sparse.csr_matrix((30000, 60000),dtype=int)
-    St = sparse.csr_matrix((30000, 60000),dtype=int)
+    Stm1 = sparse.csr_matrix((30000, 60000), dtype=int)
+    St = sparse.csr_matrix((30000, 60000), dtype=int)
     for node in degree_3sup_nodes_tm1:
         Stm1[pos_tm1[node][0], pos_tm1[node][1]] = node
     for node in degree_3sup_nodes_t:
@@ -134,8 +137,10 @@ def reduce_labels(nx_graph_list, pos_list):
         all_node_labels = all_node_labels.union(set(nx_graph.nodes))
     all_node_labels = sorted(all_node_labels)
     dico = {node: all_node_labels.index(node) for node in all_node_labels}
+
     def mapping(node):
         return dico[node]
+
     for i, nx_graph in enumerate(nx_graph_list):
         for node in nx_graph.nodes:
             pos = pos_list[i][node]
@@ -815,7 +820,8 @@ def remove_spurs(nx_g, pos, threshold=100):
         reconnect_degree_2(nx_g, pos, has_width=False)
     return (nx_g, pos)
 
-def find_closest_edge(tip, Sedge,nx_graph_t,pos_t,nx_graph_tm1,pos_tm1):
+
+def find_closest_edge(tip, Sedge, nx_graph_t, pos_t, nx_graph_tm1, pos_tm1):
     mini1 = np.inf
     posanchor = pos_tm1[tip]
     window = 1000
@@ -827,10 +833,7 @@ def find_closest_edge(tip, Sedge,nx_graph_t,pos_t,nx_graph_tm1,pos_tm1):
     for node_root in potential_surrounding_t.data:
         for edge in nx_graph_t.edges(int(node_root)):
             pixel_list = nx_graph_t.get_edge_data(*edge)["pixel_list"]
-            if (
-                np.linalg.norm(np.array(pixel_list[0]) - np.array(pos_tm1[tip]))
-                <= 5000
-            ):
+            if np.linalg.norm(np.array(pixel_list[0]) - np.array(pos_tm1[tip])) <= 5000:
                 distance = np.min(
                     np.linalg.norm(
                         np.array(pixel_list) - np.array(pos_tm1[tip]), axis=1
@@ -841,12 +844,10 @@ def find_closest_edge(tip, Sedge,nx_graph_t,pos_t,nx_graph_tm1,pos_tm1):
                     right_edge = edge
     if mini == np.inf:
         print(f"didnt find a tip to match tip in pos {posanchor}")
-        return(None,None,None,None)
+        return (None, None, None, None)
     origin = np.array(
         orient(
-            nx_graph_tm1.get_edge_data(*list(nx_graph_tm1.edges(tip))[0])[
-                "pixel_list"
-            ],
+            nx_graph_tm1.get_edge_data(*list(nx_graph_tm1.edges(tip))[0])["pixel_list"],
             pos_tm1[tip],
         )
     )
@@ -873,14 +874,27 @@ def find_closest_edge(tip, Sedge,nx_graph_t,pos_t,nx_graph_tm1,pos_tm1):
             pos_t[current_node],
         )
     )
-    return(last_node, next_node,last_branch,current_node)
+    return (last_node, next_node, last_branch, current_node)
 
-def track(tip,current_node,last_branch,last_node,length_id,nx_graph_t,pos_t,nx_graph_tm1,pos_tm1,corresp_tips,ambiguous,identified):
+
+def track(
+    tip,
+    current_node,
+    last_branch,
+    last_node,
+    length_id,
+    nx_graph_t,
+    pos_t,
+    nx_graph_tm1,
+    pos_tm1,
+    corresp_tips,
+    ambiguous,
+    identified,
+):
     i = 0
     loop = []
     while (
-        nx_graph_t.degree(current_node) != 1
-        and not current_node in identified
+        nx_graph_t.degree(current_node) != 1 and not current_node in identified
     ):  # Careful : if there is a cycle with low angle this might loop indefinitely but unprobable
         i += 1
         if i >= 100:
@@ -931,11 +945,16 @@ def track(tip,current_node,last_branch,last_node,length_id,nx_graph_t,pos_t,nx_g
                 break
             else:
                 loop.append(next_node)
-        assert len(candidate_vectors) >= 2,"candidate_vectors < 2"
+        assert len(candidate_vectors) >= 2, "candidate_vectors < 2"
         edge_couples = itertools.combinations(candidate_vectors, 2)
-        competitor = np.max([np.arccos(np.dot(candidate_vectors[0], -candidate_vectors[1])) for candidate_vectors in edge_couples])
-        #Look if the continuation is indeed best, including the case of degree 4 or more. This is a difficult ambiguous case. Handling is what it is
-                            #Then candidate vectors is longer than 2.
+        competitor = np.max(
+            [
+                np.arccos(np.dot(candidate_vectors[0], -candidate_vectors[1]))
+                for candidate_vectors in edge_couples
+            ]
+        )
+        # Look if the continuation is indeed best, including the case of degree 4 or more. This is a difficult ambiguous case. Handling is what it is
+        # Then candidate vectors is longer than 2.
         if mini < competitor:
             current_node, last_node = next_node, current_node
         else:
@@ -949,9 +968,10 @@ def track(tip,current_node,last_branch,last_node,length_id,nx_graph_t,pos_t,nx_g
         if current_node in corresp_tips.values():
             ambiguous.add(tip)
         corresp_tips[tip] = current_node
-    return(ambiguous,corresp_tips)
+    return (ambiguous, corresp_tips)
 
-def handle_ambiguous(ambiguous,corresp_tips,pos_tm1,pos_t):
+
+def handle_ambiguous(ambiguous, corresp_tips, pos_tm1, pos_t):
     while len(ambiguous) > 0:  # improve ambiguity resolving!
         node = ambiguous.pop()
         identifier = corresp_tips[node]
@@ -968,7 +988,7 @@ def handle_ambiguous(ambiguous,corresp_tips,pos_tm1,pos_t):
             if candidate != right_candidate:
                 corresp_tips.pop(candidate)
                 ambiguous.discard(candidate)
-    return(corresp_tips)
+    return corresp_tips
 
 
 def second_identification_new(
@@ -988,7 +1008,7 @@ def second_identification_new(
     corresp_tips = {node: corresp[node] for node in corresp.keys()}
     tips = [node for node in nx_graph_tm1.nodes if nx_graph_tm1.degree(node) == 1]
     ambiguous = set()
-    Sedge = sparse.csr_matrix((30000, 60000),dtype=int)
+    Sedge = sparse.csr_matrix((30000, 60000), dtype=int)
     for edge in nx_graph_t.edges:
         pixel_list = nx_graph_t.get_edge_data(*edge)["pixel_list"]
         pixela = pixel_list[0]
@@ -996,9 +1016,24 @@ def second_identification_new(
         Sedge[pixela[0], pixela[1]] = edge[0]
         Sedge[pixelb[0], pixelb[1]] = edge[1]
     for i, tip in enumerate(tips):
-        last_node, next_node,last_branch,current_node = find_closest_edge(tip, Sedge,nx_graph_t,pos_t,nx_graph_tm1,pos_tm1)
+        last_node, next_node, last_branch, current_node = find_closest_edge(
+            tip, Sedge, nx_graph_t, pos_t, nx_graph_tm1, pos_tm1
+        )
         if last_node is None:
             continue
-        ambiguous,corresp_tips = track(tip,current_node,last_branch,last_node,length_id,nx_graph_t,pos_t,nx_graph_tm1,pos_tm1,corresp_tips,ambiguous,identified)
-    corresp_tips = handle_ambiguous(ambiguous,corresp_tips,pos_tm1,pos_t)
-    return (corresp_tips)
+        ambiguous, corresp_tips = track(
+            tip,
+            current_node,
+            last_branch,
+            last_node,
+            length_id,
+            nx_graph_t,
+            pos_t,
+            nx_graph_tm1,
+            pos_tm1,
+            corresp_tips,
+            ambiguous,
+            identified,
+        )
+    corresp_tips = handle_ambiguous(ambiguous, corresp_tips, pos_tm1, pos_t)
+    return corresp_tips

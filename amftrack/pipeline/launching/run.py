@@ -77,7 +77,7 @@ def run(
     args: List,
     folders: pd.DataFrame,
     loc_code="pipeline/scripts/image_processing/",
-    pyt_vers ='3'
+    pyt_vers="3",
 ) -> None:
     """
     Run the chosen script `code` localy.

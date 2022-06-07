@@ -1,6 +1,6 @@
 from datetime import datetime
 from subprocess import call, DEVNULL
-from amftrack.util.sys import path_code, temp_path, slurm_path,slurm_path_transfer
+from amftrack.util.sys import path_code, temp_path, slurm_path, slurm_path_transfer
 import os
 from copy import copy
 from time import time_ns
@@ -16,13 +16,25 @@ path_bash = os.getenv("HOME") + "/bash/"
 
 path_stitch = os.getenv("HOME") + "/bash/stitch.sh"
 
-def call_code(path_job,dependency):
+
+def call_code(path_job, dependency):
     if not dependency:
         call(f"sbatch {path_job}", shell=True)
     else:
         call(f"sbatch --dependency=singleton {path_job}", shell=True)
 
-def run_parallel(code, args, folders, num_parallel, time, name, cpus=128, node="thin", dependency=None,   name_job="job.sh"
+
+def run_parallel(
+    code,
+    args,
+    folders,
+    num_parallel,
+    time,
+    name,
+    cpus=128,
+    node="thin",
+    dependency=None,
+    name_job="job.sh",
 ):
     path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
@@ -53,11 +65,20 @@ def run_parallel(code, args, folders, num_parallel, time, name, cpus=128, node="
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call_code(path_job,dependency)
+        call_code(path_job, dependency)
+
 
 def run_parallel_all_time(
-    code, args, folders, num_parallel, time, name, cpus=128, node="thin", dependency=None,   name_job="job.sh",
-
+    code,
+    args,
+    folders,
+    num_parallel,
+    time,
+    name,
+    cpus=128,
+    node="thin",
+    dependency=None,
+    name_job="job.sh",
 ):
     path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
@@ -89,7 +110,7 @@ def run_parallel_all_time(
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call_code(path_job,dependency)
+        call_code(path_job, dependency)
 
 
 def run_parallel_post(
@@ -104,14 +125,12 @@ def run_parallel_post(
     cpus=128,
     node="thin",
     name_job="post",
-    dependency=False
+    dependency=False,
 ):
     path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
-    pickle.dump(
-        (list_f, list_args), open(f"{temp_path}/{op_id}.pick", "wb")
-    )
+    pickle.dump((list_f, list_args), open(f"{temp_path}/{op_id}.pick", "wb"))
     length = len(folders)
     begin_skel = 0
     end_skel = length // num_parallel + 1
@@ -139,7 +158,7 @@ def run_parallel_post(
         my_file.write("wait\n")
         my_file.close()
         call(f"sbatch {path_job }", shell=True)
-        call_code(path_job,dependency)
+        call_code(path_job, dependency)
 
 
 def make_stitching_loop(directory, dirname, op_id):
@@ -231,7 +250,7 @@ def run_parallel_transfer(
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job}", shell=True,stdout=DEVNULL)
+        call(f"sbatch {path_job}", shell=True, stdout=DEVNULL)
 
 
 def run_parallel_transfer_to_archive(
