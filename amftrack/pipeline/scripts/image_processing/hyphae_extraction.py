@@ -41,7 +41,7 @@ indexes = [index for index in indexes if index < limit]
 indexes.sort()
 indexes += [limit]
 start = 0
-labeled = suffix =='_labeled'
+labeled = suffix == "_labeled"
 for index in indexes:
     stop = index
     select_folder_names = folder_list[start:stop]

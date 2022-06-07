@@ -22,5 +22,9 @@ API = str(np.load("/home/cbisot/pycode/API_drop.npy"))
 
 path_zip = f"/scratch-shared/amftrack/temp/{directory_name}.zip"
 zip_file(path_snap, path_zip)
-upload(path_zip, f"/{dir_drop}/{id_unique}/{directory_name}.zip", chunk_size=256 * 1024 * 1024)
+upload(
+    path_zip,
+    f"/{dir_drop}/{id_unique}/{directory_name}.zip",
+    chunk_size=256 * 1024 * 1024,
+)
 os.remove(path_zip)

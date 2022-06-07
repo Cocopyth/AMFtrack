@@ -12,5 +12,5 @@ directory = str(sys.argv[1])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 run_info = pd.read_json(f"{temp_path}/{op_id}.json")
-folders = run_info.iloc[i:i+1]
-download_folders_old(folders,directory)
+folders = run_info.iloc[i : i + 1]
+download_folders_old(folders, directory)

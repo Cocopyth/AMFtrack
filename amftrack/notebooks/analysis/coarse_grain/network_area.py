@@ -37,7 +37,8 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Edge,
     Node,
     Hyphae,
-    plot_raw_plus, orient,
+    plot_raw_plus,
+    orient,
 )
 from amftrack.pipeline.pipeline.paths.directory import (
     run_parallel,

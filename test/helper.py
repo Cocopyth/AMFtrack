@@ -76,7 +76,7 @@ def make_experiment_object():
     i = 0
     # directory_name = folder_list[i]
     exp = Experiment(directory)
-    exp.load(selected_df, suffix='')
+    exp.load(selected_df, suffix="")
     exp.load_tile_information(0)
     return exp
 

@@ -28,7 +28,10 @@ path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 target = env_config.get("DATA_PATH")
 storage_path = env_config.get("STORAGE_PATH")
 fiji_path = env_config.get("FIJI_PATH")
-test_path = os.path.join(storage_path, "test/",)  # repository used for tests
+test_path = os.path.join(
+    storage_path,
+    "test/",
+)  # repository used for tests
 pastis_path = env_config.get("PASTIS_PATH")
 temp_path = env_config.get("TEMP_PATH")
 slurm_path = env_config.get("SLURM_PATH")
@@ -86,9 +89,9 @@ def get_dates_datetime(directory, plate):
 
 
 def get_dirname(date, folders):
-    select = folders.loc[folders['datetime']==date]['folder']
+    select = folders.loc[folders["datetime"] == date]["folder"]
     print(len(select))
-    assert len(select)==1
+    assert len(select) == 1
     return select.iloc[0]
 
 
@@ -270,11 +273,12 @@ def get_data_info(local=False):
     data_info.index.name = "total_path"
     data_info.reset_index(inplace=True)
     data_info["unique_id"] = (
-        data_info["Plate"].astype(str) + "_" + data_info["CrossDate"].str.replace("'","").astype(str)
+        data_info["Plate"].astype(str)
+        + "_"
+        + data_info["CrossDate"].str.replace("'", "").astype(str)
     )
 
-    data_info["datetime"] = pd.to_datetime(data_info["date"], format="%d.%m.%Y, %H:%M:"
-                                          )
+    data_info["datetime"] = pd.to_datetime(data_info["date"], format="%d.%m.%Y, %H:%M:")
     return data_info
 
 
