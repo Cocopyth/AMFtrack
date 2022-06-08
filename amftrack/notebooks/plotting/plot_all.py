@@ -13,7 +13,6 @@ import ast
 from amftrack.plotutil import plot_t_tp1
 from scipy import sparse
 from datetime import datetime
-from amftrack.pipeline.functions.image_processing.node_id import orient
 import pickle
 import scipy.io as sio
 from pymatreader import read_mat
@@ -35,6 +34,7 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
 from skimage.feature import hessian_matrix_det
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
+    orient,
 )
 from amftrack.pipeline.pipeline.paths.directory import (
     run_parallel,

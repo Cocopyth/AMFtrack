@@ -54,10 +54,18 @@ def make_movie_raw(directory, folders, plate_num, exp, id_unique, args=None):
 
     path_movie = f"{temp_path}/{plate_num}.gif"
     imageio.mimsave(path_movie, img_array, duration=1)
-    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_raw.gif", chunk_size=256 * 1024 * 1024)
+    upload(
+        path_movie,
+        f"/{dir_drop}/{id_unique}/movie_raw.gif",
+        chunk_size=256 * 1024 * 1024,
+    )
     path_movie = f"{temp_path}/{plate_num}.mp4"
     imageio.mimsave(path_movie, img_array)
-    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_raw.mp4", chunk_size=256 * 1024 * 1024)
+    upload(
+        path_movie,
+        f"/{dir_drop}/{id_unique}/movie_raw.mp4",
+        chunk_size=256 * 1024 * 1024,
+    )
 
 
 def make_movie_aligned(directory, folders, plate_num, exp, id_unique, args=None):
@@ -93,10 +101,18 @@ def make_movie_aligned(directory, folders, plate_num, exp, id_unique, args=None)
         img_array.append(img)
     path_movie = f"{temp_path}/{plate_num}.gif"
     imageio.mimsave(path_movie, img_array, duration=1)
-    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_aligned.gif", chunk_size=256 * 1024 * 1024)
+    upload(
+        path_movie,
+        f"/{dir_drop}/{id_unique}/movie_aligned.gif",
+        chunk_size=256 * 1024 * 1024,
+    )
     path_movie = f"{temp_path}/{plate_num}.mp4"
     imageio.mimsave(path_movie, img_array)
-    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_aligned.mp4", chunk_size=256 * 1024 * 1024)
+    upload(
+        path_movie,
+        f"/{dir_drop}/{id_unique}/movie_aligned.mp4",
+        chunk_size=256 * 1024 * 1024,
+    )
 
 
 def make_movie_RH_BAS(directory, folders, plate_num, exp, id_unique, args=None):
@@ -178,10 +194,18 @@ def make_movie_RH_BAS(directory, folders, plate_num, exp, id_unique, args=None):
         img_array.append(img)
     path_movie = f"{temp_path}/{plate_num}_rhbas.gif"
     imageio.mimsave(path_movie, img_array, duration=1)
-    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_rhbas.gif", chunk_size=256 * 1024 * 1024)
+    upload(
+        path_movie,
+        f"/{dir_drop}/{id_unique}/movie_rhbas.gif",
+        chunk_size=256 * 1024 * 1024,
+    )
     path_movie = f"{temp_path}/{plate_num}.mp4"
     imageio.mimsave(path_movie, img_array)
-    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_rhbas.mp4", chunk_size=256 * 1024 * 1024)
+    upload(
+        path_movie,
+        f"/{dir_drop}/{id_unique}/movie_rhbas.mp4",
+        chunk_size=256 * 1024 * 1024,
+    )
 
 
 def make_movie_dens(directory, folders, plate_num, exp, id_unique, args=None):
@@ -257,10 +281,18 @@ def make_movie_dens(directory, folders, plate_num, exp, id_unique, args=None):
         img_array.append(img)
     path_movie = f"{temp_path}/{plate_num}_dens.gif"
     imageio.mimsave(path_movie, img_array, duration=1)
-    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_dens.gif", chunk_size=256 * 1024 * 1024)
+    upload(
+        path_movie,
+        f"/{dir_drop}/{id_unique}/movie_dens.gif",
+        chunk_size=256 * 1024 * 1024,
+    )
     path_movie = f"{temp_path}/{plate_num}_dens.mp4"
     imageio.mimsave(path_movie, img_array)
-    upload(path_movie, f"/{dir_drop}/{id_unique}/movie_dens.mp4", chunk_size=256 * 1024 * 1024)
+    upload(
+        path_movie,
+        f"/{dir_drop}/{id_unique}/movie_dens.mp4",
+        chunk_size=256 * 1024 * 1024,
+    )
 
 
 def plot_anastomosis(directory, folders, plate_num, exp, id_unique, args=None):
@@ -319,5 +351,8 @@ def plot_anastomosis(directory, folders, plate_num, exp, id_unique, args=None):
             path_save = f"{temp_path}/{plate_num}_anas_im{t}_tip{tip.label}"
             plt.savefig(path_save + ".png")
             plt.close(fig)
-            upload(path_save + ".png", f"/{dir_drop}/{id_unique}/anastomosis/{t}_tip{tip.label}.png",
-                   chunk_size=256 * 1024 * 1024)
+            upload(
+                path_save + ".png",
+                f"/{dir_drop}/{id_unique}/anastomosis/{t}_tip{tip.label}.png",
+                chunk_size=256 * 1024 * 1024,
+            )

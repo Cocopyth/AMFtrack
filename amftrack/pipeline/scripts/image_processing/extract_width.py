@@ -1,7 +1,5 @@
-from path import path_code_dir
 import sys
 
-sys.path.insert(0, path_code_dir)
 from amftrack.pipeline.functions.image_processing.extract_width_fun import *
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
@@ -25,8 +23,8 @@ folder_list.sort()
 directory_name = folder_list[i]
 plate = int(directory_name.split("_")[-1][5:])
 
-exp = Experiment(plate, directory)
-exp.load(run_info.loc[run_info["folder"] == directory_name], labeled=False)
+exp = Experiment(directory)
+exp.load(run_info.loc[run_info["folder"] == directory_name], suffix="")
 path_snap = directory + directory_name
 suffix = "/Analysis/nx_graph_pruned.p"
 

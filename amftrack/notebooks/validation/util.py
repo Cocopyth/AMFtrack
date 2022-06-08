@@ -37,7 +37,7 @@ def transform_skeleton_final_for_show(skeleton_doc, Rot, trans):
 
 def get_skeleton_non_aligned(exp, boundaries, t, directory):
     i = t
-    plate = exp.plate
+    plate = exp.prince_pos
     listdir = os.listdir(directory)
     dates = exp.dates
     date = dates[i]

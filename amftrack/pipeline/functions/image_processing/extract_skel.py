@@ -8,7 +8,7 @@ import pandas as pd
 import ast
 from scipy import sparse
 from datetime import datetime
-from amftrack.pipeline.functions.image_processing.node_id import orient
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
 import scipy.io as sio
 import cv2 as cv
 import imageio
@@ -49,23 +49,28 @@ def streline(linelen, degrees):
 def stredisk(radius):
     return cv.getStructuringElement(cv.MORPH_ELLIPSE, (2 * radius - 1, 2 * radius - 1))
 
+
 def remove_component(dilated):
-    nb_components, output, stats, centroids = cv.connectedComponentsWithStats(dilated.astype(np.uint8), connectivity=8)
-#connectedComponentswithStats yields every seperated component with information on each of them, such as size
-#the following part is just taking out the background which is also considered a component, but most of the time we don't want that.
-    sizes = stats[1:, -1]; nb_components = nb_components - 1
+    nb_components, output, stats, centroids = cv.connectedComponentsWithStats(
+        dilated.astype(np.uint8), connectivity=8
+    )
+    # connectedComponentswithStats yields every seperated component with information on each of them, such as size
+    # the following part is just taking out the background which is also considered a component, but most of the time we don't want that.
+    sizes = stats[1:, -1]
+    nb_components = nb_components - 1
 
     # minimum size of particles we want to keep (number of pixels)
-    #here, it's a fixed value, but you can set it as you want, eg the mean of the sizes or whatever
-    min_size = 4000  
+    # here, it's a fixed value, but you can set it as you want, eg the mean of the sizes or whatever
+    min_size = 4000
 
-    #your answer image
+    # your answer image
     img_f = np.zeros((dilated.shape))
-    #for every component in the image, you keep it only if it's above min_size
+    # for every component in the image, you keep it only if it's above min_size
     for i in range(0, nb_components):
         if sizes[i] >= min_size:
             img_f[output == i + 1] = 1
-    return(np.array(255*img_f,dtype=np.uint8))
+    return np.array(255 * img_f, dtype=np.uint8)
+
 
 def bowler_hat(im, no, si):
     o = np.linspace(0, 180, no)
@@ -90,35 +95,39 @@ def bowler_hat(im, no, si):
     imda = (imda - np.min(imda[:])) / (np.max(imda[:]) - np.min(imda[:]))
     return imda
 
-def extract_skel_new_prince(im, params,perc_low,perc_high):
-    bowled = bowler_hat(-im,32,params)
+
+def extract_skel_new_prince(im, params, perc_low, perc_high):
+    bowled = bowler_hat(-im, 32, params)
     filename = time_ns()
     place_save = temp_path
-    to_smooth = (bowled*255)
+    to_smooth = bowled * 255
     # to_smooth = 255-im
-    imtransformed_path = f'{place_save}/{filename}.tif'
-    imageio.imsave(imtransformed_path,to_smooth.astype(np.uint8))
+    imtransformed_path = f"{place_save}/{filename}.tif"
+    imageio.imsave(imtransformed_path, to_smooth.astype(np.uint8))
     path_anis = pastis_path
     args = [0.1, 7, 0.9, 10, 50]
-    command = [path_anis,imtransformed_path]+args
+    command = [path_anis, imtransformed_path] + args
     command = [str(elem) for elem in command]
-    process = subprocess.run(command,cwd = place_save, stdout=subprocess.DEVNULL)
-    foldname = f'{filename}_ani-K{int(args[0]*10)}s{args[1]}g{int(args[2]*10)}itD{args[3]}'
-    imname = foldname+f'/{foldname}it{args[4]}.tif'
-    path_modif = place_save +"/"+ imname
+    process = subprocess.run(command, cwd=place_save, stdout=subprocess.DEVNULL)
+    foldname = (
+        f"{filename}_ani-K{int(args[0]*10)}s{args[1]}g{int(args[2]*10)}itD{args[3]}"
+    )
+    imname = foldname + f"/{foldname}it{args[4]}.tif"
+    path_modif = place_save + "/" + imname
     im2 = imageio.imread(path_modif)
-    low = max(20,np.percentile(im2, perc_low))
-    high = max(90,np.percentile(im2, perc_high))
+    low = max(20, np.percentile(im2, perc_low))
+    high = max(90, np.percentile(im2, perc_high))
     # transformed = -img+255
     transformed = im2
     hyst = filters.apply_hysteresis_threshold(transformed, low, high)
     dilated = remove_holes(hyst)
     dilated = dilated.astype(np.uint8)
     connected = remove_component(dilated)
-    
-    return(connected)
 
-def extend_tip(skeletonized,dilated,dist):
+    return connected
+
+
+def extend_tip(skeletonized, dilated, dist):
     img2 = np.zeros((dilated.shape))
     nx_g = generate_nx_graph(
         from_sparse_to_graph(scipy.sparse.dok_matrix(skeletonized))
@@ -164,13 +173,15 @@ def extend_tip(skeletonized,dilated,dist):
     )  # recent addition for agg, careful
     return dilation > 0
 
+
 def remove_holes(hyst):
     kernel = np.ones((3, 3), np.uint8)
     dilation = cv.dilate(hyst.astype(np.uint8) * 255, kernel, iterations=1)
     for i in range(3):
         dilation = cv.erode(dilation.astype(np.uint8) * 255, kernel, iterations=1)
         dilation = cv.dilate(dilation.astype(np.uint8) * 255, kernel, iterations=1)
-    return(dilation>0)
+    return dilation > 0
+
 
 def extract_skel_tip_ext(im, low, high, dist):
     im_cropped = im
@@ -189,25 +200,37 @@ def extract_skel_tip_ext(im, low, high, dist):
     dilated = dilated.astype(np.uint8)
     connected = remove_component(dilated)
     skeletonized = cv.ximgproc.thinning(connected)
-    dilation = extend_tip(skeletonized,dilated,dist)
+    dilation = extend_tip(skeletonized, dilated, dist)
     return dilation
 
-def make_back_sub(directory,dirname,op_id):
-    a_file = open(f'{path_code}pipeline/scripts/stitching_loops/background_substract.ijm',"r")
+
+def make_back_sub(directory, dirname, op_id):
+    a_file = open(
+        f"{path_code}pipeline/scripts/stitching_loops/background_substract.ijm", "r"
+    )
 
     list_of_lines = a_file.readlines()
 
-    list_of_lines[4] = f'mainDirectory = \u0022{directory}\u0022 ;\n'
-    list_of_lines[29] = f'\t if(startsWith(list[i],\u0022{dirname}\u0022)) \u007b\n'
-    file_name = f'{temp_path}/stitching_loops/background_substract{op_id}.ijm'
+    list_of_lines[4] = f"mainDirectory = \u0022{directory}\u0022 ;\n"
+    list_of_lines[29] = f"\t if(startsWith(list[i],\u0022{dirname}\u0022)) \u007b\n"
+    file_name = f"{temp_path}/stitching_loops/background_substract{op_id}.ijm"
     a_file = open(file_name, "w")
 
     a_file.writelines(list_of_lines)
 
     a_file.close()
-    
-def run_back_sub(directory, folder):  
+
+
+def run_back_sub(directory, folder):
     op_id = time_ns()
-    make_back_sub(directory,folder,op_id)
-    command = [fiji_path,'--mem=8000m','--headless','--ij2','--console','-macro',f'{os.getenv("TEMP")}/stitching_loops/background_substract{op_id}.ijm']
-    process = subprocess.run(command,stdout=subprocess.DEVNULL)
+    make_back_sub(directory, folder, op_id)
+    command = [
+        fiji_path,
+        "--mem=8000m",
+        "--headless",
+        "--ij2",
+        "--console",
+        "-macro",
+        f'{os.getenv("TEMP")}/stitching_loops/background_substract{op_id}.ijm',
+    ]
+    process = subprocess.run(command, stdout=subprocess.DEVNULL)
