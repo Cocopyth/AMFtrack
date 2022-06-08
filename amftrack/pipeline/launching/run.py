@@ -78,6 +78,7 @@ def run(
     args: List,
     folders: pd.DataFrame,
     loc_code="pipeline/scripts/image_processing/",
+    pyt_vers="3",
 ) -> None:
     """
     Run the chosen script `code` localy.
@@ -93,7 +94,7 @@ def run(
     with tqdm(total=len(folder_list), desc="folder_treated") as pbar:
         for index, folder in enumerate(folder_list):
             command = (
-                ["python3", f"{path_code}{loc_code}{code}"]
+                [f"python{pyt_vers}", f"{path_code}{loc_code}{code}"]
                 + args_str
                 + [f"{op_id}", f"{index}"]
             )

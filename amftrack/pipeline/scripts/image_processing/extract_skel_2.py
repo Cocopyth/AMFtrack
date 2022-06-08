@@ -1,8 +1,6 @@
-from path import path_code_dir
 import sys
 import os
 
-sys.path.insert(0, path_code_dir)
 from amftrack.util.sys import get_dirname, temp_path
 import pandas as pd
 import ast

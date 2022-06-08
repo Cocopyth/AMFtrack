@@ -1,6 +1,6 @@
 from datetime import datetime
-from subprocess import call
-from amftrack.util.sys import get_dates_datetime, get_dirname, path_code, temp_path, slurm_path
+from subprocess import call, DEVNULL
+from amftrack.util.sys import path_code, temp_path, slurm_path, slurm_path_transfer
 import os
 from copy import copy
 from time import time_ns
@@ -14,12 +14,29 @@ directory_sun = "/run/user/357100554/gvfs/smb-share:server=sun.amolf.nl,share=sh
 
 path_bash = os.getenv("HOME") + "/bash/"
 
-path_job = os.getenv("HOME") + "/bash/job.sh"
 path_stitch = os.getenv("HOME") + "/bash/stitch.sh"
 
 
+def call_code(path_job, dependency):
+    if not dependency:
+        call(f"sbatch {path_job}", shell=True)
+    else:
+        call(f"sbatch --dependency=singleton {path_job}", shell=True)
 
-def run_parallel(code, args, folders, num_parallel, time, name, cpus=128, node="thin"):
+
+def run_parallel(
+    code,
+    args,
+    folders,
+    num_parallel,
+    time,
+    name,
+    cpus=128,
+    node="thin",
+    dependency=None,
+    name_job="job.sh",
+):
+    path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     length = len(folders)
@@ -48,12 +65,22 @@ def run_parallel(code, args, folders, num_parallel, time, name, cpus=128, node="
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job}", shell=True)
+        call_code(path_job, dependency)
 
 
 def run_parallel_all_time(
-    code, args, folders, num_parallel, time, name, cpus=128, node="thin"
+    code,
+    args,
+    folders,
+    num_parallel,
+    time,
+    name,
+    cpus=128,
+    node="thin",
+    dependency=None,
+    name_job="job.sh",
 ):
+    path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     plates = set(folders["Plate"].values)
@@ -83,7 +110,7 @@ def run_parallel_all_time(
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job}", shell=True)
+        call_code(path_job, dependency)
 
 
 def run_parallel_post(
@@ -98,13 +125,12 @@ def run_parallel_post(
     cpus=128,
     node="thin",
     name_job="post",
+    dependency=False,
 ):
     path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
-    pickle.dump(
-        (list_f, list_args), open(f"{temp_path}/{op_id}.pick", "wb")
-    )
+    pickle.dump((list_f, list_args), open(f"{temp_path}/{op_id}.pick", "wb"))
     length = len(folders)
     begin_skel = 0
     end_skel = length // num_parallel + 1
@@ -132,20 +158,7 @@ def run_parallel_post(
         my_file.write("wait\n")
         my_file.close()
         call(f"sbatch {path_job }", shell=True)
-
-
-def check_state(plate, begin, end, file, directory):
-    not_exist = []
-    dates_datetime = get_dates_datetime(directory, plate)
-    dates_datetime_chosen = dates_datetime[begin : end + 1]
-    dates = dates_datetime_chosen
-    for i, date in enumerate(dates):
-        directory_name = get_dirname(date, plate)
-        path_snap = directory + directory_name
-        stage = os.path.exists(path_snap + file)
-        if not stage:
-            not_exist.append((date, i + begin))
-    return not_exist
+        call_code(path_job, dependency)
 
 
 def make_stitching_loop(directory, dirname, op_id):
@@ -197,47 +210,6 @@ def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="
         call(f"sbatch {path_stitch}", shell=True)
 
 
-def find_state(plate, begin, end, directory, include_stitch=True):
-    files = [
-        "/Analysis/skeleton_compressed.mat",
-        "/Analysis/skeleton_masked_compressed.mat",
-        "/Analysis/skeleton_pruned_compressed.mat",
-        "/Analysis/transform.mat",
-        "/Analysis/skeleton_realigned_compressed.mat",
-    ]
-    if include_stitch:
-        files = ["/Img/TileConfiguration.txt.registered"] + files
-    not_present2 = check_state(
-        plate, begin + 1, end, "/Analysis/transform_corrupt.mat", directory
-    )
-    for file in files:
-        if file == "/Analysis/transform.mat":
-            not_present = check_state(plate, begin + 1, end, file, directory)
-            to_check = copy(not_present)
-            for datetme in to_check:
-                if datetme not in not_present2:
-                    print(datetme, "alignment failed")
-                    not_present.remove(datetme)
-        else:
-            not_present = check_state(plate, begin, end, file, directory)
-        if len(not_present) > 0:
-            return (file, not_present)
-    return "skeletonization is complete"
-
-
-def find_state_extract(plate, begin, end, directory):
-    files = [
-        "/Analysis/nx_graph_pruned.p",
-        "/Analysis/nx_graph_pruned_width.p",
-        "/Analysis/nx_graph_pruned_labeled.p",
-    ]
-    for file in files:
-        not_present = check_state(plate, begin, end, file, directory)
-        if len(not_present) > 0:
-            return (file, not_present)
-    return "extration is complete"
-
-
 def run_parallel_transfer(
     code,
     args,
@@ -267,7 +239,7 @@ def run_parallel_transfer(
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
         my_file.write(
-            f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
+            f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
         my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
         my_file.write(f"conda activate amftrack\n")
@@ -278,7 +250,7 @@ def run_parallel_transfer(
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job}", shell=True)
+        call(f"sbatch {path_job}", shell=True, stdout=DEVNULL)
 
 
 def run_parallel_transfer_to_archive(
@@ -288,9 +260,9 @@ def run_parallel_transfer_to_archive(
     name,
     cpus=1,
     node="staging",
-    name_job="transfer_archive.sh",
+    dependency="transfer_archive.sh",
 ):
-    path_job = f"{path_bash}{name_job}"
+    path_job = f"{path_bash}{dependency}"
     plates = set(folders["Plate"].values)
     length = len(plates)
     folders = folders.copy()

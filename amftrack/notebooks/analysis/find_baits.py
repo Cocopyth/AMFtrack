@@ -23,7 +23,6 @@ import ast
 from amftrack.plotutil import plot_t_tp1
 from scipy import sparse
 from datetime import datetime
-from amftrack.pipeline.functions.image_processing.node_id import orient
 import pickle
 import scipy.io as sio
 from pymatreader import read_mat
@@ -47,6 +46,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Edge,
     Node,
+    orient,
 )
 from amftrack.pipeline.pipeline.paths.directory import (
     run_parallel,
@@ -77,7 +77,7 @@ def get_Pside(plate_number):
 
 def get_raw(exp, t):
     date = exp.dates[t]
-    directory_name = get_dirname(date, exp.plate)
+    directory_name = get_dirname(date, exp.folders)
     path_snap = exp.directory + directory_name
     im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
     return im
