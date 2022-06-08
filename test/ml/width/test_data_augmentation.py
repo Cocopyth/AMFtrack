@@ -42,7 +42,6 @@ class TestDataAugmentation(unittest.TestCase):
         )
 
     def test_random_brightness(self):
-
         # checking that a different seed is used at each call
         layer = random_brightness(10)
         c_1 = layer(self.c)
@@ -50,7 +49,8 @@ class TestDataAugmentation(unittest.TestCase):
         assert_raises(AssertionError, assert_array_equal, np.array(c_1), np.array(c_2))
 
     def test_random_crop(self):
-        layer = random_crop(10)
+        # test that a random seed is used each time
+        layer = random_crop(original_size=120, input_size=80)
         c_1 = layer(self.d)
         c_2 = layer(self.d)
         assert_raises(AssertionError, assert_array_equal, np.array(c_1), np.array(c_2))
