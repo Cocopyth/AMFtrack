@@ -22,9 +22,11 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_full_image_with_features,
     get_all_edges,
     find_neighboring_edges,
+    reconstruct_image,
 )
 from amftrack.util.sys import test_path
 from test import helper
+from PIL import Image
 
 
 @unittest.skipUnless(helper.has_test_plate(), "No plate to run the tests..")
@@ -78,7 +80,7 @@ class TestExperiment(unittest.TestCase):
     def test_get_all_edges(self):
         get_all_edges(self.exp, t=0)
 
-    def test_get_nearest_edge(self):
+    def get_nearest_edge(self):
         edge = get_random_edge(self.exp)
         edge_coords = edge.pixel_list(0)
         middle_coord = edge_coords[len(edge_coords) // 2]
@@ -90,6 +92,32 @@ class TestExperiment(unittest.TestCase):
 
         self.assertEqual(edge, found_edge)
         self.assertIn(edge, found_edges)
+
+    def test_reconstruct_image(self):
+        region = [[10000, 20000], [20000, 40000]]
+
+        # Full image downsized
+        im, _ = reconstruct_image(self.exp, 0, downsizing=13)
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_full_downsized.png"))
+
+        # Region precise
+        im, _ = reconstruct_image(self.exp, 0, region=region)
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_region.png"))
+
+        # Region downsized
+        im, _ = reconstruct_image(self.exp, 0, region=region, downsizing=15)
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_region_downsized.png"))
+
+        # Backgroud check
+        im, _ = reconstruct_image(self.exp, 0, downsizing=40, white_background=True)
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_white_bg.png"))
+        im, _ = reconstruct_image(self.exp, 0, downsizing=40, white_background=False)
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_black_bg.png"))
 
 
 class TestExperimentLight(unittest.TestCase):
