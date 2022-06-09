@@ -231,7 +231,7 @@ def plot_full_image_with_features(
     # TODO(FK): saving image, add nodes, caching the images
     # TODO(FK): move the cropping part and function for changing the coodinates in the reconstruct image function
     # 1/ Image layer
-    im = reconstruct_image(exp, t, downsizing=downsizing)
+    im = reconstruct_image_simple(exp, t, downsizing=downsizing)
 
     if region != None:
         for i in range(2):
@@ -308,7 +308,7 @@ def plot_full_image_with_features(
         plt.show()
 
 
-def reconstruct_image(
+def reconstruct_image_simple(
     exp: Experiment, t: int, downsizing=1, white_background=True
 ) -> np.array:
     """
@@ -365,7 +365,7 @@ def reconstruct_image(
     return full_im
 
 
-def reconstruct_image_opt(
+def reconstruct_image(
     exp: Experiment,
     t: int,
     region=None,
