@@ -12,6 +12,7 @@ from amftrack.util.geometry import (
     intersect_rectangle,
     is_overlapping,
     get_overlap,
+    format_region,
 )
 
 
@@ -225,3 +226,7 @@ class TestSegment(unittest.TestCase):
                 [[15, 7], [15, 10]],
             )
         )  # touching only a side
+
+    def test_format_region(self):
+        self.assertTrue(is_equal_seq(format_region([[1, 2], [0, 3]]), [[0, 2], [1, 3]]))
+        self.assertTrue(is_equal_seq(format_region([[1, 2], [2, 3]]), [[1, 2], [2, 3]]))

@@ -224,6 +224,10 @@ def intersect_rectangle(
 def get_overlap(
     rect1_coord1: coord, rect1_coord2, rect2_coord1, rect2_coord2, strict=False
 ) -> Tuple[coord]:
+    """
+    Returns the overlap of two rectangles.
+    The boundaries are included in case of int coordinates.
+    """
 
     if not intersect_rectangle(
         rect1_coord1, rect1_coord2, rect2_coord1, rect2_coord2, strict
@@ -239,6 +243,18 @@ def get_overlap(
     l2.sort()
 
     return [[l1[1], l2[1]], [l1[2], l2[2]]]
+
+
+def format_region(region):
+    """
+    From [[a, b], [c, d]] defining a region in the plane.
+    Return a definition of the region where [a', b'] is the upper left-corner
+    and [c', d'] is the lower-right corner (ie c' > a' and d' > b')
+    """
+    return [
+        [min(region[0][0], region[1][0]), min(region[0][1], region[1][1])],
+        [max(region[0][0], region[1][0]), max(region[0][1], region[1][1])],
+    ]
 
 
 if __name__ == "__main__":
