@@ -308,17 +308,22 @@ def plot_full_image_with_features(
 
 
 # @lru_cache(maxsize=1)  # TODO(FK): make a custom decorator
-def reconstruct_image(exp: Experiment, t: int, downsizing=1) -> np.array:
+def reconstruct_image(
+    exp: Experiment, t: int, downsizing=1, white_background=True
+) -> np.array:
     """
     This function reconstructs the full size image at timestep t and return it as an np array.
     :param downsizing: factor by which the image is downsized, 1 returns the original image
+    :param white_background: if True, areas where no image was found are white otherwise black
     WARNING: the image is a very heavy object (2 Go)
     NB: To plot objects in this image, the TIMESTEP referential must be used
     """
     # TODO(FK): add window here, return function for plotting
     # TODO(FK): make a decorator to store in TEMP or cache with
     if exp.image_coordinates is None:
-        exp.load_tile_information(t)
+        exp.load_tile_information(
+            t
+        )  # TODO (FK): make this independent of the rest of pipeline
 
     image_coodinates = exp.image_coordinates[t]
 
@@ -327,11 +332,17 @@ def reconstruct_image(exp: Experiment, t: int, downsizing=1) -> np.array:
     m_y = np.max([c[1] for c in image_coodinates])
 
     # Dimensions
-    d_x = int(m_x + DIM_X)
+    d_x = int(m_x + DIM_X)  # TODO(FK): Make image dimension a parameter
     d_y = int(m_y + DIM_Y)
 
     # Create the general image frame
-    full_im = np.ones((d_x, d_y), dtype=np.uint8)
+    if white_background:
+        background_value = 255
+    else:
+        background_value = 0
+    full_im = np.full(
+        (d_x, d_y), fill_value=background_value, dtype=np.uint8
+    )  # TODO (FK): which element for the background
 
     # Copy each image into the frame
     for i, im_coord in enumerate(image_coodinates):
