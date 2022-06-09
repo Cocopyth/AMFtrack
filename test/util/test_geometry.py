@@ -1,5 +1,6 @@
 import numpy as np
 import unittest
+from helper import is_equal_seq
 from amftrack.util.geometry import (
     expand_segment,
     get_section_segment,
@@ -8,6 +9,9 @@ from amftrack.util.geometry import (
     distance_point_pixel_line,
     get_closest_lines,
     get_closest_line_opt,
+    intersect_rectangle,
+    is_overlapping,
+    get_overlap,
 )
 
 
@@ -140,3 +144,84 @@ class TestSegment(unittest.TestCase):
         ind, d = get_closest_line_opt([7, 10], lines=[line1, line2, line3], step=1)
         self.assertEqual(ind, 0)
         self.assertEqual(d, float(np.linalg.norm(np.array([7, 7]) - np.array([7, 10]))))
+
+    def test_is_overlapping(self):
+        # Overlapping
+        self.assertTrue(is_overlapping([1, 10], [5, 15]))
+        self.assertTrue(is_overlapping([5, 15], [1, 10]))
+        self.assertTrue(is_overlapping([1, 20], [5, 10]))
+        self.assertTrue(is_overlapping([5, 10], [1, 20]))
+
+        # Not overlapping
+        self.assertFalse(is_overlapping([1, 10], [11, 20]))
+        self.assertFalse(is_overlapping([11, 20], [1, 10]))
+
+        # Adjacent segment
+        self.assertTrue(is_overlapping([1, 2], [2, 3], strict=False))
+        self.assertTrue(is_overlapping([2, 3], [1, 2], strict=False))
+        self.assertFalse(is_overlapping([1, 2], [2, 3], strict=True))
+        self.assertFalse(is_overlapping([2, 3], [1, 2], strict=True))
+
+    def test_intersect_rectangle(self):
+        # Interecting rectangles
+        self.assertTrue(
+            intersect_rectangle([5, 5], [10, 30], [7, 7], [9, 9])
+        )  # contained
+        self.assertTrue(
+            intersect_rectangle([7, 7], [9, 9], [5, 5], [10, 30])
+        )  # contained
+        self.assertTrue(
+            intersect_rectangle([7, 7], [40, 40], [5, 5], [10, 30])
+        )  # partly intersecting
+
+        # Not intersecting rectangles
+        self.assertFalse(intersect_rectangle([31, 31], [40, 40], [5, 5], [10, 30]))
+        self.assertFalse(intersect_rectangle([5, 5], [10, 30], [31, 31], [40, 40]))
+        self.assertFalse(intersect_rectangle([5, 5], [10, 30], [31, 0], [40, 4]))
+
+        # Limit cases
+        self.assertFalse(
+            intersect_rectangle([10, 30], [40, 40], [5, 5], [10, 30], strict=True)
+        )  # touching only a corner
+        self.assertFalse(
+            intersect_rectangle([5, 5], [15, 15], [15, 7], [20, 10], strict=True)
+        )  # touching only a side
+        self.assertTrue(
+            intersect_rectangle([10, 30], [40, 40], [5, 5], [10, 30], strict=False)
+        )  # touching only a corner
+        self.assertTrue(
+            intersect_rectangle([5, 5], [15, 15], [15, 7], [20, 10], strict=False)
+        )  # touching only a side
+
+    def test_get_overlap(self):
+
+        # Interecting rectangles
+        self.assertTrue(
+            is_equal_seq(
+                get_overlap([5, 5], [10, 30], [7, 7], [9, 9]), [[7, 7], [9, 9]]
+            )
+        )  # contained
+        self.assertTrue(
+            is_equal_seq(
+                get_overlap([7, 7], [9, 9], [5, 5], [10, 30]), [[7, 7], [9, 9]]
+            )
+        )  # contained
+        self.assertTrue(
+            is_equal_seq(
+                get_overlap([7, 7], [40, 40], [5, 5], [10, 30]),
+                [[7, 7], [10, 30]],
+            )
+        )  # partly intersecting
+
+        self.assertTrue(
+            is_equal_seq(
+                get_overlap([10, 30], [40, 40], [5, 5], [10, 30], strict=False),
+                [[10, 30], [10, 30]],
+            )
+        )  # touching only a corner
+        self.assertTrue(
+            is_equal_seq(
+                get_overlap([5, 5], [15, 15], [15, 7], [20, 10], strict=False),
+                [[15, 7], [15, 10]],
+            )
+        )  # touching only a side

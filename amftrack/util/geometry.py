@@ -1,3 +1,4 @@
+from xmlrpc.client import Boolean
 from amftrack.util.aliases import coord
 from typing import Tuple
 import numpy as np
@@ -182,6 +183,62 @@ def compute_factor(point1: coord, point2: coord, target_length: float) -> float:
     length = np.sqrt(vx**2 + vy**2)
 
     return target_length / length
+
+
+def is_overlapping(segment1: coord, segment2: coord, strict=False) -> bool:
+    """
+    Determines if the two segments are overlapping.
+    If they are just touching, it returns True in strict=False mode and False otherwise.
+    """
+    if strict:
+        return segment1[0] < segment2[1] and segment2[0] < segment1[1]
+    else:
+        return segment1[0] <= segment2[1] and segment2[0] <= segment1[1]
+
+
+def intersect_rectangle(
+    rect1_coord1: coord, rect1_coord2, rect2_coord1, rect2_coord2, strict=False
+) -> Boolean:
+    """
+    Determine if two rectangles are overlapping.
+    :param rect1_coord1: [x, y] coordinates of the first point of the first rectangle
+    :param rect2_coord2: [x, y] coordinates of the second point of the first rectangle
+    :param strict: if strict = false if there are just touching they are considered overlapping
+    """
+    # intersection along the first dimention
+    if is_overlapping(
+        [rect1_coord1[0], rect1_coord2[0]],
+        [rect2_coord1[0], rect2_coord2[0]],
+        strict,
+    ):
+        # intersection along the second dimention
+        if is_overlapping(
+            [rect1_coord1[1], rect1_coord2[1]],
+            [rect2_coord1[1], rect2_coord2[1]],
+            strict,
+        ):
+            return True
+    return False
+
+
+def get_overlap(
+    rect1_coord1: coord, rect1_coord2, rect2_coord1, rect2_coord2, strict=False
+) -> Tuple[coord]:
+
+    if not intersect_rectangle(
+        rect1_coord1, rect1_coord2, rect2_coord1, rect2_coord2, strict
+    ):
+        raise Exception("Can't get overlapp of two rectangles that are not overlapping")
+
+    # along axis 1
+    l1 = [rect1_coord1[0], rect1_coord2[0], rect2_coord1[0], rect2_coord2[0]]
+    l1.sort()
+
+    # along axis 2
+    l2 = [rect1_coord1[1], rect1_coord2[1], rect2_coord1[1], rect2_coord2[1]]
+    l2.sort()
+
+    return [[l1[1], l2[1]], [l1[2], l2[2]]]
 
 
 if __name__ == "__main__":
