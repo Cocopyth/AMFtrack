@@ -5,6 +5,7 @@ import os
 from copy import copy
 from time import time_ns
 import pickle
+import imageio
 
 directory_scratch = "/scratch-shared/amftrack/"
 directory_project = "/projects/0/einf914/data/"
@@ -184,6 +185,21 @@ def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="
     length = len(folders)
     begin_skel = 0
     end_skel = length // num_parallel + 1
+    folder_list = list(folders["folder"])
+    folder_list.sort()
+    for folder in folder_list:
+        path_im_copy = f"{directory}/{folder}/Img/Img_r03_c05.tif"
+        if os.path.isfile(path_im_copy):
+            im = imageio.imread(path_im_copy)
+            for x in range(1, 11):
+                for y in range(1, 16):
+                    strix = str(x) if x >= 10 else f"0{x}"
+                    striy = str(y) if y >= 10 else f"0{y}"
+                    path = f"{directory}/{folder}/Img/Img_r{strix}_c{striy}.tif"
+                    if not os.path.isfile(path):
+                        f = open(path, "w")
+                    if os.path.getsize(path) == 0:
+                        imageio.imwrite(path, im * 0)
     for j in range(begin_skel, end_skel):
         op_ids = []
         start = num_parallel * j

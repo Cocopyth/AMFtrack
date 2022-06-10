@@ -64,7 +64,7 @@ class Experiment:
     def load(self, folders: pd.DataFrame, suffix="_labeled"):
         """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
-        assert len(folders["unique_id"].unique()) == 1
+        assert len(folders["unique_id"].unique()) == 1, "multiple plate id"
         self.unique_id = folders["unique_id"].unique()[0]
         self.image_coordinates = [None] * len(folders)
         self.image_transformation = [None] * len(folders)

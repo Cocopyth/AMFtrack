@@ -233,4 +233,4 @@ def run_back_sub(directory, folder):
         "-macro",
         f'{os.getenv("TEMP")}/stitching_loops/background_substract{op_id}.ijm',
     ]
-    process = subprocess.run(command, stdout=subprocess.DEVNULL)
+    subprocess.run(command, stdout=subprocess.DEVNULL)

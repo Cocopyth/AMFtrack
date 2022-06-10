@@ -351,7 +351,7 @@ def get_study_zone(exp, dist, radius, i=0):
     return (dr_orth, dr_center)
 
 
-def save_study_zone(dr_orth, dr_center, exp, i=0):
+def extract_study_zone(dr_orth, dr_center, exp, i=0):
     rect_orth, rect_center = dr_orth.rect, dr_center.rect
     center = rect_center.xy
     orthog = np.array(rect_orth.xy) - np.array(center)
