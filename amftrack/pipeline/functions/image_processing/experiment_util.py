@@ -514,10 +514,32 @@ def reconstruct_skeletton(
     return full_im, f
 
 
+def reconstruct_skeletton_from_edges(
+    exp,
+    t,
+    edges: List[Edge],
+    region=[[0, 0], [20000, 40000]],  # add get bounding box
+    color_seeds: List[int] = None,
+    downsizing=5,
+    dilation=2,
+) -> Tuple[List[np.array], Callable[[float, float], float]]:
+    # TODO(FK): filter edges more effectively
+
+    im, f = reconstruct_skeletton(
+        [edge.pixel_list(t) for edge in edges],
+        region=region,
+        color_seeds=color_seeds,
+        downsizing=downsizing,
+        dilation=dilation,
+    )
+    return im, f
+
+# TODO(FK): DEPRECATED
 def plot_full_image(
     exp: Experiment, t: int, downsizing=10, save="", region: List[coord_int] = None
 ) -> np.array:
     """
+    DEPRECATED
     This function plots the full size image at timestep t.
     :param downsizing: factor by which the image is downsized
     :param save: path (including the file name) where we want to store the image
@@ -620,10 +642,11 @@ if __name__ == "__main__":
     # im, _ = reconstruct_image_opt(exp, 0, downsizing=1, region=region)
 
     a = 1
-    region = [[10, 10], [20, 30]]
-    a, b = reconstruct_skeletton(
-        [[[2, 4], [15, 15], [12, 32]], [[16, 16]]], region=region
-    )
+    # region = [[10, 10], [20, 30]]
+    # a, b = reconstruct_skeletton(
+    #     [[[2, 4], [15, 15], [12, 32]], [[16, 16]]], region=region
+    # )
+    im, f = reconstruct_skeletton_from_edges(exp, 0, dilation=10)
 
     c = 0
     # plt.imshow(im[0])
