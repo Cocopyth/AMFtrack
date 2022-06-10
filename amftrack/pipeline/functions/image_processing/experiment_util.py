@@ -1,4 +1,5 @@
 from random import choice
+import random
 import numpy as np
 from typing import List, Tuple, Optional, Callable
 import cv2 as cv
@@ -15,7 +16,7 @@ from amftrack.util.geometry import (
     intersect_rectangle,
     get_overlap,
 )
-from amftrack.util.plot import crop_image
+from amftrack.util.plot import crop_image, make_random_color
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Node,
@@ -115,6 +116,7 @@ def aux_plot_edge(
     See plot_edge for more information.
     :return: np binary image, coordinate of all the points in image
     """
+    # TODO(FK): use reconstruct image instead
     exp = edge.experiment
     number_points = 10
     # Fetch coordinates of edge points in general referential
@@ -158,6 +160,7 @@ def plot_edge(edge: Edge, t: int, mode=2, points=10, save_path=None, f=None):
     :param save_path: doesn't save if None, else save the image as `save_path`
     :param f: function of the signature f(n:int)->List[int]
     """
+    # TODO(FK): use reconstruct image instead
     im, list_of_coord_im = aux_plot_edge(edge, t, mode, points, f)
     plt.imshow(im)
     for i in range(len(list_of_coord_im)):
@@ -320,8 +323,7 @@ def reconstruct_image_simple(
     WARNING: the image is a very heavy object (2 Go)
     NB: To plot objects in this image, the TIMESTEP referential must be used
     """
-    # TODO(FK): add window here, return function for plotting
-    # TODO(FK): make a decorator to store in TEMP or cache with
+    # TODO(FK): return function for plotting
     if exp.image_coordinates is None:
         exp.load_tile_information(
             t
@@ -455,6 +457,62 @@ def reconstruct_image(
     return full_im, f
 
 
+def reconstruct_skeletton(
+    coord_list_list: List,
+    region,  # TODO(FK):
+    color_seeds=None,
+    downsizing=5,
+    dilation=1,
+    color=True,
+    dim_x=DIM_X,
+    dim_y=DIM_Y,
+) -> Tuple[List[np.array], Callable[[float, float], float]]:
+    """
+    This function reconstructs the skeletton or a part of it and return it as an np array.
+    It also returns a function to plot things on the created image.
+    :param region: [[a, b], [c, d]] defining a zone that we want to extract. Can be np.array or lists, int or floats
+    :param downsizing: factor by which the image is downsized, 1 returns the original image
+    :param dimx: x dimension of images
+    WARNING: without downsizing, the full image is heavy (2 Go)
+    NB: returned image shape is ((int(a)-int(c))//downsizing, (int(b)-int(d))//downsizing)
+    NB: dilation
+    """
+    # TODO(FK): filter edges more effectively
+
+    region = format_region(region)
+    region = [[int(e) for e in l] for l in region]  # only to avoid errors
+    d_x = (region[1][0] - region[0][0]) // downsizing
+    d_y = (region[1][1] - region[0][1]) // downsizing
+
+    full_im = np.full(
+        shape=(d_x, d_y, 4), fill_value=0, dtype=np.uint8
+    )  # TODO(FK): add background
+
+    # Mapping from TIMESTEP referential to downsized image referential
+    f = lambda c: (np.array(c) - np.array(region[0])) / downsizing
+    f_int = lambda c: f(c).astype(int)
+    # region_new = [f_int(region[0]), f_int(region[1])]  # should be [[0, 0],[d_x, d_y]]
+
+    if not color_seeds:
+        color_seeds = [random.randrange(255) for _ in range(len(coord_list_list))]
+
+    # Copy each image into the frame
+    for i, coord_list in enumerate(coord_list_list):
+        color = make_random_color(color_seeds[i])
+        # chose a color here
+        skel = [
+            f_int(coordinates) for coordinates in coord_list
+        ]  # not unique but it's ok
+        for c in skel:
+            x, y = c[0], c[1]
+            try:  # TODO(FK): use is_in_image
+                full_im[x][y][:] = color
+            except:
+                None
+
+    return full_im, f
+
+
 def plot_full_image(
     exp: Experiment, t: int, downsizing=10, save="", region: List[coord_int] = None
 ) -> np.array:
@@ -557,11 +615,16 @@ if __name__ == "__main__":
     # im, _ = reconstruct_image_opt(exp, 0)
 
     # im, _ = reconstruct_image_opt(exp, 0, downsizing=42, white_background=True)
-    region = [[10000, 20000], [20000, 40000]]
-    im, _ = reconstruct_image_opt(exp, 0, downsizing=1, region=region)
+    # region = [[10000, 20000], [20000, 40000]]
+    # im, _ = reconstruct_image_opt(exp, 0, downsizing=1, region=region)
 
     a = 1
+    region = [[10, 10], [20, 30]]
+    a, b = reconstruct_skeletton(
+        [[[2, 4], [15, 15], [12, 32]], [[16, 16]]], region=region
+    )
 
-    plt.imshow(im[0])
+    c = 0
+    # plt.imshow(im[0])
 
     a = 0
