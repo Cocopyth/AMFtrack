@@ -1,9 +1,19 @@
 from typing import List
 import numpy as np
+import random
 
 from matplotlib import image
 import matplotlib.pyplot as plt
 from amftrack.util.aliases import coord_int
+
+
+def make_random_color(seed):
+    "From an int value, hands out a color with its transparency channel as np.array"
+    random.seed(seed)
+    color = [random.randrange(255) for i in range(3)]
+    color.append(255)  # alpha channel
+    color = np.array(color)
+    return color
 
 
 def show_image(image_path: str) -> None:
@@ -53,3 +63,7 @@ def crop_image(matrix: np.array, region: List[coord_int]):
     y_max = np.max([np.min([dim_y, np.max([region[0][1], region[1][1]])]), 0])
 
     return matrix[x_min:x_max, y_min:y_max]
+
+
+if __name__ == "__main__":
+    make_random_color(12)
