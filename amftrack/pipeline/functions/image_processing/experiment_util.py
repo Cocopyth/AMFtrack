@@ -214,6 +214,7 @@ def plot_full_image_with_features(
     downsizing=5,
     dilation=1,
     save_path="",
+    prettify=False,
 ) -> None:
     """
     This is the general purpose function to plot the full image, downsized by a chosen factor
@@ -234,45 +235,34 @@ def plot_full_image_with_features(
     # TODO(FK): saving image, add nodes, caching the images
     # TODO(FK): move the cropping part and function for changing the coodinates in the reconstruct image function
     # 1/ Image layer
-    im = reconstruct_image_simple(exp, t, downsizing=downsizing)
-
-    if region != None:
-        for i in range(2):
-            for j in range(2):
-                region[i][j] = region[i][j] // downsizing
-        im = crop_image(im, region)
-
-    if region is None:
-        region = [0, 0]
-    f = lambda c: list(
-        (np.array(exp.general_to_timestep(c, t)) / downsizing).astype(int)
-        - np.array(region[0], dtype=int)
+    # TODO(FK): compute region here
+    im, f = reconstruct_image(
+        exp,
+        t,
+        downsizing=downsizing,
+        region=region,
+        prettify=prettify,
+        white_background=False,  # TODO(FK): add image dimention here dimx = ..
     )
-    # 2/ Edge layer
-    # TODO(FK): use a dilation instead, this is a QUICKFIX
-    # kernel = np.ones((dilation, dilation), np.uint8)
-    # skel = pixel_list_to_matrix(edge.pixel_list(t), margin=dilation)
-    # dilated_skel = cv.dilate(skel.astype(np.uint8), kernel, iterations=1)
-    # im.shape, dilation, downsizin, edge, f
-    edge_layer = np.zeros(shape=(im.shape[0], im.shape[1], 3), dtype=int)
-    size = int(dilation / downsizing)
-    for edge in edges:
-        skel = [f(coordinates) for coordinates in edge.pixel_list(t)]
-        dilated_skel = dilate_coord_list(skel, iteration=size)
-        color = np.array([randrange(255) for i in range(3)])
-        for c in dilated_skel:
-            # TODO check if out of bound here
-            x, y = c[0], c[1]
-            try:  # TODO(FK): use is_in_image
-                edge_layer[x][y][:] = color
-            except:
-                None
+    skel_im, _ = reconstruct_skeletton_from_edges(
+        exp,
+        t,
+        edges=edges,
+        region=region,
+        color_seeds=None,
+        downsizing=downsizing,
+        dilation=dilation,
+    )
+
+    f_int = lambda c: f(c).astype(int)
 
     # Plotting the two layers
-    fig = plt.figure(figsize=(12, 8))  # width: 30 cm height: 20 cm
+    fig = plt.figure(
+        figsize=(12, 8)
+    )  # width: 30 cm height: 20 cm # TODO(FK): change dpi
     ax = fig.add_subplot(111)
-    ax.imshow(im, cmap="gray", alpha=0.3, interpolation="none")
-    ax.imshow(edge_layer, alpha=0.7, interpolation="none")
+    ax.imshow(im, cmap="gray", interpolation="none")
+    ax.imshow(skel_im, alpha=0.5, interpolation="none")
 
     # 3/ Plotting the Nodes
     size = 5
@@ -533,6 +523,7 @@ def reconstruct_skeletton_from_edges(
         dilation=dilation,
     )
     return im, f
+
 
 # TODO(FK): DEPRECATED
 def plot_full_image(
