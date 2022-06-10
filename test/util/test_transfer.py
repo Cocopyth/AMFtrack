@@ -15,5 +15,6 @@ target2 = env_config.get("TEMP_PATH")
 class TestTransfer(unittest.TestCase):
     def test_upload(self):
         upload(target, "/test/test")
+
     def test_download(self):
-        download("/test/test",os.path.join(target2,'test.json'))
+        download("/test/test", os.path.join(target2, "test.json"))

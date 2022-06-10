@@ -1,7 +1,5 @@
-from path import path_code_dir
 import sys
 
-sys.path.insert(0, path_code_dir)
 from amftrack.util.sys import temp_path
 import scipy.io as sio
 from pymatreader import read_mat

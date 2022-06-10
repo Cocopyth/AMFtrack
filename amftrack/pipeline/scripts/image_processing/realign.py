@@ -1,7 +1,5 @@
-from path import path_code_dir
 import sys
 
-sys.path.insert(0, path_code_dir)
 from amftrack.util.sys import temp_path
 from scipy import sparse
 import scipy.io as sio
@@ -28,13 +26,11 @@ folder_list = list(run_info["folder"])
 folder_list.sort()
 
 dilateds = []
-# skels = []
 skel_docs = []
 directory_name = folder_list[0]
 path_snap = directory + directory_name
 skel_info = read_mat(path_snap + "/Analysis/skeleton_pruned.mat")
 skel = skel_info["skeleton"]
-# skels.append(skel)
 skel_doc = sparse_to_doc(skel)
 skel_docs.append(skel_doc)
 Rs = [np.array([[1, 0], [0, 1]])]
@@ -43,7 +39,6 @@ for i, directory_name in enumerate(folder_list[1:]):
     path_snap = directory + directory_name
     skel_info = read_mat(path_snap + "/Analysis/skeleton_pruned.mat")
     skel = skel_info["skeleton"]
-    #     skels.append(skel)
     if i + 1 == j:
         skel_doc = sparse_to_doc(skel)
         skel_docs.append(skel_doc)
@@ -57,16 +52,10 @@ for i, directory_name in enumerate(folder_list[1:]):
     Rs.append(R)
     ts.append(t)
 
-# skel_doc = skel_docs[0]
-# skel_aligned_t = skels[0]
-# skel_sparse = scipy.sparse.csc_matrix(skels[0])
-# directory_name=f'2020{dates[0]}_Plate{0 if plate<10 else ""}{plate}'
-# path_snap='/scratch/shared/mrozemul/Fiji.app/'+directory_name
-# sio.savemat(path_snap+'/Analysis/skeleton_realigned.mat',{'skeleton' : skel_sparse,'R' : np.array([[1,0],[0,1]]),'t' : np.array([0,0])})
+
 R0 = np.array([[1, 0], [0, 1]])
 t0 = np.array([0, 0])
 for i, skel in enumerate(skel_docs):
-    #     print(i+begin,j)
     R0 = np.dot(np.transpose(Rs[i]), R0)
     t0 = -np.dot(ts[i], np.transpose(Rs[i])) + np.dot(t0, np.transpose(Rs[i]))
     directory_name = folder_list[i]

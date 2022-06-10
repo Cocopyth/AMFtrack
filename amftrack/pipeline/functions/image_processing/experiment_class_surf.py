@@ -22,9 +22,7 @@ import ast
 from scipy import sparse
 
 from amftrack.util.sys import get_dirname
-from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
 from amftrack.plotutil import plot_t_tp1
-from amftrack.pipeline.functions.image_processing.node_id import orient
 from amftrack.util.aliases import node_coord_dict, binary_image, coord, coord_int
 from amftrack.util.image_analysis import find_image_indexes
 
@@ -38,8 +36,8 @@ class Experiment:
     - image referential: it is the referential of one particular source image at a certain timestep
     """
 
-    def __init__(self, plate: int, directory: str):
-        self.plate = plate  # plate number in Prince
+    def __init__(self, directory: str):
+        self.unique_id: str
         self.directory = directory  # full directory path
 
         self.folders: List[pd.DataFrame]  # one dataframe per timestep
@@ -58,38 +56,33 @@ class Experiment:
         ]  # (R, t) transformation to go from timestep referential to general referential
         self.image_paths: List[List[str]]  # full paths to each images for each timestep
         self.hyphaes = None
+        self.corresps = {}
 
     def __repr__(self):
-        return f"Experiment({self.directory}, {self.plate})"
+        return f"Experiment({self.directory})"
 
-    def load(self, folders: pd.DataFrame, labeled=True):
+    def load(self, folders: pd.DataFrame, suffix="_labeled"):
         """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
+        assert len(folders["unique_id"].unique()) == 1, "multiple plate id"
+        self.unique_id = folders["unique_id"].unique()[0]
         self.image_coordinates = [None] * len(folders)
         self.image_transformation = [None] * len(folders)
         self.image_paths = [None] * len(folders)
-        dates_datetime = [
-            datetime.strptime(row["date"], "%d.%m.%Y, %H:%M:")
-            for index, row in folders.iterrows()
-        ]
-        self.dates = dates_datetime
         # Reindexing the dataframe based on time order
         self.folders["datetime"] = pd.to_datetime(
             self.folders["date"], format="%d.%m.%Y, %H:%M:"
         )
         self.folders = self.folders.sort_values(by=["datetime"], ignore_index=True)
+        self.dates = list(self.folders["datetime"])
         self.dates.sort()
         nx_graph_poss = []
         for date in self.dates:
             print(date)
-
-            directory_name = get_dirname(date, self.plate)
+            directory_name = get_dirname(date, self.folders)
             path_snap = os.path.join(self.directory, directory_name)
-            if labeled:
-                suffix = "/Analysis/nx_graph_pruned_labeled.p"
-            else:
-                suffix = "/Analysis/nx_graph_pruned.p"
-            path_save = path_snap + suffix
+            file = os.path.join(f"Analysis", f"nx_graph_pruned{suffix}.p")
+            path_save = os.path.join(path_snap, file)
             (g, pos) = pickle.load(open(path_save, "rb"))
             nx_graph_poss.append((g, pos))
 
@@ -109,7 +102,19 @@ class Experiment:
         xpos = [pos[0] for poss in self.positions for pos in poss.values()]
         ypos = [pos[1] for poss in self.positions for pos in poss.values()]
         self.ts = len(self.dates)
-        self.labeled = labeled
+        self.labeled = suffix == "_labeled"
+
+    def save_graphs(self, suffix):
+        for i, date in enumerate(self.dates):
+            print(date)
+            directory_name = get_dirname(date, self.folders)
+            path_snap = os.path.join(self.directory, directory_name)
+            file = os.path.join(f"Analysis", f"nx_graph_pruned{suffix}.p")
+            path_save = os.path.join(path_snap, file)
+            # print(path_save)
+            g = self.nx_graph[i]
+            pos = self.positions[i]
+            pickle.dump((g, pos), open(path_save, "wb"))
 
     def load_compressed_skel(self, factor=5):
         """
@@ -136,7 +141,7 @@ class Experiment:
         """
         # Loading coordinates of each image in its timestep referential
         date = self.dates[t]
-        directory_name = get_dirname(date, self.plate)
+        directory_name = get_dirname(date, self.folders)
         path_tile = os.path.join(
             self.directory, directory_name, "Img/TileConfiguration.txt.registered"
         )
@@ -175,7 +180,7 @@ class Experiment:
         If not loaded these transformation will be loaded upon calls to convert coordinates
         """
         date = self.dates[t]
-        directory_name = get_dirname(date, self.plate)
+        directory_name = get_dirname(date, self.folders)
         skel = read_mat(
             os.path.join(
                 self.directory,
@@ -207,7 +212,7 @@ class Experiment:
         self.positions = experiment.positions
         self.nx_graph = experiment.nx_graph
         self.dates = experiment.dates
-        self.plate = experiment.plate
+        self.prince_pos = experiment.prince_pos
         self.hyphaes = None
 
         self.ts = experiment.ts
@@ -215,17 +220,6 @@ class Experiment:
         self.nodes = []
         for label in labels:
             self.nodes.append(Node(label, self))
-
-    def save(self, path=f"Data/"):
-        tabs_labeled = []
-        for i, date in enumerate(self.dates):
-            tabs_labeled.append(from_nx_to_tab(self.nx_graph[i], self.positions[i]))
-        for i, date in enumerate(self.dates):
-            #             tabs_labeled[i].to_csv(path + f"graph_{date}_{self.plate}_full_labeled.csv")
-            sio.savemat(
-                path + f"graph_{date}_{self.plate}_full_labeled.mat",
-                {name: col.values for name, col in tabs_labeled[i].items()},
-            )
 
     def pickle_save(self, path):
         pickle.dump(self, open(path + f"experiment.pick", "wb"))
@@ -251,68 +245,6 @@ class Experiment:
         }
         growing_tips = [node for node in growths.keys() if growths[node] >= threshold]
         return growing_tips
-
-    def pinpoint_anastomosis(self, t):
-        # TODO(FK): self.connections?
-        nx_graph_tm1 = self.nx_graph[t]
-        nx_grapht = self.nx_graph[t + 1]
-        from_tip = self.connections[t]
-        pos_tm1 = self.positions[t]
-        anastomosis = []
-        origins = []
-        tips = [node for node in nx_graph_tm1.nodes if nx_graph_tm1.degree(node) == 1]
-        number_anastomosis = 0
-
-        def dist_branch(node, nx_graph, pos):
-            mini = np.inf
-            for edge in nx_graph.edges:
-                pixel_list = nx_graph.get_edge_data(*edge)["pixel_list"]
-                if (
-                    np.linalg.norm(np.array(pixel_list[0]) - np.array(pos[node]))
-                    <= 5000
-                ):
-                    distance = np.min(
-                        np.linalg.norm(
-                            np.array(pixel_list) - np.array(pos[node]), axis=1
-                        )
-                    )
-                    if distance < mini:
-                        mini = distance
-            return mini
-
-        def count_neighbors_is_from_root(equ_list, nx_graph, root):
-            count = 0
-            for neighbor in nx_graph.neighbors(root):
-                if neighbor in equ_list:
-                    count += 1
-            return count
-
-        for tip in tips:
-            #         print(tip)
-            consequence = from_tip[tip]
-            for node in consequence:
-                if (
-                    node in nx_grapht.nodes
-                    and nx_grapht.degree(node) >= 3
-                    and count_neighbors_is_from_root(consequence, nx_grapht, node) < 2
-                ):
-                    #                 if node==2753:
-                    #                     print(count_neighbors_is_from_root(consequence,nx_grapht,node))
-                    #                     print(list(nx_grapht.neighbors(node)))
-                    anastomosis.append(node)
-                    origins.append(tip)
-                    number_anastomosis += 1
-            if (
-                tip not in nx_grapht.nodes
-                and dist_branch(tip, nx_grapht, pos_tm1) <= 30
-                and nx_graph_tm1.get_edge_data(*list(nx_graph_tm1.edges(tip))[0])[
-                    "weight"
-                ]
-                >= 20
-            ):
-                origins.append(tip)
-                number_anastomosis += 1 / 2
-        return (anastomosis, origins, number_anastomosis)
 
     def general_to_timestep(self, point: coord, t: int) -> coord:
         """
@@ -420,7 +352,7 @@ class Experiment:
     def plot_raw(self, t, figsize=(10, 9)):
         """Plot the full stiched image compressed (otherwise too heavy)"""
         date = self.dates[t]
-        directory_name = get_dirname(date, self.plate)
+        directory_name = get_dirname(date, self.folders)
         path_snap = self.directory + directory_name
         im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
         fig = plt.figure(figsize=figsize)
@@ -506,16 +438,14 @@ class Experiment:
             plt.show()
 
 
-def save_graphs(exp):
-    nx_graph_poss = []
+def save_graphs(exp, suf=2):
     for i, date in enumerate(exp.dates):
-        directory_name = get_dirname(date, exp.plate)
+        directory_name = get_dirname(date, exp.folders)
         path_snap = exp.directory + directory_name
         labeled = exp.labeled
         print(date, labeled)
-
         if labeled:
-            suffix = "/Analysis/nx_graph_pruned_labeled2.p"
+            suffix = f"/Analysis/nx_graph_pruned_labeled{suf}.p"
             path_save = path_snap + suffix
             # print(path_save)
             g = exp.nx_graph[i]
@@ -529,7 +459,7 @@ def load_graphs(exp, indexes=None):
     if indexes == None:
         indexes = range(exp.ts)
     for index, date in enumerate(exp.dates):
-        directory_name = get_dirname(date, exp.plate)
+        directory_name = get_dirname(date, exp.folders)
         path_snap = exp.directory + directory_name
         if labeled:
             suffix = "/Analysis/nx_graph_pruned_labeled2.p"
@@ -580,7 +510,7 @@ def plot_raw_plus(
     Plots a group of node on the compressed full stiched image of the skeleton.
     """
     date = exp.dates[t0]
-    directory_name = get_dirname(date, exp.plate)
+    directory_name = get_dirname(date, exp.folders)
     path_snap = exp.directory + directory_name
     skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
     Rot = skel["R"]
@@ -745,8 +675,8 @@ class Node:
             plot_t_tp1(
                 [self.label],
                 [self.label],
-                {self.label: (posimg[1][i], posimg[0][i])},
-                {self.label: (posimgp1[1][ip1], posimgp1[0][ip1])},
+                {self.label: (posimg[i][0], posimg[i][1])},
+                {self.label: (posimgp1[ip1][0], posimgp1[ip1][1])},
                 ims[i],
                 imsp1[ip1],
             )
@@ -754,7 +684,7 @@ class Node:
             plot_t_tp1(
                 [self.label],
                 [],
-                {self.label: (posimg[1][i], posimg[0][i])},
+                {self.label: (posimg[i][0], posimg[i][1])},
                 None,
                 ims[i],
                 ims[i],
@@ -1156,8 +1086,8 @@ if __name__ == "__main__":
     plate = int(list(selected_df["folder"])[i].split("_")[-1][5:])
     folder_list = list(selected_df["folder"])
     directory_name = folder_list[i]
-    exp = Experiment(plate, directory)
-    exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
+    exp = Experiment(directory)
+    exp.load(selected_df.loc[selected_df["folder"] == directory_name], suffix="")
     exp.load_tile_information(0)
 
     a = 0
@@ -1166,3 +1096,11 @@ if __name__ == "__main__":
     # print(r)
 
     # print(exp.get_image_coordinates(0))
+
+
+def orient(pixel_list, root_pos):
+    """Orients a pixel list with the root position at the begining"""
+    if np.all(root_pos == pixel_list[0]):
+        return pixel_list
+    else:
+        return list(reversed(pixel_list))

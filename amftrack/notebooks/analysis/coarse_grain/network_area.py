@@ -13,7 +13,6 @@ import ast
 from amftrack.plotutil import plot_t_tp1
 from scipy import sparse
 from datetime import datetime
-from amftrack.pipeline.functions.image_processing.node_id import orient
 import pickle
 import scipy.io as sio
 from pymatreader import read_mat
@@ -39,6 +38,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Node,
     Hyphae,
     plot_raw_plus,
+    orient,
 )
 from amftrack.pipeline.pipeline.paths.directory import (
     run_parallel,
@@ -59,7 +59,7 @@ from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
 from collections import Counter
 from IPython.display import clear_output
 from amftrack.notebooks.analysis.data_info import *
-from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
+from amftrack.pipeline.functions.image_processing.node_id_2 import reconnect_degree_2
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     generate_skeleton,
     from_nx_to_tab,
@@ -88,7 +88,7 @@ begin = 7
 end = 42
 dates_datetime = get_dates_datetime(directory, plate)
 dates = dates_datetime[begin : end + 1]
-exp = Experiment(plate, directory)
+exp = Experiment(directory)
 exp.load(dates)  # for method 2
 exp.load_compressed_skel()
 

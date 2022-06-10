@@ -1,7 +1,5 @@
-from path import path_code_dir
 import sys
 
-sys.path.insert(0, path_code_dir)
 from amftrack.util.sys import temp_path
 import pandas as pd
 import ast
@@ -24,8 +22,8 @@ run_info = pd.read_json(f"{temp_path}/{op_id}.json")
 folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]
-path_snap = directory + directory_name
-path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
+path_snap = os.path.join(directory, directory_name)
+path_tile = os.path.join(path_snap, "Img/TileConfiguration.txt.registered")
 try:
     tileconfig = pd.read_table(
         path_tile,
@@ -37,7 +35,7 @@ try:
     )
 except:
     print("error_name")
-    path_tile = path_snap + "/Img/TileConfiguration.registered.txt"
+    path_tile = os.path.join(path_snap, "Img/TileConfiguration.registered.txt")
     tileconfig = pd.read_table(
         path_tile,
         sep=";",

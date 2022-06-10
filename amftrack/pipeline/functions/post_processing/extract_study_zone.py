@@ -342,7 +342,7 @@ def place_study_zone(image, dist, radius):
 
 def get_study_zone(exp, dist, radius, i=0):
     date = exp.dates[i]
-    directory_name = get_dirname(date, exp.plate)
+    directory_name = get_dirname(date, exp.folders)
     path_snap = exp.directory + directory_name
     im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
     shape_compressed = im.shape[1] // 5, im.shape[0] // 5
@@ -351,14 +351,14 @@ def get_study_zone(exp, dist, radius, i=0):
     return (dr_orth, dr_center)
 
 
-def save_study_zone(dr_orth, dr_center, exp, i=0):
+def extract_study_zone(dr_orth, dr_center, exp, i=0):
     rect_orth, rect_center = dr_orth.rect, dr_center.rect
     center = rect_center.xy
     orthog = np.array(rect_orth.xy) - np.array(center)
     orthog = orthog / np.linalg.norm(orthog)
     compress = 25
     date = exp.dates[i]
-    directory_name = get_dirname(date, exp.plate)
+    directory_name = get_dirname(date, exp.folders)
     path_snap = exp.directory + directory_name
     skel = read_mat(path_snap + "/Analysis/skeleton_pruned_realigned.mat")
     Rot = skel["R"]

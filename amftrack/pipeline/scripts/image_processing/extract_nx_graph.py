@@ -1,7 +1,5 @@
-from path import path_code_dir
 import sys
 
-sys.path.insert(0, path_code_dir)
 from scipy import sparse
 from pymatreader import read_mat
 
