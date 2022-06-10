@@ -79,6 +79,78 @@ class TestExperiment(unittest.TestCase):
             save_path=os.path.join(test_path, "plot_full"),
         )
 
+    def test_plot_full_image_with_features_2(self):
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            downsizing=5,
+            region=[[0, 0], [20000, 55000]],
+            points=[[11191, 39042], [11923, 45165]],
+            segments=[[[11191, 39042], [11923, 45165]]],
+            nodes=[Node(10, self.exp), Node(100, self.exp), Node(200, self.exp)],
+            edges=get_all_edges(self.exp, 0),
+            dilation=5,
+            save_path=os.path.join(test_path, "plot1"),
+        )
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            downsizing=5,
+            region=[[0, 0], [20000, 55000]],
+            nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
+            edges=get_all_edges(self.exp, 0)[10:],
+            dilation=9,
+            save_path=os.path.join(test_path, "plot2"),
+        )
+
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            region=[[10000, 20000], [25000, 35000]],
+            downsizing=3,
+            nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
+            edges=get_all_edges(self.exp, 0)[10:],
+            dilation=4,
+            save_path=os.path.join(test_path, "plot3"),
+        )
+
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            region=[[16000, 20000], [25000, 30000]],
+            downsizing=1,
+            nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
+            edges=get_all_edges(self.exp, 0),
+            dilation=20,
+            save_path=os.path.join(test_path, "plot4"),
+        )
+
+    def test_plot_full_image_with_features_3(self):
+
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            region=[[18000, 20000], [25000, 30000]],
+            downsizing=1,
+            nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
+            edges=get_all_edges(self.exp, 0),
+            dilation=40,
+            save_path=os.path.join(test_path, "plot5"),
+        )
+
+    def test_plot_full_image_with_features_4(self):
+
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            region=[[18000, 20000], [25000, 30000]],
+            downsizing=1,
+            nodes=[Node(i, self.exp) for i in range(100)],
+            edges=get_all_edges(self.exp, 0),
+            dilation=40,
+            save_path=os.path.join(test_path, "plot6"),
+        )
+
     def test_get_all_edges(self):
         get_all_edges(self.exp, t=0)
 
