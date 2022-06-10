@@ -257,6 +257,27 @@ def format_region(region):
     ]
 
 
+def get_bounding_box(coodinate_list):
+    """
+    From a list of coordinates, this function hands out the two points defining
+    a rectangle that contains all of the points.
+    """
+    x_min = int(np.min([coord[0] for coord in coodinate_list]))
+    x_max = int(np.max([coord[0] for coord in coodinate_list]))
+    y_min = int(np.min([coord[1] for coord in coodinate_list]))
+    y_max = int(np.max([coord[1] for coord in coodinate_list]))
+    return [[x_min, y_min], [x_max, y_max]]
+
+
+def expand_bounding_box(bounding_box, margin):
+    """
+    Expand the bounding box in all the direction by `margin`
+    """
+    bounding_box = format_region(bounding_box)
+    [[x_min, y_min], [x_max, y_max]] = bounding_box
+    return [[x_min - margin, y_min - margin], [x_max + margin, y_max + margin]]
+
+
 if __name__ == "__main__":
     point1 = [0, 0]
     point2 = [2, 4]
