@@ -121,6 +121,7 @@ APP_SECRET=___
 REFRESH_TOKEN = ___
 FOLDER_ID=___
 USER_ID=___
+SLURM_PATH_transfer=___
 ```
 
 To have access to a path: 
