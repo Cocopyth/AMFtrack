@@ -308,7 +308,7 @@ def transform_skeleton_final(skeleton_doc, Rot, trans):
         + trans
     ).astype(np.int)
     for pixel in list(transformed_keys):
-        if pixel[0]>=0 and pixel[1]>=0:
+        if pixel[0] >= 0 and pixel[1] >= 0:
             skeleton_transformed[(pixel[0], pixel[1])] = 1
         else:
             # print("some negative pixels")

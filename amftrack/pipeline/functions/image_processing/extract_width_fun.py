@@ -425,8 +425,8 @@ if __name__ == "__main__":
     plate = 19
     folder_list = list(selected_df["folder"])
     directory_name = folder_list[i]
-    exp = Experiment(plate, directory)
-    exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
+    exp = Experiment(directory)
+    exp.load(selected_df.loc[selected_df["folder"] == directory_name], suffix="")
 
     ## Select a random Edge at time 0
     (G, pos) = exp.nx_graph[0], exp.positions[0]

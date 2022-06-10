@@ -1,135 +1,162 @@
-from amftrack.pipeline.functions.image_processing.hyphae_id_surf import get_pixel_growth_and_new_children
+from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
+    get_pixel_growth_and_new_children,
+)
 import numpy as np
 import networkx as nx
-from amftrack.pipeline.functions.post_processing.util import get_length_um_edge, is_in_study_zone,get_length_um
+from amftrack.pipeline.functions.post_processing.util import (
+    get_length_um_edge,
+    is_in_study_zone,
+    get_length_um,
+)
 from scipy import sparse
+
 
 def get_time_since_start(hypha, t, tp1, args):
     exp = hypha.experiment
-    seconds = (exp.dates[t]-exp.dates[hypha.ts[0]]).total_seconds()
-    return("time_since_emergence",seconds/3600)
+    seconds = (exp.dates[t] - exp.dates[hypha.ts[0]]).total_seconds()
+    return ("time_since_emergence", seconds / 3600)
+
 
 def get_time_since_begin_exp(hypha, t, tp1, args):
     exp = hypha.experiment
-    seconds = (exp.dates[t]-exp.dates[0]).total_seconds()
-    return("time_since_begin_exp",seconds/3600)
+    seconds = (exp.dates[t] - exp.dates[0]).total_seconds()
+    return ("time_since_begin_exp", seconds / 3600)
 
-def get_timedelta(hypha,t,tp1,args):
+
+def get_timedelta(hypha, t, tp1, args):
     exp = hypha.experiment
-    seconds = (exp.dates[tp1]-exp.dates[t]).total_seconds()
-    return("timedelta",seconds/3600)
+    seconds = (exp.dates[tp1] - exp.dates[t]).total_seconds()
+    return ("timedelta", seconds / 3600)
 
 
-def get_speed(hypha,t,tp1,args):
+def get_speed(hypha, t, tp1, args):
     try:
-        pixels,nodes = get_pixel_growth_and_new_children(hypha,t,tp1)
-        speed = np.sum([get_length_um(seg) for seg in pixels])/get_timedelta(hypha,t,tp1,None)[1]
-        return('speed',speed)
+        pixels, nodes = get_pixel_growth_and_new_children(hypha, t, tp1)
+        speed = (
+            np.sum([get_length_um(seg) for seg in pixels])
+            / get_timedelta(hypha, t, tp1, None)[1]
+        )
+        return ("speed", speed)
     except nx.exception.NetworkXNoPath:
-        print('not_connected',hypha.end.label,hypha.get_root(tp1).label)
-        return('speed',None)
+        print("not_connected", hypha.end.label, hypha.get_root(tp1).label)
+        return ("speed", None)
 
-def get_angle(veca,vecb):
-    begin = veca/np.linalg.norm(veca)
-    end = vecb/np.linalg.norm(vecb)
-    dot_product = min(np.dot(begin, end),1)
-    if (begin[1] * end[0] - end[1] * begin[0] >= 0):  # determinant
+
+def get_angle(veca, vecb):
+    begin = veca / np.linalg.norm(veca)
+    end = vecb / np.linalg.norm(vecb)
+    dot_product = min(np.dot(begin, end), 1)
+    if begin[1] * end[0] - end[1] * begin[0] >= 0:  # determinant
         angle = -np.arccos(dot_product) / (2 * np.pi) * 360
     else:
         angle = np.arccos(dot_product) / (2 * np.pi) * 360
-    return(angle)
+    return angle
 
-def get_absolute_angle_growth(hypha,t,tp1,args):
+
+def get_absolute_angle_growth(hypha, t, tp1, args):
     try:
-        segs,nodes = get_pixel_growth_and_new_children(hypha,t,tp1)
+        segs, nodes = get_pixel_growth_and_new_children(hypha, t, tp1)
         curve = [pixel for seg in segs for pixel in seg]
         curve_array = np.array(curve)
         vec1 = curve_array[-1] - curve_array[0]
-        vec2 = [0,1]
+        vec2 = [0, 1]
         angle = get_angle(vec1, vec2)
-        return('absolute_angle',angle)
+        return ("absolute_angle", angle)
     except nx.exception.NetworkXNoPath:
-        print('not_connected',hypha.end.label,hypha.get_root(tp1).label)
-        return('absolute_angle',None)
+        print("not_connected", hypha.end.label, hypha.get_root(tp1).label)
+        return ("absolute_angle", None)
 
 
-def get_tot_length_C(hyph,t,tp1,args):
+def get_tot_length_C(hyph, t, tp1, args):
     try:
         edges = hyph.get_nodes_within(t)[1]
-        lengths = np.array([get_length_um_edge(edge,t) for edge in edges])
+        lengths = np.array([get_length_um_edge(edge, t) for edge in edges])
         tot_length_C = np.sum(lengths)
-        return('tot_length_C',tot_length_C)
+        return ("tot_length_C", tot_length_C)
     except nx.exception.NetworkXNoPath:
-        return('tot_length_C',None)
+        return ("tot_length_C", None)
 
-def get_timestep(hypha,t,tp1,args):
-    return("timestep",t)
 
-def get_timestep_init(hypha,t,tp1,args):
-    return("timestep_init",hypha.ts[0])
+def get_timestep(hypha, t, tp1, args):
+    return ("timestep", t)
 
-def get_time_init(hypha,t,tp1,args):
-    return("time_init",get_timedelta(hypha,0,hypha.ts[0],None)[1])
 
-def get_degree(hypha,t,tp1,args):
-    return("degree",hypha.end.degree(t))
+def get_timestep_init(hypha, t, tp1, args):
+    return ("timestep_init", hypha.ts[0])
 
-def get_width_tip_edge(hypha,t,tp1,args):
+
+def get_time_init(hypha, t, tp1, args):
+    return ("time_init", get_timedelta(hypha, 0, hypha.ts[0], None)[1])
+
+
+def get_degree(hypha, t, tp1, args):
+    return ("degree", hypha.end.degree(t))
+
+
+def get_width_tip_edge(hypha, t, tp1, args):
     try:
         edges = hypha.get_nodes_within(t)[1]
-        if len(edges)>0:
+        if len(edges) > 0:
             edge = edges[-1]
             width = edge.width(t)
-            return('width_tip_edge',width)
+            return ("width_tip_edge", width)
         else:
-            return('width_tip_edge',None)
+            return ("width_tip_edge", None)
     except nx.exception.NetworkXNoPath:
-        return('width_tip_edge',None)
-    
-def get_width_root_edge(hypha,t,tp1,args):
+        return ("width_tip_edge", None)
+
+
+def get_width_root_edge(hypha, t, tp1, args):
     try:
         edges = hypha.get_nodes_within(t)[1]
-        if len(edges)>0:
+        if len(edges) > 0:
             edge = edges[0]
             width = edge.width(t)
-            return('width_tip_edge',width)
+            return ("width_tip_edge", width)
         else:
-            return('width_tip_edge',None)
+            return ("width_tip_edge", None)
     except nx.exception.NetworkXNoPath:
-        print('no_path')
-        return('width_root_edge',None)
-    
-def get_width_average(hypha,t,tp1,args):
+        print("no_path")
+        return ("width_root_edge", None)
+
+
+def get_width_average(hypha, t, tp1, args):
     try:
         edges = hypha.get_nodes_within(t)[1]
         widths = np.array([edge.width(t) for edge in edges])
-        lengths = np.array([get_length_um_edge(edge,t) for edge in edges])
-        av_width = np.sum(widths*lengths)/np.sum(lengths)
-        return('av_width',av_width)
+        lengths = np.array([get_length_um_edge(edge, t) for edge in edges])
+        av_width = np.sum(widths * lengths) / np.sum(lengths)
+        return ("av_width", av_width)
     except nx.exception.NetworkXNoPath:
-        return('av_width',None)
-    
-def has_reached_final_pos(hypha,t,tp1,args):
+        return ("av_width", None)
+
+
+def has_reached_final_pos(hypha, t, tp1, args):
     tf = hypha.ts[-1]
     pos_end = hypha.end.pos(tf)
     thresh = 40
-    return('has_reached_final_pos',str(np.linalg.norm(hypha.end.pos(t)-pos_end)<thresh))
+    return (
+        "has_reached_final_pos",
+        str(np.linalg.norm(hypha.end.pos(t) - pos_end) < thresh),
+    )
 
-def get_distance_final_pos(hypha,t,tp1,args):
+
+def get_distance_final_pos(hypha, t, tp1, args):
     tf = hypha.ts[-1]
     pos_end = hypha.end.pos(tf)
-    return('distance_final_pos',np.linalg.norm(hypha.end.pos(t)-pos_end))
+    return ("distance_final_pos", np.linalg.norm(hypha.end.pos(t) - pos_end))
 
 
-def local_density(hypha,t,tp1,args):
+def local_density(hypha, t, tp1, args):
     window = args[0]
     exp = hypha.experiment
     pos = hypha.end.pos(t)
-    x,y = pos[0],pos[1]
+    x, y = pos[0], pos[1]
     skeletons = [sparse.csr_matrix(skel) for skel in exp.skeletons]
-    skeleton=skeletons[t][x-window:x+window,y-window:y+window]
-    density = skeleton.count_nonzero()/(window**2*1.725)*10**6
-    return(f'density_window{window}',density)
+    skeleton = skeletons[t][x - window : x + window, y - window : y + window]
+    density = skeleton.count_nonzero() / (window**2 * 1.725) * 10**6
+    return (f"density_window{window}", density)
 
-def in_ROI(hypha,t,tp1,args):
-    return('in_ROI', str(np.all(is_in_study_zone(hypha.end,t,1000,150))))
+
+def in_ROI(hypha, t, tp1, args):
+    return ("in_ROI", str(np.all(is_in_study_zone(hypha.end, t, 1000, 150))))
