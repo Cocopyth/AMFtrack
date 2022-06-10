@@ -458,37 +458,37 @@ def reconstruct_image(
 
 
 def reconstruct_skeletton(
-    coord_list_list: List,
-    region,  # TODO(FK):
-    color_seeds=None,
+    coord_list_list: List[List[coord_int]],
+    region=[[0, 0], [20000, 40000]],
+    color_seeds: List[int] = None,
     downsizing=5,
-    dilation=1,
-    color=True,
-    dim_x=DIM_X,
-    dim_y=DIM_Y,
+    dilation=2,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
     """
-    This function reconstructs the skeletton or a part of it and return it as an np array.
-    It also returns a function to plot things on the created image.
-    :param region: [[a, b], [c, d]] defining a zone that we want to extract. Can be np.array or lists, int or floats
-    :param downsizing: factor by which the image is downsized, 1 returns the original image
-    :param dimx: x dimension of images
-    WARNING: without downsizing, the full image is heavy (2 Go)
-    NB: returned image shape is ((int(a)-int(c))//downsizing, (int(b)-int(d))//downsizing)
-    NB: dilation
-    """
-    # TODO(FK): filter edges more effectively
+    This function makes an image of `region` downsized by a factor `downsizing`
+    were each list of points in `coord_list_list` is drawn with a different color
+    specified in `color_seed`.
+    It also applies a kernel dilation of size 2.
+    All areas without any points painted are set transparent (alpha value of 0).
+    Also return a function f to plot points in the image.
 
+    :param region: [[a, b], [c, d]] defining a zone that we want, it can be np.array or lists, int or floats
+    :param downsizing: factor by which the image is downsized, 1 returns the original image
+    WARNING: without downsizing, the full image is heavy (8 Go)
+    NB: returned image shape is ((int(a)-int(c))//downsizing, (int(b)-int(d))//downsizing)
+    NB: dilation is applied after downsizing the thickness of lines T is transformed in T*dilation + 2*dilation
+    """
+    # TODO(FK): make a black and white version
+    # TODO(FK): make a default region based on the edges
+
+    # Define canvas
     region = format_region(region)
     region = [[int(e) for e in l] for l in region]  # only to avoid errors
     d_x = (region[1][0] - region[0][0]) // downsizing
     d_y = (region[1][1] - region[0][1]) // downsizing
+    full_im = np.full(shape=(d_x, d_y, 4), fill_value=0, dtype=np.uint8)
 
-    full_im = np.full(
-        shape=(d_x, d_y, 4), fill_value=0, dtype=np.uint8
-    )  # TODO(FK): add background
-
-    # Mapping from TIMESTEP referential to downsized image referential
+    # Mapping from original referential to downsized and cropped image referential
     f = lambda c: (np.array(c) - np.array(region[0])) / downsizing
     f_int = lambda c: f(c).astype(int)
     # region_new = [f_int(region[0]), f_int(region[1])]  # should be [[0, 0],[d_x, d_y]]
@@ -496,19 +496,20 @@ def reconstruct_skeletton(
     if not color_seeds:
         color_seeds = [random.randrange(255) for _ in range(len(coord_list_list))]
 
-    # Copy each image into the frame
+    # Plot edges
     for i, coord_list in enumerate(coord_list_list):
         color = make_random_color(color_seeds[i])
-        # chose a color here
         skel = [
             f_int(coordinates) for coordinates in coord_list
-        ]  # not unique but it's ok
+        ]  # nb: coordinates are not unique after downsizing
         for c in skel:
             x, y = c[0], c[1]
-            try:  # TODO(FK): use is_in_image
+            if 0 <= x < d_x and 0 <= y < d_y:
                 full_im[x][y][:] = color
-            except:
-                None
+
+    # Dilation
+    kernel = np.ones((dilation, dilation), np.uint8)
+    full_im = cv.dilate(full_im, kernel, iterations=1)
 
     return full_im, f
 
