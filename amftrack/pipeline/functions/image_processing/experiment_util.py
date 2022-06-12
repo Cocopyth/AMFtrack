@@ -1,8 +1,10 @@
 from random import choice
+import random
 import numpy as np
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Callable
 import cv2 as cv
 import matplotlib.pyplot as plt
+from random import randrange
 
 from amftrack.util.aliases import coord_int, coord
 from amftrack.util.param import DIM_X, DIM_Y
@@ -10,18 +12,18 @@ from amftrack.util.geometry import (
     distance_point_pixel_line,
     get_closest_line_opt,
     get_closest_lines,
+    format_region,
+    intersect_rectangle,
+    get_overlap,
 )
-from amftrack.util.plot import crop_image
+from amftrack.util.plot import crop_image, make_random_color
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Node,
     Edge,
 )
 from amftrack.util.sparse import dilate_coord_list
-from random import randrange
-
-
-# Prov
+from amftrack.util.other import is_in
 
 
 def get_random_edge(exp: Experiment, t=0) -> Edge:
@@ -75,7 +77,7 @@ def get_edge_from_node_labels(
     exp: Experiment, t: int, start_node: int, end_node: int
 ) -> Optional[Edge]:
     (G, pos) = exp.nx_graph[t], exp.positions[t]
-    # Verify that the edge exists
+    # TODO(FK): Verify that the edge exists
     edge_nodes = list(G.edges)
     if (start_node, end_node) in edge_nodes:
         edge = Edge(Node(start_node, exp), Node(end_node, exp), exp)
@@ -114,6 +116,7 @@ def aux_plot_edge(
     See plot_edge for more information.
     :return: np binary image, coordinate of all the points in image
     """
+    # TODO(FK): use reconstruct image instead
     exp = edge.experiment
     number_points = 10
     # Fetch coordinates of edge points in general referential
@@ -157,6 +160,7 @@ def plot_edge(edge: Edge, t: int, mode=2, points=10, save_path=None, f=None):
     :param save_path: doesn't save if None, else save the image as `save_path`
     :param f: function of the signature f(n:int)->List[int]
     """
+    # TODO(FK): use reconstruct image instead
     im, list_of_coord_im = aux_plot_edge(edge, t, mode, points, f)
     plt.imshow(im)
     for i in range(len(list_of_coord_im)):
@@ -230,7 +234,7 @@ def plot_full_image_with_features(
     # TODO(FK): saving image, add nodes, caching the images
     # TODO(FK): move the cropping part and function for changing the coodinates in the reconstruct image function
     # 1/ Image layer
-    im = reconstruct_image(exp, t, downsizing=downsizing)
+    im = reconstruct_image_simple(exp, t, downsizing=downsizing)
 
     if region != None:
         for i in range(2):
@@ -307,19 +311,19 @@ def plot_full_image_with_features(
         plt.show()
 
 
-# @lru_cache(maxsize=1)  # TODO(FK): make a custom decorator
-def reconstruct_image(
+def reconstruct_image_simple(
     exp: Experiment, t: int, downsizing=1, white_background=True
 ) -> np.array:
     """
     This function reconstructs the full size image at timestep t and return it as an np array.
+    It also returns a function mapping coordinates in the TIMESTEP referential to coordinates
+    in the returned IMAGE referential.
     :param downsizing: factor by which the image is downsized, 1 returns the original image
     :param white_background: if True, areas where no image was found are white otherwise black
     WARNING: the image is a very heavy object (2 Go)
     NB: To plot objects in this image, the TIMESTEP referential must be used
     """
-    # TODO(FK): add window here, return function for plotting
-    # TODO(FK): make a decorator to store in TEMP or cache with
+    # TODO(FK): return function for plotting
     if exp.image_coordinates is None:
         exp.load_tile_information(
             t
@@ -361,6 +365,153 @@ def reconstruct_image(
     )
 
     return full_im
+
+
+def reconstruct_image(
+    exp: Experiment,
+    t: int,
+    region=None,
+    downsizing=5,
+    prettify=False,
+    white_background=True,
+    dim_x=DIM_X,
+    dim_y=DIM_Y,
+) -> Tuple[List[np.array], Callable[[float, float], float]]:
+    """
+    This function reconstructs the full size image or a part of it at
+    timestep t and return it as an np array. It also returns a function
+    mapping coordinates in the TIMESTEP referential to coordinates in
+    the reconstructed image referential.
+    :param region: [[a, b], [c, d]] defining a zone in the TIMESTEP ref that
+                    we want to extract. Can be np.array or lists, int or floats
+    :param downsizing: factor by which the image is downsized, 1 returns the original image
+    :param white_background: if True, areas where no images were found are white, otherwise black
+    :param prettify: add transformation operation to make the rendering better (but costly)
+    :param dimx: x dimension of images
+    WARNING: without downsizing, the full image is heavy (2 Go)
+    NB: returned image shape is ((int(a)-int(c))//downsizing, (int(b)-int(d))//downsizing)
+    """
+    if exp.image_coordinates is None:
+        exp.load_tile_information(
+            t
+        )  # TODO (FK): make this independent of plate analysis
+    image_coodinates = exp.image_coordinates[t]
+
+    # Define canvas dimension
+    if region == None:
+        # Full image
+        m_x = np.min([c[0] for c in image_coodinates])
+        m_y = np.min([c[1] for c in image_coodinates])
+        M_x = np.max([c[0] for c in image_coodinates]) + dim_x
+        M_y = np.max([c[1] for c in image_coodinates]) + dim_y
+        region = [[int(m_x), int(m_y)], [int(M_x), int(M_y)]]
+    region = format_region(region)
+    region = [[int(e) for e in l] for l in region]  # only to avoid errors
+    d_x = (region[1][0] - region[0][0]) // downsizing
+    d_y = (region[1][1] - region[0][1]) // downsizing
+
+    # Mapping from TIMESTEP referential to downsized image referential
+    f = lambda c: (np.array(c) - np.array(region[0])) / downsizing
+    f_int = lambda c: f(c).astype(int)
+    region_new = [f_int(region[0]), f_int(region[1])]  # should be [[0, 0],[d_x, d_y]]
+
+    # Create the general image frame
+    if white_background:
+        background_value = 255
+    else:
+        background_value = 0
+    full_im = np.full((d_x, d_y), fill_value=background_value, dtype=np.uint8)
+
+    # Copy each image into the frame
+    for i, im_coord in enumerate(image_coodinates):
+        if intersect_rectangle(
+            region[0],
+            region[1],
+            im_coord,
+            [im_coord[0] + dim_x, im_coord[1] + dim_y],
+            strict=True,  # we don't care about the last pixel
+        ):
+            im = exp.get_image(t, i)
+            if prettify:
+                # apply rolling ball here
+                pass
+            length_x = im.shape[0] // downsizing
+            length_y = im.shape[1] // downsizing
+            im_coord_new = f_int(im_coord)
+            if downsizing != 1:
+                im = cv.resize(
+                    im, (length_y, length_x)
+                )  # cv2 has different (x, y) convention
+            overlap = get_overlap(
+                region_new[0],
+                region_new[1],
+                im_coord_new,
+                im_coord_new + np.array([length_x, length_y]),
+                strict=True,
+            )
+            full_im[overlap[0][0] : overlap[1][0], overlap[0][1] : overlap[1][1]] = im[
+                overlap[0][0] - im_coord_new[0] : overlap[1][0] - im_coord_new[0],
+                overlap[0][1] - im_coord_new[1] : overlap[1][1] - im_coord_new[1],
+            ]
+
+    return full_im, f
+
+
+def reconstruct_skeletton(
+    coord_list_list: List[List[coord_int]],
+    region=[[0, 0], [20000, 40000]],
+    color_seeds: List[int] = None,
+    downsizing=5,
+    dilation=2,
+) -> Tuple[List[np.array], Callable[[float, float], float]]:
+    """
+    This function makes an image of `region` downsized by a factor `downsizing`
+    were each list of points in `coord_list_list` is drawn with a different color
+    specified in `color_seed`.
+    It also applies a kernel dilation of size 2.
+    All areas without any points painted are set transparent (alpha value of 0).
+    Also return a function f to plot points in the image.
+
+    :param region: [[a, b], [c, d]] defining a zone that we want, it can be np.array or lists, int or floats
+    :param downsizing: factor by which the image is downsized, 1 returns the original image
+    WARNING: without downsizing, the full image is heavy (8 Go)
+    NB: returned image shape is ((int(a)-int(c))//downsizing, (int(b)-int(d))//downsizing)
+    NB: dilation is applied after downsizing the thickness of lines T is transformed in T*dilation + 2*dilation
+    """
+    # TODO(FK): make a black and white version
+    # TODO(FK): make a default region based on the edges
+
+    # Define canvas
+    region = format_region(region)
+    region = [[int(e) for e in l] for l in region]  # only to avoid errors
+    d_x = (region[1][0] - region[0][0]) // downsizing
+    d_y = (region[1][1] - region[0][1]) // downsizing
+    full_im = np.full(shape=(d_x, d_y, 4), fill_value=0, dtype=np.uint8)
+
+    # Mapping from original referential to downsized and cropped image referential
+    f = lambda c: (np.array(c) - np.array(region[0])) / downsizing
+    f_int = lambda c: f(c).astype(int)
+    # region_new = [f_int(region[0]), f_int(region[1])]  # should be [[0, 0],[d_x, d_y]]
+
+    if not color_seeds:
+        color_seeds = [random.randrange(255) for _ in range(len(coord_list_list))]
+
+    # Plot edges
+    for i, coord_list in enumerate(coord_list_list):
+        color = make_random_color(color_seeds[i])
+        skel = [
+            f_int(coordinates) for coordinates in coord_list
+        ]  # nb: coordinates are not unique after downsizing
+        for c in skel:
+            x, y = c[0], c[1]
+            if 0 <= x < d_x and 0 <= y < d_y:
+                full_im[x][y][:] = color
+
+    # Dilation
+    kernel = np.ones((dilation, dilation), np.uint8)
+    full_im = cv.dilate(full_im, kernel, iterations=1)
+
+    return full_im, f
 
 
 def plot_full_image(
@@ -452,12 +603,29 @@ if __name__ == "__main__":
 
     # c = [35000, 20000]  # General ref
     # edge = find_nearest_edge(c, exp, 0)
-    a = 1
+    # a = 1
 
-    plot_full_image_with_features(
-        exp,
-        0,
-        points=[[11191, 39042], [11923, 45165]],
-        segments=[[[11191, 39042], [11923, 45165]]],
-        nodes=[Node(10, exp), Node(100, exp), Node(200, exp)],
+    # plot_full_image_with_features(
+    #     exp,
+    #     0,
+    #     points=[[11191, 39042], [11923, 45165]],
+    #     segments=[[[11191, 39042], [11923, 45165]]],
+    #     nodes=[Node(10, exp), Node(100, exp), Node(200, exp)],
+    # )
+
+    # im, _ = reconstruct_image_opt(exp, 0)
+
+    # im, _ = reconstruct_image_opt(exp, 0, downsizing=42, white_background=True)
+    # region = [[10000, 20000], [20000, 40000]]
+    # im, _ = reconstruct_image_opt(exp, 0, downsizing=1, region=region)
+
+    a = 1
+    region = [[10, 10], [20, 30]]
+    a, b = reconstruct_skeletton(
+        [[[2, 4], [15, 15], [12, 32]], [[16, 16]]], region=region
     )
+
+    c = 0
+    # plt.imshow(im[0])
+
+    a = 0

@@ -3,6 +3,7 @@ Utils to handle files and directories.
 """
 
 import random
+import os
 
 
 def chose_file(directory_path: str) -> str:
