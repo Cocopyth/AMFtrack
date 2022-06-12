@@ -28,6 +28,7 @@ conda install -c conda-forge scikit-learn
 pip install Shapely
 pip install tqdm
 pip install dropbox
+pip install imageio-ffmpeg
 ```
 <!-- - conda install -c anaconda ipykernel -->
 

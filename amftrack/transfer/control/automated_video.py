@@ -22,10 +22,13 @@ all_folders_origin = get_current_folders(directory_origin, local=True)
 all_folders_origin["date_datetime"] = pd.to_datetime(
     all_folders_origin["date"].astype(str), format="%d.%m.%Y, %H:%M:"
 )
-selection = (datetime.now() - all_folders_origin["date_datetime"]) >= timedelta(days=45)
-finished_plates = selection["unique_id"].unique()
-selection = (datetime.now() - all_folders_origin["date_datetime"]) < timedelta(days=44)
-to_plot = selection.loc[selection['unique_id'].is_in(finished_plates)==False]
+selection = (datetime.now() - all_folders_origin["datetime"]) >= timedelta(days=45)
+select = all_folders_origin.loc[selection]
+finished_plates = select["unique_id"].unique()
+selection = (datetime.now() - all_folders_origin["datetime"]) < timedelta(days=44)
+select = all_folders_origin.loc[selection]
+
+to_plot = select.loc[select['unique_id'].isin(finished_plates)==False]
 plates = to_plot["unique_id"].unique()
 for plate in plates:
     select = to_plot.loc[to_plot["unique_id"] == plate]
@@ -33,7 +36,7 @@ for plate in plates:
     paths = list(select['total_path'])
     paths_list = [[os.path.join(path,'Img','Img_r08_c06.tif'),os.path.join(path,'Img','Img_r07_c06.tif')] for path in paths]
     texts = [(folder,'') for folder in list(select['folder'])]
-    resize = (2048,1504)
+    resize = (2048//4,1504//4)
     id_unique = (
         str(int(select["Plate"].iloc[0]))
         + "_"
@@ -42,4 +45,6 @@ for plate in plates:
     print(paths_list)
     dir_drop = "DATA/PRINCE"
     upload_path = f"/{dir_drop}/{id_unique}/{id_unique}_single_tiled.mp4"
-    make_video_tile(paths_list,texts,resize,save_path=None,upload_path=upload_path,fontScale=3)
+    make_video_tile(paths_list,texts,resize,save_path=None,upload_path=upload_path,fontScale=1)
+    upload_path = f"/DATA/PRINCE/OVERVIEW/{id_unique}_single_tiled.mp4"
+    make_video_tile(paths_list,texts,resize,save_path=None,upload_path=upload_path,fontScale=1)
