@@ -25,3 +25,4 @@ python-decouple
 typing
 keras-tuner
 tensorflow
+imageio-ffmpeg

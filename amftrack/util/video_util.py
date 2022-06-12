@@ -29,9 +29,10 @@ def make_video(paths,texts,resize,save_path=None,upload_path=None,fontScale=3,co
     return(imgs)
 
 def make_video_tile(paths_list,texts,resize,save_path=None,upload_path=None,fontScale=3,color = (0, 255, 255)):
-    imgs_list = [[cv2.imread(path,cv2.IMREAD_COLOR) for path in paths] for paths in paths_list]
-    if not resize is None:
-        imgs_list = [[cv2.resize(img,resize) for img in imgs] for imgs in imgs_list]
+    if resize is None:
+        imgs_list = [[cv2.imread(path, cv2.IMREAD_COLOR) for path in paths] for paths in paths_list]
+    else:
+        imgs_list = [[cv2.resize(cv2.imread(path,cv2.IMREAD_COLOR),resize) for path in paths] for paths in paths_list]
     for i,imgs in enumerate(imgs_list):
         for j,img in enumerate(imgs):
             anchor =img.shape[0]//10,img.shape[1]//10
