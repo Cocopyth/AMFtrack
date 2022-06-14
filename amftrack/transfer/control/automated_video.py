@@ -47,7 +47,7 @@ for plate in plates:
     upload_path = f"/{dir_drop}/{id_unique}/{id_unique}_single_tiled.mp4"
     try:
         make_video_tile(paths_list,texts,resize,save_path=None,upload_path=upload_path,fontScale=1)
-        upload_path = f"/DATA/OVERVIEW/{id_unique}_single_tiled.mp4"
+        upload_path = f"/DATA/PRINCE_OVERVIEW/{id_unique}_single_tiled.mp4"
         make_video_tile(paths_list,texts,resize,save_path=None,upload_path=upload_path,fontScale=1)
     except:
         continue
@@ -56,7 +56,7 @@ for plate in plates:
     texts = list(select['folder'])
     resize = (2624, 1312)
     try:
-        upload_path = f"/DATA/OVERVIEW/{id_unique}_stitched.mp4"
+        upload_path = f"/DATA/PRINCE_OVERVIEW/{id_unique}_stitched.mp4"
         make_video(paths, texts, resize, save_path=None, upload_path=upload_path, fontScale=1)
     except:
         continue

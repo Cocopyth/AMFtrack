@@ -1,6 +1,4 @@
 from amftrack.util.sys import path_code
-import pandas as pd
-import ast
 import sys
 
 from amftrack.util.sys import temp_path
@@ -14,7 +12,7 @@ import os
 
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
-compress = str(sys.argv[1])
+compress = int(sys.argv[1])
 
 run_info = pd.read_json(f"{temp_path}/{op_id}.json")
 folder = run_info.iloc[i]['total_path']
@@ -51,4 +49,4 @@ for index, name in enumerate(tileconfig[0]):
         boundaries[0] : boundaries[0] + shape[1],
     ] = im_back_rem
 
-imageio.imsave(os.path.join(path,"StitchedImage.tif",mask))
+imageio.imsave(os.path.join(folder,"StitchedImage.tif"),mask)
