@@ -268,6 +268,37 @@ def run_parallel_transfer(
         my_file.close()
         call(f"sbatch {path_job}", shell=True, stdout=DEVNULL)
 
+def run_launcher(
+    code,
+    args,
+    plates,
+    time,
+    cpus=1,
+    name = 'launcher',
+    node="staging",
+    name_job="one_shot.sh",
+    dependency=False
+):
+    path_job = f"{path_bash}{name_job}"
+    args_str = [str(arg) for arg in args]+[str(plate) for plate in plates]
+    arg_str = " ".join(args_str)
+    arg_str_out = "_".join([str(arg) for arg in args if type(arg) != str])
+    my_file = open(path_job, "w")
+    my_file.write(
+        f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
+    )
+    my_file.write(
+        f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}.out" \n'
+    )
+    my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
+    my_file.write(f"conda activate amftrack\n")
+    my_file.write(
+        f"python {path_code}pipeline/launching/launcher_scripts/{code} {arg_str}  &\n"
+    )
+    my_file.write("wait\n")
+    my_file.close()
+    call_code(path_job, dependency)
+
 
 def run_parallel_transfer_to_archive(
     folders,
