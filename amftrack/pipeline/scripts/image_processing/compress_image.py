@@ -9,6 +9,7 @@ import imageio
 import numpy as np
 import os
 from time import time
+from amftrack.pipeline.functions.image_processing.extract_skel import bowler_hat
 
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
@@ -74,4 +75,5 @@ for index, name in enumerate(tileconfig[0]):
 
 output = mask
 mask_compressed = cv.resize(output, (dim[1] // 5, dim[0] // 5))
-sio.savemat(path_snap + "/Analysis/raw_image.mat", {"raw": mask_compressed})
+bckgr_rm = bowler_hat(-mask_compressed,16,[15])
+sio.savemat(path_snap + "/Analysis/raw_image.mat", {"raw": bckgr_rm})

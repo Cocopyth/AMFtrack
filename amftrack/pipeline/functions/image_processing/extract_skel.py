@@ -5,7 +5,7 @@ path_code_dir = "/home/cbisot/pycode/MscThesis"
 sys.path.insert(0, path_code_dir)
 from amftrack.util.sys import get_dirname, pastis_path, fiji_path, path_code, temp_path
 import pandas as pd
-import ast
+import shutil
 from scipy import sparse
 from datetime import datetime
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
@@ -115,9 +115,9 @@ def extract_skel_new_prince(im, params, perc_low, perc_high):
     imname = foldname + f"/{foldname}it{args[4]}.tif"
     path_modif = place_save + "/" + imname
     im2 = imageio.imread(path_modif)
+    shutil.rmtree(os.path.join(place_save,foldname))
     low = max(20, np.percentile(im2, perc_low))
     high = max(90, np.percentile(im2, perc_high))
-    # transformed = -img+255
     transformed = im2
     hyst = filters.apply_hysteresis_threshold(transformed, low, high)
     dilated = remove_holes(hyst)
