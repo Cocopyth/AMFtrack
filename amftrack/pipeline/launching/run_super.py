@@ -14,8 +14,9 @@ directory_sun = "/run/user/357100554/gvfs/smb-share:server=sun.amolf.nl,share=sh
 
 
 path_bash = os.getenv("HOME") + "/bash/"
-
-path_stitch = os.getenv("HOME") + "/bash/stitch.sh"
+path_stitch = f"{temp_path}/stitching_loops/"
+if not os.path.isdir(path_stitch):
+    os.mkdir(path_stitch)
 
 
 def call_code(path_job, dependency):
@@ -179,7 +180,7 @@ def make_stitching_loop(directory, dirname, op_id):
     a_file.close()
 
 
-def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="thin"):
+def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="thin", name_job="stitch",):
     folder_list = list(folders["folder"])
     folder_list.sort()
     length = len(folders)
@@ -187,6 +188,7 @@ def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="
     end_skel = length // num_parallel + 1
     folder_list = list(folders["folder"])
     folder_list.sort()
+    path_job = f"{path_bash}{name_job}"
     for folder in folder_list:
         path_im_copy = f"{directory}/{folder}/Img/Img_r03_c05.tif"
         if os.path.isfile(path_im_copy):
@@ -209,7 +211,7 @@ def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="
             make_stitching_loop(directory, folder_list[k], op_id)
             op_ids.append(op_id)
         ide = time_ns()
-        my_file = open(path_stitch, "w")
+        my_file = open(path_job, "w")
         my_file.write(
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
@@ -223,7 +225,7 @@ def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="
             )
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_stitch}", shell=True)
+        call(f"sbatch {path_job}", shell=True)
 
 
 def run_parallel_transfer(
@@ -276,7 +278,7 @@ def run_launcher(
     cpus=1,
     name = 'launcher',
     node="staging",
-    name_job="one_shot.sh",
+    name_job = "one_shot.sh",
     dependency=False
 ):
     path_job = f"{path_bash}{name_job}"

@@ -5,7 +5,9 @@ from amftrack.util.sys import (
 from amftrack.pipeline.launching.run_super import run_parallel_transfer
 
 directory_targ = str(sys.argv[1])
-plates = sys.argv[2:]
+name_job = str(sys.argv[2])
+
+plates = sys.argv[3:]
 dir_drop = "DATA/PRINCE"
 update_plate_info(directory_targ, local=True)
 all_folders = get_current_folders(directory_targ, local=True)
@@ -21,5 +23,5 @@ run_parallel_transfer(
     "staging",
     cpus=1,
     node="staging",
-    name_job="one_shot.sh"
+name_job = name_job
 )

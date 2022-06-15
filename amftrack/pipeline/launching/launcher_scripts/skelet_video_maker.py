@@ -8,16 +8,15 @@ directory_targ = str(sys.argv[1])
 name_job = str(sys.argv[2])
 stage = int(sys.argv[3])
 plates = sys.argv[4:]
-dir_drop = "DATA/PRINCE"
 update_plate_info(directory_targ, local=True)
 all_folders = get_current_folders(directory_targ, local=True)
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
-folders.loc[folders['/Img/TileConfiguration.txt.registered']==True]
-num_parallel = 50
+folders = folders.loc[folders["/Analysis/skeleton_compressed.mat"]==True]
+num_parallel = 30
 time = '10:00'
 args = []
 run_parallel_all_time(
-    "make_video_single.py",
+    "make_video_skelet.py",
     args,
     folders,
     num_parallel,
@@ -28,19 +27,7 @@ run_parallel_all_time(
     dependency=False,
     name_job=name_job,
 )
-run_parallel_all_time(
-    "make_video_stitched.py",
-    args,
-    folders,
-    num_parallel,
-    time,
-    "make_video",
-    cpus=32,
-    node="fat",
-    dependency=False,
-name_job = name_job
-)
 if stage>0:
-    run_launcher('skeletonizer.py',[directory_targ,name_job,stage-1],plates,'20:00',dependency=True,name_job = name_job)
+    run_launcher('masker.py',[directory_targ,name_job,stage-1],plates,'20:00',dependency=True,name_job = name_job)
 else:
     run_launcher('dropbox_uploader.py',[directory_targ,name_job],plates,'20:00',dependency=True,name_job = name_job)
