@@ -4,6 +4,7 @@ from typing import Tuple
 import numpy as np
 from typing import List
 import bisect
+import math
 
 
 def distance_point_pixel_line(point: coord, line: List[coord], step=1) -> float:
@@ -266,7 +267,10 @@ def get_bounding_box(coodinate_list):
     x_max = int(np.max([coord[0] for coord in coodinate_list]))
     y_min = int(np.min([coord[1] for coord in coodinate_list]))
     y_max = int(np.max([coord[1] for coord in coodinate_list]))
-    return [[x_min, y_min], [x_max, y_max]]
+    return [
+        [math.floor(x_min), math.floor(y_min)],
+        [math.ceil(x_max), math.ceil(y_max)],
+    ]
 
 
 def expand_bounding_box(bounding_box, margin):

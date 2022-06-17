@@ -25,6 +25,8 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_all_edges,
     find_neighboring_edges,
     reconstruct_image,
+    reconstruct_skeletton_from_edges,
+    reconstruct_skeletton_unicolor,
 )
 from amftrack.util.sys import test_path
 from test import helper
@@ -71,6 +73,7 @@ class TestExperiment(unittest.TestCase):
             self.exp,
             0,
             downsizing=10,
+            region=None,
             points=[[11191, 39042], [11923, 45165]],
             segments=[[[11191, 39042], [11923, 45165]]],
             nodes=[Node(10, self.exp), Node(100, self.exp), Node(200, self.exp)],
@@ -170,7 +173,7 @@ class TestExperiment(unittest.TestCase):
     def test_reconstruct_image(self):
         region = [[10000, 20000], [20000, 40000]]
 
-        # Full image downsized
+        # Full image downsized without region
         im, _ = reconstruct_image(self.exp, 0, downsizing=13)
         im_pil = Image.fromarray(im)
         im_pil.save(os.path.join(test_path, "reconstruct_full_downsized.png"))
@@ -192,6 +195,71 @@ class TestExperiment(unittest.TestCase):
         im, _ = reconstruct_image(self.exp, 0, downsizing=40, white_background=False)
         im_pil = Image.fromarray(im)
         im_pil.save(os.path.join(test_path, "reconstruct_black_bg.png"))
+
+    def test_reconstruct_skeletton_from_edges(self):
+        # Several edges
+        edges = [get_random_edge(self.exp) for _ in range(20)]
+        im, _ = reconstruct_skeletton_from_edges(
+            self.exp,
+            0,
+            edges=edges,
+            region=None,
+            color_seeds=None,
+            downsizing=5,
+            dilation=10,
+        )
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_squeletton_0.png"))
+        # All edges
+        im, _ = reconstruct_skeletton_from_edges(
+            self.exp,
+            0,
+            edges=get_all_edges(self.exp, 0),
+            region=None,
+            color_seeds=None,
+            downsizing=5,
+            dilation=10,
+        )
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_squeletton_1.png"))
+        # Try coloring
+        all_edges = get_all_edges(self.exp, 0)
+        im, _ = reconstruct_skeletton_from_edges(
+            self.exp,
+            0,
+            edges=all_edges,
+            region=None,
+            color_seeds=[random.randint(0, 2) for i in range(len(all_edges))],
+            downsizing=5,
+            dilation=10,
+        )
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_squeletton_2.png"))
+        # Try with region
+        all_edges = get_all_edges(self.exp, 0)
+        im, _ = reconstruct_skeletton_from_edges(
+            self.exp,
+            0,
+            region=[[10000, 20000], [25000, 35000]],
+            edges=all_edges,
+            color_seeds=[random.randint(0, 2) for i in range(len(all_edges))],
+            downsizing=10,
+            dilation=20,
+        )
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_squeletton_3.png"))
+
+    def test_squeletton_unicolor(self):
+        all_edges = get_all_edges(self.exp, 0)
+        im, f = reconstruct_skeletton_unicolor(
+            [edge.pixel_list(0) for edge in all_edges],
+            region=None,
+            downsizing=10,
+            dilation=10,
+            foreground=255,
+        )
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_squeletton_unicolor.png"))
 
     def test_reconstruct_image_2(self):
         # Verify that the ploting function works
