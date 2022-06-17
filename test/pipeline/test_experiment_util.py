@@ -27,6 +27,7 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     reconstruct_image,
     reconstruct_skeletton_from_edges,
     reconstruct_skeletton_unicolor,
+    plot_edge_width,
 )
 from amftrack.util.sys import test_path
 from test import helper
@@ -278,6 +279,35 @@ class TestExperiment(unittest.TestCase):
                 coord = f(coord)
                 plt.plot(coord[1], coord[0], marker="x", color="red")
         plt.savefig(os.path.join(test_path, "test_plot_function.png"))
+
+    def test_plot_edge_width(self):
+
+        # With widths
+        def f(edge):
+            return random.random() * 10
+
+        plot_edge_width(
+            self.exp,
+            0,
+            width_fun=f,
+            region=None,
+            downsizing=5,
+            nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
+            dilation=10,
+            save_path=os.path.join(test_path, "plot_width_with"),
+        )
+
+        # With no widths, interesting region
+        plot_edge_width(
+            self.exp,
+            0,
+            width_fun=lambda x: -2,
+            region=[[12000, 15000], [26000, 35000]],
+            downsizing=5,
+            nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
+            dilation=10,
+            save_path=os.path.join(test_path, "plot_width_without"),
+        )
 
 
 class TestExperimentLight(unittest.TestCase):
