@@ -236,7 +236,8 @@ def plot_full_image_with_features(
     :param save_path: full path to the location where the plot will be saved
     :param prettify: if True, the image will be enhanced by smoothing the intersections between images
 
-    NB: the full image often is of shape [[0, 0], [20000, 55000]]
+    NB: the typical full region of a full image is [[0, 0], [26000, 52000]]
+    NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
     NB: the colors are chosen randomly for edges
     NB: giving a smaller region greatly increase computation time
     """
@@ -395,6 +396,8 @@ def reconstruct_image(
 
     WARNING: without downsizing, the full image is heavy (2 Go)
     NB: returned image shape is ((int(a)-int(c))//downsizing, (int(b)-int(d))//downsizing)
+    NB: the typical full region of a full image is [[0, 0], [26000, 52000]]
+    NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
     """
     # Load information from the stiching
     if exp.image_coordinates is None:
@@ -607,6 +610,102 @@ def reconstruct_skeletton_from_edges(
         dilation=dilation,
     )
     return im, f
+
+
+def plot_edge_width(
+    exp: Experiment,
+    t: int,
+    width_fun: Callable,
+    region=None,
+    intervals=[[1, 4], [4, 6], [6, 10], [10, 20]],
+    nodes: List[Node] = [],
+    downsizing=5,
+    dilation=5,
+    save_path="",
+) -> None:
+    """
+    Plot the width for all the edges at a given timestep.
+
+    :param region: choosen region in the full image, such as [[100, 100], [2000,2000]], if None the full image is shown
+    :param nodes: list of nodes to plot
+    :param downsizing: factor by which we reduce the image resolution (5 -> image 25 times lighter)
+    :param dilation: only for edges: thickness of the edges (dilation applied to the pixel list)
+    :param save_path: full path to the location where the plot will be saved
+    :param intervals: different width intervals that will be given different colors
+    """
+    # TODO(FK): add option to add all nodes at once
+
+    # Default region
+    if region == None:
+        # Full image
+        image_coodinates = exp.image_coordinates[t]
+        region = get_bounding_box(image_coodinates)
+        region[1][0] += DIM_X
+        region[1][1] += DIM_Y
+
+    edges = get_all_edges(exp, t)
+
+    # Give colors to edges
+    default_color = 1000
+    colors = []
+    for edge in edges:
+        width = width_fun(edge)
+        color = default_color
+        for i, interval in enumerate(intervals):
+            if interval[0] <= width and width < interval[1]:
+                color = i
+
+        colors.append(color)
+
+    # 1/ Image layer
+    im, f = reconstruct_image(
+        exp,
+        t,
+        downsizing=downsizing,
+        region=region,
+        prettify=False,
+        white_background=False,
+    )
+    f_int = lambda c: f(c).astype(int)
+
+    # 2/ Edges layer
+    skel_im, _ = reconstruct_skeletton_from_edges(
+        exp,
+        t,
+        edges=edges,
+        region=region,
+        color_seeds=colors,
+        downsizing=downsizing,
+        dilation=dilation,
+    )
+
+    # 3/ Fusing layers
+    fig = plt.figure(
+        figsize=(12, 8)
+    )  # width: 30 cm height: 20 cm # TODO(FK): change dpi
+    ax = fig.add_subplot(111)
+    ax.imshow(im, cmap="gray", interpolation="none")
+    ax.imshow(skel_im, alpha=0.5, interpolation="none")
+
+    # 3/ Plotting the Nodes
+    size = 5
+    bbox_props = dict(boxstyle="circle", fc="white")
+    for node in nodes:
+        c = f(list(node.pos(t)))
+        node_text = ax.text(
+            c[1],
+            c[0],
+            str(node.label),
+            ha="center",
+            va="center",
+            size=size,
+            bbox=bbox_props,
+        )  # TODO(FK): fix taille inégale des nodes
+
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
 
 
 if __name__ == "__main__":
