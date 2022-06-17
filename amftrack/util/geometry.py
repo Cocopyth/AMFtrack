@@ -282,6 +282,17 @@ def expand_bounding_box(bounding_box, margin):
     return [[x_min - margin, y_min - margin], [x_max + margin, y_max + margin]]
 
 
+def is_in_bounding_box(coordinate: coord, bounding_box: List[coord]) -> bool:
+    """
+    Check if the coordinate `coordinate` is in the bounding box.
+    """
+    bounding_box = format_region(bounding_box)
+    if bounding_box[0][0] <= coordinate[0] < bounding_box[1][0]:
+        if bounding_box[0][1] <= coordinate[1] < bounding_box[1][1]:
+            return True
+    return False
+
+
 if __name__ == "__main__":
     point1 = [0, 0]
     point2 = [2, 4]

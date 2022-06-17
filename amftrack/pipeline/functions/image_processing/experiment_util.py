@@ -17,6 +17,7 @@ from amftrack.util.geometry import (
     get_overlap,
     get_bounding_box,
     expand_bounding_box,
+    is_in_bounding_box,
 )
 from amftrack.util.plot import crop_image, make_random_color
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
@@ -45,6 +46,13 @@ def get_all_edges(exp: Experiment, t: int) -> List[Edge]:
         Edge(Node(edge_coord[0], exp), Node(edge_coord[1], exp), exp)
         for edge_coord in list(G.edges)
     ]
+
+
+def get_all_nodes(exp, t) -> List[Node]:
+    """
+    Return a list of all Node objects at timestep t in the `experiment`
+    """
+    return [Node(i, exp) for i in exp.nx_graph[t].nodes]
 
 
 def find_nearest_edge(point: coord, exp: Experiment, t: int) -> Edge:
@@ -243,6 +251,7 @@ def plot_full_image_with_features(
     """
 
     # TODO(FK): fetch image size from experiment object here, and use it in reconstruct image
+    # TODO(FK): add is_in_bounding_box to discard points out of interest zone
     # NB: possible other parameters that could be added: alpha between layers, colors for object, figure_size
     if region == None:
         # Full image
@@ -633,7 +642,6 @@ def plot_edge_width(
     :param save_path: full path to the location where the plot will be saved
     :param intervals: different width intervals that will be given different colors
     """
-    # TODO(FK): add option to add all nodes at once
 
     # Default region
     if region == None:
@@ -691,16 +699,18 @@ def plot_edge_width(
     size = 5
     bbox_props = dict(boxstyle="circle", fc="white")
     for node in nodes:
-        c = f(list(node.pos(t)))
-        node_text = ax.text(
-            c[1],
-            c[0],
-            str(node.label),
-            ha="center",
-            va="center",
-            size=size,
-            bbox=bbox_props,
-        )  # TODO(FK): fix taille inégale des nodes
+        c = node.pos(t)
+        if is_in_bounding_box(c, region):
+            c = f(node.pos(t))
+            node_text = ax.text(
+                c[1],
+                c[0],
+                str(node.label),
+                ha="center",
+                va="center",
+                size=size,
+                bbox=bbox_props,
+            )  # TODO(FK): fix taille inégale des nodes
 
     if save_path:
         plt.savefig(save_path)

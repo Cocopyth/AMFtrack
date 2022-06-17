@@ -23,6 +23,7 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_edge_from_node_labels,
     plot_full_image_with_features,
     get_all_edges,
+    get_all_nodes,
     find_neighboring_edges,
     reconstruct_image,
     reconstruct_skeletton_from_edges,
@@ -308,6 +309,22 @@ class TestExperiment(unittest.TestCase):
             dilation=10,
             save_path=os.path.join(test_path, "plot_width_without"),
         )
+
+    def test_plot_edge_width_2(self):
+        # Try plotting all the nodes
+        plot_edge_width(
+            self.exp,
+            0,
+            width_fun=lambda x: -2,
+            region=[[12000, 15000], [26000, 35000]],
+            downsizing=5,
+            nodes=get_all_nodes(self.exp, 0),
+            dilation=10,
+            save_path=os.path.join(test_path, "plot_width_and_nodes"),
+        )
+
+    def test_get_all_nodes(self):
+        get_all_nodes(self.exp, 0)
 
 
 class TestExperimentLight(unittest.TestCase):
