@@ -241,7 +241,6 @@ def plot_full_image_with_features(
     NB: giving a smaller region greatly increase computation time
     """
 
-    # TODO(FK): handle case where region is none
     # TODO(FK): fetch image size from experiment object here, and use it in reconstruct image
     # NB: possible other parameters that could be added: alpha between layers, colors for object, figure_size
     if region == None:
