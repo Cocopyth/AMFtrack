@@ -532,8 +532,7 @@ def reconstruct_skeletton_unicolor(
     region=[[0, 0], [20000, 40000]],
     downsizing=5,
     dilation=2,
-    background=255,
-    foreground=0,
+    foreground=255,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
     """
     This function makes an image of `region` downsized by a factor `downsizing`
@@ -564,7 +563,7 @@ def reconstruct_skeletton_unicolor(
     region = [[int(e) for e in l] for l in region]  # only to avoid errors
     d_x = (region[1][0] - region[0][0]) // downsizing
     d_y = (region[1][1] - region[0][1]) // downsizing
-    full_im = np.full(shape=(d_x, d_y), fill_value=background, dtype=np.uint8)
+    full_im = np.full(shape=(d_x, d_y), fill_value=0, dtype=np.uint8)
 
     # Mapping from original referential to downsized and cropped image referential
     f = lambda c: (np.array(c) - np.array(region[0])) / downsizing

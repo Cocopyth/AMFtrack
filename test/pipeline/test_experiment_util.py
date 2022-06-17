@@ -256,7 +256,7 @@ class TestExperiment(unittest.TestCase):
             region=None,
             downsizing=10,
             dilation=10,
-            foreground=0,
+            foreground=255,
         )
         im_pil = Image.fromarray(im)
         im_pil.save(os.path.join(test_path, "reconstruct_squeletton_unicolor.png"))
