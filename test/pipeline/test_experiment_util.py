@@ -23,8 +23,12 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_edge_from_node_labels,
     plot_full_image_with_features,
     get_all_edges,
+    get_all_nodes,
     find_neighboring_edges,
     reconstruct_image,
+    reconstruct_skeletton_from_edges,
+    reconstruct_skeletton_unicolor,
+    plot_edge_width,
 )
 from amftrack.util.sys import test_path
 from test import helper
@@ -71,12 +75,85 @@ class TestExperiment(unittest.TestCase):
             self.exp,
             0,
             downsizing=10,
+            region=None,
             points=[[11191, 39042], [11923, 45165]],
             segments=[[[11191, 39042], [11923, 45165]]],
             nodes=[Node(10, self.exp), Node(100, self.exp), Node(200, self.exp)],
             edges=[get_random_edge(self.exp), get_random_edge(self.exp)],
             dilation=1,
             save_path=os.path.join(test_path, "plot_full"),
+        )
+
+    def test_plot_full_image_with_features_2(self):
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            downsizing=5,
+            region=[[0, 0], [20000, 55000]],
+            points=[[11191, 39042], [11923, 45165]],
+            segments=[[[11191, 39042], [11923, 45165]]],
+            nodes=[Node(10, self.exp), Node(100, self.exp), Node(200, self.exp)],
+            edges=get_all_edges(self.exp, 0),
+            dilation=5,
+            save_path=os.path.join(test_path, "plot1"),
+        )
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            downsizing=5,
+            region=[[0, 0], [20000, 55000]],
+            nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
+            edges=get_all_edges(self.exp, 0)[10:],
+            dilation=9,
+            save_path=os.path.join(test_path, "plot2"),
+        )
+
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            region=[[10000, 20000], [25000, 35000]],
+            downsizing=3,
+            nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
+            edges=get_all_edges(self.exp, 0)[10:],
+            dilation=4,
+            save_path=os.path.join(test_path, "plot3"),
+        )
+
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            region=[[16000, 20000], [25000, 30000]],
+            downsizing=1,
+            nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
+            edges=get_all_edges(self.exp, 0),
+            dilation=20,
+            save_path=os.path.join(test_path, "plot4"),
+        )
+
+    def test_plot_full_image_with_features_3(self):
+
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            region=[[18000, 20000], [25000, 30000]],
+            downsizing=1,
+            nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
+            edges=get_all_edges(self.exp, 0),
+            dilation=40,
+            save_path=os.path.join(test_path, "plot5"),
+        )
+
+    def test_plot_full_image_with_features_4(self):
+
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            region=[[18000, 20000], [25000, 30000]],
+            downsizing=1,
+            nodes=[Node(i, self.exp) for i in range(100)],
+            edges=get_all_edges(self.exp, 0),
+            dilation=40,
+            save_path=os.path.join(test_path, "plot6"),
         )
 
     def test_get_all_edges(self):
@@ -98,7 +175,7 @@ class TestExperiment(unittest.TestCase):
     def test_reconstruct_image(self):
         region = [[10000, 20000], [20000, 40000]]
 
-        # Full image downsized
+        # Full image downsized without region
         im, _ = reconstruct_image(self.exp, 0, downsizing=13)
         im_pil = Image.fromarray(im)
         im_pil.save(os.path.join(test_path, "reconstruct_full_downsized.png"))
@@ -121,6 +198,71 @@ class TestExperiment(unittest.TestCase):
         im_pil = Image.fromarray(im)
         im_pil.save(os.path.join(test_path, "reconstruct_black_bg.png"))
 
+    def test_reconstruct_skeletton_from_edges(self):
+        # Several edges
+        edges = [get_random_edge(self.exp) for _ in range(20)]
+        im, _ = reconstruct_skeletton_from_edges(
+            self.exp,
+            0,
+            edges=edges,
+            region=None,
+            color_seeds=None,
+            downsizing=5,
+            dilation=10,
+        )
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_squeletton_0.png"))
+        # All edges
+        im, _ = reconstruct_skeletton_from_edges(
+            self.exp,
+            0,
+            edges=get_all_edges(self.exp, 0),
+            region=None,
+            color_seeds=None,
+            downsizing=5,
+            dilation=10,
+        )
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_squeletton_1.png"))
+        # Try coloring
+        all_edges = get_all_edges(self.exp, 0)
+        im, _ = reconstruct_skeletton_from_edges(
+            self.exp,
+            0,
+            edges=all_edges,
+            region=None,
+            color_seeds=[random.randint(0, 2) for i in range(len(all_edges))],
+            downsizing=5,
+            dilation=10,
+        )
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_squeletton_2.png"))
+        # Try with region
+        all_edges = get_all_edges(self.exp, 0)
+        im, _ = reconstruct_skeletton_from_edges(
+            self.exp,
+            0,
+            region=[[10000, 20000], [25000, 35000]],
+            edges=all_edges,
+            color_seeds=[random.randint(0, 2) for i in range(len(all_edges))],
+            downsizing=10,
+            dilation=20,
+        )
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_squeletton_3.png"))
+
+    def test_squeletton_unicolor(self):
+        all_edges = get_all_edges(self.exp, 0)
+        im, f = reconstruct_skeletton_unicolor(
+            [edge.pixel_list(0) for edge in all_edges],
+            region=None,
+            downsizing=10,
+            dilation=10,
+            foreground=255,
+        )
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_squeletton_unicolor.png"))
+
     def test_reconstruct_image_2(self):
         # Verify that the ploting function works
         random.seed(6)  # 6, 11
@@ -138,6 +280,51 @@ class TestExperiment(unittest.TestCase):
                 coord = f(coord)
                 plt.plot(coord[1], coord[0], marker="x", color="red")
         plt.savefig(os.path.join(test_path, "test_plot_function.png"))
+
+    def test_plot_edge_width(self):
+
+        # With widths
+        def f(edge):
+            return random.random() * 10
+
+        plot_edge_width(
+            self.exp,
+            0,
+            width_fun=f,
+            region=None,
+            downsizing=5,
+            nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
+            dilation=10,
+            save_path=os.path.join(test_path, "plot_width_with"),
+        )
+
+        # With no widths, interesting region
+        plot_edge_width(
+            self.exp,
+            0,
+            width_fun=lambda x: -2,
+            region=[[12000, 15000], [26000, 35000]],
+            downsizing=5,
+            nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
+            dilation=10,
+            save_path=os.path.join(test_path, "plot_width_without"),
+        )
+
+    def test_plot_edge_width_2(self):
+        # Try plotting all the nodes
+        plot_edge_width(
+            self.exp,
+            0,
+            width_fun=lambda x: -2,
+            region=[[12000, 15000], [26000, 35000]],
+            downsizing=5,
+            nodes=get_all_nodes(self.exp, 0),
+            dilation=10,
+            save_path=os.path.join(test_path, "plot_width_and_nodes"),
+        )
+
+    def test_get_all_nodes(self):
+        get_all_nodes(self.exp, 0)
 
 
 class TestExperimentLight(unittest.TestCase):
