@@ -439,7 +439,7 @@ def reconstruct_image(
         background_value = 255
     else:
         background_value = 0
-    full_im = np.full((d_x, d_y), fill_value=background_value, dtype=np.uint8)
+    full_im = np.full((d_x, d_y), fill_value=background_value, dtype=np.uint32)
 
     # Copy each image into the frame
     for i, im_coord in enumerate(image_coodinates):
@@ -452,8 +452,13 @@ def reconstruct_image(
         ):
             im = exp.get_image(t, i)
             if prettify:
-                im = -bowler_hat(-im, 16, [30])
-                im = cv.normalize(im, None, 0, 255, cv.NORM_MINMAX).astype(np.uint8)
+                im = -bowler_hat(-im, 16, [45])
+                im = ((1+im)*255).astype(np.uint32)
+                im = im + 255 - np.percentile(im.flatten(), 20)
+                im[np.where(im>=255)] = 255
+                # im = im + 255 - np.max(im.flatten())
+                im = im.astype(np.uint8)
+                # im = ((im.astype(np.float)/np.max(im))*255).astype(np.uint8)
             length_x = im.shape[0] // downsizing
             length_y = im.shape[1] // downsizing
             im_coord_new = f_int(im_coord)
