@@ -45,8 +45,8 @@ for path in select['total_path']:
     blackAndWhiteImage3 = cv2.cvtColor(skel_comp, cv2.COLOR_GRAY2BGR)
     blackAndWhiteImage3[skel_comp > 0] = (0, 0, 125)
     blackAndWhiteImage3[skel_comp == 0] = (255, 255, 255)
-    bc_rm = bowler_hat(-im, 16, [15])
-    bc_rm_f = cv2.cvtColor(cv2.normalize(bc_rm, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8),
+    blackAndWhiteImage3 = blackAndWhiteImage3[:im.shape[0],:im.shape[1]]
+    bc_rm_f = cv2.cvtColor(cv2.normalize(-im, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8),
                            cv2.COLOR_GRAY2BGR)
 
     added_image = cv2.addWeighted(blackAndWhiteImage3, 0.3, bc_rm_f, 0.5, 0)

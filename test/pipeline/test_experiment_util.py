@@ -82,6 +82,7 @@ class TestExperiment(unittest.TestCase):
             edges=[get_random_edge(self.exp), get_random_edge(self.exp)],
             dilation=1,
             save_path=os.path.join(test_path, "plot_full"),
+            prettify= False
         )
 
     def test_plot_full_image_with_features_2(self):
@@ -154,6 +155,20 @@ class TestExperiment(unittest.TestCase):
             edges=get_all_edges(self.exp, 0),
             dilation=40,
             save_path=os.path.join(test_path, "plot6"),
+        )
+    def test_plot_full_image_with_features_5(self):
+
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            region=[[18000, 20000], [25000, 30000]],
+            downsizing=1,
+            nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
+            edges=get_all_edges(self.exp, 0),
+            dilation=40,
+            save_path=os.path.join(test_path, "plot7"),
+            prettify=True,
+
         )
 
     def test_get_all_edges(self):

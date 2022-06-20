@@ -25,6 +25,8 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Node,
     Edge,
 )
+from amftrack.pipeline.functions.image_processing.extract_skel import bowler_hat
+
 from amftrack.util.sparse import dilate_coord_list
 from amftrack.util.other import is_in
 
@@ -450,8 +452,8 @@ def reconstruct_image(
         ):
             im = exp.get_image(t, i)
             if prettify:
-                # apply rolling ball here
-                pass
+                im = -bowler_hat(-im, 16, [30])
+                im = cv.normalize(im, None, 0, 255, cv.NORM_MINMAX).astype(np.uint8)
             length_x = im.shape[0] // downsizing
             length_y = im.shape[1] // downsizing
             im_coord_new = f_int(im_coord)
