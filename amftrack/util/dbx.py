@@ -355,11 +355,14 @@ def upload_folders(
         for folder in folder_list:
             directory_name = folder
             line = run_info.loc[run_info["folder"] == directory_name]
-            id_unique = (
-                str(int(line["Plate"].iloc[0]))
-                + "_"
-                + str(int(str(line["CrossDate"].iloc[0]).replace("'", "")))
-            )
+            try:
+                id_unique = (
+                    str(int(line["Plate"].iloc[0]))
+                    + "_"
+                    + str(int(str(line["CrossDate"].iloc[0]).replace("'", "")))
+                )
+            except:
+                id_unique='faulty_param_files'
             path_snap = line["total_path"].iloc[0]
             for subfolder in os.listdir(path_snap):
                 path_total = os.path.join(path_snap, subfolder)
@@ -396,7 +399,7 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
         if not os.path.exists(path_folder):
             os.mkdir(path_folder)
         for file in listfiles:
-            path_drop = file.path_lower
+            path_drop = file.path_display
             path_local = os.path.join(
                 directory_target, folder, path_drop.split("/")[-1]
             )

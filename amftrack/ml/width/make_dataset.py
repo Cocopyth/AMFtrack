@@ -4,12 +4,18 @@ import json
 import numpy as np
 import logging
 import pandas as pd
+import imageio
 
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Edge,
 )
-from amftrack.util.geometry import generate_index_along_sequence
+from skimage.measure import profile_line
+from amftrack.util.geometry import (
+    compute_factor,
+    expand_segment,
+    generate_index_along_sequence,
+)
 from amftrack.util.sys import storage_path
 from typing import Dict, List
 from amftrack.util.aliases import coord
@@ -27,6 +33,7 @@ from amftrack.pipeline.functions.image_processing.extract_width_fun import (
 )
 from amftrack.util.sys import storage_path
 import cv2
+from amftrack.ml.width.config import ORIGINALSIZE
 
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
@@ -189,7 +196,7 @@ def make_extended_dataset(exp: Experiment, t: 0, dataset_name="dataset_test"):
                 resolution=resolution,
                 offset=offset,
                 step=5,
-                target_length=120,
+                target_length=ORIGINALSIZE,
             )
             for segment in list_of_segments:
                 edge_data["x1_timestep"].append(segment[0][0])
@@ -227,26 +234,92 @@ def make_extended_dataset(exp: Experiment, t: 0, dataset_name="dataset_test"):
     info_df.to_csv(os.path.join(dataset_directory, "data.csv"))
 
 
+def make_precise_dataset(
+    directories: List[str], target_length, dataset_name="test_precise_1"
+):
+    """
+    This function proceeds with the following steps:
+    - fetching the labels (set with labelme) from the labeled images
+    - computes the width value associated to the segment (label)
+    - expand the segment to the target feature value and extract the slice to make a feature
+    - create and save the data set
+    NB: the dataset format is different as before
+    :dataset_name: name of the dataset folder, it will be placed in the `storage_path`
+    :directories: list of full paths to plate files where the labels are in `Img` subdirectory
+    """
+
+    # Make the dataset repository where the data will be stored
+    dataset_directory = os.path.join(storage_path, dataset_name)
+    if not os.path.isdir(dataset_directory):
+        os.mkdir(dataset_directory)
+
+    slices = []
+    labels = []
+    # Process one plate at the time
+    for directory_path in directories:
+        label_path = os.path.join(directory_path, "Img")
+        segment_labels = fetch_labels(label_path)
+
+        for image_name in segment_labels.keys():
+            image_path = os.path.join(label_path, image_name)
+            for [point1, point2] in segment_labels[image_name]:
+                # Inversion of coordinates !
+                point1 = [point1[1], point1[0]]
+                point2 = [point2[1], point2[0]]
+                point1 = np.array(point1)  # in image ref
+                point2 = np.array(point2)
+                middle_point = (point1 + point2) / 2
+                # Compute width
+                width = convert_to_micrometer(
+                    np.linalg.norm(point1 - point2), magnification=2
+                )
+                im = imageio.imread(image_path)
+                point1_, point2_ = expand_segment(
+                    point1, point2, factor=compute_factor(point1, point2, target_length)
+                )
+                profile = profile_line(im, point1_, point2_, mode="constant")
+                profile = profile[:target_length]
+                profile = profile.reshape((1, len(profile)))
+                slices.append(profile)
+                labels.append(width)
+    slice_array = np.concatenate(slices, axis=0)
+    label_array = np.array(labels)
+    logger.info(f"Slice array: {slice_array.shape} Label array: {label_array.shape}")
+
+    cv2.imwrite(os.path.join(dataset_directory, "slices.png"), slice_array)
+    with open(os.path.join(dataset_directory, "labels.npy"), "wb") as f:
+        np.save(f, label_array)
+
+    return slice_array, label_array
+
+
 if __name__ == "__main__":
 
-    from amftrack.util.sys import (
-        update_plate_info_local,
-        get_current_folders_local,
-        test_path,
-        storage_path,
-    )
+    ## Useful 1
+    # from amftrack.util.sys import (
+    #     update_plate_info_local,
+    #     get_current_folders_local,
+    #     test_path,
+    #     storage_path,
+    # )
 
-    directory = os.path.join(storage_path, "width1", "full_plates")
-    plate_name = "20220325_1423_Plate907"
-    update_plate_info_local(directory)
-    folder_df = get_current_folders_local(directory)
-    selected_df = folder_df.loc[folder_df["folder"] == plate_name]
-    i = 0
-    plate = int(list(selected_df["folder"])[i].split("_")[-1][5:])
-    folder_list = list(selected_df["folder"])
-    directory_name = folder_list[i]
-    exp = Experiment(directory)
-    exp.load(selected_df.loc[selected_df["folder"] == directory_name], suffix="")
-    exp.load_tile_information(0)
+    # directory = os.path.join(storage_path, "width1", "full_plates")
+    # plate_name = "20220325_1423_Plate907"
+    # update_plate_info_local(directory)
+    # folder_df = get_current_folders_local(directory)
+    # selected_df = folder_df.loc[folder_df["folder"] == plate_name]
+    # i = 0
+    # plate = int(list(selected_df["folder"])[i].split("_")[-1][5:])
+    # folder_list = list(selected_df["folder"])
+    # directory_name = folder_list[i]
+    # exp = Experiment(plate, directory)
+    # exp.load(selected_df.loc[selected_df["folder"] == directory_name], labeled=False)
+    # exp.load_tile_information(0)
 
-    make_extended_dataset(exp, 0, dataset_name="dataset_test")
+    # make_extended_dataset(exp, 0, dataset_name="dataset_test")
+
+    ## Useful 2
+
+    dir = os.path.join(storage_path, "labels_precise")
+    directories = [os.path.join(dir, name) for name in os.listdir(dir)]
+    make_precise_dataset(directories, 120)

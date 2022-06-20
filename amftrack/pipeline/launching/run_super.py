@@ -5,6 +5,7 @@ import os
 from copy import copy
 from time import time_ns
 import pickle
+import imageio
 
 directory_scratch = "/scratch-shared/amftrack/"
 directory_project = "/projects/0/einf914/data/"
@@ -13,8 +14,9 @@ directory_sun = "/run/user/357100554/gvfs/smb-share:server=sun.amolf.nl,share=sh
 
 
 path_bash = os.getenv("HOME") + "/bash/"
-
-path_stitch = os.getenv("HOME") + "/bash/stitch.sh"
+path_stitch = f"{temp_path}/stitching_loops/"
+if not os.path.isdir(path_stitch):
+    os.mkdir(path_stitch)
 
 
 def call_code(path_job, dependency):
@@ -47,7 +49,10 @@ def run_parallel(
     arg_str_out = "_".join([str(arg) for arg in args if type(arg) != str])
     for j in range(begin_skel, end_skel):
         start = num_parallel * j
-        stop = num_parallel * j + num_parallel - 1
+        if j==end_skel-1:
+            stop = length
+        else:
+            stop = num_parallel * j + num_parallel - 1
         ide = time_ns()
         my_file = open(path_job, "w")
         my_file.write(
@@ -178,12 +183,28 @@ def make_stitching_loop(directory, dirname, op_id):
     a_file.close()
 
 
-def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="thin"):
+def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="thin", name_job="stitch",):
     folder_list = list(folders["folder"])
     folder_list.sort()
     length = len(folders)
     begin_skel = 0
     end_skel = length // num_parallel + 1
+    folder_list = list(folders["folder"])
+    folder_list.sort()
+    path_job = f"{path_bash}{name_job}"
+    for folder in folder_list:
+        path_im_copy = f"{directory}/{folder}/Img/Img_r03_c05.tif"
+        if os.path.isfile(path_im_copy):
+            im = imageio.imread(path_im_copy)
+            for x in range(1, 11):
+                for y in range(1, 16):
+                    strix = str(x) if x >= 10 else f"0{x}"
+                    striy = str(y) if y >= 10 else f"0{y}"
+                    path = f"{directory}/{folder}/Img/Img_r{strix}_c{striy}.tif"
+                    if not os.path.isfile(path):
+                        f = open(path, "w")
+                    if os.path.getsize(path) == 0:
+                        imageio.imwrite(path, im * 0)
     for j in range(begin_skel, end_skel):
         op_ids = []
         start = num_parallel * j
@@ -193,7 +214,7 @@ def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="
             make_stitching_loop(directory, folder_list[k], op_id)
             op_ids.append(op_id)
         ide = time_ns()
-        my_file = open(path_stitch, "w")
+        my_file = open(path_job, "w")
         my_file.write(
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
@@ -207,7 +228,7 @@ def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="
             )
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_stitch}", shell=True)
+        call(f"sbatch {path_job}", shell=True)
 
 
 def run_parallel_transfer(
@@ -251,6 +272,37 @@ def run_parallel_transfer(
         my_file.write("wait\n")
         my_file.close()
         call(f"sbatch {path_job}", shell=True, stdout=DEVNULL)
+
+def run_launcher(
+    code,
+    args,
+    plates,
+    time,
+    cpus=1,
+    name = 'launcher',
+    node="staging",
+    name_job = "one_shot.sh",
+    dependency=False
+):
+    path_job = f"{path_bash}{name_job}"
+    args_str = [str(arg) for arg in args]+[str(plate) for plate in plates]
+    arg_str = " ".join(args_str)
+    arg_str_out = "_".join([str(arg) for arg in args if type(arg) != str])
+    my_file = open(path_job, "w")
+    my_file.write(
+        f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
+    )
+    my_file.write(
+        f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}.out" \n'
+    )
+    my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
+    my_file.write(f"conda activate amftrack\n")
+    my_file.write(
+        f"python {path_code}pipeline/launching/launcher_scripts/{code} {arg_str}  &\n"
+    )
+    my_file.write("wait\n")
+    my_file.close()
+    call_code(path_job, dependency)
 
 
 def run_parallel_transfer_to_archive(

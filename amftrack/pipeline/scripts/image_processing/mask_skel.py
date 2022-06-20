@@ -22,8 +22,8 @@ run_info = pd.read_json(f"{temp_path}/{op_id}.json")
 folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]
-path_snap = directory + directory_name
-path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
+path_snap = os.path.join(directory, directory_name)
+path_tile = os.path.join(path_snap, "Img/TileConfiguration.txt.registered")
 try:
     tileconfig = pd.read_table(
         path_tile,
@@ -35,7 +35,7 @@ try:
     )
 except:
     print("error_name")
-    path_tile = path_snap + "/Img/TileConfiguration.registered.txt"
+    path_tile = os.path.join(path_snap, "Img/TileConfiguration.registered.txt")
     tileconfig = pd.read_table(
         path_tile,
         sep=";",
@@ -45,7 +45,6 @@ except:
         skipinitialspace=True,
     )
 dirName = path_snap + "/Analysis"
-shape = (3000, 4096)
 try:
     os.mkdir(path_snap + "/Analysis")
     print("Directory ", dirName, " Created ")
@@ -63,6 +62,8 @@ for name in tileconfig[0]:
 mask = np.zeros(dim, dtype=np.uint8)
 for index, im in enumerate(ims):
     im_cropped = im
+    shape = im_cropped.shape
+
     im_blurred = cv2.blur(im_cropped, (100, 100))
     boundaries = int(tileconfig[2][index][0] - np.min(xs)), int(
         tileconfig[2][index][1] - np.min(ys)
