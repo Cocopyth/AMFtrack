@@ -48,6 +48,7 @@ for path in select['total_path']:
     blackAndWhiteImage3 = blackAndWhiteImage3[:im.shape[0],:im.shape[1]]
     bc_rm_f = cv2.cvtColor(cv2.normalize(-im, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8),
                            cv2.COLOR_GRAY2BGR)
+    bc_rm_f = bc_rm_f[:blackAndWhiteImage3.shape[0],:blackAndWhiteImage3.shape[1]]
 
     added_image = cv2.addWeighted(blackAndWhiteImage3, 0.3, bc_rm_f, 0.5, 0)
     imgs.append(cv2.resize(added_image,resize))
