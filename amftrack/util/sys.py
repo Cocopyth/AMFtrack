@@ -35,6 +35,9 @@ test_path = os.path.join(
 pastis_path = env_config.get("PASTIS_PATH")
 temp_path = env_config.get("TEMP_PATH")
 slurm_path = env_config.get("SLURM_PATH")
+ml_path = os.path.join(storage_path, "models")
+if not os.path.isdir(ml_path):
+    os.mkdir(ml_path)
 slurm_path = env_config.get("SLURM_PATH")
 slurm_path_transfer = env_config.get("SLURM_PATH_transfer")
 
@@ -243,21 +246,24 @@ def update_plate_info(directory: str, local=True) -> None:
     with tqdm(total=len(listdir), desc="analysed") as pbar:
         for folder in listdir:
             path_snap = os.path.join(directory, folder)
-            if os.path.isfile(os.path.join(path_snap, "param.m")):
-                params = get_param(folder, directory)
-                ss = folder.split("_")[0]
-                ff = folder.split("_")[1]
-                date = datetime(
-                    year=int(ss[:4]),
-                    month=int(ss[4:6]),
-                    day=int(ss[6:8]),
-                    hour=int(ff[0:2]),
-                    minute=int(ff[2:4]),
-                )
-                params["date"] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
-                params["folder"] = folder
-                total_path = os.path.join(directory, folder)
-                plate_info[total_path] = params
+            if os.path.exists(os.path.join(path_snap,'Img')):
+                sub_list_files = os.listdir(os.path.join(path_snap,'Img'))
+                if os.path.isfile(os.path.join(path_snap, "param.m")) and os.path.isfile(os.path.join(path_snap, "Img","Img_r03_c05.tif"))\
+                        and len(sub_list_files)>=100:
+                    params = get_param(folder, directory)
+                    ss = folder.split("_")[0]
+                    ff = folder.split("_")[1]
+                    date = datetime(
+                        year=int(ss[:4]),
+                        month=int(ss[4:6]),
+                        day=int(ss[6:8]),
+                        hour=int(ff[0:2]),
+                        minute=int(ff[2:4]),
+                    )
+                    params["date"] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
+                    params["folder"] = folder
+                    total_path = os.path.join(directory, folder)
+                    plate_info[total_path] = params
             pbar.update(1)
     with open(target, "w") as jsonf:
         json.dump(plate_info, jsonf, indent=4)

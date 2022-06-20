@@ -19,7 +19,10 @@ tqdm
 dropbox
 ipympl
 nodejs
-jupyter-fs # New
+jupyter-fs
 setuptools
 python-decouple
 typing
+keras-tuner
+tensorflow
+imageio-ffmpeg

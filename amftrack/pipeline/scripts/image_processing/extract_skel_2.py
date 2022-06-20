@@ -1,4 +1,5 @@
 import sys
+import os
 
 from amftrack.util.sys import get_dirname, temp_path
 import pandas as pd
@@ -31,8 +32,8 @@ folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]
 run_back_sub(directory, directory_name)
-path_snap = directory + directory_name
-path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
+path_snap = os.path.join(directory, directory_name)
+path_tile = os.path.join(path_snap, "Img/TileConfiguration.txt.registered")
 try:
     tileconfig = pd.read_table(
         path_tile,
@@ -44,7 +45,7 @@ try:
     )
 except:
     print("error_name")
-    path_tile = path_snap + "/Img/TileConfiguration.registered.txt"
+    path_tile = os.path.join(path_snap, "Img/TileConfiguration.registered.txt")
     tileconfig = pd.read_table(
         path_tile,
         sep=";",
@@ -54,7 +55,6 @@ except:
         skipinitialspace=True,
     )
 dirName = path_snap + "/Analysis"
-shape = (3000, 4096)
 try:
     os.mkdir(path_snap + "/Analysis")
     print("Directory ", dirName, " Created ")
@@ -69,6 +69,7 @@ skel = np.zeros(dim, dtype=np.uint8)
 for index, name in enumerate(tileconfig[0]):
     imname = "/Img3/" + name.split("/")[-1]
     im = imageio.imread(directory + directory_name + imname)
+    shape = im.shape
     segmented = extract_skel_new_prince(im, [hyph_width], perc_low, perc_high)
     # low = np.percentile(-im+255, perc_low)
     # high = np.percentile(-im+255, perc_high)

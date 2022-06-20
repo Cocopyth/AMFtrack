@@ -28,6 +28,7 @@ conda install -c conda-forge scikit-learn
 pip install Shapely
 pip install tqdm
 pip install dropbox
+pip install imageio-ffmpeg
 ```
 <!-- - conda install -c anaconda ipykernel -->
 
@@ -121,6 +122,7 @@ APP_SECRET=___
 REFRESH_TOKEN = ___
 FOLDER_ID=___
 USER_ID=___
+SLURM_PATH_transfer=___
 ```
 
 To have access to a path: 

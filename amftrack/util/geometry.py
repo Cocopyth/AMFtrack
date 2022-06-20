@@ -1,8 +1,10 @@
+from xmlrpc.client import Boolean
 from amftrack.util.aliases import coord
 from typing import Tuple
 import numpy as np
 from typing import List
 import bisect
+import math
 
 
 def distance_point_pixel_line(point: coord, line: List[coord], step=1) -> float:
@@ -182,6 +184,113 @@ def compute_factor(point1: coord, point2: coord, target_length: float) -> float:
     length = np.sqrt(vx**2 + vy**2)
 
     return target_length / length
+
+
+def is_overlapping(segment1: coord, segment2: coord, strict=False) -> bool:
+    """
+    Determines if the two segments are overlapping.
+    If they are just touching, it returns True in strict=False mode and False otherwise.
+    """
+    if strict:
+        return segment1[0] < segment2[1] and segment2[0] < segment1[1]
+    else:
+        return segment1[0] <= segment2[1] and segment2[0] <= segment1[1]
+
+
+def intersect_rectangle(
+    rect1_coord1: coord, rect1_coord2, rect2_coord1, rect2_coord2, strict=False
+) -> Boolean:
+    """
+    Determine if two rectangles are overlapping.
+    :param rect1_coord1: [x, y] coordinates of the first point of the first rectangle
+    :param rect2_coord2: [x, y] coordinates of the second point of the first rectangle
+    :param strict: if strict = false if there are just touching they are considered overlapping
+    """
+    # intersection along the first dimention
+    if is_overlapping(
+        [rect1_coord1[0], rect1_coord2[0]],
+        [rect2_coord1[0], rect2_coord2[0]],
+        strict,
+    ):
+        # intersection along the second dimention
+        if is_overlapping(
+            [rect1_coord1[1], rect1_coord2[1]],
+            [rect2_coord1[1], rect2_coord2[1]],
+            strict,
+        ):
+            return True
+    return False
+
+
+def get_overlap(
+    rect1_coord1: coord, rect1_coord2, rect2_coord1, rect2_coord2, strict=False
+) -> Tuple[coord]:
+    """
+    Returns the overlap of two rectangles.
+    The boundaries are included in case of int coordinates.
+    """
+
+    if not intersect_rectangle(
+        rect1_coord1, rect1_coord2, rect2_coord1, rect2_coord2, strict
+    ):
+        raise Exception("Can't get overlapp of two rectangles that are not overlapping")
+
+    # along axis 1
+    l1 = [rect1_coord1[0], rect1_coord2[0], rect2_coord1[0], rect2_coord2[0]]
+    l1.sort()
+
+    # along axis 2
+    l2 = [rect1_coord1[1], rect1_coord2[1], rect2_coord1[1], rect2_coord2[1]]
+    l2.sort()
+
+    return [[l1[1], l2[1]], [l1[2], l2[2]]]
+
+
+def format_region(region):
+    """
+    From [[a, b], [c, d]] defining a region in the plane.
+    Return a definition of the region where [a', b'] is the upper left-corner
+    and [c', d'] is the lower-right corner (ie c' > a' and d' > b')
+    """
+    return [
+        [min(region[0][0], region[1][0]), min(region[0][1], region[1][1])],
+        [max(region[0][0], region[1][0]), max(region[0][1], region[1][1])],
+    ]
+
+
+def get_bounding_box(coodinate_list):
+    """
+    From a list of coordinates, this function hands out the two points defining
+    a rectangle that contains all of the points.
+    """
+    x_min = int(np.min([coord[0] for coord in coodinate_list]))
+    x_max = int(np.max([coord[0] for coord in coodinate_list]))
+    y_min = int(np.min([coord[1] for coord in coodinate_list]))
+    y_max = int(np.max([coord[1] for coord in coodinate_list]))
+    return [
+        [math.floor(x_min), math.floor(y_min)],
+        [math.ceil(x_max), math.ceil(y_max)],
+    ]
+
+
+def expand_bounding_box(bounding_box, margin):
+    """
+    Expand the bounding box in all the direction by `margin`
+    """
+    bounding_box = format_region(bounding_box)
+    [[x_min, y_min], [x_max, y_max]] = bounding_box
+    return [[x_min - margin, y_min - margin], [x_max + margin, y_max + margin]]
+
+
+def is_in_bounding_box(coordinate: coord, bounding_box: List[coord]) -> bool:
+    """
+    Check if the coordinate `coordinate` is in the bounding box.
+    """
+    bounding_box = format_region(bounding_box)
+    if bounding_box[0][0] <= coordinate[0] < bounding_box[1][0]:
+        if bounding_box[0][1] <= coordinate[1] < bounding_box[1][1]:
+            return True
+    return False
 
 
 if __name__ == "__main__":

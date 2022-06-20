@@ -20,6 +20,13 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 video_path = os.path.join(test_path, "video")
 
 
+def is_equal_seq(list_of_list_1, list_of_list_2):
+    for i in range(len(list_of_list_1)):
+        if not np.all(list_of_list_1[i] == list_of_list_2[i]):
+            return False
+    return True
+
+
 def has_video():
     """
     Check if there is a video present to run tests on videos.

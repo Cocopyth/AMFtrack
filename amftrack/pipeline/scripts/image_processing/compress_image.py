@@ -9,6 +9,7 @@ import imageio
 import numpy as np
 import os
 from time import time
+from amftrack.pipeline.functions.image_processing.extract_skel import bowler_hat
 
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
@@ -18,8 +19,8 @@ run_info = pd.read_json(f"{temp_path}/{op_id}.json")
 folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]
-path_snap = directory + directory_name
-path_tile = path_snap + "/Img/TileConfiguration.txt.registered"
+path_snap = os.path.join(directory, directory_name)
+path_tile = os.path.join(path_snap, "Img/TileConfiguration.txt.registered")
 try:
     tileconfig = pd.read_table(
         path_tile,
@@ -31,7 +32,7 @@ try:
     )
 except:
     print("error_name")
-    path_tile = path_snap + "/Img/TileConfiguration.registered.txt"
+    path_tile = os.path.join(path_snap, "Img/TileConfiguration.registered.txt")
     tileconfig = pd.read_table(
         path_tile,
         sep=";",
@@ -41,7 +42,6 @@ except:
         skipinitialspace=True,
     )
 dirName = path_snap + "/Analysis"
-shape = (3000, 4096)
 try:
     os.mkdir(path_snap + "/Analysis")
     print("Directory ", dirName, " Created ")
@@ -58,6 +58,8 @@ for index, name in enumerate(tileconfig[0]):
     imname = "/Img/" + name.split("/")[-1]
     im = imageio.imread(directory + directory_name + imname)
     im_cropped = im
+    shape = im_cropped.shape
+
     im_blurred = cv.blur(im_cropped, (200, 200))
     im_back_rem = (
         (im_cropped)
@@ -74,4 +76,5 @@ for index, name in enumerate(tileconfig[0]):
 
 output = mask
 mask_compressed = cv.resize(output, (dim[1] // 5, dim[0] // 5))
-sio.savemat(path_snap + "/Analysis/raw_image.mat", {"raw": mask_compressed})
+bckgr_rm = bowler_hat(-mask_compressed,16,[15])
+sio.savemat(path_snap + "/Analysis/raw_image.mat", {"raw": bckgr_rm})

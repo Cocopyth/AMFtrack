@@ -2,8 +2,8 @@ import os
 import pandas as pd
 from amftrack.util.sys import (
     path_code,
-    update_plate_info,
-    get_current_folders,
+    update_plate_info_local,
+    get_current_folders_local,
     temp_path,
     fiji_path,
 )
@@ -43,6 +43,7 @@ def run_stitch(directory: str, folders: pd.DataFrame) -> None:
     """
     # TODO(FK): Should encapsulate and factorize to have a version working with str instead of pd frame
     folder_list = list(folders["folder"])
+    # TODO(FK): raise error if empty list
     folder_list.sort()
     with tqdm(total=len(folder_list), desc="stitched") as pbar:
         for folder in folder_list:
@@ -65,7 +66,7 @@ def run_stitch(directory: str, folders: pd.DataFrame) -> None:
                 "--ij2",
                 "--console",
                 "-macro",
-                f'{os.getenv("TEMP")}/stitching_loops/stitching_loop{op_id}.ijm',
+                f"{temp_path}/stitching_loops/stitching_loop{op_id}.ijm",
             ]
             print(" ".join(command))
             process = subprocess.run(command)
@@ -77,7 +78,7 @@ def run(
     args: List,
     folders: pd.DataFrame,
     loc_code="pipeline/scripts/image_processing/",
-    pyt_vers="3",
+    pyt_vers="python3",
 ) -> None:
     """
     Run the chosen script `code` localy.
@@ -93,7 +94,7 @@ def run(
     with tqdm(total=len(folder_list), desc="folder_treated") as pbar:
         for index, folder in enumerate(folder_list):
             command = (
-                [f"python{pyt_vers}", f"{path_code}{loc_code}{code}"]
+                [f"{pyt_vers}", f"{path_code}{loc_code}{code}"]
                 + args_str
                 + [f"{op_id}", f"{index}"]
             )
@@ -121,10 +122,29 @@ if __name__ == "__main__":
     # args = [threshold, directory]
     # run("prune_skel.py", args, folders)
 
-    directory = "/data/felix/width1/full_plates/"  # careful: must have the / at the end
-    # update_plate_info(directory)
-    folder_df = get_current_folders(directory)
-    folders = folder_df.loc[folder_df["Plate"] == "907"]
-    time = "2:00:00"
-    args = [directory]
-    run("extract_nx_graph.py", args, folders)
+    # directory = "/data/felix/width1/full_plates/"  # careful: must have the / at the end
+    # time = "2:00:00"
+    # args = [directory]
+    # run("extract_nx_graph.py", args, folders)
+
+    ### TEST 1
+    # directory = "/data/felix/plate1050/"
+    # update_plate_info_local(directory)
+    # folder_df = get_current_folders_local(directory)
+    # folders = folder_df.loc[folder_df["Plate"] == "1050"]
+    # run_stitch(directory, folders)
+
+    ### TEST 2
+    from amftrack.util.sys import storage_path
+
+    directory = os.path.join(storage_path, "plate1050")
+    update_plate_info_local(directory)
+    folder_df = get_current_folders_local(directory)
+    folders = folder_df.loc[folder_df["Plate"] == "1050"]
+
+    time = "3:00:00"
+    low = 30
+    high = 80
+    extend = 30
+    args = [low, high, extend, directory]
+    run("extract_skel.py", args, folders)

@@ -64,7 +64,7 @@ class Experiment:
     def load(self, folders: pd.DataFrame, suffix="_labeled"):
         """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
-        assert len(folders["unique_id"].unique()) == 1
+        assert len(folders["unique_id"].unique()) == 1, "multiple plate id"
         self.unique_id = folders["unique_id"].unique()[0]
         self.image_coordinates = [None] * len(folders)
         self.image_transformation = [None] * len(folders)
@@ -245,68 +245,6 @@ class Experiment:
         }
         growing_tips = [node for node in growths.keys() if growths[node] >= threshold]
         return growing_tips
-
-    def pinpoint_anastomosis(self, t):
-        # TODO(FK): self.connections?
-        nx_graph_tm1 = self.nx_graph[t]
-        nx_grapht = self.nx_graph[t + 1]
-        from_tip = self.connections[t]
-        pos_tm1 = self.positions[t]
-        anastomosis = []
-        origins = []
-        tips = [node for node in nx_graph_tm1.nodes if nx_graph_tm1.degree(node) == 1]
-        number_anastomosis = 0
-
-        def dist_branch(node, nx_graph, pos):
-            mini = np.inf
-            for edge in nx_graph.edges:
-                pixel_list = nx_graph.get_edge_data(*edge)["pixel_list"]
-                if (
-                    np.linalg.norm(np.array(pixel_list[0]) - np.array(pos[node]))
-                    <= 5000
-                ):
-                    distance = np.min(
-                        np.linalg.norm(
-                            np.array(pixel_list) - np.array(pos[node]), axis=1
-                        )
-                    )
-                    if distance < mini:
-                        mini = distance
-            return mini
-
-        def count_neighbors_is_from_root(equ_list, nx_graph, root):
-            count = 0
-            for neighbor in nx_graph.neighbors(root):
-                if neighbor in equ_list:
-                    count += 1
-            return count
-
-        for tip in tips:
-            #         print(tip)
-            consequence = from_tip[tip]
-            for node in consequence:
-                if (
-                    node in nx_grapht.nodes
-                    and nx_grapht.degree(node) >= 3
-                    and count_neighbors_is_from_root(consequence, nx_grapht, node) < 2
-                ):
-                    #                 if node==2753:
-                    #                     print(count_neighbors_is_from_root(consequence,nx_grapht,node))
-                    #                     print(list(nx_grapht.neighbors(node)))
-                    anastomosis.append(node)
-                    origins.append(tip)
-                    number_anastomosis += 1
-            if (
-                tip not in nx_grapht.nodes
-                and dist_branch(tip, nx_grapht, pos_tm1) <= 30
-                and nx_graph_tm1.get_edge_data(*list(nx_graph_tm1.edges(tip))[0])[
-                    "weight"
-                ]
-                >= 20
-            ):
-                origins.append(tip)
-                number_anastomosis += 1 / 2
-        return (anastomosis, origins, number_anastomosis)
 
     def general_to_timestep(self, point: coord, t: int) -> coord:
         """
