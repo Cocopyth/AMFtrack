@@ -13,7 +13,7 @@ all_folders = get_current_folders(directory_targ, local=True)
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Analysis/skeleton_compressed.mat"]==True]
 num_parallel = 30
-time = '10:00'
+time = '1:00:00'
 args = []
 run_parallel_all_time(
     "make_video_skelet.py",

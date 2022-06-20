@@ -12,9 +12,8 @@ update_plate_info(directory_targ, local=True)
 all_folders = get_current_folders(directory_targ, local=True)
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Analysis/skeleton_pruned_compressed.mat"]==True]
-plates = list(set(list(folders["Plate"].values)))
 for plate in plates:
-    select = folders.loc[folders["Plate"] == plate]
+    select = folders.loc[folders["unique_id"] == plate]
     num_parallel = 128
     time = "12:00:00"
     args = [directory_targ]
