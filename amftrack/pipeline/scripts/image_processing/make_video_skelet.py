@@ -16,7 +16,6 @@ i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
 run_info = pd.read_json(f"{temp_path}/{op_id}.json")
-
 unique_ids = list(set(run_info["unique_id"].values))
 unique_ids.sort()
 select = run_info.loc[run_info["unique_id"] == unique_ids[i]]
@@ -41,7 +40,7 @@ for path in select['total_path']:
     skel = skel_info["skeleton"]
     im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
     compressed = sparse.csr_matrix(([1] * len(skel.nonzero()[0]), (skel.nonzero()[0] // 5, skel.nonzero()[1] // 5)),
-                                   im.shape)
+                                   (5800, 11000))
     skel_comp = cv2.dilate(compressed.toarray().astype(np.uint8), kernel, iterations=itera)
     blackAndWhiteImage3 = cv2.cvtColor(skel_comp, cv2.COLOR_GRAY2BGR)
     blackAndWhiteImage3[skel_comp > 0] = (0, 0, 125)

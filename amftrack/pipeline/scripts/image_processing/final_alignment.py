@@ -11,6 +11,7 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
 import open3d as o3d
 from cycpd import rigid_registration
 import pandas as pd
+import os
 
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
@@ -21,6 +22,7 @@ run_info = pd.read_json(f"{temp_path}/{op_id}.json")
 folder_list = list(run_info["folder"])
 folder_list.sort()
 
+print(run_info)
 dates_datetime_chosen = folder_list[i : i + 2]
 print("========")
 print(f"Matching plate {dates_datetime_chosen[0]} at dates {dates_datetime_chosen}")
@@ -31,7 +33,7 @@ dilateds = []
 skels = []
 skel_docs = []
 for directory_name in dates:
-    path_snap = directory + directory_name
+    path_snap = os.path.join(directory, directory_name)
     skel_info = read_mat(path_snap + "/Analysis/skeleton_pruned.mat")
     skel = skel_info["skeleton"]
     skels.append(skel)
@@ -74,24 +76,9 @@ for order in [(0, 1), (1, 0)]:
     isnan = np.isnan(tfound[0])
     if isnan:
         continue
-    #     X = np.transpose(
-    #         np.array([pos1[node] for node in pruned1 if pruned1.degree(node) == 3])
-    #     )
-    #     Y = np.transpose(
-    #         np.array([pos2[node] for node in pruned2 if pruned2.degree(node) == 3])
-    #     )
     skeleton1, skeleton2 = skel_docs[0], skel_docs[1]
     X = np.transpose(np.array(get_degree3_nodes(skeleton1)))
     Y = np.transpose(np.array(get_degree3_nodes(skeleton2)))
-    # fig=plt.figure(figsize=(10,9))
-    # ax = fig.add_subplot(111)
-    # ax.scatter(X[0,:],X[1,:])
-    # ax.scatter(Y[0,:],Y[1,:])
-    #     Xex = np.transpose(np.transpose(np.dot(Rot_init, X)) + t_init)
-    # fig=plt.figure(figsize=(10,9))
-    # ax = fig.add_subplot(111)
-    # ax.scatter(Xex[0,:],Xex[1,:])
-    # ax.scatter(Y[0,:],Y[1,:])
     X = np.insert(X, 2, values=0, axis=0)
     Y = np.insert(Y, 2, values=0, axis=0)
     print(X.shape, Y.shape)

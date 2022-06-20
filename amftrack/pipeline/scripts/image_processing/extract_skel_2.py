@@ -55,7 +55,6 @@ except:
         skipinitialspace=True,
     )
 dirName = path_snap + "/Analysis"
-shape = (3000, 4096)
 try:
     os.mkdir(path_snap + "/Analysis")
     print("Directory ", dirName, " Created ")
@@ -70,6 +69,7 @@ skel = np.zeros(dim, dtype=np.uint8)
 for index, name in enumerate(tileconfig[0]):
     imname = "/Img3/" + name.split("/")[-1]
     im = imageio.imread(directory + directory_name + imname)
+    shape = im.shape
     segmented = extract_skel_new_prince(im, [hyph_width], perc_low, perc_high)
     # low = np.percentile(-im+255, perc_low)
     # high = np.percentile(-im+255, perc_high)

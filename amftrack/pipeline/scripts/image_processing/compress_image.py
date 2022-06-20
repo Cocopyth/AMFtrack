@@ -42,7 +42,6 @@ except:
         skipinitialspace=True,
     )
 dirName = path_snap + "/Analysis"
-shape = (3000, 4096)
 try:
     os.mkdir(path_snap + "/Analysis")
     print("Directory ", dirName, " Created ")
@@ -59,6 +58,8 @@ for index, name in enumerate(tileconfig[0]):
     imname = "/Img/" + name.split("/")[-1]
     im = imageio.imread(directory + directory_name + imname)
     im_cropped = im
+    shape = im_cropped.shape
+
     im_blurred = cv.blur(im_cropped, (200, 200))
     im_back_rem = (
         (im_cropped)

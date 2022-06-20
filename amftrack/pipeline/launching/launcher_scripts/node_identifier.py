@@ -12,7 +12,6 @@ update_plate_info(directory_targ, local=True)
 all_folders = get_current_folders(directory_targ, local=True)
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Analysis/nx_graph_pruned_width.p"]==True]
-plates = list(set(list(folders["unique_id"].values)))
 args = [directory_targ]
 num_parallel = 128
 

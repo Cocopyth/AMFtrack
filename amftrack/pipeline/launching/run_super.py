@@ -49,7 +49,10 @@ def run_parallel(
     arg_str_out = "_".join([str(arg) for arg in args if type(arg) != str])
     for j in range(begin_skel, end_skel):
         start = num_parallel * j
-        stop = num_parallel * j + num_parallel - 1
+        if j==end_skel-1:
+            stop = length
+        else:
+            stop = num_parallel * j + num_parallel - 1
         ide = time_ns()
         my_file = open(path_job, "w")
         my_file.write(

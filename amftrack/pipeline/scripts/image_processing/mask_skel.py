@@ -45,7 +45,6 @@ except:
         skipinitialspace=True,
     )
 dirName = path_snap + "/Analysis"
-shape = (3000, 4096)
 try:
     os.mkdir(path_snap + "/Analysis")
     print("Directory ", dirName, " Created ")
@@ -63,6 +62,8 @@ for name in tileconfig[0]:
 mask = np.zeros(dim, dtype=np.uint8)
 for index, im in enumerate(ims):
     im_cropped = im
+    shape = im_cropped.shape
+
     im_blurred = cv2.blur(im_cropped, (100, 100))
     boundaries = int(tileconfig[2][index][0] - np.min(xs)), int(
         tileconfig[2][index][1] - np.min(ys)
