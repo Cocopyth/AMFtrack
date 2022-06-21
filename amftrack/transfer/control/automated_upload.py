@@ -29,4 +29,5 @@ old_folders = all_folders_origin.loc[all_folders_origin['unique_id'].isin(plates
 old_folders["Plate"] = (
     old_folders["Plate"].str.replace("R", "66666").str.replace("[^0-9]", "")
 )
+print(len(old_folders))
 upload_folders(old_folders, dir_drop=dir_drop, delete=True)
