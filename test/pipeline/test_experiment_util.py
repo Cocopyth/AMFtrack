@@ -3,7 +3,11 @@ import numpy as np
 import random
 import unittest
 import matplotlib.pyplot as plt
-from amftrack.util.geometry import expand_bounding_box, get_bounding_box
+from amftrack.util.geometry import (
+    expand_bounding_box,
+    get_bounding_box,
+    centered_bounding_box,
+)
 from amftrack.util.sys import (
     update_plate_info_local,
     get_current_folders_local,
@@ -325,6 +329,23 @@ class TestExperiment(unittest.TestCase):
 
     def test_get_all_nodes(self):
         get_all_nodes(self.exp, 0)
+
+    def test_region_around_node(self):
+        nodes = get_all_nodes(self.exp, 0)
+        node_select = random.choice(nodes)
+        pos = node_select.pos(0)
+        region = centered_bounding_box(pos, size=3000)
+        plot_full_image_with_features(
+            self.exp,
+            0,
+            region=region,
+            downsizing=5,
+            nodes=[node_select],
+            edges=get_all_edges(self.exp, 0),
+            dilation=20,
+            prettify=False,
+            save_path=os.path.join(test_path, "test_region_centered"),
+        )
 
 
 class TestExperimentLight(unittest.TestCase):
