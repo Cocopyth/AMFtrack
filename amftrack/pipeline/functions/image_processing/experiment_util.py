@@ -6,6 +6,7 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 from random import randrange
 import matplotlib.patches as mpatches
+from scipy import ndimage
 
 from amftrack.util.aliases import coord_int, coord
 from amftrack.util.param import DIM_X, DIM_Y
@@ -21,6 +22,7 @@ from amftrack.util.geometry import (
     is_in_bounding_box,
 )
 from amftrack.util.plot import crop_image, make_random_color
+from amftrack.util.image_analysis import extract_inscribed_rotated_image
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Node,
@@ -744,6 +746,71 @@ def plot_edge_width(
         plt.savefig(save_path)
     else:
         plt.show()
+
+
+def reconstruct_image_from_general(
+    exp: Experiment,
+    t: int,
+    region=None,
+    downsizing=5,
+    prettify=False,
+    white_background=True,
+    dim_x=DIM_X,
+    dim_y=DIM_Y,
+) -> Tuple[List[np.array], Callable[[float, float], float]]:
+    """
+    This function reconstructs the full size image or a part of it given by `region` at
+    timestep `t` and return it as an np array. It also returns a function mapping coordinates
+    in the GENERAL referential to coordinates in the reconstructed image referential.
+
+    It is the analog of reconstruct_image but for the general referential.
+
+    :param region: [[x1, y1], [x2, y2]] defining a zone in the TIMESTEP ref that
+                    we want to extract. Can be np.array or lists, int or floats
+    :param downsizing: factor by which the image is downsized, 1 returns the original image
+    :param prettify: add transformation operation to make the rendering better (but costly)
+    :param white_background: if True, areas where no images were found are white, otherwise black
+    :param dimx: x dimension of images
+
+    WARNING: without downsizing, the full image is heavy (2 Go)
+    NB: returned image shape is ((int(a)-int(c))//downsizing, (int(b)-int(d))//downsizing)
+    NB: the typical full region of a full image is [[0, 0], [26000, 52000]]
+    NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
+    """
+
+    # TODO(FK): size may not be the right one (99 instead of 100)
+    # TODO(FK): writte the analog plot with feature and reconstruct skeletton
+    # TODO(FK): finish writting tests
+
+    # Step 1: computing a region in the TIMESTEP referential that contains all point from the original region
+    region = format_region(region)
+    point1, point2 = region
+    region_vertices = [point1, point2, [point1[0], point2[1]], [point2[0], point1[1]]]
+    region_vertices_ts = [
+        exp.general_to_timestep(point, t) for point in region_vertices
+    ]
+    region_ts = get_bounding_box(region_vertices_ts, margin=0)
+
+    # Step 2: fetch this region
+    image_ts, f = reconstruct_image(
+        exp,
+        t,
+        region=region_ts,
+        downsizing=downsizing,
+        prettify=prettify,
+        white_background=white_background,
+        dim_x=dim_x,
+        dim_y=dim_y,
+    )
+
+    # Step 3: extract only the region of interest from the TIMESTEP image
+    angle = np.degrees(exp.get_rotation(t))
+    extracted_image = extract_inscribed_rotated_image(image_ts, angle=-angle)
+
+    # Mapping from GENERAL referential to downsized image referential
+    f = lambda c: (np.array(c) - np.array(region[0])) / downsizing
+
+    return extracted_image, f
 
 
 if __name__ == "__main__":
