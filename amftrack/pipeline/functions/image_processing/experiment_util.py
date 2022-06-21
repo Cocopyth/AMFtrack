@@ -5,6 +5,7 @@ from typing import List, Tuple, Optional, Callable
 import cv2 as cv
 import matplotlib.pyplot as plt
 from random import randrange
+import matplotlib.patches as mpatches
 
 from amftrack.util.aliases import coord_int, coord
 from amftrack.util.param import DIM_X, DIM_Y
@@ -272,6 +273,10 @@ def plot_full_image_with_features(
         white_background=False,  # TODO(FK): add image dimention here dimx = ..
     )
     f_int = lambda c: f(c).astype(int)
+    new_region = [
+        f_int(region[0]),
+        f_int(region[1]),
+    ]  # should be [[0, 0], [d_x/downsized, d_y/downsized]]
 
     # 2/ Edges layer
     skel_im, _ = reconstruct_skeletton_from_edges(
@@ -297,20 +302,21 @@ def plot_full_image_with_features(
     bbox_props = dict(boxstyle="circle", fc="white")
     for node in nodes:
         c = f(list(node.pos(t)))
-        node_text = ax.text(
-            c[1],
-            c[0],
-            str(node.label),
-            ha="center",
-            va="center",
-            size=size,
-            bbox=bbox_props,
-        )  # TODO(FK): fix taille inégale des nodes
-
+        if is_in_bounding_box(c, new_region):
+            node_text = ax.text(
+                c[1],
+                c[0],
+                str(node.label),
+                ha="center",
+                va="center",
+                size=size,
+                bbox=bbox_props,
+            )
     # 4/ Plotting coordinates
     points = [f(c) for c in points]
     for c in points:
-        plt.plot(c[1], c[0], marker="x", color="red")
+        if is_in_bounding_box(c, new_region):
+            plt.plot(c[1], c[0], marker="x", color="red")
 
     # 5/ Plotting segments
     segments = [[f(segment[0]), f(segment[1])] for segment in segments]
@@ -638,6 +644,7 @@ def plot_edge_width(
     downsizing=5,
     dilation=5,
     save_path="",
+    color_seed=12,
 ) -> None:
     """
     Plot the width for all the edges at a given timestep.
@@ -650,7 +657,6 @@ def plot_edge_width(
     :param intervals: different width intervals that will be given different colors
     """
 
-    # Default region
     if region == None:
         # Full image
         image_coodinates = exp.image_coordinates[t]
@@ -660,6 +666,11 @@ def plot_edge_width(
 
     edges = get_all_edges(exp, t)
 
+    fig = plt.figure(
+        figsize=(12, 8)
+    )  # width: 30 cm height: 20 cm # TODO(FK): change dpi
+    ax = fig.add_subplot(111)
+
     # Give colors to edges
     default_color = 1000
     colors = []
@@ -668,9 +679,26 @@ def plot_edge_width(
         color = default_color
         for i, interval in enumerate(intervals):
             if interval[0] <= width and width < interval[1]:
-                color = i
-
+                color = i + color_seed
         colors.append(color)
+
+    # 0/ Make color legend
+    def convert(c):
+        c_ = c / 255
+        return (c_[0], c_[1], c_[2])
+
+    handles = []
+    for i, interval in enumerate(intervals):
+        handles.append(
+            mpatches.Patch(
+                color=convert(make_random_color(i + color_seed)),
+                label=str(interval),
+            )
+        )
+    handles.append(
+        mpatches.Patch(color=convert(make_random_color(1000)), label="out of bound")
+    )
+    fig.legend(handles=handles)
 
     # 1/ Image layer
     im, f = reconstruct_image(
@@ -693,12 +721,12 @@ def plot_edge_width(
         downsizing=downsizing,
         dilation=dilation,
     )
+    new_region = [
+        f_int(region[0]),
+        f_int(region[1]),
+    ]  # should be [[0, 0], [d_x/downsized, d_y/downsized]]
 
     # 3/ Fusing layers
-    fig = plt.figure(
-        figsize=(12, 8)
-    )  # width: 30 cm height: 20 cm # TODO(FK): change dpi
-    ax = fig.add_subplot(111)
     ax.imshow(im, cmap="gray", interpolation="none")
     ax.imshow(skel_im, alpha=0.5, interpolation="none")
 
@@ -717,7 +745,7 @@ def plot_edge_width(
                 va="center",
                 size=size,
                 bbox=bbox_props,
-            )  # TODO(FK): fix taille inégale des nodes
+            )
 
     if save_path:
         plt.savefig(save_path)
