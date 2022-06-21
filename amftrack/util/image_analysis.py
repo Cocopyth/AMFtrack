@@ -87,7 +87,7 @@ def extract_inscribed_rotated_image(image, angle=10):
         )
     )
     bounds = np.array([np.min(bounds), np.max(bounds)])
-    if (np.abs(angle) < 46 and np.abs(angle) > 44) or (
+    if (np.abs(angle) < 45.01 and np.abs(angle) > 44.99) or (
         np.abs(angle) < bounds[1] and np.abs(angle) > bounds[0]
     ):
         raise Error("Angle too close to 45 degrees")
@@ -108,9 +108,7 @@ def extract_inscribed_rotated_image(image, angle=10):
 
     dx = int((rotated_X - final_X) / 2)
     dy = int((rotated_Y - final_Y) / 2)
-    final = rotated_image[
-        dx : -dx - 1, dy : -dy - 1, :
-    ]  # case without last layer + -1??
+    final = rotated_image[dx : -dx - 1, dy : -dy - 1, ...]  # TODO(FK): -1??
     return final
 
 

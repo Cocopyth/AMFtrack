@@ -33,6 +33,7 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     reconstruct_skeletton_from_edges,
     reconstruct_skeletton_unicolor,
     plot_edge_width,
+    reconstruct_image_from_general,
 )
 from amftrack.util.sys import test_path
 from test import helper
@@ -346,6 +347,17 @@ class TestExperiment(unittest.TestCase):
             prettify=False,
             save_path=os.path.join(test_path, "test_region_centered"),
         )
+
+    def test_reconstruct_image_from_general(self):
+        im, _ = reconstruct_image_from_general(
+            self.exp,
+            0,
+            downsizing=10,
+            region=[[10000, 10000], [20000, 40000]],
+            white_background=True,
+        )
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_from_general.png"))
 
 
 class TestExperimentLight(unittest.TestCase):

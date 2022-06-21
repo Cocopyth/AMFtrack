@@ -261,6 +261,18 @@ class Experiment:
         new_coord = np.dot(np.linalg.inv(R), old_coord - t)
         return new_coord
 
+    def get_rotation(self, t: int) -> float:
+        """
+        Return the rotation value in radians of the referential of timestep t
+        with respect to the general referential
+        """
+        if self.image_transformation is None:
+            raise Exception("Must load directories first")
+        if self.image_transformation[t] is None:
+            self.image_transformation[t] = self.load_image_transformation(t)
+        R, _ = self.image_transformation[t]
+        return np.arcsin(R[0][1])
+
     def timestep_to_general(self, point: coord, t: int) -> coord:
         """
         Take as input float coordinates `coord` the referential of timestep t
@@ -792,6 +804,7 @@ class Edge:
         )
 
     def width(self, t):
+        # TODO(FK): keep as a function?
         return self.experiment.nx_graph[t].get_edge_data(
             self.begin.label, self.end.label
         )["width"]
