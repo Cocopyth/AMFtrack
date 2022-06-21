@@ -14,7 +14,7 @@ all_folders = get_current_folders(directory_targ, local=True)
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Analysis/nx_graph_pruned_labeled.p"]==True]
 num_parallel = 30
-time = '30:00'
+time = '6:00:00'
 args = [directory_targ]
 run_parallel_all_time(
     "make_video_full.py",
@@ -31,5 +31,5 @@ run_parallel_all_time(
 
 if stage>1000:
     run_launcher('full_video_maker.py',[directory_targ,name_job,stage-1],plates,'20:00',dependency=True,name_job = name_job)
-elif stage==0:
+elif stage<=0:
     run_launcher('dropbox_uploader.py',[directory_targ,name_job],plates,'20:00',dependency=True,name_job = name_job)
