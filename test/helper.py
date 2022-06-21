@@ -53,6 +53,14 @@ def make_video() -> None:
         cv2.imwrite(os.path.join(video_path, f"image{2}.png"), im2)
 
 
+def make_image() -> np.array:
+    image = np.full(shape=(250, 300, 3), fill_value=255, dtype=np.int8)
+    image[100:120, :, :] = 100
+    image[:100, :, :] = 50
+    image[:, 200:220, :] = 0
+    return image
+
+
 def has_test_repo():
     "Tests if the general test repository is present"
     return os.path.isdir(test_path)
