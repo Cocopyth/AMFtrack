@@ -1,5 +1,7 @@
 import numpy as np
+from scipy import ndimage
 from typing import Tuple, List
+import matplotlib.pyplot as plt
 from amftrack.util.param import DIM_X, DIM_Y, CAMERA_RES
 
 
@@ -71,6 +73,45 @@ def reverse_transformation(R, t) -> Tuple[np.array, np.array]:
     :param t: is a matrix (2,)
     """
     return np.linalg.inv(R), -t
+
+
+def extract_inscribed_rotated_image(image, angle=10):
+    """
+    Extract the image that is inscribed in the `image` with a degree angle of `angle` clockwise.
+    WARNING: angle mustn't be equal to 45 degrees
+    WARNING: depending on image.shape[0]/image.shape[1] an interval around 45 degrees is inaccessible
+    """
+    bounds = np.degrees(
+        np.arctan(
+            np.array([image.shape[0] / image.shape[1], image.shape[1] / image.shape[0]])
+        )
+    )
+    bounds = np.array([np.min(bounds), np.max(bounds)])
+    if (np.abs(angle) < 46 and np.abs(angle) > 44) or (
+        np.abs(angle) < bounds[1] and np.abs(angle) > bounds[0]
+    ):
+        raise Error("Angle too close to 45 degrees")
+
+    angle_rad = np.radians(angle)
+    rotated_image = ndimage.rotate(image, -angle)
+
+    original_X, original_Y = image.shape[0], image.shape[1]
+    rotated_X, rotated_Y = rotated_image.shape[0], rotated_image.shape[1]
+    final_X = int(
+        (np.cos(angle_rad) * original_X - np.abs(np.sin(angle_rad)) * original_Y)
+        / np.cos(2 * angle_rad)
+    )
+    final_Y = int(
+        (np.cos(angle_rad) * original_Y - np.abs(np.sin(angle_rad)) * original_X)
+        / np.cos(2 * angle_rad)
+    )
+
+    dx = int((rotated_X - final_X) / 2)
+    dy = int((rotated_Y - final_Y) / 2)
+    final = rotated_image[
+        dx : -dx - 1, dy : -dy - 1, :
+    ]  # case without last layer + -1??
+    return final
 
 
 if __name__ == "__main__":
