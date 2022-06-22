@@ -75,6 +75,6 @@ for index, name in enumerate(tileconfig[0]):
     ] = im_back_rem
 
 output = mask
-mask_compressed = cv.resize(output, (dim[1] // 5, dim[0] // 5))
+mask_compressed = cv.resize(output, (dim[1] // 15, dim[0] // 15))
 bckgr_rm = bowler_hat(-mask_compressed,16,[15])
 sio.savemat(path_snap + "/Analysis/raw_image.mat", {"raw": bckgr_rm})
