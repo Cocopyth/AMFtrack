@@ -39,7 +39,7 @@ for path in select['total_path']:
     skel_info = read_mat(path_snap + "/Analysis/skeleton.mat")
     skel = skel_info["skeleton"]
     im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
-    compressed = sparse.csr_matrix(([1] * len(skel.nonzero()[0]), (skel.nonzero()[0] // 5, skel.nonzero()[1] // 5)),
+    compressed = sparse.csr_matrix(([1] * len(skel.nonzero()[0]), (skel.nonzero()[0] // 15, skel.nonzero()[1] // 15)),
                                    (5800, 11000))
     skel_comp = cv2.dilate(compressed.toarray().astype(np.uint8), kernel, iterations=itera)
     blackAndWhiteImage3 = cv2.cvtColor(skel_comp, cv2.COLOR_GRAY2BGR)
