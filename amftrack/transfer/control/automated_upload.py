@@ -1,7 +1,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.getenv("HOME") + "/pycode/MscThesis/")
+
 # sys.path.insert(0,r'C:\Users\coren\Documents\PhD\Code\AMFtrack')
 
 import pandas as pd
@@ -15,7 +15,7 @@ from amftrack.util.dbx import upload_folders
 
 directory_origin = r"/mnt/sun-temp/TEMP/PRINCE_syncing/"
 dir_drop = "DATA/PRINCE"
-update_plate_info(directory_origin, local=True)
+update_plate_info(directory_origin, local=True,strong_constraint=False)
 all_folders_origin = get_current_folders(directory_origin, local=True)
 
 all_folders_origin["date_datetime"] = pd.to_datetime(
@@ -29,4 +29,6 @@ old_folders = all_folders_origin.loc[all_folders_origin['unique_id'].isin(plates
 old_folders["Plate"] = (
     old_folders["Plate"].str.replace("R", "66666").str.replace("[^0-9]", "")
 )
+old_folders = old_folders.sort_values(by=["datetime"], ignore_index=True)
+print(len(old_folders))
 upload_folders(old_folders, dir_drop=dir_drop, delete=True)
