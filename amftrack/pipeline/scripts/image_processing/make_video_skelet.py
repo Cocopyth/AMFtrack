@@ -15,7 +15,8 @@ import os
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-run_info = pd.read_json(f"{temp_path}/{op_id}.json")
+
+run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
 unique_ids = list(set(run_info["unique_id"].values))
 unique_ids.sort()
 select = run_info.loc[run_info["unique_id"] == unique_ids[i]]
@@ -39,7 +40,7 @@ for path in select['total_path']:
     skel_info = read_mat(path_snap + "/Analysis/skeleton.mat")
     skel = skel_info["skeleton"]
     im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
-    compressed = sparse.csr_matrix(([1] * len(skel.nonzero()[0]), (skel.nonzero()[0] // 5, skel.nonzero()[1] // 5)),
+    compressed = sparse.csr_matrix(([1] * len(skel.nonzero()[0]), (skel.nonzero()[0] // 15, skel.nonzero()[1] // 15)),
                                    (5800, 11000))
     skel_comp = cv2.dilate(compressed.toarray().astype(np.uint8), kernel, iterations=itera)
     blackAndWhiteImage3 = cv2.cvtColor(skel_comp, cv2.COLOR_GRAY2BGR)
@@ -48,6 +49,7 @@ for path in select['total_path']:
     blackAndWhiteImage3 = blackAndWhiteImage3[:im.shape[0],:im.shape[1]]
     bc_rm_f = cv2.cvtColor(cv2.normalize(-im, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8),
                            cv2.COLOR_GRAY2BGR)
+    bc_rm_f = bc_rm_f[:blackAndWhiteImage3.shape[0],:blackAndWhiteImage3.shape[1]]
 
     added_image = cv2.addWeighted(blackAndWhiteImage3, 0.3, bc_rm_f, 0.5, 0)
     imgs.append(cv2.resize(added_image,resize))

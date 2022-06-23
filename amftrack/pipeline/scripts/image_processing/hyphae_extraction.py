@@ -21,20 +21,22 @@ suffix = eval(sys.argv[4])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-run_info = pd.read_json(f"{temp_path}/{op_id}.json")
 
+run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
+print(run_info['unique_id'])
 plates = list(set(run_info["Plate"].values))
 plates.sort()
 plate = plates[i]
 print(plate)
-select_folders = run_info.loc[run_info["Plate"] == plate]
-
-corrupted_rotation = select_folders.loc[
-    ((select_folders["/Analysis/transform.mat"] == False))
-    & (select_folders["/Analysis/transform_corrupt.mat"])
+folders = run_info.loc[run_info["Plate"] == plate]
+folders = folders.sort_values("datetime")
+# folders = folders.iloc[:5]
+corrupted_rotation = folders.loc[
+    ((folders["/Analysis/transform.mat"] == False))
+    & (folders["/Analysis/transform_corrupt.mat"])
 ]["folder"]
 
-folder_list = list(select_folders["folder"])
+folder_list = list(folders["folder"])
 folder_list.sort()
 indexes = [folder_list.index(corrupt_folder) for corrupt_folder in corrupted_rotation]
 indexes = [index for index in indexes if index < limit]
@@ -48,7 +50,8 @@ for index in indexes:
     plate = int(folder_list[0].split("_")[-1][5:])
     # confusion between plate number and position in Prince
     exp = Experiment(directory)
-    select_folders = run_info.loc[run_info["folder"].isin(select_folder_names)]
+    select_folders = folders.loc[run_info["folder"].isin(select_folder_names)]
+    print(select_folders['unique_id'])
     exp.load(select_folders)
     exp.dates.sort()
     # when no width is included
@@ -60,11 +63,10 @@ for index in indexes:
     # solved = solve_degree4(exp_clean)
     # clean_obvious_fake_tips(exp_clean)
     dates = exp.dates
-    op_id = time_ns()
     exp.dates.sort()
     save_graphs(exp)
     exp.nx_graph = None
-    dirName = f"{directory}Analysis_{op_id}_{start}_{stop}_Version{version}"
+    dirName = f"{directory}Analysis_{start}_{stop}_Version{version}"
     try:
         os.mkdir(dirName)
         print("Directory ", dirName, " Created ")
@@ -76,6 +78,6 @@ for index in indexes:
     # exp.save(f"{directory}Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/")
     exp.save_location = dirName
     exp.pickle_save(f"{dirName}/")
-    with open(f"{dirName}/folder_info.json", "w") as jsonf:
-        json.dump(folder_list[start:stop], jsonf, indent=4)
+    folders.to_json(f"{temp_path}/{op_id}.json")
+    select_folders.to_json(f"{dirName}/folder_info.json")
     start = stop

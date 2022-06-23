@@ -24,8 +24,8 @@ DOTENV_FILE = (
 )
 env_config = Config(RepositoryEnv(DOTENV_FILE))
 
-path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
-target = env_config.get("DATA_PATH")
+path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + os.sep
+
 storage_path = env_config.get("STORAGE_PATH")
 fiji_path = env_config.get("FIJI_PATH")
 test_path = os.path.join(
@@ -34,6 +34,7 @@ test_path = os.path.join(
 )  # repository used for tests
 pastis_path = env_config.get("PASTIS_PATH")
 temp_path = env_config.get("TEMP_PATH")
+
 slurm_path = env_config.get("SLURM_PATH")
 ml_path = os.path.join(storage_path, "models")
 if not os.path.isdir(ml_path):
@@ -191,9 +192,9 @@ def update_plate_info_local(directory: str) -> None:
     An acquisition repositorie has a param.m file inside it.
     :param directory: full path to a directory containing acquisition directories
     """
+    target = env_config.get("DATA_PATH")
     listdir = os.listdir(directory)
     info_path = os.path.join(storage_path, "data_info.json")
-
     # TODO(FK): Crashes when there is no basic file
     # try:
     #     with open(target) as f:
@@ -228,7 +229,7 @@ def update_plate_info_local(directory: str) -> None:
         json.dump(plate_info, jsonf, indent=4)
 
 
-def update_plate_info(directory: str, local=True) -> None:
+def update_plate_info(directory: str, local=True,strong_constraint = True,suffix_data_info='') -> None:
     """*
     1/ Download `data_info.json` file containing all information about acquisitions.
     2/ Add all acquisition files in the `directory` path to the `data_info.json`.
@@ -238,6 +239,7 @@ def update_plate_info(directory: str, local=True) -> None:
     # TODO(FK): add a local version without dropbox modification
     listdir = os.listdir(directory)
     source = f"/data_info.json"
+    target = os.path.join(temp_path,f'data_info{suffix_data_info}.json')
     if local:
         plate_info = {}
     else:
@@ -248,8 +250,11 @@ def update_plate_info(directory: str, local=True) -> None:
             path_snap = os.path.join(directory, folder)
             if os.path.exists(os.path.join(path_snap,'Img')):
                 sub_list_files = os.listdir(os.path.join(path_snap,'Img'))
-                if os.path.isfile(os.path.join(path_snap, "param.m")) and os.path.isfile(os.path.join(path_snap, "Img","Img_r03_c05.tif"))\
-                        and len(sub_list_files)>=100:
+                is_real_folder = os.path.isfile(os.path.join(path_snap, "param.m"))
+                if strong_constraint:
+                    is_real_folder *=(os.path.isfile(os.path.join(path_snap, "Img","Img_r03_c05.tif"))\
+                        * len(sub_list_files)>=100)
+                if  is_real_folder:
                     params = get_param(folder, directory)
                     ss = folder.split("_")[0]
                     ff = folder.split("_")[1]
@@ -271,8 +276,10 @@ def update_plate_info(directory: str, local=True) -> None:
         upload(target, f"{source}", chunk_size=256 * 1024 * 1024)
 
 
-def get_data_info(local=False):
+def get_data_info(local=False,suffix_data_info=''):
     source = f"/data_info.json"
+    target = os.path.join(temp_path,f'data_info{suffix_data_info}.json')
+
     if not local:
         download(source, target, end="")
     data_info = pd.read_json(target, convert_dates=True).transpose()
@@ -311,7 +318,7 @@ def get_current_folders_local(directory: str) -> pd.DataFrame:
 
 
 def get_current_folders(
-    directory: str, file_metadata=False, local=True
+    directory: str, local=True,suffix_data_info=''
 ) -> pd.DataFrame:
     """
     Returns a pandas data frame with all informations about the acquisition files
@@ -319,7 +326,7 @@ def get_current_folders(
     WARNING: directory must finish with '/'
     """
     # TODO(FK): solve the / problem
-    plate_info = get_data_info(local)
+    plate_info = get_data_info(local,suffix_data_info)
     listdir = os.listdir(directory)
     return plate_info.loc[
         np.isin(plate_info["folder"], listdir)
@@ -345,10 +352,8 @@ def get_folders_by_plate_id(plate_id, begin=0, end=-1, directory=None):
     return select_folders
 
 
-def update_analysis_info(directory):
+def update_analysis_info(directory,suffix_analysis_info=''):
     listdir = os.listdir(directory)
-    update_plate_info(directory)
-    all_folders = get_current_folders(directory)
     analysis_dir = [fold for fold in listdir if fold.split("_")[0] == "Analysis"]
     infos_analysed = {}
     for folder in analysis_dir:
@@ -357,17 +362,16 @@ def update_analysis_info(directory):
         op_id = int(folder.split("_")[-2])
         dt = datetime.fromtimestamp(op_id // 1000000000)
         path = f"{directory}{folder}/folder_info.json"
-        infos = json.load(open(path, "r")) if os.path.isfile(path) else []
-        infos.sort()
+        infos = pd.read_json(path,dtype = {'unique_id':str})
         if len(infos) > 0:
-            select = all_folders.loc[all_folders["folder"].isin(infos)]
-            column_interest = [column for column in select.columns if column[0] != "/"]
+            column_interest = [column for column in infos.columns if column[0] != "/"]
             metadata["version"] = version
             for column in column_interest:
                 if column != "folder":
-                    metadata[column] = list(select[column])[0]
-            metadata["date_begin"] = infos[0]
-            metadata["date_end"] = infos[-1]
+                    info = str(infos[column].iloc[0])
+                    metadata[column] = info
+            metadata["date_begin"] = datetime.strftime(infos["datetime"].iloc[0], "%d.%m.%Y, %H:%M:")
+            metadata["date_end"] = datetime.strftime(infos["datetime"].iloc[-1], "%d.%m.%Y, %H:%M:")
             metadata["number_timepoints"] = len(infos)
             metadata["path_exp"] = f"{folder}/experiment.pick"
             metadata["path_global_hypha_info"] = f"{folder}/global_hypha_info.json"
@@ -376,13 +380,17 @@ def update_analysis_info(directory):
             metadata["path_global_plate_info"] = f"{folder}/global_plate_info.json"
             metadata["date_run_analysis"] = datetime.strftime(dt, "%d.%m.%Y, %H:%M:")
             infos_analysed[folder] = metadata
-        with open(f"{directory}global_analysis_info.json", "w") as jsonf:
-            json.dump(infos_analysed, jsonf, indent=4)
+    target = os.path.join(temp_path, f'analysis_info{suffix_analysis_info}.json')
+
+    with open(target, "w") as jsonf:
+        json.dump(infos_analysed, jsonf, indent=4)
 
 
-def get_analysis_info(directory):
+def get_analysis_info(directory,suffix_analysis_info=''):
+    target = os.path.join(temp_path, f'analysis_info{suffix_analysis_info}.json')
+
     analysis_info = pd.read_json(
-        f"{directory}global_analysis_info.json", convert_dates=True
+        target, convert_dates=True
     ).transpose()
     analysis_info.index.name = "folder_analysis"
     analysis_info.reset_index(inplace=True)
