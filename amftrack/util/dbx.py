@@ -365,21 +365,12 @@ def upload_folders(
                 id_unique='faulty_param_files'
             path_snap = line["total_path"].iloc[0]
             for subfolder in os.listdir(path_snap):
-                if subfolder !="Analysis":
-                    path_total = os.path.join(path_snap, subfolder)
-                    suffix = ".zip" if os.path.isdir(path_total) else ""
-                    target = f"/{dir_drop}/{id_unique}/{directory_name}/{subfolder}{suffix}"
-                    upload_zip(
-                        path_total, target, catch_exception=catch_exception, delete=delete
-                    )
-                else:
-                    for subfolder in os.listdir(os.path.join(path_snap,'Analysis')):
-                        path_total = os.path.join(path_snap, "Analysis",subfolder)
-                        suffix = ".zip" if os.path.isdir(path_total) else ""
-                        target = f"/{dir_drop}/{id_unique}/{directory_name}/Analysis/{subfolder}{suffix}"
-                        upload_zip(
-                            path_total, target, catch_exception=catch_exception, delete=delete
-                        )
+                path_total = os.path.join(path_snap, subfolder)
+                suffix = ".zip" if os.path.isdir(path_total) else ""
+                target = f"/{dir_drop}/{id_unique}/{directory_name}/{subfolder}{suffix}"
+                upload_zip(
+                    path_total, target, catch_exception=catch_exception, delete=delete
+                )
             pbar.update(1)
             if delete:
                 os.remove(os.path.join(path_snap, "param.m"))
