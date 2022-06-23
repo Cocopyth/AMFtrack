@@ -22,7 +22,8 @@ load_graphs_bool = eval(sys.argv[3])
 
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
-run_info = pd.read_json(f"{temp_path}/{op_id}.json")
+
+run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
 list_f, list_args = pickle.load(open(f"{temp_path}/{op_id}.pick", "rb"))
 print(run_info.columns)
 

@@ -16,7 +16,8 @@ directory = str(sys.argv[1])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-run_info = pd.read_json(f"{temp_path}/{op_id}.json")
+
+run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
 
 unique_ids = list(set(run_info["unique_id"].values))
 unique_ids.sort()

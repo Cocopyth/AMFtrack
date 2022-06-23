@@ -9,8 +9,10 @@ name_job = str(sys.argv[2])
 stage = int(sys.argv[3])
 plates = sys.argv[4:]
 dir_drop = "DATA/PRINCE"
-update_plate_info(directory_targ, local=True)
-all_folders = get_current_folders(directory_targ, local=True)
+from time import time_ns
+suffix_data_info=time_ns()
+update_plate_info(directory_targ, local=True,suffix_data_info=suffix_data_info)
+all_folders = get_current_folders(directory_targ, local=True,suffix_data_info=suffix_data_info)
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Analysis/nx_graph_pruned_labeled.p"]==True]
 num_parallel = 30
@@ -31,5 +33,5 @@ run_parallel_all_time(
 
 if stage>1000:
     run_launcher('full_video_maker.py',[directory_targ,name_job,stage-1],plates,'20:00',dependency=True,name_job = name_job)
-elif stage==0:
+else:
     run_launcher('dropbox_uploader.py',[directory_targ,name_job],plates,'20:00',dependency=True,name_job = name_job)

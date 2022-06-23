@@ -8,8 +8,10 @@ directory_targ = str(sys.argv[1])
 name_job = str(sys.argv[2])
 stage = int(sys.argv[3])
 plates = sys.argv[4:]
-update_plate_info(directory_targ, local=True)
-all_folders = get_current_folders(directory_targ, local=True)
+from time import time_ns
+suffix_data_info=time_ns()
+update_plate_info(directory_targ, local=True,suffix_data_info=suffix_data_info)
+all_folders = get_current_folders(directory_targ, local=True,suffix_data_info=suffix_data_info)
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Analysis/skeleton_compressed.mat"]==True]
 
