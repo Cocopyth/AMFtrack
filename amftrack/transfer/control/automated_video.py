@@ -1,8 +1,4 @@
 import os
-import sys
-
-sys.path.insert(0, os.getenv("HOME") + "/pycode/MscThesis/")
-# sys.path.insert(0,r'C:\Users\coren\Documents\PhD\Code\AMFtrack')
 
 import pandas as pd
 from amftrack.util.sys import (
@@ -25,9 +21,11 @@ all_folders_origin["date_datetime"] = pd.to_datetime(
 selection = (datetime.now() - all_folders_origin["datetime"]) >= timedelta(days=45)
 select = all_folders_origin.loc[selection]
 finished_plates = select["unique_id"].unique()
-selection = (datetime.now() - all_folders_origin["datetime"]) < timedelta(days=44)
+selection = (datetime.now() - all_folders_origin["datetime"]).between(timedelta(days=4),timedelta(days=44))
 select = all_folders_origin.loc[selection]
-
+select["Plate"] = (
+    select["Plate"].str.replace("R", "66666").str.replace("[^0-9]", "")
+)
 to_plot = select.loc[select['unique_id'].isin(finished_plates)==False]
 plates = to_plot["unique_id"].unique()
 for plate in plates:
@@ -60,4 +58,3 @@ for plate in plates:
         make_video(paths, texts, resize, save_path=None, upload_path=upload_path, fontScale=1)
     except:
         continue
-

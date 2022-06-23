@@ -14,7 +14,8 @@ i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 compress = int(sys.argv[1])
 
-run_info = pd.read_json(f"{temp_path}/{op_id}.json")
+
+run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
 folder = run_info.iloc[i]['total_path']
 path_tile = f"{path_code}pipeline/scripts/stitching_loops/TileConfiguration.txt.registered"
 tileconfig = pd.read_table(

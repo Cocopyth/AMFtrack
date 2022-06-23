@@ -13,7 +13,7 @@ delete = bool(sys.argv[2])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-run_info = pd.read_json(os.path.join(temp_path, f"{op_id}.json"))
+run_info = pd.read_json(os.path.join(temp_path, f"{op_id}.json"),dtype = {'unique_id':str})
 folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]
