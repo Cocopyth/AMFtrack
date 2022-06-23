@@ -40,7 +40,7 @@ def make_video(paths,texts,resize,save_path=None,upload_path=None,fontScale=3,co
 def make_video_tile(paths_list,texts,resize,save_path=None,upload_path=None,fontScale=3,color = (0, 255, 255)):
     """
     This function makes a video out of a list of list of paths.
-    paths_list is of the form [['path1','path2','path3','path4'],['path5','path6','path7','path8']]
+    paths_list is of the form [['path1','path2','path3','path4'],['path5','path6','path7','path8']...]
     where 'path1','path2','path3','path4' correspond to the path of images
     of a single timesteps that one want to tile together.
     If odd number they will all be arranged horizontally
