@@ -39,7 +39,7 @@ except AttributeError:
     exp.labeled = True
 load_graphs(exp)
 op_id2 = time_ns()
-get_data_tables(op_id2, redownload=True)
+#get_data_tables(op_id2, redownload=True)
 folder = row["folder_analysis"]
 path = f'{directory}{row["folder_analysis"]}'
 load_study_zone(exp)
