@@ -114,6 +114,7 @@ run_parallel_post(
     cpus=32,
     name_job=name_job,
     node="fat",
+    dependency=True
 )
 
 time = "40:00"
