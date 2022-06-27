@@ -7,7 +7,8 @@ from amftrack.pipeline.functions.post_processing.global_plate import *
 from amftrack.pipeline.functions.post_processing.time_plate import *
 from amftrack.pipeline.functions.post_processing.global_hypha import *
 from amftrack.pipeline.functions.post_processing.area_hulls import *
-from amftrack.util.dbx import upload_folder
+from amftrack.pipeline.launching.run_super import run_parallel,run_launcher
+
 directory_targ = str(sys.argv[1])
 name_job = str(sys.argv[2])
 stage = int(sys.argv[3])
@@ -152,12 +153,6 @@ run_parallel_post(
     name_job=name_job,
 
 )
-dir_drop = "DATA/PRINCE"
 
+run_launcher('analysis_uploader.py', [directory_targ, name_job], plates, '20:00', dependency=True, name_job=name_job)
 
-for index, row in analysis_folders.iterrows():
-    folder = row['folder_analysis']
-    id_unique = row['id_unique']
-    path = os.path.join(directory,folder)
-    target_drop = f'/{dir_drop}/{id_unique}//{folder}'
-    upload_folder(path,target_drop)
