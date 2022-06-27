@@ -379,8 +379,9 @@ def extract_study_zone(dr_orth, dr_center, exp, i=0):
     exp.center, exp.orthog = pos_center, orthog
 
 
-def load_study_zone(exp,default=False):
-    if default:
+def load_study_zone(exp):
+    has_center = os.path.isfile(os.path.join(exp.save_location,"center.npy"))
+    if not has_center:
         loc_load = os.path.join(path_code,
                                 'pipeline','functions','post_processing'
                                 ,'default_param')

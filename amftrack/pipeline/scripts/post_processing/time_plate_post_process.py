@@ -44,7 +44,6 @@ folder = row["folder_analysis"]
 path = f'{directory}{row["folder_analysis"]}'
 load_study_zone(exp)
 for t in range(exp.ts):
-    print(t)
     data_t = time_plate_info[str(t)] if str(t) in time_plate_info.keys() else {}
     date = exp.dates[t]
     date_str = datetime.strftime(date, "%d.%m.%Y, %H:%M:")

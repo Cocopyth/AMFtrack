@@ -115,184 +115,184 @@ def make_movie_aligned(directory, folders, plate_num, exp, id_unique, args=None)
     )
 
 
-def make_movie_RH_BAS(directory, folders, plate_num, exp, id_unique, args=None):
-    time_plate_info, global_hypha_info, time_hypha_info = get_data_tables(
-        redownload=True
-    )
-    table = global_hypha_info.loc[global_hypha_info["Plate"] == plate_num].copy()
-    table["log_length"] = np.log10((table["tot_length_C"] + 1).astype(float))
-    table["is_rh"] = (table["log_length"] >= 3.36).astype(int)
-    table = table.set_index("hypha")
-    for t in range(exp.ts):
-        plt.close("all")
-        clear_output(wait=True)
-        segs = []
-        colors = []
-        hyphaes = table.loc[
-            (table["strop_track"] >= t)
-            & (table["timestep_init_growth"] <= t)
-            & ((table["out_of_ROI"].isnull()) | (table["out_of_ROI"] > t))
-        ].index
-        for hyph in exp.hyphaes:
-            if t in hyph.ts and hyph.end.label in hyphaes:
-                try:
-                    nodes, edges = hyph.get_nodes_within(t)
-                    color = (
-                        "red"
-                        if np.all(table.loc[table.index == hyph.end.label]["is_rh"])
-                        else "blue"
-                    )
-                    # color = 'green' if np.all(table.loc[table.index == hyph.end.label]['is_small']) else color
-                    for edge in edges:
-                        origin, end = edge.end.get_pseudo_identity(t).pos(
-                            t
-                        ), edge.begin.get_pseudo_identity(t).pos(t)
-                        segs.append((origin, end))
-                        colors.append(color)
-                except nx.exception.NetworkXNoPath:
-                    pass
-        segs = [(np.flip(origin) // 5, np.flip(end) // 5) for origin, end in segs]
-        skels = []
-        ims = []
-        kernel = np.ones((5, 5), np.uint8)
-        itera = 2
-        folders = list(exp.folders["folder"])
-        folders.sort()
-        for folder in folders[t : t + 1]:
-            directory_name = folder
-            path_snap = directory + directory_name
-            skel_info = read_mat(
-                path_snap + "/Analysis/skeleton_realigned_compressed.mat"
-            )
-            skel = skel_info["skeleton"]
-            skels.append(cv2.dilate(skel.astype(np.uint8), kernel, iterations=itera))
-        i = 0
-        ln_coll = matplotlib.collections.LineCollection(segs, colors=colors)
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.imshow(skels[i])
-        ax.add_collection(ln_coll)
-        plt.draw()
-        right = 0.80
-        top = 0.80
-        fontsize = 20
-        ax.text(
-            right,
-            top,
-            f"t = {int(get_time(exp,0,t))}h",
-            horizontalalignment="right",
-            verticalalignment="bottom",
-            transform=ax.transAxes,
-            color="white",
-            fontsize=fontsize,
-        )
-        plt.savefig(f"{temp_path}/{plate_num}_rhbas_im{t}")
-        plt.close(fig)
-    img_array = []
-    for t in range(exp.ts):
-        img = cv2.imread(f"{temp_path}/{plate_num}_rhbas_im{t}.png")
-        img_array.append(img)
-    path_movie = f"{temp_path}/{plate_num}_rhbas.gif"
-    imageio.mimsave(path_movie, img_array, duration=1)
-    upload(
-        path_movie,
-        f"/{dir_drop}/{id_unique}/movie_rhbas.gif",
-        chunk_size=256 * 1024 * 1024,
-    )
-    path_movie = f"{temp_path}/{plate_num}.mp4"
-    imageio.mimsave(path_movie, img_array)
-    upload(
-        path_movie,
-        f"/{dir_drop}/{id_unique}/movie_rhbas.mp4",
-        chunk_size=256 * 1024 * 1024,
-    )
+# def make_movie_RH_BAS(directory, folders, plate_num, exp, id_unique, args=None):
+#     time_plate_info, global_hypha_info, time_hypha_info = get_data_tables(
+#         redownload=True
+#     )
+#     table = global_hypha_info.loc[global_hypha_info["Plate"] == plate_num].copy()
+#     table["log_length"] = np.log10((table["tot_length_C"] + 1).astype(float))
+#     table["is_rh"] = (table["log_length"] >= 3.36).astype(int)
+#     table = table.set_index("hypha")
+#     for t in range(exp.ts):
+#         plt.close("all")
+#         clear_output(wait=True)
+#         segs = []
+#         colors = []
+#         hyphaes = table.loc[
+#             (table["strop_track"] >= t)
+#             & (table["timestep_init_growth"] <= t)
+#             & ((table["out_of_ROI"].isnull()) | (table["out_of_ROI"] > t))
+#         ].index
+#         for hyph in exp.hyphaes:
+#             if t in hyph.ts and hyph.end.label in hyphaes:
+#                 try:
+#                     nodes, edges = hyph.get_nodes_within(t)
+#                     color = (
+#                         "red"
+#                         if np.all(table.loc[table.index == hyph.end.label]["is_rh"])
+#                         else "blue"
+#                     )
+#                     # color = 'green' if np.all(table.loc[table.index == hyph.end.label]['is_small']) else color
+#                     for edge in edges:
+#                         origin, end = edge.end.get_pseudo_identity(t).pos(
+#                             t
+#                         ), edge.begin.get_pseudo_identity(t).pos(t)
+#                         segs.append((origin, end))
+#                         colors.append(color)
+#                 except nx.exception.NetworkXNoPath:
+#                     pass
+#         segs = [(np.flip(origin) // 5, np.flip(end) // 5) for origin, end in segs]
+#         skels = []
+#         ims = []
+#         kernel = np.ones((5, 5), np.uint8)
+#         itera = 2
+#         folders = list(exp.folders["folder"])
+#         folders.sort()
+#         for folder in folders[t : t + 1]:
+#             directory_name = folder
+#             path_snap = directory + directory_name
+#             skel_info = read_mat(
+#                 path_snap + "/Analysis/skeleton_realigned_compressed.mat"
+#             )
+#             skel = skel_info["skeleton"]
+#             skels.append(cv2.dilate(skel.astype(np.uint8), kernel, iterations=itera))
+#         i = 0
+#         ln_coll = matplotlib.collections.LineCollection(segs, colors=colors)
+#         fig = plt.figure()
+#         ax = fig.add_subplot(111)
+#         ax.imshow(skels[i])
+#         ax.add_collection(ln_coll)
+#         plt.draw()
+#         right = 0.80
+#         top = 0.80
+#         fontsize = 20
+#         ax.text(
+#             right,
+#             top,
+#             f"t = {int(get_time(exp,0,t))}h",
+#             horizontalalignment="right",
+#             verticalalignment="bottom",
+#             transform=ax.transAxes,
+#             color="white",
+#             fontsize=fontsize,
+#         )
+#         plt.savefig(f"{temp_path}/{plate_num}_rhbas_im{t}")
+#         plt.close(fig)
+#     img_array = []
+#     for t in range(exp.ts):
+#         img = cv2.imread(f"{temp_path}/{plate_num}_rhbas_im{t}.png")
+#         img_array.append(img)
+#     path_movie = f"{temp_path}/{plate_num}_rhbas.gif"
+#     imageio.mimsave(path_movie, img_array, duration=1)
+#     upload(
+#         path_movie,
+#         f"/{dir_drop}/{id_unique}/movie_rhbas.gif",
+#         chunk_size=256 * 1024 * 1024,
+#     )
+#     path_movie = f"{temp_path}/{plate_num}.mp4"
+#     imageio.mimsave(path_movie, img_array)
+#     upload(
+#         path_movie,
+#         f"/{dir_drop}/{id_unique}/movie_rhbas.mp4",
+#         chunk_size=256 * 1024 * 1024,
+#     )
 
 
-def make_movie_dens(directory, folders, plate_num, exp, id_unique, args=None):
-    time_plate_info, global_hypha_info, time_hypha_info = get_data_tables(
-        redownload=True
-    )
-    ts = range(exp.ts)
-    incr = 100
-    regular_hulls, indexes = get_regular_hulls_area_fixed(exp, ts, incr)
-    plate = plate_num
-    table = time_plate_info.loc[time_plate_info["Plate"] == plate]
-    table = table.fillna(-1)
-    my_cmap = cm.Greys
-    my_cmap.set_under("k", alpha=0)
-    table = table.set_index("t")
-    num_hulls = len(regular_hulls) - 4
-    for t in ts:
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        skels = []
-        ims = []
-        kernel = np.ones((5, 5), np.uint8)
-        itera = 2
-        folders = list(exp.folders["folder"])
-        folders.sort()
-        for folder in folders[t : t + 1]:
-            directory_name = folder
-            path_snap = directory + directory_name
-            skel_info = read_mat(
-                path_snap + "/Analysis/skeleton_realigned_compressed.mat"
-            )
-            skel = skel_info["skeleton"]
-            skels.append(cv2.dilate(skel.astype(np.uint8), kernel, iterations=itera))
-        for index in range(num_hulls):
-            polygon = regular_hulls[num_hulls - 1 - index]
-            column = f"ring_density_incr-100_index-{num_hulls - 1 - index}"
-            p = affine_transform(polygon, [0.2, 0, 0, -0.2, 0, 0])
-            p = rotate(p, 90, origin=(0, 0))
-            density = table[column][t]
-            if density != -1:
-                p = gpd.GeoSeries(p)
-                _ = p.plot(ax=ax, color=cm.cool(density / 5000), alpha=0.9)
-        polygon = regular_hulls[0]
-        p = affine_transform(polygon, [0.2, 0, 0, -0.2, 0, 0])
-        p = rotate(p, 90, origin=(0, 0))
-        p = gpd.GeoSeries(p)
-        _ = p.plot(ax=ax, color="black")
-        norm = mpl.colors.Normalize(vmin=0, vmax=3000)
-        fig.colorbar(
-            cm.ScalarMappable(norm=norm, cmap=cm.cool), ax=ax, orientation="horizontal"
-        )
-        ax.imshow(
-            skels[0], vmin=0.00000001, cmap=my_cmap, zorder=30, interpolation=None
-        )
-        right = 0.90
-        top = 0.90
-        fontsize = 10
-        text = ax.text(
-            right,
-            top,
-            f"time = {int(table['time_since_begin'][t])}h",
-            horizontalalignment="right",
-            verticalalignment="bottom",
-            transform=ax.transAxes,
-            color="white",
-            fontsize=fontsize,
-        )
-        plt.close(fig)
-        plt.savefig(f"{temp_path}/{plate_num}_dens_im{t}")
-    img_array = []
-    for t in range(exp.ts):
-        img = cv2.imread(f"{temp_path}/{plate_num}_dens_im{t}.png")
-        img_array.append(img)
-    path_movie = f"{temp_path}/{plate_num}_dens.gif"
-    imageio.mimsave(path_movie, img_array, duration=1)
-    upload(
-        path_movie,
-        f"/{dir_drop}/{id_unique}/movie_dens.gif",
-        chunk_size=256 * 1024 * 1024,
-    )
-    path_movie = f"{temp_path}/{plate_num}_dens.mp4"
-    imageio.mimsave(path_movie, img_array)
-    upload(
-        path_movie,
-        f"/{dir_drop}/{id_unique}/movie_dens.mp4",
-        chunk_size=256 * 1024 * 1024,
-    )
+# def make_movie_dens(directory, folders, plate_num, exp, id_unique, args=None):
+#     time_plate_info, global_hypha_info, time_hypha_info = get_data_tables(
+#         redownload=True
+#     )
+#     ts = range(exp.ts)
+#     incr = 100
+#     regular_hulls, indexes = get_regular_hulls_area_fixed(exp, ts, incr)
+#     plate = plate_num
+#     table = time_plate_info.loc[time_plate_info["Plate"] == plate]
+#     table = table.fillna(-1)
+#     my_cmap = cm.Greys
+#     my_cmap.set_under("k", alpha=0)
+#     table = table.set_index("t")
+#     num_hulls = len(regular_hulls) - 4
+#     for t in ts:
+#         fig = plt.figure()
+#         ax = fig.add_subplot(111)
+#         skels = []
+#         ims = []
+#         kernel = np.ones((5, 5), np.uint8)
+#         itera = 2
+#         folders = list(exp.folders["folder"])
+#         folders.sort()
+#         for folder in folders[t : t + 1]:
+#             directory_name = folder
+#             path_snap = directory + directory_name
+#             skel_info = read_mat(
+#                 path_snap + "/Analysis/skeleton_realigned_compressed.mat"
+#             )
+#             skel = skel_info["skeleton"]
+#             skels.append(cv2.dilate(skel.astype(np.uint8), kernel, iterations=itera))
+#         for index in range(num_hulls):
+#             polygon = regular_hulls[num_hulls - 1 - index]
+#             column = f"ring_density_incr-100_index-{num_hulls - 1 - index}"
+#             p = affine_transform(polygon, [0.2, 0, 0, -0.2, 0, 0])
+#             p = rotate(p, 90, origin=(0, 0))
+#             density = table[column][t]
+#             if density != -1:
+#                 p = gpd.GeoSeries(p)
+#                 _ = p.plot(ax=ax, color=cm.cool(density / 5000), alpha=0.9)
+#         polygon = regular_hulls[0]
+#         p = affine_transform(polygon, [0.2, 0, 0, -0.2, 0, 0])
+#         p = rotate(p, 90, origin=(0, 0))
+#         p = gpd.GeoSeries(p)
+#         _ = p.plot(ax=ax, color="black")
+#         norm = mpl.colors.Normalize(vmin=0, vmax=3000)
+#         fig.colorbar(
+#             cm.ScalarMappable(norm=norm, cmap=cm.cool), ax=ax, orientation="horizontal"
+#         )
+#         ax.imshow(
+#             skels[0], vmin=0.00000001, cmap=my_cmap, zorder=30, interpolation=None
+#         )
+#         right = 0.90
+#         top = 0.90
+#         fontsize = 10
+#         text = ax.text(
+#             right,
+#             top,
+#             f"time = {int(table['time_since_begin'][t])}h",
+#             horizontalalignment="right",
+#             verticalalignment="bottom",
+#             transform=ax.transAxes,
+#             color="white",
+#             fontsize=fontsize,
+#         )
+#         plt.close(fig)
+#         plt.savefig(f"{temp_path}/{plate_num}_dens_im{t}")
+#     img_array = []
+#     for t in range(exp.ts):
+#         img = cv2.imread(f"{temp_path}/{plate_num}_dens_im{t}.png")
+#         img_array.append(img)
+#     path_movie = f"{temp_path}/{plate_num}_dens.gif"
+#     imageio.mimsave(path_movie, img_array, duration=1)
+#     upload(
+#         path_movie,
+#         f"/{dir_drop}/{id_unique}/movie_dens.gif",
+#         chunk_size=256 * 1024 * 1024,
+#     )
+#     path_movie = f"{temp_path}/{plate_num}_dens.mp4"
+#     imageio.mimsave(path_movie, img_array)
+#     upload(
+#         path_movie,
+#         f"/{dir_drop}/{id_unique}/movie_dens.mp4",
+#         chunk_size=256 * 1024 * 1024,
+#     )
 
 
 def plot_anastomosis(directory, folders, plate_num, exp, id_unique, args=None):

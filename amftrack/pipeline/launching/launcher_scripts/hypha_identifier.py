@@ -14,13 +14,14 @@ update_plate_info(directory_targ, local=True,suffix_data_info=suffix_data_info)
 all_folders = get_current_folders(directory_targ, local=True,suffix_data_info=suffix_data_info)
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Analysis/nx_graph_pruned_labeled.p"]==True]
+# folders = folders.iloc[:10]
 args = [directory_targ]
 num_parallel = 32
 time = "8:00:00"
 limit = 1000
 version = 1
-labeled = True
-args = [directory_targ, limit, version, labeled]
+suffix = "_labeled"
+args = [directory_targ, limit, version, suffix]
 run_parallel_all_time(
     "hyphae_extraction.py",
     args,
