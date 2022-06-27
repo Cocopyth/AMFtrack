@@ -123,6 +123,19 @@ def upload(file_path, target_path, chunk_size=4 * 1024 * 1024, catch_exception=T
                     return e
             break
 
+def upload_folder(path,target_drop):
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            # construct the full local path
+            local_path = os.path.join(root, filename)
+
+            # construct the full Dropbox path
+            relative_path = os.path.relpath(local_path, path)
+
+            dropbox_path = os.path.join(target_drop, relative_path)
+            dropbox_path = dropbox_path.replace("\\", "/")
+            upload(local_path, dropbox_path, catch_exception=False)
+
 
 def get_size_dbx(path):
     dbx = load_dbx()
