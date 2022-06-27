@@ -3,8 +3,7 @@ from amftrack.pipeline.functions.post_processing.area_hulls import *
 from amftrack.util.dbx import upload_folder
 directory_targ = str(sys.argv[1])
 name_job = str(sys.argv[2])
-stage = int(sys.argv[3])
-plates = sys.argv[4:]
+plates = sys.argv[3:]
 update_analysis_info(directory_targ)
 analysis_info = get_analysis_info(directory_targ)
 analysis_folders = analysis_info.loc[analysis_info['unique_id'].isin(plates)]

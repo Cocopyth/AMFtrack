@@ -6,7 +6,8 @@ from amftrack.pipeline.launching.run_super import run_parallel,run_launcher
 
 directory_targ = str(sys.argv[1])
 name_job = str(sys.argv[2])
-plates = sys.argv[3:]
+stage = int(sys.argv[3])
+plates = sys.argv[4:]
 from time import time_ns
 suffix_data_info=time_ns()
 update_plate_info(directory_targ, local=True,suffix_data_info=suffix_data_info)
