@@ -47,11 +47,6 @@ if load_graphs_bool:
 # print('size after loading',get_size(exp)/10**6)
 
 folder_analysis = row["folder_analysis"]
-whole_plate_info = pd.read_json(
-    f"{directory}{folder_analysis}/time_plate_info.json", convert_dates=True
-).transpose()
-whole_plate_info.index.name = "t"
-whole_plate_info.reset_index(inplace=True)
 path_hyph_info_t = f"{directory}{folder_analysis}/time_hypha_info/hyph_info_{t}.json"
 if not os.path.isfile(path_hyph_info_t) or overwrite:
     time_hypha_info_t = {}

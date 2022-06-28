@@ -11,7 +11,8 @@ dir_drop = "DATA/PRINCE"
 
 for index, row in analysis_folders.iterrows():
     folder = row['folder_analysis']
-    id_unique = row['id_unique']
-    path = os.path.join(directory,folder)
-    target_drop = f'/{dir_drop}/{id_unique}//{folder}'
+    id_unique = row['unique_id']
+    path = os.path.join(directory_targ,folder)
+    target_drop = f'/{dir_drop}/{id_unique}/{folder}'
+    print(dir_drop)
     upload_folder(path,target_drop)

@@ -33,3 +33,10 @@ run_parallel_all_time(
     node="fat",
     name_job=name_job
 )
+
+if stage>0:
+    run_launcher('post_processer_1.py',[directory_targ,name_job,stage-1],plates,
+                 '20:00',dependency=True,name_job = name_job)
+elif stage==0:
+    run_launcher('dropbox_uploader.py',[directory_targ,name_job]
+                 ,plates,'20:00',dependency=True,name_job = name_job)
