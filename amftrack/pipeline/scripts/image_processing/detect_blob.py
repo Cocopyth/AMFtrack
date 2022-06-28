@@ -13,9 +13,9 @@ import scipy.sparse
 import os
 from time import time
 from amftrack.pipeline.functions.image_processing.blob_detection import (
-    detect_blobs
+    detect_blobs, plot_blobs_upload
 )
-
+from random import choice
 from amftrack.util.sys import get_dates_datetime, get_dirname
 import shutil
 
@@ -58,6 +58,7 @@ except FileExistsError:
 xs = [c[0] for c in tileconfig[2]]
 ys = [c[1] for c in tileconfig[2]]
 complete_spores = []
+choosen_picture = choice(tileconfig[0])
 for index, name in enumerate(tileconfig[0]):
     imname = "/Img/" + name.split("/")[-1]
     im = imageio.imread(directory + directory_name + imname)
@@ -70,5 +71,7 @@ for index, name in enumerate(tileconfig[0]):
         x_tot = x + boundaries[1]
         y_tot = y + boundaries[0]
         complete_spores.append((x_tot,y_tot,r))
+    if name == choosen_picture:
+        plot_blobs_upload(im)
 
 sio.savemat(path_snap + "/Analysis/spores.mat", {"spores": complete_spores})
