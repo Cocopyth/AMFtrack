@@ -301,7 +301,9 @@ def plot_full_image_with_features(
     size = 5
     bbox_props = dict(boxstyle="circle", fc="white")
     for node in nodes:
-        c = f(list(node.pos(t)))
+        general_pos = list(node.pos(t))
+        ts_pos = exp.general_to_timestep(general_pos, t)
+        c = f(ts_pos)
         if is_in_bounding_box(c, new_region):
             node_text = ax.text(
                 c[1],
@@ -618,9 +620,20 @@ def reconstruct_skeletton_from_edges(
     This is a wrapper function around reconstruct_skeletton, to apply it
     directly to edge objects.
     See reconstruct_skeletton for documentation.
+    Region is in the GENERAL referential.
     """
+    # Conversion of pixels lists to TIMESTEP referential
+    # QUICKFIX
+    pixels = [edge.pixel_list(t) for edge in edges]
+    pixels_ = []
+    for pl in pixels:
+        l = []
+        for p in pl:
+            l.append(exp.general_to_timestep(p, t))
+        pixels_.append(l)
+
     im, f = reconstruct_skeletton(
-        [edge.pixel_list(t) for edge in edges],
+        pixels_,
         region=region,
         color_seeds=color_seeds,
         downsizing=downsizing,
