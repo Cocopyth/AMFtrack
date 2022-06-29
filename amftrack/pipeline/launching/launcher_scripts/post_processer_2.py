@@ -33,7 +33,7 @@ list_f = [
 ]
 # list_f = [local_density,local_density,local_density]
 # list_f = [get_time_since_begin_exp]
-list_f = [get_width_tip_edge, get_width_root_edge]
+# list_f = [get_width_tip_edge, get_width_root_edge]
 list_args = [{}] * len(list_f)
 # list_args= [[500],[1000],[2000]]+[[]]
 # list_args= [[500]]
