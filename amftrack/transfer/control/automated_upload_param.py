@@ -13,6 +13,7 @@ from amftrack.util.sys import (
 from datetime import datetime, timedelta
 from amftrack.util.dbx import upload_folders
 from time import time_ns
+mod = int(sys.argv[1])
 directory_origin = r"/mnt/sun-temp/TEMP/PRINCE_syncing/"
 dir_drop = "DATA/PRINCE"
 suffix_data_info = str(time_ns())
@@ -26,7 +27,7 @@ selection = (datetime.now() - all_folders_origin["date_datetime"]) <= timedelta(
 current_prince = all_folders_origin.loc[selection]
 plates_in_prince = current_prince['unique_id'].unique()
 old_folders = all_folders_origin.loc[all_folders_origin['unique_id'].isin(plates_in_prince)==False]
-# old_folders = old_folders.loc[old_folders['PrincePos'].astype(int)%4==mod]
+old_folders = old_folders.loc[old_folders['PrincePos'].astype(int)%4==mod]
 old_folders["Plate"] = (
     old_folders["Plate"].str.replace("R", "66666").str.replace("[^0-9]", "")
 )

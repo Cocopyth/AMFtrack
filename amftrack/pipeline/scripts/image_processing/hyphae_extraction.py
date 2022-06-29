@@ -18,6 +18,7 @@ directory = str(sys.argv[1])
 limit = int(sys.argv[2])
 version = str(sys.argv[3])
 suffix = str(sys.argv[4])
+lim_considered = int(sys.argv[5])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
@@ -56,7 +57,7 @@ for index in indexes:
     # when no width is included
     # width_based_cleaning(exp)
     if labeled:
-        resolve_anastomosis_crossing_by_root(exp)
+        resolve_anastomosis_crossing_by_root(exp,lim_considered=lim_considered)
     # get_mother(exp.hyphaes)
     # solve_two_ends = resolve_ambiguity_two_ends(exp_clean.hyphaes)
     # solved = solve_degree4(exp_clean)

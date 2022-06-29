@@ -252,7 +252,7 @@ def get_regular_hulls_area_ratio(num, exp, ts):
 
 def get_regular_hulls_area_fixed(exp, ts, incr):
     path = (
-        directory_scratch + f"temp/hulls_{exp.prince_pos}_{incr}_"
+        directory_scratch + f"temp/hulls_{exp.unique_id}_{incr}_"
         f"{exp.dates[0].strftime('%m%d%Y%H:%M:%S')}.pick"
     )
     if os.path.isfile(path):

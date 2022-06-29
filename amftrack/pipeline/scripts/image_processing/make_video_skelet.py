@@ -23,7 +23,7 @@ select = run_info.loc[run_info["unique_id"] == unique_ids[i]]
 select = select.sort_values('datetime')
 imgs = []
 
-kernel = np.ones((5, 5), np.uint8)
+kernel = np.ones((3, 3), np.uint8)
 itera = 1
 resize = (2624, 1312)
 texts = list(select['folder'])

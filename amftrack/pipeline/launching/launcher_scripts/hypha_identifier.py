@@ -18,10 +18,11 @@ folders = folders.loc[folders["/Analysis/nx_graph_pruned_labeled.p"]==True]
 args = [directory_targ]
 num_parallel = 32
 time = "8:00:00"
-limit = 1000
+limit = 100
 version = 1
 suffix = "_labeled"
-args = [directory_targ, limit, version, suffix]
+lim_considered = 3
+args = [directory_targ, limit, version, suffix,lim_considered]
 run_parallel_all_time(
     "hyphae_extraction.py",
     args,
