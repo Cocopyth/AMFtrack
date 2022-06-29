@@ -72,6 +72,7 @@ for index, name in enumerate(tileconfig[0]):
         y_tot = y + boundaries[0]
         complete_spores.append((x_tot,y_tot,r))
     if name == choosen_picture:
-        plot_blobs_upload(im)
+        if len(blobs)>0:
+            plot_blobs_upload(im)
 
 sio.savemat(path_snap + "/Analysis/spores.mat", {"spores": complete_spores})
