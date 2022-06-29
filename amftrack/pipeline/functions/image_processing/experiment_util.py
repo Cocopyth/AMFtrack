@@ -765,7 +765,7 @@ def reconstruct_image_from_general(
 
     It is the analog of reconstruct_image but for the general referential.
 
-    :param region: [[x1, y1], [x2, y2]] defining a zone in the TIMESTEP ref that
+    :param region: [[x1, y1], [x2, y2]] defining a zone in the GENERAL ref that
                     we want to extract. Can be np.array or lists, int or floats
     :param downsizing: factor by which the image is downsized, 1 returns the original image
     :param prettify: add transformation operation to make the rendering better (but costly)
@@ -805,7 +805,7 @@ def reconstruct_image_from_general(
 
     # Step 3: extract only the region of interest from the TIMESTEP image
     angle = np.degrees(exp.get_rotation(t))
-    extracted_image = extract_inscribed_rotated_image(image_ts, angle=-angle)
+    extracted_image = extract_inscribed_rotated_image(image_ts, angle=angle)
 
     # Mapping from GENERAL referential to downsized image referential
     f = lambda c: (np.array(c) - np.array(region[0])) / downsizing
