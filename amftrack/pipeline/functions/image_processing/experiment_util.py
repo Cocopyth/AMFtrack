@@ -987,23 +987,23 @@ if __name__ == "__main__":
     im, f = reconstruct_skeletton_from_edges(exp, 0, dilation=10)
 
 
-def plot_hulls_skelet(exp,t,hulls,save_path=''):
+def plot_hulls_skelet(exp,t,hulls,save_path='',close=True):
+    if close:
+        plt.close('all')
     my_cmap = cm.Greys
     fig, ax = plt.subplots(figsize=(20, 10))
     skels = []
     ims = []
     kernel = np.ones((5,5),np.uint8)
     itera = 2
-    folders = list(exp.folders['folder'])
+    folders = list(exp.folders['total_path'])
     folders.sort()
     for folder in folders[t:t+1]:
-        directory_name=folder
-        path_snap=directory+directory_name
+        path_snap=folder
         skel_info = read_mat(path_snap+'/Analysis/skeleton_realigned_compressed.mat')
         skel = skel_info['skeleton']
         skels.append(cv2.dilate(skel.astype(np.uint8),kernel,iterations = itera))
     ax.imshow(skels[0],vmin=0.00000001,cmap=my_cmap,zorder=30,interpolation =None,alpha = 0.7)
-
     for polygon in hulls:
         p = affine_transform(polygon,[0.2,0,0,-0.2,0,0])
         p = rotate(p,90,origin=(0,0))
