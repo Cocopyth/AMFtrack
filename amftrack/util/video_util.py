@@ -79,9 +79,11 @@ def make_video_tile(paths_list,texts,resize,save_path=None,upload_path=None,font
         for j,img in enumerate(imgs):
             anchor =img.shape[0]//10,img.shape[1]//10
             cv2.putText(img=img, text=texts[i][j],org = anchor, fontFace=cv2.FONT_HERSHEY_TRIPLEX, fontScale=fontScale, color=color,thickness=3)
-    if len(imgs[0])%2==0:
+    if len(imgs_list[0])%2==0:
         imgs_final = [[cv2.vconcat(imgs[::2]),cv2.vconcat(imgs[1::2])] for imgs in imgs_list]
         imgs_final = [cv2.hconcat(imgs) for imgs in imgs_final]
+    elif len(imgs_list[0])==1:
+        imgs_final = [imgs[0] for imgs in imgs_list]
     else:
         imgs_final = [cv2.hconcat(imgs) for imgs in imgs_list]
     if not save_path is None:
