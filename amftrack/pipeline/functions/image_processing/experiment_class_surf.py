@@ -58,6 +58,9 @@ class Experiment:
         self.hyphaes = None
         self.corresps = {}
 
+    def __len__(self):
+        return len(self.folders)
+
     def __repr__(self):
         return f"Experiment({self.directory})"
 
@@ -793,7 +796,7 @@ class Edge:
     def pixel_list(self, t: int) -> List[coord_int]:
         """
         Return a list of pixels coordinates that make the edge.
-        These coordinates are in the general referential.
+        These coordinates are in the GENERAL referential.
         Also returns the starting position of the Edge.
         """
         return orient(
