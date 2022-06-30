@@ -8,7 +8,7 @@ from amftrack.pipeline.functions.post_processing.time_plate import *
 from amftrack.pipeline.functions.post_processing.global_hypha import *
 from amftrack.pipeline.functions.post_processing.area_hulls import *
 from amftrack.pipeline.launching.run_super import run_parallel,run_launcher
-
+from amftrack.pipeline.functions.post_processing.exp_plot import *
 directory_targ = str(sys.argv[1])
 name_job = str(sys.argv[2])
 stage = int(sys.argv[3])
@@ -116,7 +116,25 @@ run_parallel_post(
     node="fat",
     dependency=True
 )
-
+time = "40:00"
+directory = directory
+list_f = [plot_hulls]
+list_args = [[]] * len(list_f)
+overwrite = True
+num_parallel = 30
+run_parallel_post(
+    "exp_plot.py",
+    list_f,
+    list_args,
+    [directory, overwrite],
+    analysis_folders,
+    num_parallel,
+    time,
+    "global_plate_post_process",
+    cpus=32,
+    name_job="plotting_hulls",
+    node="fat",
+)
 time = "40:00"
 directory = directory
 # list_f = [get_width_f,get_tot_length_C_f,get_tot_growth_C_f]
