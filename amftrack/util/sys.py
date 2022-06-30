@@ -94,7 +94,6 @@ def get_dates_datetime(directory, plate):
 
 def get_dirname(date, folders):
     select = folders.loc[folders["datetime"] == date]["folder"]
-    print(len(select))
     assert len(select) == 1
     return select.iloc[0]
 
