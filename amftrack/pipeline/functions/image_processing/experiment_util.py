@@ -906,12 +906,18 @@ def reconstruct_image_from_general(
     NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
     """
 
-    # TODO(FK): size may not be the right one (99 instead of 100)
-    # TODO(FK): writte the analog plot with feature and reconstruct skeletton
-    # TODO(FK): finish writting tests
+    # TODO(FK): add a test for size consistency
 
     # Step 1: computing a region in the TIMESTEP referential that contains all point from the original region
     region = format_region(region)
+
+    # Final dimension
+    # Rotating the image can slightly change dimension, hence we expand a bit the region
+    # and reframe it at the end to have a consistent size returned by the function
+    l_x = (region[1][0] - region[0][0]) // downsizing
+    l_y = (region[1][1] - region[0][1]) // downsizing
+    region = expand_bounding_box(region, margin=downsizing)
+
     point1, point2 = region
     region_vertices = [point1, point2, [point1[0], point2[1]], [point2[0], point1[1]]]
     region_vertices_ts = [
@@ -938,7 +944,7 @@ def reconstruct_image_from_general(
     # Mapping from GENERAL referential to downsized image referential
     f = lambda c: (np.array(c) - np.array(region[0])) / downsizing
 
-    return extracted_image, f
+    return extracted_image[:l_x, :l_y, ...], f
 
 
 if __name__ == "__main__":
