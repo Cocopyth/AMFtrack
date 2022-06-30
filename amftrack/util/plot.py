@@ -8,7 +8,9 @@ from amftrack.util.aliases import coord_int
 
 
 def make_random_color(seed):
-    "From an int value, hands out a color with its transparency channel as np.array"
+    """
+    From an int value, hands out a color with its transparency channel as np.array.
+    """
     random.seed(seed)
     color = [random.randrange(255) for i in range(3)]
     color.append(255)  # alpha channel
@@ -24,7 +26,10 @@ def show_image(image_path: str) -> None:
 
 
 def show_image_with_segment(image_path: str, x1, y1, x2, y2):
-    """Show the image with a segment drawn on top of it"""
+    """
+    Show the image with a segment drawn on top of it
+    WARNING: Coordinates are given in PLT referential.
+    """
     show_image(image_path)
     plt.plot(y1, x1, marker="x", color="white")
     plt.plot(y2, x2, marker="x", color="white")
