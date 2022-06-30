@@ -36,6 +36,7 @@ id_unique = (
     + str(int(str(select["CrossDate"].iloc[0]).replace("'", "")))
 )
 for path in select['total_path']:
+    print(path)
     # print(folder)
     path_snap = path
     skel_info = read_mat(path_snap + "/Analysis/skeleton.mat")

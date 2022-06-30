@@ -10,9 +10,13 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_full_image_with_features,
     get_all_edges,
     get_all_nodes,
+    plot_hulls_skelet
 
 )
 from random import choice
+from amftrack.pipeline.functions.post_processing.extract_study_zone import load_study_zone
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment, save_graphs, load_graphs, load_skel
+from amftrack.pipeline.functions.post_processing.area_hulls import get_regular_hulls_area_fixed
 
 def make_video(paths,texts,resize,save_path=None,upload_path=None,fontScale=3,color = (0, 255, 255)):
     if resize is None:
@@ -161,4 +165,20 @@ def make_images_track(exp,num_tiles = 4):
                 save_path=path,
             )
         paths_list.append(paths)
+    return(paths_list)
+
+def make_hull_images(exp,ts_plot):
+    """
+TODO
+    """
+    ts = range(exp.ts)
+    incr = 100
+    regular_hulls, indexes = get_regular_hulls_area_fixed(exp, ts, incr)
+    paths_list = []
+    for t in ts_plot:
+        path = f"plot_nodes_{time_ns()}"
+        path = os.path.join(temp_path, path)
+        plot_hulls_skelet(exp, t, regular_hulls, save_path=path)
+        exp.load_tile_information(t)
+        paths_list.append([path])
     return(paths_list)

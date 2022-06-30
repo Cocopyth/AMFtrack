@@ -788,15 +788,13 @@ if __name__ == "__main__":
 
 def plot_hulls_skelet(exp,t,hulls,save_path=''):
     my_cmap = cm.Greys
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
+    fig, ax = plt.subplots(figsize=(20, 10))
     skels = []
     ims = []
     kernel = np.ones((5,5),np.uint8)
     itera = 2
     folders = list(exp.folders['folder'])
     folders.sort()
-    t = 10
     for folder in folders[t:t+1]:
         directory_name=folder
         path_snap=directory+directory_name
@@ -812,4 +810,4 @@ def plot_hulls_skelet(exp,t,hulls,save_path=''):
         _ = p.boundary.plot(ax =ax,alpha = 0.9)
         # _ = ax.plot(np.array(y)/5,np.array(x)/5)
     if save_path != '':
-        plt.savefig('path')
+        plt.savefig(save_path)
