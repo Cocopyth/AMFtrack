@@ -429,3 +429,19 @@ class TestExperimentHeavy(unittest.TestCase):
             im_pil.save(
                 os.path.join(test_path, f"reconstruct_square_downsized_ts_{t}.png")
             )
+
+    def test_plot_full(self):
+        # General case square
+        # region = [[10000, 10000], [20000, 40000]]
+        region = [[22000, 15000], [24000, 17000]]
+        for t in range(len(self.exp)):
+            plot_full_image_with_features(
+                self.exp,
+                t,
+                downsizing=10,
+                region=None,
+                nodes=[Node(10, self.exp), Node(100, self.exp), Node(200, self.exp)],
+                edges=get_all_edges(self.exp, t),
+                dilation=5,
+                save_path=os.path.join(test_path, f"plot_full_final_{t}"),
+            )
