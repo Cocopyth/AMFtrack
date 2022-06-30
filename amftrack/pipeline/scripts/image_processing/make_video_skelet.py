@@ -68,5 +68,5 @@ imageio.mimsave(save_path_temp, imgs)
 dir_drop = "DATA/PRINCE"
 upload_path = f"/{dir_drop}/{id_unique}/{id_unique}_skelet.mp4"
 upload(save_path_temp, upload_path)
-
+print(upload_path,len(imgs),len(select))
 os.remove(save_path_temp)

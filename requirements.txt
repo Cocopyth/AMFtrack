@@ -23,6 +23,7 @@ jupyter-fs
 setuptools
 python-decouple
 typing
-#keras-tuner
-#tensorflow
+keras-tuner
+tensorflow
 imageio-ffmpeg
+geopandas
