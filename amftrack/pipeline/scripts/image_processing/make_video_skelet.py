@@ -21,6 +21,7 @@ unique_ids = list(set(run_info["unique_id"].values))
 unique_ids.sort()
 select = run_info.loc[run_info["unique_id"] == unique_ids[i]]
 select = select.sort_values('datetime')
+print(select["folder"])
 imgs = []
 
 kernel = np.ones((3, 3), np.uint8)
@@ -35,6 +36,7 @@ id_unique = (
     + str(int(str(select["CrossDate"].iloc[0]).replace("'", "")))
 )
 for path in select['total_path']:
+    print(path)
     # print(folder)
     path_snap = path
     skel_info = read_mat(path_snap + "/Analysis/skeleton.mat")
@@ -67,5 +69,5 @@ imageio.mimsave(save_path_temp, imgs)
 dir_drop = "DATA/PRINCE"
 upload_path = f"/{dir_drop}/{id_unique}/{id_unique}_skelet.mp4"
 upload(save_path_temp, upload_path)
-
+print(upload_path,len(imgs),len(select))
 os.remove(save_path_temp)

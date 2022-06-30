@@ -10,9 +10,13 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_full_image_with_features,
     get_all_edges,
     get_all_nodes,
+    plot_hulls_skelet
 
 )
 from random import choice
+from amftrack.pipeline.functions.post_processing.extract_study_zone import load_study_zone
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment, save_graphs, load_graphs, load_skel
+from amftrack.pipeline.functions.post_processing.area_hulls import get_regular_hulls_area_fixed
 
 def make_video(paths,texts,resize,save_path=None,upload_path=None,fontScale=3,color = (0, 255, 255)):
     if resize is None:
@@ -120,4 +124,61 @@ def make_images_track(exp,num_tiles = 4):
                 save_path=path,
             )
         paths_list.append(paths)
+    return(paths_list)
+
+def make_images_track(exp,num_tiles = 4):
+    """
+    This function makes images centered on the initial position of some random nodes,
+    plots the skeleton on top of the raw image, the label of the nodes at different timesteps
+    it returns the paths_list of those plotted image in the format for tile video making
+    :param exp:
+    :param num_tiles: number of such images to tile together
+    """
+    nodes = get_all_nodes(exp, 0)
+    nodes = [node for node in nodes if node.is_in(0) and
+             np.linalg.norm(node.pos(0) - node.pos(node.ts()[-1])) > 1000 and
+             len(node.ts()) > 3]
+
+    paths_list = []
+    node_select_list = [choice(nodes) for k in range(num_tiles)]
+    for t in range(exp.ts):
+        exp.load_tile_information(t)
+        paths = []
+        for k in range(num_tiles):
+            node_select = node_select_list[k]
+            pos = node_select.pos(0)
+            window = 1500
+            region = [[pos[0] - window, pos[1] - window], [pos[0] + window, pos[1] + window]]
+            path = f"plot_nodes_{time_ns()}"
+            path = os.path.join(temp_path, path)
+            paths.append(path + '.png')
+            plot_full_image_with_features(
+                exp,
+                t,
+                region=region,
+                downsizing=5,
+                nodes=[node for node in get_all_nodes(exp, 0) if
+                       node.is_in(t) and np.linalg.norm(node.pos(t) - pos) <= window],
+                edges=get_all_edges(exp, t),
+                dilation=5,
+                prettify=False,
+                save_path=path,
+            )
+        paths_list.append(paths)
+    return(paths_list)
+
+def make_hull_images(exp,ts_plot):
+    """
+TODO
+    """
+    ts = range(exp.ts)
+    incr = 100
+    regular_hulls, indexes = get_regular_hulls_area_fixed(exp, ts, incr)
+    paths_list = []
+    for t in ts_plot:
+        path = f"plot_nodes_{time_ns()}"
+        path = os.path.join(temp_path, path)
+        plot_hulls_skelet(exp, t, regular_hulls, save_path=path)
+        exp.load_tile_information(t)
+        paths_list.append([path])
     return(paths_list)
