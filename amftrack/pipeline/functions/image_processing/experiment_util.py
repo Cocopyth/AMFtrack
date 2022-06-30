@@ -584,17 +584,23 @@ def reconstruct_image(
                 im = cv.resize(
                     im, (length_y, length_x)
                 )  # cv2 has different (x, y) convention
-            overlap = get_overlap(
-                region_new[0],
-                region_new[1],
-                im_coord_new,
-                im_coord_new + np.array([length_x, length_y]),
-                strict=True,
-            )
-            full_im[overlap[0][0] : overlap[1][0], overlap[0][1] : overlap[1][1]] = im[
-                overlap[0][0] - im_coord_new[0] : overlap[1][0] - im_coord_new[0],
-                overlap[0][1] - im_coord_new[1] : overlap[1][1] - im_coord_new[1],
-            ]
+
+            try:
+                overlap = get_overlap(
+                    region_new[0],
+                    region_new[1],
+                    im_coord_new,
+                    im_coord_new + np.array([length_x, length_y]),
+                    strict=True,
+                )
+                full_im[
+                    overlap[0][0] : overlap[1][0], overlap[0][1] : overlap[1][1]
+                ] = im[
+                    overlap[0][0] - im_coord_new[0] : overlap[1][0] - im_coord_new[0],
+                    overlap[0][1] - im_coord_new[1] : overlap[1][1] - im_coord_new[1],
+                ]
+            except:
+                logging.error("The resized rectangle is no longer overlapping")
 
     return full_im, f
 
