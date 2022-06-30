@@ -19,6 +19,7 @@ def plot_hulls(exp,args = None):
     texts = [[folder] for folder in list(exp.folders['folder'])]
     folder_analysis = exp.save_location.split('/')[-1]
     upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/{id_unique}_hulls.mp4"
+    print(upload_path)
     make_video_tile(paths_list, texts, None, save_path=None, upload_path=upload_path, fontScale=3)
 
 

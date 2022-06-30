@@ -162,7 +162,6 @@ def run_parallel_post(
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job }", shell=True)
         call_code(path_job, dependency)
 
 
