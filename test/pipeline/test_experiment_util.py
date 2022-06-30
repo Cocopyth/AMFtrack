@@ -33,14 +33,29 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     reconstruct_skeletton_from_edges,
     reconstruct_skeletton_unicolor,
     plot_edge_width,
+    reconstruct_image_from_general,
 )
 from amftrack.util.sys import test_path
 from test import helper
 from PIL import Image
 
 
+class TestExperimentLight(unittest.TestCase):
+    """Test that need no plate to run"""
+
+    def test_distance_point_edge(self):
+
+        edge = helper.EdgeMock([[2, 3], [3, 3], [3, 4], [4, 5], [5, 5], [6, 6], [7, 7]])
+        self.assertEqual(
+            distance_point_edge([2, 3], edge, 0, step=1),
+            0,
+        )
+
+
 @unittest.skipUnless(helper.has_test_plate(), "No plate to run the tests..")
 class TestExperiment(unittest.TestCase):
+    """Tests that need only a static plate with one timestep"""
+
     @classmethod
     def setUpClass(cls):
         cls.exp = helper.make_experiment_object()
@@ -361,12 +376,86 @@ class TestExperiment(unittest.TestCase):
             save_path=os.path.join(test_path, "test_region_centered"),
         )
 
-
-class TestExperimentLight(unittest.TestCase):
-    def test_distance_point_edge(self):
-
-        edge = helper.EdgeMock([[2, 3], [3, 3], [3, 4], [4, 5], [5, 5], [6, 6], [7, 7]])
-        self.assertEqual(
-            distance_point_edge([2, 3], edge, 0, step=1),
+    def test_reconstruct_image_from_general(self):
+        im, _ = reconstruct_image_from_general(
+            self.exp,
             0,
+            downsizing=10,
+            region=[[10000, 10000], [20000, 40000]],
+            white_background=True,
         )
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_from_general.png"))
+
+
+class TestExperimentHeavy(unittest.TestCase):
+    """Tests that need a plate with multiple timesteps"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.exp = helper.make_experiment_object_multi()
+
+    def test_reconstruct_image_from_general_0(self):
+        # General case rectangle + downsized
+        region = [[10000, 10000], [20000, 40000]]
+        for t in range(len(self.exp)):
+            im, _ = reconstruct_image_from_general(
+                self.exp,
+                t,
+                downsizing=30,
+                region=region,
+                white_background=True,
+            )
+            im_pil = Image.fromarray(im)
+            im_pil.save(os.path.join(test_path, f"reconstruct_rectangle_ts_{t}.png"))
+            size = im.shape
+            a = 0
+
+    def test_reconstruct_image_from_general_1(self):
+        # General case square + real size
+        region = [[22000, 15000], [23000, 16000]]
+        for t in range(len(self.exp)):
+            im, _ = reconstruct_image_from_general(
+                self.exp,
+                t,
+                downsizing=1,
+                region=region,
+                white_background=True,
+            )
+            im_pil = Image.fromarray(im)
+            im_pil.save(os.path.join(test_path, f"reconstruct_square__{t}.png"))
+            size = im.shape
+            a = 0
+
+    def test_reconstruct_image_from_general_2(self):
+        # General case square
+        # region = [[10000, 10000], [20000, 40000]]
+        region = [[22000, 15000], [24000, 17000]]
+        for t in range(len(self.exp)):
+            im, _ = reconstruct_image_from_general(
+                self.exp,
+                t,
+                downsizing=10,
+                region=region,
+                white_background=True,
+            )
+            im_pil = Image.fromarray(im)
+            im_pil.save(
+                os.path.join(test_path, f"reconstruct_square_downsized_ts_{t}.png")
+            )
+
+    def test_plot_full(self):
+        # General case square
+        # region = [[10000, 10000], [20000, 40000]]
+        region = [[22000, 15000], [24000, 17000]]
+        for t in range(len(self.exp)):
+            plot_full_image_with_features(
+                self.exp,
+                t,
+                downsizing=10,
+                region=None,
+                nodes=[Node(10, self.exp), Node(100, self.exp), Node(200, self.exp)],
+                edges=get_all_edges(self.exp, t),
+                dilation=5,
+                save_path=os.path.join(test_path, f"plot_full_final_{t}"),
+            )
