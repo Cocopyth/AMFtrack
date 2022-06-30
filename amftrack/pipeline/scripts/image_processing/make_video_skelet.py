@@ -21,6 +21,7 @@ unique_ids = list(set(run_info["unique_id"].values))
 unique_ids.sort()
 select = run_info.loc[run_info["unique_id"] == unique_ids[i]]
 select = select.sort_values('datetime')
+print(select["folder"])
 imgs = []
 
 kernel = np.ones((3, 3), np.uint8)
