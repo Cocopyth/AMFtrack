@@ -1003,12 +1003,15 @@ def plot_hulls_skelet(exp,t,hulls,save_path='',close=True):
         skel_info = read_mat(path_snap+'/Analysis/skeleton_realigned_compressed.mat')
         skel = skel_info['skeleton']
         skels.append(cv2.dilate(skel.astype(np.uint8),kernel,iterations = itera))
-    ax.imshow(skels[0],vmin=0.00000001,cmap=my_cmap,zorder=30,interpolation =None,alpha = 0.7)
+    ax.imshow(skels[0], cmap=my_cmap, interpolation=None, alpha=0.7)
     for polygon in hulls:
         p = affine_transform(polygon,[0.2,0,0,-0.2,0,0])
         p = rotate(p,90,origin=(0,0))
         p =gpd.GeoSeries(p)
-        _ = p.boundary.plot(ax =ax,alpha = 0.9)
+        try:
+            _ = p.boundary.plot(ax =ax,alpha = 0.9)
+        except ValueError:
+            print(p)
         # _ = ax.plot(np.array(y)/5,np.array(x)/5)
     if save_path != '':
         plt.savefig(save_path)

@@ -10,13 +10,26 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_full_image_with_features,
     get_all_edges,
     get_all_nodes,
-    plot_hulls_skelet
+    plot_hulls_skelet,
+    plot_full
 
 )
 from random import choice
 from amftrack.pipeline.functions.post_processing.extract_study_zone import load_study_zone
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment, save_graphs, load_graphs, load_skel
 from amftrack.pipeline.functions.post_processing.area_hulls import get_regular_hulls_area_fixed
+from amftrack.util.geometry import (
+    distance_point_pixel_line,
+    get_closest_line_opt,
+    get_closest_lines,
+    format_region,
+    intersect_rectangle,
+    get_overlap,
+    get_bounding_box,
+    expand_bounding_box,
+    is_in_bounding_box,
+    centered_bounding_box
+)
 
 def make_video(paths,texts,resize,save_path=None,upload_path=None,fontScale=3,color = (0, 255, 255)):
     if resize is None:
@@ -148,11 +161,11 @@ def make_images_track(exp,num_tiles = 4):
             node_select = node_select_list[k]
             pos = node_select.pos(0)
             window = 1500
-            region = [[pos[0] - window, pos[1] - window], [pos[0] + window, pos[1] + window]]
+            region = centered_bounding_box(pos, size=3000)
             path = f"plot_nodes_{time_ns()}"
             path = os.path.join(temp_path, path)
             paths.append(path + '.png')
-            plot_full_image_with_features(
+            plot_full(
                 exp,
                 t,
                 region=region,
@@ -176,9 +189,8 @@ TODO
     regular_hulls, indexes = get_regular_hulls_area_fixed(exp, ts, incr)
     paths_list = []
     for t in ts_plot:
-        path = f"plot_nodes_{time_ns()}"
+        path = f"plot_nodes_{time_ns()}.png"
         path = os.path.join(temp_path, path)
         plot_hulls_skelet(exp, t, regular_hulls, save_path=path)
-        exp.load_tile_information(t)
         paths_list.append([path])
     return(paths_list)
