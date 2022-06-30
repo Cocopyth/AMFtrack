@@ -12,6 +12,8 @@ from amftrack.util.sys import (
     test_path,
     get_current_folders,
     update_plate_info,
+    get_current_folders_local,
+    update_plate_info_local,
 )
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
@@ -93,6 +95,20 @@ def make_experiment_object():
     exp = Experiment(directory)
     exp.load(selected_df, suffix="")
     exp.load_tile_information(0)
+    return exp
+
+
+def make_experiment_object_multi():
+    "Build an experiment object using the plate that is in the test repository."
+    directory = os.path.join(test_path, "plate_938")
+    update_plate_info_local(directory)
+    folder_df = get_current_folders_local(directory)
+    print(len(folder_df))
+    folder_df["unique_id"] = 10000
+    exp = Experiment(directory)
+    exp.load(folder_df, suffix="")
+    for t in range(len(exp.folders)):
+        exp.load_tile_information(t)
     return exp
 
 
