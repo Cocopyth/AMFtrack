@@ -61,3 +61,7 @@ class TestExperiment(unittest.TestCase):
 
     def test_find_im_indexes_from_general(self):
         self.exp.find_im_indexes_from_general(21980, 30916, 0)
+
+    def test_get_rotation(self):
+        self.exp.load_image_transformation(0)
+        self.assertTrue(self.exp.get_rotation(0) == 0)
