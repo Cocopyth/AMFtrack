@@ -27,7 +27,12 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Edge,
 )
 from amftrack.pipeline.functions.image_processing.extract_skel import bowler_hat
-
+from pymatreader import read_mat
+from matplotlib import cm
+import cv2
+from shapely.geometry import Polygon, shape,Point
+from shapely.affinity import affine_transform, rotate
+import geopandas as gpd
 from amftrack.util.sparse import dilate_coord_list
 from amftrack.util.other import is_in
 
@@ -779,3 +784,32 @@ if __name__ == "__main__":
     exp.load_tile_information(0)
 
     im, f = reconstruct_skeletton_from_edges(exp, 0, dilation=10)
+
+
+def plot_hulls_skelet(exp,t,hulls,save_path=''):
+    my_cmap = cm.Greys
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    skels = []
+    ims = []
+    kernel = np.ones((5,5),np.uint8)
+    itera = 2
+    folders = list(exp.folders['folder'])
+    folders.sort()
+    t = 10
+    for folder in folders[t:t+1]:
+        directory_name=folder
+        path_snap=directory+directory_name
+        skel_info = read_mat(path_snap+'/Analysis/skeleton_realigned_compressed.mat')
+        skel = skel_info['skeleton']
+        skels.append(cv2.dilate(skel.astype(np.uint8),kernel,iterations = itera))
+    ax.imshow(skels[0],vmin=0.00000001,cmap=my_cmap,zorder=30,interpolation =None,alpha = 0.7)
+
+    for polygon in hulls:
+        p = affine_transform(polygon,[0.2,0,0,-0.2,0,0])
+        p = rotate(p,90,origin=(0,0))
+        p =gpd.GeoSeries(p)
+        _ = p.boundary.plot(ax =ax,alpha = 0.9)
+        # _ = ax.plot(np.array(y)/5,np.array(x)/5)
+    if save_path != '':
+        plt.savefig('path')
