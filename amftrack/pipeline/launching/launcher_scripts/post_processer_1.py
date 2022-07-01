@@ -79,46 +79,46 @@ print(len(analysis_folders))
 #     name_job=name_job,
 #     node="fat",
 # )
-#
-# time = "5:40:00"
-# directory = directory
-# max_ind = 20
-# incr = 100
-#
-# fs = [
-#     get_density_in_ring,
-#     get_density_anastomose_in_ring,
-#     get_density_branch_rate_in_ring,
-#     get_density_stop_rate_in_ring,
-#     get_density_active_tips_in_ring,
-# ]
-# # fs = [get_mean_speed_in_ring]
-#
-# list_f = []
-# list_args = []
-#
-# for f in fs:
-#     list_f += [f] * max_ind
-#
-#     list_args += [{"incr": incr, "i": i, "rh_only": True} for i in range(max_ind)]
-# overwrite = False
-# num_parallel = 30
-# run_parallel_post(
-#     "time_plate_post_process.py",
-#     list_f,
-#     list_args,
-#     [directory, overwrite],
-#     analysis_folders,
-#     num_parallel,
-#     time,
-#     "time_plate_post_process",
-#     cpus=32,
-#     name_job=name_job,
-#     node="fat",
-#     dependency=True
-# )
+
+time = "5:40:00"
+directory = directory
+max_ind = 20
+incr = 100
+
+fs = [
+    get_density_in_ring,
+    get_density_anastomose_in_ring,
+    get_density_branch_rate_in_ring,
+    get_density_stop_rate_in_ring,
+    get_density_active_tips_in_ring,
+]
+# fs = [get_mean_speed_in_ring]
+
+list_f = []
+list_args = []
+
+for f in fs:
+    list_f += [f] * max_ind
+
+    list_args += [{"incr": incr, "i": i, "rh_only": True} for i in range(max_ind)]
+overwrite = False
+num_parallel = 30
+run_parallel_post(
+    "time_plate_post_process.py",
+    list_f,
+    list_args,
+    [directory, overwrite],
+    analysis_folders,
+    num_parallel,
+    time,
+    "time_plate_post_process",
+    cpus=32,
+    name_job=name_job,
+    node="fat",
+    dependency=True
+)
 time = "40:00"
-list_f = [plot_hulls]
+list_f = [plot_hulls,plot_tracking]
 list_args = [[]] * len(list_f)
 overwrite = True
 num_parallel = 30
