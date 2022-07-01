@@ -14,7 +14,8 @@ skip = eval(sys.argv[2])
 resolution = eval(sys.argv[3])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
-run_info = pd.read_json(f"{temp_path}/{op_id}.json")
+
+run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
 # plate = list(run_info['PrincePos'])[i]
 # Sometime plate in param file is inconsistent with folder name...
 # plate = int(list(run_info['folder'])[i].split('_')[-1][5:])

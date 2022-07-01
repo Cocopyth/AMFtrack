@@ -67,7 +67,7 @@ class Experiment:
     def load(self, folders: pd.DataFrame, suffix="_labeled"):
         """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
-        assert len(folders["unique_id"].unique()) == 1
+        assert len(folders["unique_id"].unique()) == 1, "multiple plate id"
         self.unique_id = folders["unique_id"].unique()[0]
         self.image_coordinates = [None] * len(folders)
         self.image_transformation = [None] * len(folders)
@@ -469,6 +469,7 @@ def save_graphs(exp, suf=2):
 
 
 def load_graphs(exp, indexes=None):
+    #TODO : add as a class method
     nx_graph_poss = []
     labeled = exp.labeled
     if indexes == None:
@@ -477,7 +478,7 @@ def load_graphs(exp, indexes=None):
         directory_name = get_dirname(date, exp.folders)
         path_snap = exp.directory + directory_name
         if labeled:
-            suffix = "/Analysis/nx_graph_pruned_labeled2.p"
+            suffix = "/Analysis/nx_graph_pruned_labeled.p"
         else:
             suffix = "/Analysis/nx_graph_pruned.p"
         path_save = path_snap + suffix
