@@ -78,7 +78,7 @@ def run(
     args: List,
     folders: pd.DataFrame,
     loc_code="pipeline/scripts/image_processing/",
-    pyt_vers="3",
+    pyt_vers="python3",
 ) -> None:
     """
     Run the chosen script `code` localy.
@@ -94,14 +94,43 @@ def run(
     with tqdm(total=len(folder_list), desc="folder_treated") as pbar:
         for index, folder in enumerate(folder_list):
             command = (
-                [f"python{pyt_vers}", f"{path_code}{loc_code}{code}"]
+                [f"{pyt_vers}", f"{path_code}{loc_code}{code}"]
                 + args_str
                 + [f"{op_id}", f"{index}"]
             )
             print(" ".join(command))
-            process = subprocess.run(command)
+            process = subprocess.run(command,stdout=subprocess.DEVNULL)
             pbar.update(1)
 
+def run_all_time(
+    code: str,
+    args: List,
+    folders: pd.DataFrame,
+    loc_code="pipeline/scripts/image_processing/",
+    pyt_vers="python3",
+) -> None:
+    """
+    Run the chosen script `code` localy.
+    :param code: name of the script file such as "prune.py", it has to be in the image_processing file
+    :param args: list of arguments used by the script
+    """
+    op_id = time_ns()
+    folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
+    plates = set(folders["Plate"].values)
+    folder_list = list(folders["folder"])
+    folder_list.sort()
+    args_str = [str(arg) for arg in args]
+    arg_str = " ".join(args_str)
+    with tqdm(total=len(plates), desc="plate treated") as pbar:
+        for index, plate in enumerate(plates):
+            command = (
+                [f"{pyt_vers}", f"{path_code}{loc_code}{code}"]
+                + args_str
+                + [f"{op_id}", f"{index}"]
+            )
+            print(" ".join(command))
+            process = subprocess.run(command,stdout=subprocess.DEVNULL)
+            pbar.update(1)
 
 def run_transfer(code: str, args: List, folders: pd.DataFrame) -> None:
     """

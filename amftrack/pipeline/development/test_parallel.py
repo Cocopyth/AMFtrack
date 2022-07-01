@@ -17,7 +17,8 @@ directory = directory_project
 skip = False
 i = 330
 op_id = 1635343105134052723
-run_info = pd.read_json(f"{temp_path}/{op_id}.json")
+
+run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
 plate = list(run_info["PrincePos"])[i]
 
 folder_list = list(run_info["folder"])
