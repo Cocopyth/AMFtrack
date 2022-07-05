@@ -14,6 +14,8 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_full
 
 )
+from amftrack.pipeline.functions.post_processing.area_hulls import is_in_study_zone
+
 from random import choice
 from amftrack.pipeline.functions.post_processing.extract_study_zone import load_study_zone
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import Experiment, save_graphs, load_graphs, load_skel
@@ -196,3 +198,62 @@ TODO
         plot_hulls_skelet(exp, t, regular_hulls, save_path=path)
         paths_list.append([path])
     return(paths_list)
+
+def make_anastomosis_images(exp,t0):
+    """
+TODO
+    """
+    paths_list = []
+
+    nodes = [
+        node
+        for node in exp.nodes
+        if node.is_in(t0) and np.all(is_in_study_zone(node, t0, 1000, 200))
+    ]
+    tips = [
+        node
+        for node in nodes
+        if node.degree(t0) == 1 and node.is_in(t0 + 1) and len(node.ts()) > 2
+    ]
+    growing_tips = [
+        node
+        for node in tips
+        if np.linalg.norm(node.pos(t0) - node.pos(node.ts()[-1])) >= 40
+    ]
+    growing_rhs = [
+        node
+        for node in growing_tips
+        if np.linalg.norm(node.pos(node.ts()[0]) - node.pos(node.ts()[-1])) >= 1500
+    ]
+
+    anas_tips = [
+        tip
+        for tip in growing_rhs
+        if tip.degree(t0) == 1
+        and tip.degree(t0 + 1) == 3
+        and 1 not in [tip.degree(t) for t in [tau for tau in tip.ts() if tau > t]]
+    ]
+    if len(anas_tips)>0:
+        ts = [t0, t0 + 1, t0 + 3]
+        for t in ts:
+            exp.load_tile_information(t)
+        node = choice(anas_tips)
+        pos = node.pos(t0)
+        region = centered_bounding_box(pos, size=3000)
+        path = f"plot_anas_{time_ns()}.png"
+        path = os.path.join(temp_path, path)
+        for t in ts:
+
+            # region = centered_bounding_box(pos, size=3000)
+            plot_full(
+                exp,
+                t,
+                region=region,
+                downsizing=5,
+                nodes=[node],
+                edges=get_all_edges(exp, t),
+                dilation=5,
+                prettify=False,
+                save_path=path,
+            )
+

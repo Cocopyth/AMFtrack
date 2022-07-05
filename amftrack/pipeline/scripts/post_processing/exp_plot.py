@@ -33,7 +33,7 @@ except AttributeError:
 
 load_study_zone(exp)
 
-load_graphs(exp, indexes=[])
+load_graphs(exp, indexes=None)
 exp.dates.sort()
 
 for f, args in zip(list_f, list_args):
