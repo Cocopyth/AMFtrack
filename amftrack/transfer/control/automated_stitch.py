@@ -1,7 +1,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.getenv("HOME") + "/pycode/MscThesis/")
+
 # sys.path.insert(0,r'C:\Users\coren\Documents\PhD\Code\AMFtrack')
 
 import pandas as pd

@@ -18,7 +18,8 @@ directory = str(sys.argv[1])
 overwrite = eval(sys.argv[2])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
-run_info = pd.read_json(f"{temp_path}/{op_id}.json")
+
+run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
 list_f, list_args = pickle.load(open(f"{temp_path}/{op_id}.pick", "rb"))
 folder_list = list(run_info["folder_analysis"])
 directory_name = folder_list[i]
@@ -38,12 +39,11 @@ except AttributeError:
     exp.labeled = True
 load_graphs(exp)
 op_id2 = time_ns()
-get_data_tables(op_id2, redownload=True)
+#get_data_tables(op_id2, redownload=True)
 folder = row["folder_analysis"]
 path = f'{directory}{row["folder_analysis"]}'
 load_study_zone(exp)
 for t in range(exp.ts):
-    print(t)
     data_t = time_plate_info[str(t)] if str(t) in time_plate_info.keys() else {}
     date = exp.dates[t]
     date_str = datetime.strftime(date, "%d.%m.%Y, %H:%M:")

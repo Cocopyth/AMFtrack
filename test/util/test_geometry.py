@@ -13,6 +13,9 @@ from amftrack.util.geometry import (
     is_overlapping,
     get_overlap,
     format_region,
+    is_in_bounding_box,
+    get_bounding_box,
+    centered_bounding_box,
 )
 
 
@@ -230,3 +233,19 @@ class TestSegment(unittest.TestCase):
     def test_format_region(self):
         self.assertTrue(is_equal_seq(format_region([[1, 2], [0, 3]]), [[0, 2], [1, 3]]))
         self.assertTrue(is_equal_seq(format_region([[1, 2], [2, 3]]), [[1, 2], [2, 3]]))
+
+    def test_is_in_bounding_box(self):
+        self.assertTrue(is_in_bounding_box([1, 2], [[0, 0], [10, 10]]))
+        self.assertFalse(is_in_bounding_box([10, 20], [[0, 0], [10, 10]]))
+
+    def test_get_bounding_box_1(self):
+        self.assertTrue(
+            is_equal_seq(get_bounding_box([[1, 2]], margin=30), [[-29, -28], [31, 32]])
+        )
+
+    def test_get_bounding_box_2(self):
+        get_bounding_box([[1.3, 4.1], [1.3, 2.1]])
+
+    def test_centered_bounding_box(self):
+        region = centered_bounding_box([1, 2], size=100)
+        self.assertTrue(is_equal_seq(region, [[-49, -48], [51, 52]]))

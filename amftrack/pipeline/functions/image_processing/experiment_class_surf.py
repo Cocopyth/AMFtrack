@@ -58,13 +58,16 @@ class Experiment:
         self.hyphaes = None
         self.corresps = {}
 
+    def __len__(self):
+        return len(self.folders)
+
     def __repr__(self):
         return f"Experiment({self.directory})"
 
     def load(self, folders: pd.DataFrame, suffix="_labeled"):
         """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
-        assert len(folders["unique_id"].unique()) == 1
+        assert len(folders["unique_id"].unique()) == 1, "multiple plate id"
         self.unique_id = folders["unique_id"].unique()[0]
         self.image_coordinates = [None] * len(folders)
         self.image_transformation = [None] * len(folders)
@@ -261,6 +264,18 @@ class Experiment:
         new_coord = np.dot(np.linalg.inv(R), old_coord - t)
         return new_coord
 
+    def get_rotation(self, t: int) -> float:
+        """
+        Return the rotation value in radians of the referential of timestep t
+        with respect to the general referential
+        """
+        if self.image_transformation is None:
+            raise Exception("Must load directories first")
+        if self.image_transformation[t] is None:
+            self.image_transformation[t] = self.load_image_transformation(t)
+        R, _ = self.image_transformation[t]
+        return np.arcsin(R[0][1])
+
     def timestep_to_general(self, point: coord, t: int) -> coord:
         """
         Take as input float coordinates `coord` the referential of timestep t
@@ -454,6 +469,7 @@ def save_graphs(exp, suf=2):
 
 
 def load_graphs(exp, indexes=None):
+    #TODO : add as a class method
     nx_graph_poss = []
     labeled = exp.labeled
     if indexes == None:
@@ -462,7 +478,7 @@ def load_graphs(exp, indexes=None):
         directory_name = get_dirname(date, exp.folders)
         path_snap = exp.directory + directory_name
         if labeled:
-            suffix = "/Analysis/nx_graph_pruned_labeled2.p"
+            suffix = "/Analysis/nx_graph_pruned_labeled.p"
         else:
             suffix = "/Analysis/nx_graph_pruned.p"
         path_save = path_snap + suffix
@@ -781,7 +797,7 @@ class Edge:
     def pixel_list(self, t: int) -> List[coord_int]:
         """
         Return a list of pixels coordinates that make the edge.
-        These coordinates are in the general referential.
+        These coordinates are in the GENERAL referential.
         Also returns the starting position of the Edge.
         """
         return orient(
@@ -792,6 +808,7 @@ class Edge:
         )
 
     def width(self, t):
+        # TODO(FK): keep as a function?
         return self.experiment.nx_graph[t].get_edge_data(
             self.begin.label, self.end.label
         )["width"]
