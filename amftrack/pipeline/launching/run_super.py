@@ -26,6 +26,7 @@ def call_code(path_job, dependency):
     len_queue = get_queue_size()
     while len_queue>800:
         sleep(360)
+        len_queue = get_queue_size()
     if not dependency:
         call(f"sbatch {path_job}", shell=True)
     else:
