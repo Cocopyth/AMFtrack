@@ -1,12 +1,13 @@
 from datetime import datetime
-from subprocess import call, DEVNULL
+from subprocess import call, DEVNULL,check_output
 from amftrack.util.sys import path_code, temp_path, slurm_path, slurm_path_transfer
 import os
 from copy import copy
 from time import time_ns
 import pickle
 import imageio
-
+import sys
+from time import sleep
 directory_scratch = "/scratch-shared/amftrack/"
 directory_project = "/projects/0/einf914/data/"
 directory_archive = "/archive/cbisot/"
@@ -18,8 +19,13 @@ path_stitch = f"{temp_path}/stitching_loops/"
 if not os.path.isdir(path_stitch):
     os.mkdir(path_stitch)
 
+def get_queue_size():
+    return(len(check_output(["squeue"]).decode(sys.stdout.encoding).split('\n'))-2)
 
 def call_code(path_job, dependency):
+    len_queue = get_queue_size()
+    while len_queue>800:
+        sleep(360)
     if not dependency:
         call(f"sbatch {path_job}", shell=True)
     else:

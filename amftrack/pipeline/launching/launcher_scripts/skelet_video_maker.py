@@ -30,6 +30,6 @@ run_parallel_all_time(
     name_job=name_job,
 )
 if stage>0:
-    run_launcher('masker.py',[directory_targ,name_job,stage-1],plates,'20:00',dependency=True,name_job = name_job)
+    run_launcher('masker.py',[directory_targ,name_job,stage-1],plates,'3:00:00',dependency=True,name_job = name_job)
 elif stage==0:
-    run_launcher('dropbox_uploader.py',[directory_targ,name_job],plates,'20:00',dependency=True,name_job = name_job)
+    run_launcher('dropbox_uploader.py',[directory_targ,name_job],plates,'3:00:00',dependency=True,name_job = name_job)
