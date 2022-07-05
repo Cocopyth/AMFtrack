@@ -24,7 +24,7 @@ def get_queue_size():
 
 def call_code(path_job, dependency):
     len_queue = get_queue_size()
-    while len_queue>800:
+    while len_queue>700:
         sleep(360)
         len_queue = get_queue_size()
     if not dependency:
@@ -189,7 +189,8 @@ def make_stitching_loop(directory, dirname, op_id):
     a_file.close()
 
 
-def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="thin", name_job="stitch",):
+def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="thin", name_job="stitch",    dependency=False,
+):
     folder_list = list(folders["folder"])
     folder_list.sort()
     length = len(folders)
@@ -234,7 +235,7 @@ def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="
             )
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job}", shell=True)
+        call_code(path_job, dependency)
 
 
 def run_parallel_transfer(
@@ -247,6 +248,8 @@ def run_parallel_transfer(
     cpus=1,
     node="staging",
     name_job="transfer.sh",
+    dependency=False,
+
 ):
     path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
@@ -277,7 +280,7 @@ def run_parallel_transfer(
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job}", shell=True, stdout=DEVNULL)
+        call_code(path_job, dependency)
 
 def run_launcher(
     code,

@@ -37,9 +37,10 @@ def plot_blobs_upload(im):
 
     params.filterByArea = True
     params.minArea = 500
+    params.maxArea = 60000
 
-    params.filterByCircularity = True
-    params.minCircularity = 0.8
+    params.filterByCircularity = False
+    # params.minCircularity = 0.8
     img = (1 - im2_bw).astype(np.uint8) * 255
     # img = im2.astype(np.uint8)
     detector = cv2.SimpleBlobDetector_create(params)
