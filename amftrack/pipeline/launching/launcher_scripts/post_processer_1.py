@@ -117,8 +117,10 @@ print(len(analysis_folders))
 #     node="fat",
 #     dependency=True
 # )
-time = "40:00"
-list_f = [plot_hulls]
+time = "3:40:00"
+list_f = [plot_hulls,plot_tracking]
+list_f = [plot_tracking]
+
 list_args = [[]] * len(list_f)
 overwrite = True
 num_parallel = 30

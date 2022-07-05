@@ -22,5 +22,5 @@ run_parallel_transfer(
 name_job = name_job
 )
 if stage>0:
-    run_launcher('stitcher.py',[directory_targ,name_job,stage-1],plates,'20:00',
+    run_launcher('stitcher.py',[directory_targ,name_job,stage-1],plates,'12:00:00',
                  dependency=True,name_job = name_job)
