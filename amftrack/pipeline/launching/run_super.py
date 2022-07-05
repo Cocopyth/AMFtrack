@@ -24,7 +24,7 @@ def get_queue_size():
 
 def call_code(path_job, dependency):
     len_queue = get_queue_size()
-    while len_queue>800:
+    while len_queue>700:
         sleep(360)
         len_queue = get_queue_size()
     if not dependency:
