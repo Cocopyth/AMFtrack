@@ -1,4 +1,8 @@
 import unittest
+import os
+import cv2
+import matplotlib.pyplot as plt
+from PIL import Image
 from amftrack.util.image_analysis import (
     find_transformation,
     get_transformation,
@@ -6,7 +10,10 @@ from amftrack.util.image_analysis import (
     convert_to_micrometer,
     find_image_index,
     is_in_image,
+    extract_inscribed_rotated_image,
 )
+from amftrack.util.sys import test_path
+from helper import make_image
 
 
 class TestTransformations(unittest.TestCase):
@@ -39,3 +46,39 @@ class TestTransformations(unittest.TestCase):
             ),
             2,
         )
+
+    def test_extract_inscribed_rotated_image_1(self):
+
+        image = make_image()
+
+        for angle in [0, 1, 3, 5, 10, 87]:
+            new_image = extract_inscribed_rotated_image(image, angle)
+            im_pil = Image.fromarray(new_image, mode="RGB")
+            im_pil.save(os.path.join(test_path, f"rotated{angle}.png"))
+
+    def test_extract_inscribed_rotated_image_2(self):
+
+        image = make_image()
+
+        image = image[:200, :200, :]
+        for angle in [30, 40, 50, 60, 80]:
+            new_image = extract_inscribed_rotated_image(image, angle)
+            im_pil = Image.fromarray(new_image, mode="RGB")
+            im_pil.save(os.path.join(test_path, f"rotated{angle}_square.png"))
+
+    def test_extract_inscribed_rotated_image_3(self):
+
+        image = make_image()
+
+        image = image[:300, :100, :]
+        with self.assertRaises(Exception):
+            new_image = extract_inscribed_rotated_image(image, 40)
+
+    def test_extract_inscribed_rotated_image_4(self):
+        # negative values
+        image = make_image()
+
+        for angle in [0, -1, -3, -5]:
+            new_image = extract_inscribed_rotated_image(image, angle)
+            im_pil = Image.fromarray(new_image, mode="RGB")
+            im_pil.save(os.path.join(test_path, f"rotated{angle}.png"))

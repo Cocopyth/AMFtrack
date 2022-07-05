@@ -123,6 +123,19 @@ def upload(file_path, target_path, chunk_size=4 * 1024 * 1024, catch_exception=T
                     return e
             break
 
+def upload_folder(path,target_drop):
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            # construct the full local path
+            local_path = os.path.join(root, filename)
+
+            # construct the full Dropbox path
+            relative_path = os.path.relpath(local_path, path)
+
+            dropbox_path = os.path.join(target_drop, relative_path)
+            dropbox_path = dropbox_path.replace("\\", "/")
+            upload(local_path, dropbox_path, catch_exception=False)
+
 
 def get_size_dbx(path):
     dbx = load_dbx()
@@ -355,11 +368,14 @@ def upload_folders(
         for folder in folder_list:
             directory_name = folder
             line = run_info.loc[run_info["folder"] == directory_name]
-            id_unique = (
-                str(int(line["Plate"].iloc[0]))
-                + "_"
-                + str(int(str(line["CrossDate"].iloc[0]).replace("'", "")))
-            )
+            try:
+                id_unique = (
+                    str(int(line["Plate"].iloc[0]))
+                    + "_"
+                    + str(int(str(line["CrossDate"].iloc[0]).replace("'", "")))
+                )
+            except:
+                id_unique='faulty_param_files'
             path_snap = line["total_path"].iloc[0]
             for subfolder in os.listdir(path_snap):
                 path_total = os.path.join(path_snap, subfolder)
@@ -396,7 +412,7 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
         if not os.path.exists(path_folder):
             os.mkdir(path_folder)
         for file in listfiles:
-            path_drop = file.path_lower
+            path_drop = file.path_display
             path_local = os.path.join(
                 directory_target, folder, path_drop.split("/")[-1]
             )

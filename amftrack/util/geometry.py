@@ -1,9 +1,9 @@
 from xmlrpc.client import Boolean
 from amftrack.util.aliases import coord
-from typing import Tuple
+from typing import Tuple, List
 import numpy as np
-from typing import List
 import bisect
+import math
 
 
 def distance_point_pixel_line(point: coord, line: List[coord], step=1) -> float:
@@ -257,25 +257,50 @@ def format_region(region):
     ]
 
 
-def get_bounding_box(coodinate_list):
+def get_bounding_box(coodinate_list: List[coord], margin=0) -> List[coord]:
     """
     From a list of coordinates, this function hands out the two points defining
     a rectangle that contains all of the points.
+
+    :param margin: expand the bounding box by `margin` in all direction
     """
     x_min = int(np.min([coord[0] for coord in coodinate_list]))
     x_max = int(np.max([coord[0] for coord in coodinate_list]))
     y_min = int(np.min([coord[1] for coord in coodinate_list]))
     y_max = int(np.max([coord[1] for coord in coodinate_list]))
-    return [[x_min, y_min], [x_max, y_max]]
+    strict_bounding_box = [
+        [math.floor(x_min), math.floor(y_min)],
+        [math.ceil(x_max), math.ceil(y_max)],
+    ]
+    return expand_bounding_box(strict_bounding_box, margin)
 
 
-def expand_bounding_box(bounding_box, margin):
+def centered_bounding_box(coordinate: coord, size=200) -> List[coord]:
+    """
+    From a given coordinate, return the two points defining a square bounding box
+    around this point, of size `size`x`size`.
+    """
+    return get_bounding_box([coordinate], margin=size // 2)
+
+
+def expand_bounding_box(bounding_box: List[coord], margin: int) -> List[coord]:
     """
     Expand the bounding box in all the direction by `margin`
     """
     bounding_box = format_region(bounding_box)
     [[x_min, y_min], [x_max, y_max]] = bounding_box
     return [[x_min - margin, y_min - margin], [x_max + margin, y_max + margin]]
+
+
+def is_in_bounding_box(coordinate: coord, bounding_box: List[coord]) -> bool:
+    """
+    Check if the coordinate `coordinate` is in the bounding box.
+    """
+    bounding_box = format_region(bounding_box)
+    if bounding_box[0][0] <= coordinate[0] < bounding_box[1][0]:
+        if bounding_box[0][1] <= coordinate[1] < bounding_box[1][1]:
+            return True
+    return False
 
 
 if __name__ == "__main__":
