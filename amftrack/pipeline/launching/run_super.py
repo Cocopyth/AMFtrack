@@ -1,5 +1,6 @@
 from datetime import datetime
-from subprocess import call, DEVNULL,check_output
+from subprocess import call, DEVNULL, check_output
+from typing import List
 from amftrack.util.sys import path_code, temp_path, slurm_path, slurm_path_transfer
 import os
 from copy import copy
@@ -8,6 +9,7 @@ import pickle
 import imageio
 import sys
 from time import sleep
+
 directory_scratch = "/scratch-shared/amftrack/"
 directory_project = "/projects/0/einf914/data/"
 directory_archive = "/archive/cbisot/"
@@ -19,12 +21,14 @@ path_stitch = f"{temp_path}/stitching_loops/"
 if not os.path.isdir(path_stitch):
     os.mkdir(path_stitch)
 
+
 def get_queue_size():
-    return(len(check_output(["squeue"]).decode(sys.stdout.encoding).split('\n'))-2)
+    return len(check_output(["squeue"]).decode(sys.stdout.encoding).split("\n")) - 2
+
 
 def call_code(path_job, dependency):
     len_queue = get_queue_size()
-    while len_queue>700:
+    while len_queue > 700:
         sleep(360)
         len_queue = get_queue_size()
     if not dependency:
@@ -56,7 +60,7 @@ def run_parallel(
     arg_str_out = "_".join([str(arg) for arg in args if type(arg) != str])
     for j in range(begin_skel, end_skel):
         start = num_parallel * j
-        if j==end_skel-1:
+        if j == end_skel - 1:
             stop = length
         else:
             stop = num_parallel * j + num_parallel - 1
@@ -189,7 +193,15 @@ def make_stitching_loop(directory, dirname, op_id):
     a_file.close()
 
 
-def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="thin", name_job="stitch",    dependency=False,
+def run_parallel_stitch(
+    directory,
+    folders,
+    num_parallel,
+    time,
+    cpus=128,
+    node="thin",
+    name_job="stitch",
+    dependency=False,
 ):
     folder_list = list(folders["folder"])
     folder_list.sort()
@@ -249,7 +261,6 @@ def run_parallel_transfer(
     node="staging",
     name_job="transfer.sh",
     dependency=False,
-
 ):
     path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
@@ -282,28 +293,30 @@ def run_parallel_transfer(
         my_file.close()
         call_code(path_job, dependency)
 
+
 def run_launcher(
     code,
     args,
-    plates,
+    plates: List[str],
     time,
     cpus=1,
-    name = 'launcher',
+    name="launcher",
     node="staging",
-    name_job = "one_shot.sh",
-    dependency=False
+    name_job="one_shot.sh",
+    dependency=False,
 ):
+    """
+    :param plates: ['1015_20220504',"1023_20220502"]
+    """
     path_job = f"{path_bash}{name_job}"
-    args_str = [str(arg) for arg in args]+[str(plate) for plate in plates]
+    args_str = [str(arg) for arg in args] + [str(plate) for plate in plates]
     arg_str = " ".join(args_str)
     arg_str_out = "_".join([str(arg) for arg in args if type(arg) != str])
     my_file = open(path_job, "w")
     my_file.write(
         f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
     )
-    my_file.write(
-        f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}.out" \n'
-    )
+    my_file.write(f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}.out" \n')
     my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
     my_file.write(f"conda activate amftrack\n")
     my_file.write(
