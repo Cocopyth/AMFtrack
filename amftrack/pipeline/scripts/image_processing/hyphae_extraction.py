@@ -17,18 +17,18 @@ from amftrack.util.sys import temp_path
 directory = str(sys.argv[1])
 limit = int(sys.argv[2])
 version = str(sys.argv[3])
-suffix = eval(sys.argv[4])
+suffix = str(sys.argv[4])
+lim_considered = int(sys.argv[5])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
 
 run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
-print(run_info['unique_id'])
-plates = list(set(run_info["Plate"].values))
+# print(run_info['unique_id'])
+plates = list(set(run_info["unique_id"].values))
 plates.sort()
-plate = plates[i]
-print(plate)
-folders = run_info.loc[run_info["Plate"] == plate]
+unique_id = plates[i]
+folders = run_info.loc[run_info["unique_id"] == unique_id]
 folders = folders.sort_values("datetime")
 # folders = folders.iloc[:5]
 corrupted_rotation = folders.loc[
@@ -57,7 +57,7 @@ for index in indexes:
     # when no width is included
     # width_based_cleaning(exp)
     if labeled:
-        resolve_anastomosis_crossing_by_root(exp)
+        resolve_anastomosis_crossing_by_root(exp,lim_considered=lim_considered)
     # get_mother(exp.hyphaes)
     # solve_two_ends = resolve_ambiguity_two_ends(exp_clean.hyphaes)
     # solved = solve_degree4(exp_clean)
@@ -66,7 +66,7 @@ for index in indexes:
     exp.dates.sort()
     save_graphs(exp)
     exp.nx_graph = None
-    dirName = f"{directory}Analysis_{start}_{stop}_Version{version}"
+    dirName = f"{directory}Analysis_{unique_id}_{index}_Version{version}"
     try:
         os.mkdir(dirName)
         print("Directory ", dirName, " Created ")

@@ -6,6 +6,7 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 from random import randrange
 import matplotlib.patches as mpatches
+from scipy import ndimage
 
 from amftrack.util.aliases import coord_int, coord
 from amftrack.util.param import DIM_X, DIM_Y
@@ -21,13 +22,19 @@ from amftrack.util.geometry import (
     is_in_bounding_box,
 )
 from amftrack.util.plot import crop_image, make_random_color
+from amftrack.util.image_analysis import extract_inscribed_rotated_image
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Node,
     Edge,
 )
 from amftrack.pipeline.functions.image_processing.extract_skel import bowler_hat
-
+from pymatreader import read_mat
+from matplotlib import cm
+import cv2
+from shapely.geometry import Polygon, shape,Point
+from shapely.affinity import affine_transform, rotate
+import geopandas as gpd
 from amftrack.util.sparse import dilate_coord_list
 from amftrack.util.other import is_in
 
@@ -301,6 +308,123 @@ def plot_full_image_with_features(
     size = 5
     bbox_props = dict(boxstyle="circle", fc="white")
     for node in nodes:
+        general_pos = list(node.pos(t))
+        ts_pos = exp.general_to_timestep(general_pos, t)
+        c = f(ts_pos)
+        if is_in_bounding_box(c, new_region):
+            node_text = ax.text(
+                c[1],
+                c[0],
+                str(node.label),
+                ha="center",
+                va="center",
+                size=size,
+                bbox=bbox_props,
+            )
+    # 4/ Plotting coordinates
+    points = [f(c) for c in points]
+    for c in points:
+        if is_in_bounding_box(c, new_region):
+            plt.plot(c[1], c[0], marker="x", color="red")
+
+    # 5/ Plotting segments
+    segments = [[f(segment[0]), f(segment[1])] for segment in segments]
+    for s in segments:
+        plt.plot(
+            [s[0][1], s[1][1]],  # x1, x2
+            [s[0][0], s[1][0]],  # y1, y2
+            color="white",
+            linewidth=2,
+        )
+
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+
+
+def plot_full(
+    exp: Experiment,
+    t: int,
+    region=None,
+    edges: List[Edge] = [],
+    points: List[coord_int] = [],
+    segments: List[List[coord_int]] = [],
+    nodes: List[Node] = [],
+    downsizing=5,
+    dilation=1,
+    save_path="",
+    prettify=False,
+) -> None:
+    """
+    This is the general purpose function to plot the full image or a region `region` of the image at
+    any given timestep t. The region being specified in the GENERAL coordinates.
+    The image can be downsized by a chosen factor `downsized` with additionnal features such as: edges, nodes, points, segments.
+    The coordinates for all the objects are provided in the GENERAL referential.
+
+    :param region: choosen region in the full image, such as [[100, 100], [2000,2000]], if None the full image is shown
+    :param edges: list of edges to plot, it is the pixel list that is plotted, not a straight line
+    :param nodes: list of nodes to plot (only nodes in the `region` will be shown)
+    :param points: points such as [123, 234] to plot with a red cross on the image
+    :param segments: plot lines between two points that are provided
+    :param downsizing: factor by which we reduce the image resolution (5 -> image 25 times lighter)
+    :param dilation: only for edges: thickness of the edges (dilation applied to the pixel list)
+    :param save_path: full path to the location where the plot will be saved
+    :param prettify: if True, the image will be enhanced by smoothing the intersections between images
+
+    NB: the full region of a full image is typically [[0, 0], [26000, 52000]]
+    NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
+    NB: the colors are chosen randomly for edges
+    NB: giving a smaller region greatly increase computation time
+    """
+
+    # TODO(FK): fetch image size from experiment object here, and use it in reconstruct image
+    # TODO(FK): colors for edges are not consistent
+    # NB: possible other parameters that could be added: alpha between layers, colors for object, figure_size
+
+    if region == None:
+        # Full image
+        image_coodinates = exp.image_coordinates[t]
+        region = get_bounding_box(image_coodinates)
+        region[1][0] += DIM_X  # TODO(FK): Shouldn't be hardcoded
+        region[1][1] += DIM_Y
+
+    # 1/ Image layer
+    im, f = reconstruct_image_from_general(
+        exp,
+        t,
+        downsizing=downsizing,
+        region=region,
+        prettify=prettify,
+        white_background=False,  # TODO(FK): add image dimention here dimx = ..
+    )
+    f_int = lambda c: f(c).astype(int)
+    new_region = [
+        f_int(region[0]),
+        f_int(region[1]),
+    ]  # should be [[0, 0], [d_x/downsized, d_y/downsized]]
+
+    # 2/ Edges layer
+    skel_im, _ = reconstruct_skeletton(
+        [edge.pixel_list(t) for edge in edges],
+        region=region,
+        color_seeds=None,  # Give color seed here
+        downsizing=downsizing,
+        dilation=dilation,
+    )
+
+    # 3/ Fusing layers
+    fig = plt.figure(
+        figsize=(12, 8)
+    )  # width: 30 cm height: 20 cm # TODO(FK): change dpi
+    ax = fig.add_subplot(111)
+    ax.imshow(im, cmap="gray", interpolation="none")
+    ax.imshow(skel_im, alpha=0.5, interpolation="none")
+
+    # 3/ Plotting the Nodes
+    size = 5
+    bbox_props = dict(boxstyle="circle", fc="white")
+    for node in nodes:
         c = f(list(node.pos(t)))
         if is_in_bounding_box(c, new_region):
             node_text = ax.text(
@@ -472,17 +596,23 @@ def reconstruct_image(
                 im = cv.resize(
                     im, (length_y, length_x)
                 )  # cv2 has different (x, y) convention
-            overlap = get_overlap(
-                region_new[0],
-                region_new[1],
-                im_coord_new,
-                im_coord_new + np.array([length_x, length_y]),
-                strict=True,
-            )
-            full_im[overlap[0][0] : overlap[1][0], overlap[0][1] : overlap[1][1]] = im[
-                overlap[0][0] - im_coord_new[0] : overlap[1][0] - im_coord_new[0],
-                overlap[0][1] - im_coord_new[1] : overlap[1][1] - im_coord_new[1],
-            ]
+
+            try:
+                overlap = get_overlap(
+                    region_new[0],
+                    region_new[1],
+                    im_coord_new,
+                    im_coord_new + np.array([length_x, length_y]),
+                    strict=True,
+                )
+                full_im[
+                    overlap[0][0] : overlap[1][0], overlap[0][1] : overlap[1][1]
+                ] = im[
+                    overlap[0][0] - im_coord_new[0] : overlap[1][0] - im_coord_new[0],
+                    overlap[0][1] - im_coord_new[1] : overlap[1][1] - im_coord_new[1],
+                ]
+            except:
+                logging.error("The resized rectangle is no longer overlapping")
 
     return full_im, f
 
@@ -623,9 +753,20 @@ def reconstruct_skeletton_from_edges(
     This is a wrapper function around reconstruct_skeletton, to apply it
     directly to edge objects.
     See reconstruct_skeletton for documentation.
+    Region is in the GENERAL referential.
     """
+    # Conversion of pixels lists to TIMESTEP referential
+    # QUICKFIX
+    pixels = [edge.pixel_list(t) for edge in edges]
+    pixels_ = []
+    for pl in pixels:
+        l = []
+        for p in pl:
+            l.append(exp.general_to_timestep(p, t))
+        pixels_.append(l)
+
     im, f = reconstruct_skeletton(
-        [edge.pixel_list(t) for edge in edges],
+        pixels_,
         region=region,
         color_seeds=color_seeds,
         downsizing=downsizing,
@@ -753,6 +894,77 @@ def plot_edge_width(
         plt.show()
 
 
+def reconstruct_image_from_general(
+    exp: Experiment,
+    t: int,
+    region=None,
+    downsizing=5,
+    prettify=False,
+    white_background=True,
+    dim_x=DIM_X,
+    dim_y=DIM_Y,
+) -> Tuple[List[np.array], Callable[[float, float], float]]:
+    """
+    This function reconstructs the full size image or a part of it given by `region` at
+    timestep `t` and return it as an np array. It also returns a function mapping coordinates
+    in the GENERAL referential to coordinates in the reconstructed image referential.
+
+    It is the analog of reconstruct_image but for the general referential.
+
+    :param region: [[x1, y1], [x2, y2]] defining a zone in the GENERAL ref that
+                    we want to extract. Can be np.array or lists, int or floats
+    :param downsizing: factor by which the image is downsized, 1 returns the original image
+    :param prettify: add transformation operation to make the rendering better (but costly)
+    :param white_background: if True, areas where no images were found are white, otherwise black
+    :param dimx: x dimension of images
+
+    WARNING: without downsizing, the full image is heavy (2 Go)
+    NB: returned image shape is ((int(a)-int(c))//downsizing, (int(b)-int(d))//downsizing)
+    NB: the typical full region of a full image is [[0, 0], [26000, 52000]]
+    NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
+    """
+
+    # TODO(FK): add a test for size consistency
+
+    # Step 1: computing a region in the TIMESTEP referential that contains all point from the original region
+    region = format_region(region)
+
+    # Final dimension
+    # Rotating the image can slightly change dimension, hence we expand a bit the region
+    # and reframe it at the end to have a consistent size returned by the function
+    l_x = (region[1][0] - region[0][0]) // downsizing
+    l_y = (region[1][1] - region[0][1]) // downsizing
+    region = expand_bounding_box(region, margin=downsizing)
+
+    point1, point2 = region
+    region_vertices = [point1, point2, [point1[0], point2[1]], [point2[0], point1[1]]]
+    region_vertices_ts = [
+        exp.general_to_timestep(point, t) for point in region_vertices
+    ]
+    region_ts = get_bounding_box(region_vertices_ts, margin=0)
+
+    # Step 2: fetch this region
+    image_ts, f = reconstruct_image(
+        exp,
+        t,
+        region=region_ts,
+        downsizing=downsizing,
+        prettify=prettify,
+        white_background=white_background,
+        dim_x=dim_x,
+        dim_y=dim_y,
+    )
+
+    # Step 3: extract only the region of interest from the TIMESTEP image
+    angle = np.degrees(exp.get_rotation(t))
+    extracted_image = extract_inscribed_rotated_image(image_ts, angle=angle)
+
+    # Mapping from GENERAL referential to downsized image referential
+    f = lambda c: (np.array(c) - np.array(region[0])) / downsizing
+
+    return extracted_image[:l_x, :l_y, ...], f
+
+
 if __name__ == "__main__":
 
     # FOR TEST PURPOSES
@@ -779,3 +991,33 @@ if __name__ == "__main__":
     exp.load_tile_information(0)
 
     im, f = reconstruct_skeletton_from_edges(exp, 0, dilation=10)
+
+
+def plot_hulls_skelet(exp,t,hulls,save_path='',close=True):
+    if close:
+        plt.close('all')
+    my_cmap = cm.Greys
+    fig, ax = plt.subplots(figsize=(20, 10))
+    skels = []
+    ims = []
+    kernel = np.ones((5,5),np.uint8)
+    itera = 2
+    folders = list(exp.folders['total_path'])
+    folders.sort()
+    for folder in folders[t:t+1]:
+        path_snap=folder
+        skel_info = read_mat(path_snap+'/Analysis/skeleton_realigned_compressed.mat')
+        skel = skel_info['skeleton']
+        skels.append(cv2.dilate(skel.astype(np.uint8),kernel,iterations = itera))
+    ax.imshow(skels[0], cmap=my_cmap, interpolation=None, alpha=0.7)
+    for polygon in hulls:
+        p = affine_transform(polygon,[0.2,0,0,-0.2,0,0])
+        p = rotate(p,90,origin=(0,0))
+        p =gpd.GeoSeries(p)
+        try:
+            _ = p.boundary.plot(ax =ax,alpha = 0.9)
+        except ValueError:
+            print(p)
+        # _ = ax.plot(np.array(y)/5,np.array(x)/5)
+    if save_path != '':
+        plt.savefig(save_path)

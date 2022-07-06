@@ -33,17 +33,37 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     reconstruct_skeletton_from_edges,
     reconstruct_skeletton_unicolor,
     plot_edge_width,
+    reconstruct_image_from_general,
+    plot_full,
 )
 from amftrack.util.sys import test_path
 from test import helper
 from PIL import Image
 
 
+class TestExperimentLight(unittest.TestCase):
+    """Test that need no plate to run"""
+
+    def test_distance_point_edge(self):
+
+        edge = helper.EdgeMock([[2, 3], [3, 3], [3, 4], [4, 5], [5, 5], [6, 6], [7, 7]])
+        self.assertEqual(
+            distance_point_edge([2, 3], edge, 0, step=1),
+            0,
+        )
+
+
 @unittest.skipUnless(helper.has_test_plate(), "No plate to run the tests..")
 class TestExperiment(unittest.TestCase):
+    """Tests that need only a static plate with one timestep"""
+
     @classmethod
     def setUpClass(cls):
         cls.exp = helper.make_experiment_object()
+
+    def tearDown(self):
+        "Runs after each test"
+        plt.close("all")
 
     def test_get_random_edge(self):
         get_random_edge(self.exp)
@@ -86,7 +106,7 @@ class TestExperiment(unittest.TestCase):
             edges=[get_random_edge(self.exp), get_random_edge(self.exp)],
             dilation=1,
             save_path=os.path.join(test_path, "plot_full"),
-            prettify= True
+            prettify=True,
         )
 
     def test_plot_full_image_with_features_2(self):
@@ -160,6 +180,7 @@ class TestExperiment(unittest.TestCase):
             dilation=40,
             save_path=os.path.join(test_path, "plot6"),
         )
+
     def test_plot_full_image_with_features_5(self):
 
         plot_full_image_with_features(
@@ -361,12 +382,204 @@ class TestExperiment(unittest.TestCase):
             save_path=os.path.join(test_path, "test_region_centered"),
         )
 
-
-class TestExperimentLight(unittest.TestCase):
-    def test_distance_point_edge(self):
-
-        edge = helper.EdgeMock([[2, 3], [3, 3], [3, 4], [4, 5], [5, 5], [6, 6], [7, 7]])
-        self.assertEqual(
-            distance_point_edge([2, 3], edge, 0, step=1),
+    def test_reconstruct_image_from_general(self):
+        im, _ = reconstruct_image_from_general(
+            self.exp,
             0,
+            downsizing=10,
+            region=[[10000, 10000], [20000, 40000]],
+            white_background=True,
         )
+        im_pil = Image.fromarray(im)
+        im_pil.save(os.path.join(test_path, "reconstruct_from_general.png"))
+
+
+@unittest.skip("Shouldn't be run each time because very costly")
+class TestExperimentHeavy(unittest.TestCase):
+    """Tests that need a plate with multiple timesteps"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.exp = helper.make_experiment_object_multi()
+
+    def tearDown(self):
+        "Runs after each test"
+        plt.close("all")
+
+    def test_reconstruct_image_from_general_0(self):
+        # General case rectangle + downsized
+        region = [[10000, 10000], [20000, 40000]]
+        for t in range(np.min([len(self.exp), 3])):
+            im, _ = reconstruct_image_from_general(
+                self.exp,
+                t,
+                downsizing=30,
+                region=region,
+                white_background=True,
+            )
+            im_pil = Image.fromarray(im)
+            im_pil.save(os.path.join(test_path, f"reconstruct_rectangle_ts_{t}.png"))
+
+    def test_reconstruct_image_from_general_1(self):
+        # General case square + real size
+        region = [[22000, 15000], [23000, 16000]]
+        for t in range(np.min([len(self.exp), 3])):
+            im, _ = reconstruct_image_from_general(
+                self.exp,
+                t,
+                downsizing=1,
+                region=region,
+                white_background=True,
+            )
+            im_pil = Image.fromarray(im)
+            im_pil.save(os.path.join(test_path, f"reconstruct_square__{t}.png"))
+            size = im.shape
+            a = 0
+
+    def test_reconstruct_image_from_general_2(self):
+        # General case square
+        region = [[22000, 15000], [24000, 17000]]
+        for t in range(np.min([len(self.exp), 3])):
+            im, _ = reconstruct_image_from_general(
+                self.exp,
+                t,
+                downsizing=10,
+                region=region,
+                white_background=True,
+            )
+            im_pil = Image.fromarray(im)
+            im_pil.save(
+                os.path.join(test_path, f"reconstruct_square_downsized_ts_{t}.png")
+            )
+
+    def test_reconstruct_image_from_general_2(self):
+        # Test that the size is consistent accross timesteps
+        region = [[22014, 15301], [22501, 16000]]
+        im_dx = []
+        im_dy = []
+        for t in range(np.min([len(self.exp), 3])):
+            im, _ = reconstruct_image_from_general(
+                self.exp,
+                t,
+                downsizing=17,
+                region=region,
+                white_background=True,
+            )
+            im_dx.append(im.shape[0])
+            im_dy.append(im.shape[1])
+        a = 0
+        self.assertEqual(im_dx[0], im_dx[1])
+        self.assertEqual(im_dx[2], im_dx[1])
+        self.assertEqual(im_dy[0], im_dy[1])
+        self.assertEqual(im_dy[2], im_dy[1])
+
+    def test_plot_full_0(self):
+        # Plot the full plate
+        for t in range(np.min([len(self.exp), 3])):
+            plot_full(
+                self.exp,
+                t,
+                downsizing=30,
+                region=None,
+                nodes=[Node(10, self.exp), Node(100, self.exp), Node(200, self.exp)],
+                edges=get_all_edges(self.exp, t),
+                dilation=1,
+                save_path=os.path.join(test_path, f"plot_full_{t}"),
+            )
+
+    def test_plot_full_1(self):
+        # TODO(FK): plot segments and points
+        # TODO(FK): try prettify on a full image
+        # Plotting around a Node
+        nodes = get_all_nodes(self.exp, 0)
+        chosen = []
+        for n in nodes:
+            if len(n.ts()) == len(self.exp):
+                chosen.append(n)
+        for i in range(len(chosen[:3])):
+            for t in range(np.min([len(self.exp), 3])):
+                pos = chosen[i].pos(t)
+                region = centered_bounding_box(pos, size=300)
+                plot_full(
+                    self.exp,
+                    t,
+                    region=region,
+                    downsizing=5,
+                    nodes=[chosen[i]],
+                    edges=get_all_edges(self.exp, t),
+                    dilation=5,
+                    prettify=False,
+                    save_path=os.path.join(test_path, f"plot_around_node_{i}_{t}"),
+                )
+
+    def test_plot_full_2(self):
+        # Try prettify
+        for t in range(np.min([len(self.exp), 3])):
+            plot_full(
+                self.exp,
+                t,
+                downsizing=30,
+                region=[[15000, 16000], [20000, 20000]],
+                nodes=[Node(10, self.exp), Node(100, self.exp), Node(200, self.exp)],
+                edges=get_all_edges(self.exp, t),
+                dilation=1,
+                save_path=os.path.join(test_path, f"plot_full_prettify_{t}"),
+                prettify=True,
+            )
+
+    def test_plot_full_3(self):
+        # Try plotting things
+        nodes = get_all_nodes(self.exp, 0)
+        chosen = []
+        for n in nodes:
+            if len(n.ts()) == len(self.exp):
+                chosen.append(n)
+        for i in range(len(chosen[:3])):
+            for t in range(np.min([len(self.exp), 3])):
+                pos = chosen[i].pos(t)
+                region = centered_bounding_box(pos, size=300)
+                plot_full(
+                    self.exp,
+                    t,
+                    region=region,
+                    downsizing=5,
+                    nodes=[chosen[i]],
+                    dilation=5,
+                    points=[np.array(pos) + 50, np.array(pos) - 50],
+                    prettify=False,
+                    save_path=os.path.join(test_path, f"plot_full_with_points{i}_{t}"),
+                )
+
+    def test_plot_full_4(self):
+        # Prettify vs no prettify
+        nodes = get_all_nodes(self.exp, 0)
+        chosen = []
+        for n in nodes:
+            if len(n.ts()) == len(self.exp):
+                chosen.append(n)
+        for i in range(len(chosen[:3])):
+            for t in range(np.min([len(self.exp), 3])):
+                pos = chosen[i].pos(t)
+                region = centered_bounding_box(pos, size=500)
+                plot_full(
+                    self.exp,
+                    t,
+                    region=region,
+                    downsizing=5,
+                    nodes=[chosen[i]],
+                    prettify=False,
+                    save_path=os.path.join(
+                        test_path, f"plot_around_node_{i}_{t}_prettify"
+                    ),
+                )
+                plot_full(
+                    self.exp,
+                    t,
+                    region=region,
+                    downsizing=5,
+                    nodes=[chosen[i]],
+                    prettify=True,
+                    save_path=os.path.join(
+                        test_path, f"plot_around_node_{i}_{t}_not_prettify"
+                    ),
+                )
