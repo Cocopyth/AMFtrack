@@ -1,12 +1,13 @@
 from datetime import datetime
-from subprocess import call, DEVNULL
+from subprocess import call, DEVNULL,check_output
 from amftrack.util.sys import path_code, temp_path, slurm_path, slurm_path_transfer
 import os
 from copy import copy
 from time import time_ns
 import pickle
 import imageio
-
+import sys
+from time import sleep
 directory_scratch = "/scratch-shared/amftrack/"
 directory_project = "/projects/0/einf914/data/"
 directory_archive = "/archive/cbisot/"
@@ -18,8 +19,14 @@ path_stitch = f"{temp_path}/stitching_loops/"
 if not os.path.isdir(path_stitch):
     os.mkdir(path_stitch)
 
+def get_queue_size():
+    return(len(check_output(["squeue"]).decode(sys.stdout.encoding).split('\n'))-2)
 
 def call_code(path_job, dependency):
+    len_queue = get_queue_size()
+    while len_queue>700:
+        sleep(360)
+        len_queue = get_queue_size()
     if not dependency:
         call(f"sbatch {path_job}", shell=True)
     else:
@@ -162,7 +169,6 @@ def run_parallel_post(
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job }", shell=True)
         call_code(path_job, dependency)
 
 
@@ -183,7 +189,8 @@ def make_stitching_loop(directory, dirname, op_id):
     a_file.close()
 
 
-def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="thin", name_job="stitch",):
+def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="thin", name_job="stitch",    dependency=False,
+):
     folder_list = list(folders["folder"])
     folder_list.sort()
     length = len(folders)
@@ -228,7 +235,7 @@ def run_parallel_stitch(directory, folders, num_parallel, time, cpus=128, node="
             )
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job}", shell=True)
+        call_code(path_job, dependency)
 
 
 def run_parallel_transfer(
@@ -241,6 +248,8 @@ def run_parallel_transfer(
     cpus=1,
     node="staging",
     name_job="transfer.sh",
+    dependency=False,
+
 ):
     path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
@@ -271,7 +280,7 @@ def run_parallel_transfer(
         my_file.write("done\n")
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch {path_job}", shell=True, stdout=DEVNULL)
+        call_code(path_job, dependency)
 
 def run_launcher(
     code,

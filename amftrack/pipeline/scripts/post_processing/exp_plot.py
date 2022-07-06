@@ -2,7 +2,6 @@ from path import path_code_dir
 import sys
 
 sys.path.insert(0, path_code_dir)
-from amftrack.pipeline.functions.image_processing.extract_width_fun import *
 from amftrack.util.sys import temp_path
 import pickle
 import pandas as pd
@@ -34,16 +33,8 @@ except AttributeError:
 
 load_study_zone(exp)
 
-load_graphs(exp, indexes=[])
+load_graphs(exp, indexes=None)
 exp.dates.sort()
-plate = exp.prince_pos
-run_inf = exp.folders
-id_unique = (
-    run_inf["Plate"].astype(str) + "_" + run_inf["CrossDate"].astype(str)
-).iloc[0]
-folders = list(exp.folders["folder"])
-folders.sort()
-
 
 for f, args in zip(list_f, list_args):
-    f(directory, folders, plate_num, exp, id_unique, args)
+    f(exp, args)

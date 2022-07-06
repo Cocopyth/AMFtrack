@@ -47,8 +47,23 @@ run_parallel(
     name_job=name_job
 
 )
+num_parallel = 100
+time = "10:00"
+args = [directory_targ]
+run_parallel(
+    "detect_blob.py",
+    args,
+    folders,
+    num_parallel,
+    time,
+    "detect_blob",
+    cpus=128,
+    node="fat",
+    name_job=name_job
+
+)
 
 if stage>0:
-    run_launcher('skelet_video_maker.py',[directory_targ,name_job,stage-1],plates,'20:00',dependency=True,name_job = name_job)
+    run_launcher('skelet_video_maker.py',[directory_targ,name_job,stage-1],plates,'3:00:00',dependency=True,name_job = name_job)
 elif stage==0:
-    run_launcher('dropbox_uploader.py',[directory_targ,name_job],plates,'20:00',dependency=True,name_job = name_job)
+    run_launcher('dropbox_uploader.py',[directory_targ,name_job],plates,'3:00:00',dependency=True,name_job = name_job)

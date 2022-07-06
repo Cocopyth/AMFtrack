@@ -2,7 +2,6 @@ from path import path_code_dir
 import sys
 
 sys.path.insert(0, path_code_dir)
-from amftrack.pipeline.functions.image_processing.extract_width_fun import *
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     load_graphs,
 )
@@ -39,12 +38,11 @@ except AttributeError:
     exp.labeled = True
 load_graphs(exp)
 op_id2 = time_ns()
-get_data_tables(op_id2, redownload=True)
+#get_data_tables(op_id2, redownload=True)
 folder = row["folder_analysis"]
 path = f'{directory}{row["folder_analysis"]}'
 load_study_zone(exp)
 for t in range(exp.ts):
-    print(t)
     data_t = time_plate_info[str(t)] if str(t) in time_plate_info.keys() else {}
     date = exp.dates[t]
     date_str = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
