@@ -12,11 +12,13 @@ from amftrack.util.sys import (
 
 from datetime import datetime, timedelta
 from amftrack.pipeline.launching.run import run
+from time import time_ns
 
 directory_origin = r"/mnt/sun-temp/TEMP/PRINCE_syncing/"
 dir_drop = "DATA/PRINCE"
-update_plate_info(directory_origin, local=True)
-all_folders_origin = get_current_folders(directory_origin, local=True)
+suffix_data_info = str(time_ns())
+update_plate_info(directory_origin, local=True,strong_constraint=False,suffix_data_info = suffix_data_info)
+all_folders_origin = get_current_folders(directory_origin, local=True,suffix_data_info = suffix_data_info)
 
 all_folders_origin["date_datetime"] = pd.to_datetime(
     all_folders_origin["date"].astype(str), format="%d.%m.%Y, %H:%M:"
