@@ -36,14 +36,14 @@ unique_ids = list(set(run_info["unique_id"].values))
 unique_ids.sort()
 logging.info(f"""unique_ids: {unique_ids}""")
 logging.info(f"""len run_info: {len(run_info)}""")
-select = run_info.loc[run_info["unique_id"] == unique_ids[i]]
+# select = run_info.loc[run_info["unique_id"] == unique_ids[i]]
 id_unique = (
-    str(int(select["Plate"].iloc[0]))
+    str(int(run_info["Plate"].iloc[0]))
     + "_"
-    + str(int(str(select["CrossDate"].iloc[0]).replace("'", "")))
+    + str(int(str(run_info["CrossDate"].iloc[0]).replace("'", "")))
 )
 exp = Experiment(directory)
-exp.load(select, suffix="")
+exp.load(run_info, suffix="")
 
 # Generate the images
 directory_path = os.path.join(base_dir, id_unique)
