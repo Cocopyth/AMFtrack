@@ -9,7 +9,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
 )
 from amftrack.util.video_util import make_video_targeted
-from amftrack.util.formatting import coord_list_to_str, str_to_coord_list
+from amftrack.util.formatting import str_to_coord_list
 
 # Arguments
 directory = str(sys.argv[1])
@@ -20,7 +20,10 @@ upload_bool = bool(sys.argv[5])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-logging.info(f"{size}, {coords}, {i}, {op_id}")
+logging.info(
+    f"""Launched script {__file__} with parameter:\n 
+            size: {size}, coords: {coords[:3]}.., i: {i}, op_id: {op_id}, local: {local}"""
+)
 
 if local:
     base_dir = "/home/cbisot/pycode/BAS"
@@ -31,6 +34,8 @@ else:
 run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 unique_ids = list(set(run_info["unique_id"].values))
 unique_ids.sort()
+logging.info(f"""unique_ids: {unique_ids}""")
+logging.info(f"""len run_info: {len(run_info)}""")
 select = run_info.loc[run_info["unique_id"] == unique_ids[i]]
 id_unique = (
     str(int(select["Plate"].iloc[0]))
