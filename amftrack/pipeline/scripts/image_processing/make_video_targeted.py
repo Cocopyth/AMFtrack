@@ -55,7 +55,7 @@ for [x, y] in coords:
     if not os.path.isdir(bas_directory_path):
         os.mkdir(bas_directory_path)
     path_list = make_video_targeted(
-        exp, coord=[x, y], directory_path=bas_directory_path, size=size
+        exp, coordinate=[x, y], directory_path=bas_directory_path, size=size
     )
 
 # Upload images on dropbox
