@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from random import randrange
 import matplotlib.patches as mpatches
 from scipy import ndimage
+import logging
 
 from amftrack.util.aliases import coord_int, coord
 from amftrack.util.param import DIM_X, DIM_Y
@@ -32,7 +33,7 @@ from amftrack.pipeline.functions.image_processing.extract_skel import bowler_hat
 from pymatreader import read_mat
 from matplotlib import cm
 import cv2
-from shapely.geometry import Polygon, shape,Point
+from shapely.geometry import Polygon, shape, Point
 from shapely.affinity import affine_transform, rotate
 import geopandas as gpd
 from amftrack.util.sparse import dilate_coord_list
@@ -539,6 +540,7 @@ def reconstruct_image(
     NB: returned image shape is ((int(a)-int(c))//downsizing, (int(b)-int(d))//downsizing)
     NB: the typical full region of a full image is [[0, 0], [26000, 52000]]
     NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
+    NB: output image format is np.uint8
     """
     # Load information from the stiching
     if exp.image_coordinates is None:
@@ -569,7 +571,7 @@ def reconstruct_image(
         background_value = 255
     else:
         background_value = 0
-    full_im = np.full((d_x, d_y), fill_value=background_value, dtype=np.uint32)
+    full_im = np.full((d_x, d_y), fill_value=background_value, dtype=np.uint8)
 
     # Copy each image into the frame
     for i, im_coord in enumerate(image_coodinates):
@@ -583,9 +585,9 @@ def reconstruct_image(
             im = exp.get_image(t, i)
             if prettify:
                 im = -bowler_hat(-im, 16, [45])
-                im = ((1+im)*255).astype(np.uint32)
+                im = ((1 + im) * 255).astype(np.uint32)
                 im = im + 255 - np.percentile(im.flatten(), 20)
-                im[np.where(im>=255)] = 255
+                im[np.where(im >= 255)] = 255
                 # im = im + 255 - np.max(im.flatten())
                 im = im.astype(np.uint8)
                 # im = ((im.astype(np.float)/np.max(im))*255).astype(np.uint8)
@@ -924,7 +926,7 @@ def reconstruct_image_from_general(
     NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
     """
 
-    # TODO(FK): add a test for size consistency
+    # TODO(FK): specify explicitly the dtype (here it is 32 why?)
 
     # Step 1: computing a region in the TIMESTEP referential that contains all point from the original region
     region = format_region(region)
@@ -993,31 +995,31 @@ if __name__ == "__main__":
     im, f = reconstruct_skeletton_from_edges(exp, 0, dilation=10)
 
 
-def plot_hulls_skelet(exp,t,hulls,save_path='',close=True):
+def plot_hulls_skelet(exp, t, hulls, save_path="", close=True):
     if close:
-        plt.close('all')
+        plt.close("all")
     my_cmap = cm.Greys
     fig, ax = plt.subplots(figsize=(20, 10))
     skels = []
     ims = []
-    kernel = np.ones((5,5),np.uint8)
+    kernel = np.ones((5, 5), np.uint8)
     itera = 2
-    folders = list(exp.folders['total_path'])
+    folders = list(exp.folders["total_path"])
     folders.sort()
-    for folder in folders[t:t+1]:
-        path_snap=folder
-        skel_info = read_mat(path_snap+'/Analysis/skeleton_realigned_compressed.mat')
-        skel = skel_info['skeleton']
-        skels.append(cv2.dilate(skel.astype(np.uint8),kernel,iterations = itera))
+    for folder in folders[t : t + 1]:
+        path_snap = folder
+        skel_info = read_mat(path_snap + "/Analysis/skeleton_realigned_compressed.mat")
+        skel = skel_info["skeleton"]
+        skels.append(cv2.dilate(skel.astype(np.uint8), kernel, iterations=itera))
     ax.imshow(skels[0], cmap=my_cmap, interpolation=None, alpha=0.7)
     for polygon in hulls:
-        p = affine_transform(polygon,[0.2,0,0,-0.2,0,0])
-        p = rotate(p,90,origin=(0,0))
-        p =gpd.GeoSeries(p)
+        p = affine_transform(polygon, [0.2, 0, 0, -0.2, 0, 0])
+        p = rotate(p, 90, origin=(0, 0))
+        p = gpd.GeoSeries(p)
         try:
-            _ = p.boundary.plot(ax =ax,alpha = 0.9)
+            _ = p.boundary.plot(ax=ax, alpha=0.9)
         except ValueError:
             print(p)
         # _ = ax.plot(np.array(y)/5,np.array(x)/5)
-    if save_path != '':
+    if save_path != "":
         plt.savefig(save_path)
