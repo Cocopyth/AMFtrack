@@ -1,6 +1,7 @@
 import sys
 import pandas as pd
 import os
+import logging
 
 from amftrack.util.sys import temp_path
 from amftrack.util.dbx import upload
@@ -19,6 +20,8 @@ upload_bool = bool(sys.argv[5])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
+logging.info(f"{size}, {coords}, {i}, {op_id}")
+
 if local:
     base_dir = "/home/cbisot/pycode/BAS"
 else:
@@ -35,7 +38,7 @@ id_unique = (
     + str(int(str(select["CrossDate"].iloc[0]).replace("'", "")))
 )
 exp = Experiment(directory)
-exp.load(select)
+exp.load(select, suffix="")
 
 # Generate the images
 directory_path = os.path.join(base_dir, id_unique)
