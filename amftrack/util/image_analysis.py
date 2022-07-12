@@ -40,6 +40,23 @@ def find_image_indexes(im_coord_list, x: float, y: float):
     return l
 
 
+def find_scaling_factor(old_coord_list, new_coord_list):
+    """Find the scaling factor between two coordinate referentials"""
+    n = len(old_coord_list)
+    values = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            dx = np.linalg.norm(
+                np.array(old_coord_list[i]) - np.array(old_coord_list[j])
+            )
+            dfx = np.linalg.norm(
+                np.array(new_coord_list[i]) - np.array(new_coord_list[j])
+            )
+            values.append(dfx / dx)
+    print(values)
+    return np.median(values)
+
+
 def find_transformation(old_coord_list: List, new_coord_list: List):
     """
     Computes the rotation and translation to transform the old plane into the new one.
