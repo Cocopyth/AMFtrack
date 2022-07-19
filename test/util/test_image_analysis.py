@@ -11,19 +11,48 @@ from amftrack.util.image_analysis import (
     find_image_index,
     is_in_image,
     extract_inscribed_rotated_image,
-    is_negative_isometry,
+    is_negative_similarity,
+    find_similarity,
+    find_scaling_factor,
 )
 from amftrack.util.sys import test_path
 from helper import make_image
+import numpy as np
 
 
 class TestTransformations(unittest.TestCase):
     def test_find_transformation(self):
-        R, t = find_transformation(
-            [[16420, 26260], [17120, 28480]], [[15760, 26500], [16420, 28780]]
+        old_coordinates = [
+            [16420, 6260],
+            [1120, 28480],
+            [15760, 26500],
+            [16420, 2780],
+            [100, 1200],
+            [-560, -10000],
+        ]
+        t = np.array([1200, -230])
+        R = np.array(
+            [
+                [np.cos(np.pi / 15), -np.sin(np.pi / 15)],
+                [np.sin(np.pi / 15), np.cos(np.pi / 15)],
+            ]
         )
         f = get_transformation(R, t)
-        f([16420, 26260])
+        new_coordinates = [f(c) for c in old_coordinates]
+        R_, t_ = find_transformation(old_coordinates, new_coordinates)
+        f = get_transformation(R_, t_)
+        result_coordinates = [f(c) for c in old_coordinates]
+
+        self.assertTrue(np.all((np.round(R - R_) == 0)))
+        self.assertTrue(np.all((np.round(t - t_) == 0)))
+        self.assertTrue(
+            np.all(
+                (
+                    np.round(np.array(result_coordinates) - np.array(new_coordinates))
+                    == 0
+                )
+            )
+        )
 
     def test_reverse_transformation(self):
         R, t = find_transformation(
@@ -84,7 +113,7 @@ class TestTransformations(unittest.TestCase):
             im_pil = Image.fromarray(new_image, mode="RGB")
             im_pil.save(os.path.join(test_path, f"rotated{angle}.png"))
 
-    def test_is_negative_isometry(self):
+    def test_is_negative_similarity(self):
         old_coordinates = [
             [16420, 26260],
             [17120, 28480],
@@ -95,6 +124,43 @@ class TestTransformations(unittest.TestCase):
         new_coordinates_2 = [[x[1], x[0]] for x in old_coordinates]
         new_coordinates_3 = [[x[1], x[0]] for x in new_coordinates_1]
 
-        self.assertFalse(is_negative_isometry(old_coordinates, new_coordinates_1))
-        self.assertTrue(is_negative_isometry(old_coordinates, new_coordinates_2))
-        self.assertTrue(is_negative_isometry(old_coordinates, new_coordinates_3))
+        self.assertFalse(is_negative_similarity(old_coordinates, new_coordinates_1))
+        self.assertTrue(is_negative_similarity(old_coordinates, new_coordinates_2))
+        self.assertTrue(is_negative_similarity(old_coordinates, new_coordinates_3))
+
+    def test_find_similarity(self):
+        old_coordinates = [
+            [16420, 26260],
+            [17120, 28480],
+            [1420, 2620],
+            [100, 10000],
+        ]
+        t = np.array([1200, -230])
+        R = np.array(
+            [
+                [np.cos(np.pi / 15), -np.sin(np.pi / 15)],
+                [np.sin(np.pi / 15), np.cos(np.pi / 15)],
+            ]
+        )
+        f = get_transformation(R, t)
+        new_coordinates_1 = [f(np.array(c)) for c in old_coordinates]
+        new_coordinates_2 = [[x[1], x[0]] for x in new_coordinates_1]
+        new_coordinates_3 = [np.array(c) / 1.6 for c in new_coordinates_2]
+
+        f1 = find_similarity(old_coordinates, new_coordinates_1)
+        f2 = find_similarity(old_coordinates, new_coordinates_2)
+        f3 = find_similarity(old_coordinates, new_coordinates_3)
+
+        result1 = np.array([np.round(f1(c)) for c in old_coordinates])
+        result2 = np.array([np.round(f2(c)) for c in old_coordinates])
+        result3 = np.array([np.round(f3(c)) for c in old_coordinates])
+
+        self.assertTrue(
+            np.all((np.round(result1 - np.array(new_coordinates_1), decimals=-1) == 0))
+        )
+        self.assertTrue(
+            np.all((np.round(result2 - np.array(new_coordinates_2), decimals=-1) == 0))
+        )
+        self.assertTrue(
+            np.all((np.round(result3 - np.array(new_coordinates_3), decimals=-1) == 0))
+        )
