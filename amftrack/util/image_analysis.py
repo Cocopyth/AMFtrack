@@ -57,6 +57,22 @@ def find_scaling_factor(old_coord_list, new_coord_list):
     return np.median(values)
 
 
+def is_negative_isometry(old_coord_list, new_coord_list):
+    """
+    Given old and new coordinates of a list of points,
+    determines if the transformation has a negative determinant.
+    If the determinant is positive, the sign of the angle will
+    switch between old and new coords.
+    """
+    point1, point2, point3 = old_coord_list[:3]
+    point1_, point2_, point3_ = new_coord_list[:3]
+    v1 = np.array(point1) - np.array(point2)
+    v2 = np.array(point1) - np.array(point3)
+    v1_ = np.array(point1_) - np.array(point2_)
+    v2_ = np.array(point1_) - np.array(point3_)
+    return 0 > np.cross(v1, v2) * np.cross(v1_, v2_)
+
+
 def find_transformation(old_coord_list: List, new_coord_list: List):
     """
     Computes the rotation and translation to transform the old plane into the new one.
