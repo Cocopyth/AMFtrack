@@ -11,6 +11,7 @@ from amftrack.util.image_analysis import (
     find_image_index,
     is_in_image,
     extract_inscribed_rotated_image,
+    is_negative_isometry,
 )
 from amftrack.util.sys import test_path
 from helper import make_image
@@ -82,3 +83,18 @@ class TestTransformations(unittest.TestCase):
             new_image = extract_inscribed_rotated_image(image, angle)
             im_pil = Image.fromarray(new_image, mode="RGB")
             im_pil.save(os.path.join(test_path, f"rotated{angle}.png"))
+
+    def test_is_negative_isometry(self):
+        old_coordinates = [
+            [16420, 26260],
+            [17120, 28480],
+            [1420, 2620],
+            [100, 10000],
+        ]
+        new_coordinates_1 = [[15760, 26500], [16420, 28780], [1330, 2530], [-165, 9880]]
+        new_coordinates_2 = [[x[1], x[0]] for x in old_coordinates]
+        new_coordinates_3 = [[x[1], x[0]] for x in new_coordinates_1]
+
+        self.assertFalse(is_negative_isometry(old_coordinates, new_coordinates_1))
+        self.assertTrue(is_negative_isometry(old_coordinates, new_coordinates_2))
+        self.assertTrue(is_negative_isometry(old_coordinates, new_coordinates_3))
