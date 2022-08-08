@@ -17,11 +17,11 @@ folders = folders.loc[folders["/Analysis/nx_graph_pruned_labeled.p"]==True]
 # folders = folders.iloc[:10]
 args = [directory_targ]
 num_parallel = 32
-time = "8:00:00"
+time = "12:00:00"
 limit = 100
 version = 1
 suffix = "_labeled"
-lim_considered = 3
+lim_considered = 5
 args = [directory_targ, limit, version, suffix,lim_considered]
 run_parallel_all_time(
     "hyphae_extraction.py",
@@ -40,4 +40,4 @@ if stage>0:
                  '20:00',dependency=True,name_job = name_job)
 elif stage==0:
     run_launcher('dropbox_uploader.py',[directory_targ,name_job]
-                 ,plates,'20:00',dependency=True,name_job = name_job)
+                 ,plates,'12:00:00',dependency=True,name_job = name_job)

@@ -36,4 +36,4 @@ if stage>0:
                  '20:00',dependency=True,name_job = name_job)
 elif stage==0:
     run_launcher('dropbox_uploader.py',[directory_targ,name_job]
-                 ,plates,'20:00',dependency=True,name_job = name_job)
+                 ,plates,'12:00:00',dependency=True,name_job = name_job)
