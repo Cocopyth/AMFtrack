@@ -20,4 +20,4 @@ for index, row in analysis_folders.iterrows():
     upload_folder(path,target_drop)
 
 run_launcher('dropbox_uploader.py',[directory_targ,name_job]
-                 ,plates,'20:00',dependency=True,name_job = name_job)
+                 ,plates,'12:00:00',dependency=True,name_job = name_job)
