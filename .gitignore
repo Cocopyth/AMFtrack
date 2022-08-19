@@ -24,4 +24,5 @@ venv
 *.svg
 *.gitconfig
 *.ipython/
+*.mp4
 *.jupyter/

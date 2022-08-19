@@ -356,6 +356,7 @@ def plot_full(
     dilation=1,
     save_path="",
     prettify=False,
+    with_point_label=False,
 ) -> None:
     """
     This is the general purpose function to plot the full image or a region `region` of the image at
@@ -372,6 +373,7 @@ def plot_full(
     :param dilation: only for edges: thickness of the edges (dilation applied to the pixel list)
     :param save_path: full path to the location where the plot will be saved
     :param prettify: if True, the image will be enhanced by smoothing the intersections between images
+    :param with_point_label: if True, the index of the point is ploted on top of it
 
     NB: the full region of a full image is typically [[0, 0], [26000, 52000]]
     NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
@@ -439,9 +441,11 @@ def plot_full(
             )
     # 4/ Plotting coordinates
     points = [f(c) for c in points]
-    for c in points:
+    for i, c in enumerate(points):
         if is_in_bounding_box(c, new_region):
             plt.plot(c[1], c[0], marker="x", color="red")
+            if with_point_label:
+                plt.text(c[1], c[0], f"{i}")
 
     # 5/ Plotting segments
     segments = [[f(segment[0]), f(segment[1])] for segment in segments]
