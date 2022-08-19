@@ -122,7 +122,7 @@ def get_timestep_anastomosis(hyph, args):
         if (
             hyph.end.degree(t) == 1
             and hyph.end.degree(tp1) == 3
-            and 1 not in [hyph.end.degree(t) for t in hyph.ts[i + 1 :]]
+            and 1 not in [hyph.end.degree(k) for k in hyph.ts[i + 1 :]]
         ):
             return ("timestep_anastomosis", t)
     return ("timestep_anastomosis", None)

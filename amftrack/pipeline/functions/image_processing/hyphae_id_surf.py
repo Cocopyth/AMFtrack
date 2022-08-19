@@ -203,7 +203,7 @@ def get_anastomosing_hyphae(exp):
 
 
 def resolve_anastomosis_crossing_by_root(exp,lim_considered=1):
-    hyphaes, problems = get_hyphae(exp,lim_considered=1)
+    hyphaes, problems = get_hyphae(exp,lim_considered=lim_considered)
     exp.hyphaes = hyphaes
     print("getting anastomosing", len(hyphaes))
     anastomosing_hyphae = get_anastomosing_hyphae(exp)
