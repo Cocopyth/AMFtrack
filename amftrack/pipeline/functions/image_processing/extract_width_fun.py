@@ -14,24 +14,37 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 )
 from amftrack.util.geometry import get_section_segment, generate_index_along_sequence
 from amftrack.util.image_analysis import is_in_image, find_image_indexes
+from tensorflow import keras
 
 logger = logging.getLogger(os.path.basename(__file__))
 
 a = 2.3196552
 
 # save_path = os.path.join(
-#     storage_path, "models", "dense_02_focused_edge", "saved_model_retrained.h5"
+#     storage_path, "models", "dense_02_focused_edge", "saved_model_retrained"
 # )
 # QUICKFIX: temporary
-MODEL = keras.models.load_model(
-    os.path.join(
+from tensorflow.python.lib.io import file_io
+path =     os.path.join(
         path_code[:-1],
         "ml",
         "models",
         "dense_02_focused_edge",
-        "saved_model_retrained.h5",
+        "saved_model_retrained",
     )
-)
+model_file = file_io.FileIO(path, mode='rb')
+temp_model_location = os.path.join(
+        path_code[:-1],
+        "ml",
+        "models",
+        "dense_02_focused_edge",
+        "saved_model_retrained2",
+    )
+temp_model_file = open(temp_model_location, 'wb')
+temp_model_file.write(model_file.read())
+temp_model_file.close()
+model_file.close()
+MODEL = keras.models.load_model(temp_model_location)
 
 
 def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
