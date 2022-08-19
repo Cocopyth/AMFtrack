@@ -14,7 +14,7 @@ import checksumdir
 import shutil
 
 # directory_origin = r'/mnt/sun/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE_syncing/'
-directory_origin = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$/Data/Prince/Images/"
+directory_origin = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$/Data/Prince2/Images/"
 directory_target = (
     r"/mnt/sun/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE_syncing/"
 )

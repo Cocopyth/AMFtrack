@@ -119,7 +119,6 @@ run_parallel_post(
 )
 time = "3:40:00"
 list_f = [plot_hulls,plot_tracking]
-list_f = [plot_tracking]
 
 list_args = [[]] * len(list_f)
 overwrite = True

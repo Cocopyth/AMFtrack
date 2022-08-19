@@ -16,6 +16,8 @@ update_analysis_info(directory_targ)
 analysis_info = get_analysis_info(directory_targ)
 analysis_folders = analysis_info.loc[analysis_info['unique_id'].isin(plates)]
 list_f = [
+    get_pos_x,
+    get_pos_y,
     get_time_since_begin_exp,
     get_distance_final_pos,
     get_timedelta,
@@ -40,7 +42,7 @@ list_args = [{}] * len(list_f)
 overwrite = False
 load_graphs = True
 num_parallel = 32
-time = "2:45:00"
+time = "12:00:00"
 for index, row in analysis_folders.iterrows():
     folder = row["folder_analysis"]
     path_time_plate_info = row["path_time_plate_info"]
