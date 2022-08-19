@@ -15,9 +15,9 @@ all_folders = get_current_folders(directory_targ, local=True,suffix_data_info=su
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Analysis/skeleton_realigned_compressed.mat"]==True]
 num_parallel = 128
-time = "1:00:00"
-skip = True
-resolution = 50
+time = "12:00:00"
+skip = False
+resolution = 10
 args = [directory_targ, skip, resolution]
 run_parallel(
     "extract_width.py",
