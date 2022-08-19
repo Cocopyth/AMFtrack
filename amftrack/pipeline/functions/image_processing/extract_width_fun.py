@@ -19,6 +19,20 @@ logger = logging.getLogger(os.path.basename(__file__))
 
 a = 2.3196552
 
+# save_path = os.path.join(
+#     storage_path, "models", "dense_02_focused_edge", "saved_model_retrained.h5"
+# )
+# QUICKFIX: temporary
+MODEL = keras.models.load_model(
+    os.path.join(
+        path_code[:-1],
+        "ml",
+        "models",
+        "dense_02_focused_edge",
+        "saved_model_retrained.h5",
+    )
+)
+
 
 def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
     """
@@ -395,6 +409,35 @@ def get_width_info(experiment, t, resolution=50, skip=False):
         else:
             # Maybe change to Nan if it doesnt break the rest
             edge_width[edge] = 40
+    return edge_width
+
+
+def get_width_info_new(experiment, t, resolution=50, skip=False) -> Dict:
+    "Felix version"
+    print(not skip)
+    edge_width = {}
+    graph = experiment.nx_graph[t]
+    for edge in graph.edges:
+        if not skip:
+            edge_exp = Edge(
+                Node(edge[0], experiment), Node(edge[1], experiment), experiment
+            )
+            if len(edge_exp.pixel_list(t)) > 100:
+                prediction = compute_edge_width_profile(
+                    experiment,
+                    t,
+                    edge_exp,
+                    resolution=resolution,
+                    offset=8,
+                    step=6,
+                    target_length=100,
+                )
+                median = np.median(prediction)
+                edge_width[edge] = median
+            else:
+                edge_width[edge] = 0
+        else:
+            edge_width[edge] = 0
     return edge_width
 
 
