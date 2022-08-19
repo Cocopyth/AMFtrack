@@ -50,7 +50,7 @@ def stredisk(radius):
     return cv.getStructuringElement(cv.MORPH_ELLIPSE, (2 * radius - 1, 2 * radius - 1))
 
 
-def remove_component(dilated):
+def remove_component(dilated,min_size=4000):
     nb_components, output, stats, centroids = cv.connectedComponentsWithStats(
         dilated.astype(np.uint8), connectivity=8
     )
@@ -61,7 +61,6 @@ def remove_component(dilated):
 
     # minimum size of particles we want to keep (number of pixels)
     # here, it's a fixed value, but you can set it as you want, eg the mean of the sizes or whatever
-    min_size = 4000
 
     # your answer image
     img_f = np.zeros((dilated.shape))

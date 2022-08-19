@@ -13,7 +13,7 @@ suffix_data_info=time_ns()
 update_plate_info(directory_targ, local=True,suffix_data_info=suffix_data_info)
 all_folders = get_current_folders(directory_targ, local=True,suffix_data_info=suffix_data_info)
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
-folders.loc[folders['/Img/TileConfiguration.txt.registered']==True]
+folders = folders.loc[folders['/Img/TileConfiguration.txt.registered']==True]
 num_parallel = 100
 time = "6:00:00"
 hyph_width = 30
