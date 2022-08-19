@@ -1,0 +1,53 @@
+Model: "model_13"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ input_14 (InputLayer)       [(None, 100, 1)]          0         
+                                                                 
+ reshape_13 (Reshape)        (None, 100)               0         
+                                                                 
+ rescaling_13 (Rescaling)    (None, 100)               0         
+                                                                 
+ dense_119 (Dense)           (None, 42)                4242      
+                                                                 
+ dropout_106 (Dropout)       (None, 42)                0         
+                                                                 
+ dense_120 (Dense)           (None, 42)                1806      
+                                                                 
+ dropout_107 (Dropout)       (None, 42)                0         
+                                                                 
+ dense_121 (Dense)           (None, 42)                1806      
+                                                                 
+ dropout_108 (Dropout)       (None, 42)                0         
+                                                                 
+ dense_122 (Dense)           (None, 42)                1806      
+                                                                 
+ dropout_109 (Dropout)       (None, 42)                0         
+                                                                 
+ dense_123 (Dense)           (None, 42)                1806      
+                                                                 
+ dropout_110 (Dropout)       (None, 42)                0         
+                                                                 
+ dense_124 (Dense)           (None, 42)                1806      
+                                                                 
+ dropout_111 (Dropout)       (None, 42)                0         
+                                                                 
+ dense_125 (Dense)           (None, 42)                1806      
+                                                                 
+ dropout_112 (Dropout)       (None, 42)                0         
+                                                                 
+ dense_126 (Dense)           (None, 42)                1806      
+                                                                 
+ dropout_113 (Dropout)       (None, 42)                0         
+                                                                 
+ dense_127 (Dense)           (None, 42)                1806      
+                                                                 
+ dropout_114 (Dropout)       (None, 42)                0         
+                                                                 
+ dense_128 (Dense)           (None, 1)                 43        
+                                                                 
+=================================================================
+Total params: 18,733
+Trainable params: 18,733
+Non-trainable params: 0
+_________________________________________________________________
