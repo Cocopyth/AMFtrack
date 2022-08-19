@@ -1,0 +1,17 @@
+
+Trained on focused slices with illumination variation:
+/media/felix/AMFtopology02/storage/datasets/focused_with_varying_lum_train
+
+Hyperparameters:
+{'input_size': 100, 'hidden_size': 42, 'regul': 0.0036787999149105136, 'dense_blocks': 9, 'dropout': 0.0, 'learning_rate': 0.0003168240557749865}
+ 
+Cross validation results:
+Mean: 0.759149506688118 Std: 0.0460086760081415
+
+Size: 18733
+
+Training on 377 points and 150 used for early stopping validation.
+
+Input size: 100
+
+Data augmentation: random_crop + random_mirror

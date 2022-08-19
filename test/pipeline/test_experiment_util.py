@@ -394,7 +394,7 @@ class TestExperiment(unittest.TestCase):
         im_pil.save(os.path.join(test_path, "reconstruct_from_general.png"))
 
 
-@unittest.skip("Shouldn't be run each time because very costly")
+# @unittest.skip("Shouldn't be run each time because very costly")
 class TestExperimentHeavy(unittest.TestCase):
     """Tests that need a plate with multiple timesteps"""
 
@@ -583,3 +583,22 @@ class TestExperimentHeavy(unittest.TestCase):
                         test_path, f"plot_around_node_{i}_{t}_not_prettify"
                     ),
                 )
+
+    def test_plot_full_5(self):
+        # Test label for points
+        plot_full(
+            self.exp,
+            0,
+            downsizing=10,
+            region=[[0, 0], [20000, 55000]],
+            points=[
+                [11191, 39042],
+                [11923, 45165],
+                [11850, 42000],
+                [14225, 41750],
+                [14450, 38425],
+                [15750, 34325],
+            ],
+            save_path=os.path.join(test_path, "plot_full_with_point_labels"),
+            with_point_label=True,
+        )
