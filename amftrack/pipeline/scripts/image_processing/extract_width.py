@@ -1,6 +1,6 @@
 import sys
 
-from amftrack.pipeline.functions.image_processing.extract_width_fun import *
+from amftrack.pipeline.functions.image_processing.extract_width_fun import get_width_info
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
 )

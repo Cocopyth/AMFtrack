@@ -5,7 +5,6 @@ from typing import Tuple, List, Dict
 import os
 import logging
 from random import choice
-from tensorflow import keras
 
 from amftrack.notebooks.analysis.util import *
 from amftrack.util.aliases import coord, coord_int
@@ -15,7 +14,6 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 )
 from amftrack.util.geometry import get_section_segment, generate_index_along_sequence
 from amftrack.util.image_analysis import is_in_image, find_image_indexes
-from amftrack.util.sys import storage_path, ml_path, path_code
 
 logger = logging.getLogger(os.path.basename(__file__))
 
@@ -55,7 +53,7 @@ def compute_section_coordinates(
     :param step: this determine which neibooring points to use for computing the tangent
     :param target_length: the approximate target_length that we want for the segment
     WARNING: taget_length is not exact as the coordinates are ints
-    NB: the coordinates are all in the GENERAL referential
+    NB: the coordinates are all in the general referential
     """
     # TODO(FK): handle case where the step is bigger than the offset, raise error instead of logging
     if step > pivot_indexes[0]:
@@ -238,34 +236,6 @@ def extract_section_profiles_for_edge(
         # TODO(FK): Add thickness of the profile here
         l.append(profile)
     return np.concatenate(l, axis=0), list_of_segments, new_section_coord_list
-
-
-def compute_edge_width_profile(
-    exp: Experiment,
-    t: int,
-    edge: Edge,
-    resolution=5,
-    offset=4,
-    step=3,
-    target_length=120,
-) -> float:
-
-    profile, _, __ = extract_section_profiles_for_edge(
-        exp,
-        t,
-        edge,
-        resolution=resolution,
-        offset=offset,
-        step=step,
-        target_length=target_length,
-    )
-
-    predicted_widths = MODEL.predict(profile)
-
-    return predicted_widths
-
-
-## Older functions ##
 
 
 def get_source_image(
