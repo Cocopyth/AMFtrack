@@ -24,27 +24,10 @@ a = 2.3196552
 #     storage_path, "models", "dense_02_focused_edge", "saved_model_retrained"
 # )
 # QUICKFIX: temporary
-from tensorflow.python.lib.io import file_io
-path =     os.path.join(
-        path_code[:-1],
-        "ml",
-        "models",
-        "dense_02_focused_edge",
-        "saved_model_retrained",
-    )
-model_file = file_io.FileIO(path, mode='rb')
-temp_model_location = os.path.join(
-        path_code[:-1],
-        "ml",
-        "models",
-        "dense_02_focused_edge",
-        "saved_model_retrained2",
-    )
-temp_model_file = open(temp_model_location, 'wb')
-temp_model_file.write(model_file.read())
-temp_model_file.close()
-model_file.close()
-MODEL = keras.models.load_model(temp_model_location)
+MODEL = keras.models.load_model(
+    os.path.join(path_code[:-1], "ml", "models", "default_model")
+)
+
 
 
 def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
