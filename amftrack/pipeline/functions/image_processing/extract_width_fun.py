@@ -21,12 +21,13 @@ logger = logging.getLogger(os.path.basename(__file__))
 a = 2.3196552
 
 # save_path = os.path.join(
-#     storage_path, "models", "dense_02_focused_edge", "saved_model_retrained.h5"
+#     storage_path, "models", "dense_02_focused_edge", "saved_model_retrained"
 # )
 # QUICKFIX: temporary
 MODEL = keras.models.load_model(
     os.path.join(path_code[:-1], "ml", "models", "default_model")
 )
+
 
 
 def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:

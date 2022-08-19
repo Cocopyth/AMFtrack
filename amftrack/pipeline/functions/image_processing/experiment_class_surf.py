@@ -680,6 +680,7 @@ class Node:
         if self.is_in(t):
             return self
         else:
+            identifier = 0
             mini = np.inf
             poss = self.experiment.positions[t]
             pos_root = np.mean([self.pos(t) for t in self.ts()], axis=0)
