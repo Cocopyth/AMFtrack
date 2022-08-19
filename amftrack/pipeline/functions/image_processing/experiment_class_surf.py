@@ -145,7 +145,18 @@ class Experiment:
             g = self.nx_graph[i]
             pos = self.positions[i]
             pickle.dump((g, pos), open(path_save, "wb"))
-
+    def save_mat(self):
+        tabs_labeled = []
+        for i, date in enumerate(self.dates):
+            tab_labeled = from_nx_to_tab(self.nx_graph[i], self.positions[i])
+            directory_name = get_dirname(date, self.folders)
+            path_snap = os.path.join(self.directory, directory_name)
+            file = os.path.join(f"Analysis", f"graph_full_labeled.mat")
+            path_save = os.path.join(path_snap, file)
+            sio.savemat(
+                path_save,
+                {name: col.values for name, col in tab_labeled.items()},
+            )
     def load_compressed_skel(self, factor=5):
         """
         Computes and store a sparse binary image of the whole squeleton for each timestep.

@@ -386,8 +386,9 @@ def upload_folders(
                 )
             pbar.update(1)
             if delete:
-                os.remove(os.path.join(path_snap, "param.m"))
-                os.rmdir(path_snap)
+                if len(os.listdir(path_snap)) ==1:
+                    os.remove(os.path.join(path_snap, "param.m"))
+                    os.rmdir(path_snap)
 
 
 def download_folders_old(folders_drop: pd.DataFrame, directory_target):
