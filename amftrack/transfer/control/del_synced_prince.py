@@ -27,6 +27,7 @@ update_plate_info(directory_target, local=True)
 
 all_folders_target = get_current_folders(directory_target, local=True)
 run_info = all_folders_target.copy()
+run_info = run_info.sort_values("datetime")
 folder_list = list(run_info["folder"])
 with tqdm(total=len(folder_list), desc="deleted") as pbar:
     for folder in folder_list:

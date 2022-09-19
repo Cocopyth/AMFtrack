@@ -41,6 +41,7 @@ if not os.path.isdir(ml_path):
     os.mkdir(ml_path)
 slurm_path = env_config.get("SLURM_PATH")
 slurm_path_transfer = env_config.get("SLURM_PATH_transfer")
+dropbox_path = env_config.get("DROPBOX_PATH")
 
 
 def pad_number(number):
@@ -395,6 +396,54 @@ def get_analysis_info(directory,suffix_analysis_info=''):
     analysis_info.reset_index(inplace=True)
     return analysis_info
 
+def get_analysis_folders():
+    analysis_folders = pd.DataFrame()
+    for dire in os.walk(dropbox_path):
+        name_analysis = dire[0].split('\\')[-1].split('_')
+        if name_analysis[0] == 'Analysis':
+            analysis_dir = dire[0]
+            path_save = os.path.join(analysis_dir, "folder_info.json")
+            if os.path.exists(path_save):
+                folders_plate = pd.read_json(path_save)
+                infos = folders_plate.iloc[0][1:10]
+                infos['total_path'] = analysis_dir
+                infos['time_plate'] = os.path.isfile(os.path.join(analysis_dir,'time_plate_info.json'))
+                infos['global_hypha'] = os.path.isfile(os.path.join(analysis_dir, 'global_hypha_info.json'))
+                infos['time_hypha'] = os.path.isdir(os.path.join(analysis_dir, 'time_hypha_info.json'))
+
+                infos['num_folders'] = len(folders_plate)
+                analysis_folders = pd.concat([analysis_folders, infos], axis=1)
+
+    analysis_folders = analysis_folders.transpose().reset_index().drop('index', axis=1)
+    return(analysis_folders)
+
+def get_time_plate_info_from_analysis(analysis_folders):
+    analysis_dirs = analysis_folders['total_path']
+    time_plate_info = pd.DataFrame()
+    folders = pd.DataFrame()
+    for analysis_dir in analysis_dirs:
+        path_save = os.path.join(analysis_dir, "time_plate_info.json")
+        table = pd.read_json(path_save)
+        table = table.transpose()
+        table = table.fillna(-1)
+        path_save = os.path.join(analysis_dir, "folder_info.json")
+        folders_plate = pd.read_json(path_save)
+        folders_plate = folders_plate.reset_index()
+        table = pd.concat((table, (folders_plate['datetime'] - folders_plate['datetime'].iloc[0])), axis=1)
+        table = table.rename(columns={'datetime': 'time_since_begin'})
+        table['time_since_begin_h'] = (table['time_since_begin'].copy() / np.timedelta64(1, 'h'))
+        table = pd.concat((table, pd.DataFrame(folders_plate.index.values)), axis=1)
+        table = table.rename(columns={0: "timestep"})
+        table = pd.concat((table, (folders_plate['folder'])), axis=1)
+        table = pd.concat((table, (folders_plate['unique_id'])), axis=1)
+        table = pd.concat((table, (folders_plate['datetime'])), axis=1)
+        table = pd.concat((table, (folders_plate['PrincePos'])), axis=1)
+        table = pd.concat((table, (folders_plate['root'])), axis=1)
+        table = pd.concat((table, (folders_plate['strain'])), axis=1)
+        table = pd.concat((table, (folders_plate['medium'])), axis=1)
+        time_plate_info = pd.concat([time_plate_info, table], ignore_index=True)
+        folders = pd.concat([folders.copy(), folders_plate.copy()], axis=0, ignore_index=True)
+    return(folders,time_plate_info)
 
 def get_data_tables(op_id=time_ns(), redownload=True):
     API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))

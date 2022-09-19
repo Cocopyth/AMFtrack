@@ -132,7 +132,7 @@ def get_width_average(hypha, t, tp1, args):
 
 
 def has_reached_final_pos(hypha, t, tp1, args):
-    tf = hypha.ts[-1]
+    tf = hypha.end.ts()[-1]
     pos_end = hypha.end.pos(tf)
     thresh = 40
     return (
@@ -142,7 +142,7 @@ def has_reached_final_pos(hypha, t, tp1, args):
 
 
 def get_distance_final_pos(hypha, t, tp1, args):
-    tf = hypha.ts[-1]
+    tf = hypha.end.ts()[-1]
     pos_end = hypha.end.pos(tf)
     return ("distance_final_pos", np.linalg.norm(hypha.end.pos(t) - pos_end))
 
