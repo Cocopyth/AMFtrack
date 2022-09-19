@@ -52,11 +52,11 @@ def calcGST(inputIMG, w):
     imgOrientationOut = 0.5 * imgOrientationOut
     return imgCoherencyOut, imgOrientationOut
 
-def segment(images_adress):
+def segment(images_adress,threshold=10):
     images = [imageio.imread(file) for file in images_adress]
     images = [cv2.resize(image, np.flip(images[0].shape)) for image in images]
     average_proj = np.mean(np.array(images),axis=0)
-    segmented = average_proj>10
+    segmented = average_proj>threshold
     segmented = remove_holes(segmented)
     segmented = segmented.astype(np.uint8)
     connected = remove_component(segmented)

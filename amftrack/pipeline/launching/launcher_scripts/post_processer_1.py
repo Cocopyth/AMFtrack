@@ -171,11 +171,10 @@ run_parallel_post(
     "global_hypha_post_process",
     cpus=32,
     name_job=name_job,
+    node="fat",
 
 )
 
-run_launcher('analysis_uploader.py', [directory_targ, name_job], plates, '20:00', dependency=True,
-             name_job=name_job)
 if stage>0:
     run_launcher('post_processer_2.py',[directory_targ,name_job,stage-1],plates,
                  '20:00',dependency=True,name_job = name_job)
