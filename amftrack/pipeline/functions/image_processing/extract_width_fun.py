@@ -39,6 +39,29 @@ def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
     """
     return generate_index_along_sequence(n, resolution, offset)
 
+def compute_edge_width_profile(
+    exp: Experiment,
+    t: int,
+    edge: Edge,
+    resolution=5,
+    offset=4,
+    step=3,
+    target_length=120,
+) -> float:
+
+    profile, _, __ = extract_section_profiles_for_edge(
+        exp,
+        t,
+        edge,
+        resolution=resolution,
+        offset=offset,
+        step=step,
+        target_length=target_length,
+    )
+
+    predicted_widths = MODEL.predict(profile)
+
+    return predicted_widths
 
 def compute_section_coordinates(
     pixel_list: List[coord_int], pivot_indexes: List, step: int, target_length=120

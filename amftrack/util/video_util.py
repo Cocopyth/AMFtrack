@@ -258,6 +258,42 @@ def make_images_track(exp, num_tiles=4):
         paths_list.append(paths)
     return paths_list
 
+def make_images_track2(exp):
+    """
+    This function makes images centered on the initial position of some random nodes,
+    plots the skeleton on top of the raw image, the label of the nodes at different timesteps
+    it returns the paths_list of those plotted image in the format for tile video making
+    :param exp:
+    :param num_tiles: number of such images to tile together
+    """
+    t0 = choice(range(exp.ts))
+    nodes = get_all_nodes(exp, t0)
+    node_select = choice(nodes)
+    paths = []
+    for t in range(exp.ts):
+        exp.load_tile_information(t)
+        pos = node_select.pos(t0)
+        window = 600
+        region = centered_bounding_box(pos, size=int(1.5*window))
+        path = f"plot_nodes_{time_ns()}"
+        path = os.path.join(temp_path, path)
+        paths.append([path + ".png"])
+        plot_full(
+            exp,
+            t,
+            region=region,
+            downsizing=1,
+            nodes=[
+                node
+                for node in get_all_nodes(exp, t)
+                if node.is_in(t) and np.linalg.norm(node.pos(t) - pos) <= window
+            ],
+            edges=get_all_edges(exp, t),
+            dilation=4,
+            prettify=False,
+            save_path=path,
+        )
+    return paths
 
 def make_video_targeted(
     exp: Experiment, coordinate: coord, directory_path: str, size=400
