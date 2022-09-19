@@ -37,7 +37,7 @@ from shapely.geometry import Polygon, shape, Point
 from shapely.affinity import affine_transform, rotate
 from amftrack.util.sparse import dilate_coord_list
 from amftrack.util.other import is_in
-# import geopandas as gpd
+import geopandas as gpd
 
 
 def get_random_edge(exp: Experiment, t=0) -> Edge:

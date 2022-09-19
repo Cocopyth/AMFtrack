@@ -36,7 +36,7 @@ try:
     exp.labeled
 except AttributeError:
     exp.labeled = True
-load_graphs(exp)
+load_graphs(exp,post_process=True)
 op_id2 = time_ns()
 #get_data_tables(op_id2, redownload=True)
 folder = row["folder_analysis"]
