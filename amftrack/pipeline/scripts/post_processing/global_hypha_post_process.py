@@ -40,7 +40,7 @@ try:
     exp.labeled
 except AttributeError:
     exp.labeled = True
-load_graphs(exp, post_process=True)
+load_graphs(exp,directory, post_process=True)
 
 load_study_zone(exp)
 folder = row["folder_analysis"]
