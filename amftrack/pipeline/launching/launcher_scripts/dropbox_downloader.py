@@ -1,6 +1,6 @@
 import sys
 from amftrack.util.dbx import get_dropbox_folders
-from amftrack.pipeline.launching.run_super import run_parallel_transfer,run_launcher
+from amftrack.pipeline.launching.run_super import run_parallel_transfer, run_launcher
 
 directory_targ = str(sys.argv[1])
 name_job = str(sys.argv[2])
@@ -19,8 +19,14 @@ run_parallel_transfer(
     "staging",
     cpus=1,
     node="staging",
-name_job = name_job
+    name_job=name_job,
 )
-if stage>0:
-    run_launcher('stitcher.py',[directory_targ,name_job,stage-1],plates,'12:00:00',
-                 dependency=True,name_job = name_job)
+if stage > 0:
+    run_launcher(
+        "stitcher.py",
+        [directory_targ, name_job, stage - 1],
+        plates,
+        "12:00:00",
+        dependency=True,
+        name_job=name_job,
+    )

@@ -19,7 +19,9 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_full,
     reconstruct_image_from_general,
 )
-from amftrack.pipeline.functions.image_processing.hyphae_id_surf import get_anastomosing_hyphae
+from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
+    get_anastomosing_hyphae,
+)
 
 from amftrack.pipeline.functions.post_processing.area_hulls import is_in_study_zone
 from amftrack.pipeline.functions.post_processing.extract_study_zone import (
@@ -30,7 +32,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     save_graphs,
     load_graphs,
     load_skel,
-    Node
+    Node,
 )
 from amftrack.pipeline.functions.post_processing.area_hulls import (
     get_regular_hulls_area_fixed,
@@ -261,6 +263,7 @@ def make_images_track(exp, num_tiles=4):
         paths_list.append(paths)
     return paths_list
 
+
 def make_images_track2(exp):
     """
     This function makes images centered on the initial position of some random nodes,
@@ -277,7 +280,7 @@ def make_images_track2(exp):
         exp.load_tile_information(t)
         pos = node_select.pos(t0)
         window = 600
-        region = centered_bounding_box(pos, size=int(1.5*window))
+        region = centered_bounding_box(pos, size=int(1.5 * window))
         path = f"plot_nodes_{time_ns()}"
         path = os.path.join(temp_path, path)
         paths.append([path + ".png"])
@@ -298,6 +301,7 @@ def make_images_track2(exp):
         )
     return paths
 
+
 def make_images_track3(exp):
     """
     This function makes images centered on the initial position of some random nodes,
@@ -307,23 +311,23 @@ def make_images_track3(exp):
     :param num_tiles: number of such images to tile together
     """
     paths = []
-    ends = [hypha.end for hypha in exp.hyphaes if len(hypha.end.ts())>0]
-    to_choose = [node for node in ends if node.ts()[0]<100 and len(node.ts())>4]
+    ends = [hypha.end for hypha in exp.hyphaes if len(hypha.end.ts()) > 0]
+    to_choose = [node for node in ends if node.ts()[0] < 100 and len(node.ts()) > 4]
     node_select = choice(to_choose)
     t0 = node_select.ts()[-1]
     pos = node_select.pos(t0)
     for t in range(exp.ts):
-    # for t in node_select.ts():
+        # for t in node_select.ts():
         window = 600
         region = centered_bounding_box(pos, size=int(1.5 * window))
 
         nodes = [
-                    node
-                    for node in ends
-                    if node.is_in(t) and np.linalg.norm(node.pos(t) - pos) <= window
-                ]
+            node
+            for node in ends
+            if node.is_in(t) and np.linalg.norm(node.pos(t) - pos) <= window
+        ]
 
-        if len(nodes)>0:
+        if len(nodes) > 0:
             exp.load_tile_information(t)
             path = f"plot_nodes_{time_ns()}"
             path = os.path.join(temp_path, path)
@@ -340,6 +344,7 @@ def make_images_track3(exp):
                 save_path=path,
             )
     return paths
+
 
 def make_images_track4(exp):
     """
@@ -360,7 +365,7 @@ def make_images_track4(exp):
     for t in range(exp.ts):
         exp.load_tile_information(t)
         window = 600
-        region = centered_bounding_box(pos, size=int(1.5*window))
+        region = centered_bounding_box(pos, size=int(1.5 * window))
         path = f"plot_nodes_{time_ns()}"
         path = os.path.join(temp_path, path)
         paths.append([path + ".png"])
@@ -381,7 +386,8 @@ def make_images_track4(exp):
         )
     return paths
 
-def make_images_track_hypha(exp,hypha):
+
+def make_images_track_hypha(exp, hypha):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
@@ -390,12 +396,12 @@ def make_images_track_hypha(exp,hypha):
     :param num_tiles: number of such images to tile together
     """
     paths = []
-    node_select = Node(hypha,exp)
+    node_select = Node(hypha, exp)
     for t in node_select.ts():
         pos = node_select.pos(t)
         exp.load_tile_information(t)
         window = 600
-        region = centered_bounding_box(pos, size=int(1.5*window))
+        region = centered_bounding_box(pos, size=int(1.5 * window))
         path = f"plot_nodes_{time_ns()}"
         path = os.path.join(temp_path, path)
         paths.append([path + ".png"])
@@ -404,15 +410,14 @@ def make_images_track_hypha(exp,hypha):
             t,
             region=region,
             downsizing=1,
-            nodes=[
-                node_select
-            ],
+            nodes=[node_select],
             edges=get_all_edges(exp, t),
             dilation=4,
             prettify=False,
             save_path=path,
         )
     return paths
+
 
 def make_video_targeted(
     exp: Experiment, coordinate: coord, directory_path: str, size=400

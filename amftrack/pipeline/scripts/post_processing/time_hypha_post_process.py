@@ -23,7 +23,7 @@ load_graphs_bool = eval(sys.argv[3])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
+run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 list_f, list_args = pickle.load(open(f"{temp_path}/{op_id}.pick", "rb"))
 
 folder_list = list(run_info["t"])
@@ -41,7 +41,7 @@ except AttributeError:
     exp.labeled = True  # For older versions of experiments, to be removed later
 load_study_zone(exp)
 if load_graphs_bool:
-    load_graphs(exp, indexes=[t, tp1],post_process=True)
+    load_graphs(exp, indexes=[t, tp1], post_process=True)
 # load_skel(exp,[t])
 # print('size after loading',get_size(exp)/10**6)
 

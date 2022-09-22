@@ -1,21 +1,23 @@
 import sys
 from amftrack.util.sys import (
     update_analysis_info,
-    get_analysis_info,)
+    get_analysis_info,
+)
 from amftrack.pipeline.launching.run_super import run_parallel_post
 from amftrack.pipeline.functions.post_processing.global_plate import *
 from amftrack.pipeline.functions.post_processing.time_plate import *
 from amftrack.pipeline.functions.post_processing.global_hypha import *
 from amftrack.pipeline.functions.post_processing.area_hulls import *
-from amftrack.pipeline.launching.run_super import run_parallel,run_launcher
+from amftrack.pipeline.launching.run_super import run_parallel, run_launcher
 from amftrack.pipeline.functions.post_processing.exp_plot import *
+
 directory_targ = str(sys.argv[1])
 name_job = str(sys.argv[2])
 stage = int(sys.argv[3])
 plates = sys.argv[4:]
 update_analysis_info(directory_targ)
 analysis_info = get_analysis_info(directory_targ)
-analysis_folders = analysis_info.loc[analysis_info['unique_id'].isin(plates)]
+analysis_folders = analysis_info.loc[analysis_info["unique_id"].isin(plates)]
 directory = directory_targ
 print(len(analysis_folders))
 time = "10:00"
@@ -115,10 +117,10 @@ run_parallel_post(
     cpus=32,
     name_job=name_job,
     node="fat",
-    dependency=True
+    dependency=True,
 )
 time = "3:40:00"
-list_f = [plot_hulls,plot_tracking]
+list_f = [plot_hulls, plot_tracking]
 
 list_args = [[]] * len(list_f)
 overwrite = True
@@ -172,12 +174,23 @@ run_parallel_post(
     cpus=32,
     name_job=name_job,
     node="fat",
-
 )
 
-if stage>0:
-    run_launcher('post_processer_2.py',[directory_targ,name_job,stage-1],plates,
-                 '20:00',dependency=True,name_job = name_job)
-elif stage==0:
-    run_launcher('dropbox_uploader.py',[directory_targ,name_job]
-                 ,plates,'12:00:00',dependency=True,name_job = name_job)
+if stage > 0:
+    run_launcher(
+        "post_processer_2.py",
+        [directory_targ, name_job, stage - 1],
+        plates,
+        "20:00",
+        dependency=True,
+        name_job=name_job,
+    )
+elif stage == 0:
+    run_launcher(
+        "dropbox_uploader.py",
+        [directory_targ, name_job],
+        plates,
+        "12:00:00",
+        dependency=True,
+        name_job=name_job,
+    )

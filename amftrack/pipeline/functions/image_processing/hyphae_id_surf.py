@@ -204,8 +204,8 @@ def get_anastomosing_hyphae(exp):
     return anastomosing_hyphae
 
 
-def resolve_anastomosis_crossing_by_root(exp,lim_considered=1):
-    hyphaes, problems = get_hyphae(exp,lim_considered=lim_considered)
+def resolve_anastomosis_crossing_by_root(exp, lim_considered=1):
+    hyphaes, problems = get_hyphae(exp, lim_considered=lim_considered)
     exp.hyphaes = hyphaes
     print("getting anastomosing", len(hyphaes))
     anastomosing_hyphae = get_anastomosing_hyphae(exp)
@@ -284,13 +284,16 @@ def resolve_anastomosis_crossing_by_root(exp,lim_considered=1):
     for label in labels:
         exp.nodes.append(Node(label, exp))
     print("getting hyphae again")
-    hyphaes, problems = get_hyphae(exp,lim_considered=lim_considered)
+    hyphaes, problems = get_hyphae(exp, lim_considered=lim_considered)
     exp.hyphaes = hyphaes
 
 
-def get_hyphae(experiment,lim_considered=1):
-    tips = [node for node in experiment.nodes if node.degree(node.ts()[0]) == 1
-            and len(node.ts())>=lim_considered]
+def get_hyphae(experiment, lim_considered=1):
+    tips = [
+        node
+        for node in experiment.nodes
+        if node.degree(node.ts()[0]) == 1 and len(node.ts()) >= lim_considered
+    ]
     problems = []
     hyphaes = []
     for i, tip in enumerate(tips):

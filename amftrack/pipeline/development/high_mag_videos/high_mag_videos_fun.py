@@ -10,16 +10,23 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
 )
 import scipy
 from amftrack.pipeline.functions.image_processing.node_id import remove_spurs
-from amftrack.pipeline.functions.image_processing.extract_skel import remove_component, remove_holes
+from amftrack.pipeline.functions.image_processing.extract_skel import (
+    remove_component,
+    remove_holes,
+)
 import numpy as np
-from amftrack.pipeline.functions.image_processing.extract_width_fun import generate_pivot_indexes, compute_section_coordinates
+from amftrack.pipeline.functions.image_processing.extract_width_fun import (
+    generate_pivot_indexes,
+    compute_section_coordinates,
+)
 from skimage.measure import profile_line
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
 
-def get_length_um_edge(edge, nx_graph,space_pixel_size):
+
+def get_length_um_edge(edge, nx_graph, space_pixel_size):
     pixel_conversion_factor = space_pixel_size
     length_edge = 0
-    pixels = nx_graph.get_edge_data(*edge)['pixel_list']
+    pixels = nx_graph.get_edge_data(*edge)["pixel_list"]
     for i in range(len(pixels) // 10 + 1):
         if i * 10 <= len(pixels) - 1:
             length_edge += np.linalg.norm(
@@ -28,6 +35,7 @@ def get_length_um_edge(edge, nx_graph,space_pixel_size):
             )
     #             length_edge+=np.linalg.norm(np.array(pixels[len(pixels)//10-1*10-1])-np.array(pixels[-1]))
     return length_edge * pixel_conversion_factor
+
 
 def calcGST(inputIMG, w):
     img = inputIMG.astype(np.float32)
@@ -52,11 +60,12 @@ def calcGST(inputIMG, w):
     imgOrientationOut = 0.5 * imgOrientationOut
     return imgCoherencyOut, imgOrientationOut
 
-def segment(images_adress,threshold=10):
+
+def segment(images_adress, threshold=10):
     images = [imageio.imread(file) for file in images_adress]
     images = [cv2.resize(image, np.flip(images[0].shape)) for image in images]
-    average_proj = np.mean(np.array(images),axis=0)
-    segmented = average_proj>threshold
+    average_proj = np.mean(np.array(images), axis=0)
+    segmented = average_proj > threshold
     segmented = remove_holes(segmented)
     segmented = segmented.astype(np.uint8)
     connected = remove_component(segmented)
@@ -64,14 +73,15 @@ def segment(images_adress,threshold=10):
     skeletonized = cv2.ximgproc.thinning(np.array(connected, dtype=np.uint8))
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
-    nx_graph, pos = remove_spurs(nx_graph, pos,threshold = 20)
+    nx_graph, pos = remove_spurs(nx_graph, pos, threshold=20)
     # nx_graph = clean_degree_4(nx_graph, pos)[0]
-    return(skeletonized,nx_graph,pos)
+    return (skeletonized, nx_graph, pos)
+
 
 def extract_section_profiles_for_edge(
     edge: tuple,
     pos: dict,
-    raw_im : np.array,
+    raw_im: np.array,
     nx_graph,
     resolution=5,
     offset=4,
@@ -89,7 +99,7 @@ def extract_section_profiles_for_edge(
     :target_length: length of the section extracted in pixels
     :return: np.array of sections, list of segments in TIMESTEP referential
     """
-    pixel_list = orient(nx_graph.get_edge_data(*edge)['pixel_list'],pos[edge[0]])
+    pixel_list = orient(nx_graph.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
     offset = max(
         offset, step
     )  # avoiding index out of range at start and end of pixel_list
@@ -112,16 +122,18 @@ def extract_section_profiles_for_edge(
         l.append(profile)
     return np.concatenate(l, axis=0), list_of_segments
 
-def plot_segments_on_image(segments,ax):
+
+def plot_segments_on_image(segments, ax):
     for (point1, point2) in segments:
         ax.plot(
-                [point1[1], point2[1]],  # x1, x2
-                [point1[0], point2[0]],  # y1, y2
-                color="red",
-                linewidth=2,
-            )
+            [point1[1], point2[1]],  # x1, x2
+            [point1[0], point2[0]],  # y1, y2
+            color="red",
+            linewidth=2,
+        )
 
-def get_kymo(edge,pos,images_adress,nx_graph_pruned):
+
+def get_kymo(edge, pos, images_adress, nx_graph_pruned):
     kymo = []
     for image_adress in images_adress:
         image = imageio.imread(image_adress)
@@ -135,41 +147,42 @@ def get_kymo(edge,pos,images_adress,nx_graph_pruned):
             step=15,
             target_length=10,
         )
-        kymo_line = np.mean(slices,axis=1)
+        kymo_line = np.mean(slices, axis=1)
         kymo.append(kymo_line)
-    return(np.array(kymo))
+    return np.array(kymo)
+
 
 def filter_kymo(kymo):
-    A = kymo[:,:]
-    B = np.flip(A,axis=0)
-    C = np.flip(A,axis=1)
-    D = np.flip(B,axis=1)
-    tiles = [[D,B,D],[C,A,C],[D,B,D]]
+    A = kymo[:, :]
+    B = np.flip(A, axis=0)
+    C = np.flip(A, axis=1)
+    D = np.flip(B, axis=1)
+    tiles = [[D, B, D], [C, A, C], [D, B, D]]
     tiles = [cv2.hconcat(imgs) for imgs in tiles]
     tiling_for_fourrier = cv2.vconcat(tiles)
     dark_image_grey_fourier = np.fft.fftshift(np.fft.fft2(tiling_for_fourrier))
-    coordinates_middle = np.array(dark_image_grey_fourier.shape)//2
-    LT_quadrant = np.s_[:coordinates_middle[0],:coordinates_middle[1]]
-    LB_quadrant = np.s_[coordinates_middle[0]+1:,:coordinates_middle[1]]
-    RB_quadrant = np.s_[coordinates_middle[0]+1:,coordinates_middle[1]:]
-    RT_quadrant = np.s_[:coordinates_middle[0],coordinates_middle[1]:]
+    coordinates_middle = np.array(dark_image_grey_fourier.shape) // 2
+    LT_quadrant = np.s_[: coordinates_middle[0], : coordinates_middle[1]]
+    LB_quadrant = np.s_[coordinates_middle[0] + 1 :, : coordinates_middle[1]]
+    RB_quadrant = np.s_[coordinates_middle[0] + 1 :, coordinates_middle[1] :]
+    RT_quadrant = np.s_[: coordinates_middle[0], coordinates_middle[1] :]
 
-    filtered_fourrier  = dark_image_grey_fourier
+    filtered_fourrier = dark_image_grey_fourier
     filtered_fourrier[LT_quadrant] = 0
     filtered_fourrier[RB_quadrant] = 0
     filtered = np.fft.ifft2(filtered_fourrier)
-    shape_v,shape_h = filtered.shape
-    shape_v,shape_h = shape_v//3,shape_h//3
-    middle_slice = np.s_[shape_v:2*shape_v,shape_h:2*shape_h]
+    shape_v, shape_h = filtered.shape
+    shape_v, shape_h = shape_v // 3, shape_h // 3
+    middle_slice = np.s_[shape_v : 2 * shape_v, shape_h : 2 * shape_h]
     middle = filtered[middle_slice]
-    filtered_left = A-np.abs(middle)
-    filtered_fourrier  = dark_image_grey_fourier
+    filtered_left = A - np.abs(middle)
+    filtered_fourrier = dark_image_grey_fourier
     filtered_fourrier[RT_quadrant] = 0
     filtered_fourrier[LB_quadrant] = 0
     filtered = np.fft.ifft2(filtered_fourrier)
     middle = filtered[middle_slice]
-    filtered_right= A-np.abs(middle)
-    return(filtered_left,filtered_right)
+    filtered_right = A - np.abs(middle)
+    return (filtered_left, filtered_right)
 
 
 def nan_helper(y):

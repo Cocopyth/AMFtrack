@@ -1,10 +1,11 @@
 import sys
 from amftrack.util.sys import (
     update_analysis_info,
-    get_analysis_info,)
+    get_analysis_info,
+)
 from amftrack.pipeline.launching.run_super import run_parallel_post
 from amftrack.pipeline.functions.post_processing.time_hypha import *
-from amftrack.pipeline.launching.run_super import run_parallel,run_launcher
+from amftrack.pipeline.launching.run_super import run_parallel, run_launcher
 import pandas as pd
 import os
 
@@ -14,7 +15,7 @@ stage = int(sys.argv[3])
 plates = sys.argv[4:]
 update_analysis_info(directory_targ)
 analysis_info = get_analysis_info(directory_targ)
-analysis_folders = analysis_info.loc[analysis_info['unique_id'].isin(plates)]
+analysis_folders = analysis_info.loc[analysis_info["unique_id"].isin(plates)]
 list_f = [
     get_pos_x,
     get_pos_y,
@@ -68,10 +69,21 @@ for index, row in analysis_folders.iterrows():
             node="fat",
         )
 
-if stage>=0:
-    run_launcher('analysis_uploader.py', [directory_targ, name_job], plates, '20:00', dependency=True,
-                 name_job=name_job)
+if stage >= 0:
+    run_launcher(
+        "analysis_uploader.py",
+        [directory_targ, name_job],
+        plates,
+        "20:00",
+        dependency=True,
+        name_job=name_job,
+    )
 else:
-    run_launcher('dropbox_uploader.py',[directory_targ,name_job]
-                 ,plates,'12:00:00',dependency=True,name_job = name_job)
-
+    run_launcher(
+        "dropbox_uploader.py",
+        [directory_targ, name_job],
+        plates,
+        "12:00:00",
+        dependency=True,
+        name_job=name_job,
+    )

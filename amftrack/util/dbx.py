@@ -123,7 +123,8 @@ def upload(file_path, target_path, chunk_size=4 * 1024 * 1024, catch_exception=T
                     return e
             break
 
-def upload_folder(path,target_drop):
+
+def upload_folder(path, target_drop):
     for root, dirs, files in os.walk(path):
         for filename in files:
             # construct the full local path
@@ -309,14 +310,18 @@ def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     response = dbx.files_list_folder(dir_drop, recursive=True)
     # for fil in response.entries:
     listfiles = []
-    folders_interest = ['param.m',"experiment.pick"]
+    folders_interest = ["param.m", "experiment.pick"]
     while response.has_more:
         listfiles += [
-            file for file in response.entries if file.name.split("/")[-1] in folders_interest
+            file
+            for file in response.entries
+            if file.name.split("/")[-1] in folders_interest
         ]
         response = dbx.files_list_folder_continue(response.cursor)
     listfiles += [
-        file for file in response.entries if file.name.split("/")[-1] in folders_interest
+        file
+        for file in response.entries
+        if file.name.split("/")[-1] in folders_interest
     ]
     # print([((file.path_lower.split(".")[0]) + "_info.json") for file in listfiles if (file.name.split(".")[-1] == "zip") &
     #        (((file.path_lower.split(".")[0]) + "_info.json") not in listjson)])
@@ -354,17 +359,22 @@ def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     )
     return df
 
+
 def get_dropbox_analysis_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     dbx = load_dbx()
     response = dbx.files_list_folder(dir_drop, recursive=True)
     listfiles = []
     while response.has_more:
         listfiles += [
-            file for file in response.entries if file.name.split("/")[-1] == "experiment.pick"
+            file
+            for file in response.entries
+            if file.name.split("/")[-1] == "experiment.pick"
         ]
         response = dbx.files_list_folder_continue(response.cursor)
     listfiles += [
-        file for file in response.entries if file.name.split("/")[-1] == "experiment.pick"
+        file
+        for file in response.entries
+        if file.name.split("/")[-1] == "experiment.pick"
     ]
     listfiles.reverse()
     names = [file.path_display.split("/")[-2] for file in listfiles]
@@ -400,6 +410,7 @@ def get_dropbox_analysis_folders(dir_drop: str, skip_size: bool = True) -> pd.Da
     )
     return df
 
+
 def upload_folders(
     folders: pd.DataFrame, dir_drop="DATA", catch_exception=True, delete=False
 ):
@@ -419,7 +430,7 @@ def upload_folders(
                     + str(int(str(line["CrossDate"].iloc[0]).replace("'", "")))
                 )
             except:
-                id_unique='faulty_param_files'
+                id_unique = "faulty_param_files"
             path_snap = line["total_path"].iloc[0]
             for subfolder in os.listdir(path_snap):
                 path_total = os.path.join(path_snap, subfolder)
@@ -430,7 +441,7 @@ def upload_folders(
                 )
             pbar.update(1)
             if delete:
-                if len(os.listdir(path_snap)) ==1:
+                if len(os.listdir(path_snap)) == 1:
                     os.remove(os.path.join(path_snap, "param.m"))
                     os.rmdir(path_snap)
 
@@ -462,7 +473,7 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
                 directory_target, folder, path_drop.split("/")[-1]
             )
             print(path_drop, path_local)
-            if file.name!="time_hypha_info":
+            if file.name != "time_hypha_info":
 
                 download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
 

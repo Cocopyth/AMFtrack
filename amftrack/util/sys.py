@@ -229,7 +229,9 @@ def update_plate_info_local(directory: str) -> None:
         json.dump(plate_info, jsonf, indent=4)
 
 
-def update_plate_info(directory: str, local=True,strong_constraint = True,suffix_data_info='') -> None:
+def update_plate_info(
+    directory: str, local=True, strong_constraint=True, suffix_data_info=""
+) -> None:
     """*
     1/ Download `data_info.json` file containing all information about acquisitions.
     2/ Add all acquisition files in the `directory` path to the `data_info.json`.
@@ -239,7 +241,7 @@ def update_plate_info(directory: str, local=True,strong_constraint = True,suffix
     # TODO(FK): add a local version without dropbox modification
     listdir = os.listdir(directory)
     source = f"/data_info.json"
-    target = os.path.join(temp_path,f'data_info{suffix_data_info}.json')
+    target = os.path.join(temp_path, f"data_info{suffix_data_info}.json")
     if local:
         plate_info = {}
     else:
@@ -248,13 +250,18 @@ def update_plate_info(directory: str, local=True,strong_constraint = True,suffix
     with tqdm(total=len(listdir), desc="analysed") as pbar:
         for folder in listdir:
             path_snap = os.path.join(directory, folder)
-            if os.path.exists(os.path.join(path_snap,'Img')):
-                sub_list_files = os.listdir(os.path.join(path_snap,'Img'))
+            if os.path.exists(os.path.join(path_snap, "Img")):
+                sub_list_files = os.listdir(os.path.join(path_snap, "Img"))
                 is_real_folder = os.path.isfile(os.path.join(path_snap, "param.m"))
                 if strong_constraint:
-                    is_real_folder *=(os.path.isfile(os.path.join(path_snap, "Img","Img_r03_c05.tif"))\
-                        * len(sub_list_files)>=100)
-                if  is_real_folder:
+                    is_real_folder *= (
+                        os.path.isfile(
+                            os.path.join(path_snap, "Img", "Img_r03_c05.tif")
+                        )
+                        * len(sub_list_files)
+                        >= 100
+                    )
+                if is_real_folder:
                     params = get_param(folder, directory)
                     ss = folder.split("_")[0]
                     ff = folder.split("_")[1]
@@ -276,9 +283,9 @@ def update_plate_info(directory: str, local=True,strong_constraint = True,suffix
         upload(target, f"{source}", chunk_size=256 * 1024 * 1024)
 
 
-def get_data_info(local=False,suffix_data_info=''):
+def get_data_info(local=False, suffix_data_info=""):
     source = f"/data_info.json"
-    target = os.path.join(temp_path,f'data_info{suffix_data_info}.json')
+    target = os.path.join(temp_path, f"data_info{suffix_data_info}.json")
 
     if not local:
         download(source, target, end="")
@@ -318,7 +325,7 @@ def get_current_folders_local(directory: str) -> pd.DataFrame:
 
 
 def get_current_folders(
-    directory: str, local=True,suffix_data_info=''
+    directory: str, local=True, suffix_data_info=""
 ) -> pd.DataFrame:
     """
     Returns a pandas data frame with all informations about the acquisition files
@@ -326,7 +333,7 @@ def get_current_folders(
     WARNING: directory must finish with '/'
     """
     # TODO(FK): solve the / problem
-    plate_info = get_data_info(local,suffix_data_info)
+    plate_info = get_data_info(local, suffix_data_info)
     listdir = os.listdir(directory)
     return plate_info.loc[
         np.isin(plate_info["folder"], listdir)
@@ -352,7 +359,7 @@ def get_folders_by_plate_id(plate_id, begin=0, end=-1, directory=None):
     return select_folders
 
 
-def update_analysis_info(directory,suffix_analysis_info=''):
+def update_analysis_info(directory, suffix_analysis_info=""):
     listdir = os.listdir(directory)
     analysis_dir = [fold for fold in listdir if fold.split("_")[0] == "Analysis"]
     infos_analysed = {}
@@ -362,7 +369,7 @@ def update_analysis_info(directory,suffix_analysis_info=''):
         op_id = int(folder.split("_")[-2])
         dt = datetime.fromtimestamp(op_id // 1000000000)
         path = f"{directory}{folder}/folder_info.json"
-        infos = pd.read_json(path,dtype = {'unique_id':str})
+        infos = pd.read_json(path, dtype={"unique_id": str})
         if len(infos) > 0:
             column_interest = [column for column in infos.columns if column[0] != "/"]
             metadata["version"] = version
@@ -370,8 +377,12 @@ def update_analysis_info(directory,suffix_analysis_info=''):
                 if column != "folder":
                     info = str(infos[column].iloc[0])
                     metadata[column] = info
-            metadata["date_begin"] = datetime.strftime(infos["datetime"].iloc[0], "%d.%m.%Y, %H:%M:")
-            metadata["date_end"] = datetime.strftime(infos["datetime"].iloc[-1], "%d.%m.%Y, %H:%M:")
+            metadata["date_begin"] = datetime.strftime(
+                infos["datetime"].iloc[0], "%d.%m.%Y, %H:%M:"
+            )
+            metadata["date_end"] = datetime.strftime(
+                infos["datetime"].iloc[-1], "%d.%m.%Y, %H:%M:"
+            )
             metadata["number_timepoints"] = len(infos)
             metadata["path_exp"] = f"{folder}/experiment.pick"
             metadata["path_global_hypha_info"] = f"{folder}/global_hypha_info.json"
@@ -380,45 +391,51 @@ def update_analysis_info(directory,suffix_analysis_info=''):
             metadata["path_global_plate_info"] = f"{folder}/global_plate_info.json"
             metadata["date_run_analysis"] = datetime.strftime(dt, "%d.%m.%Y, %H:%M:")
             infos_analysed[folder] = metadata
-    target = os.path.join(temp_path, f'analysis_info{suffix_analysis_info}.json')
+    target = os.path.join(temp_path, f"analysis_info{suffix_analysis_info}.json")
 
     with open(target, "w") as jsonf:
         json.dump(infos_analysed, jsonf, indent=4)
 
 
-def get_analysis_info(directory,suffix_analysis_info=''):
-    target = os.path.join(temp_path, f'analysis_info{suffix_analysis_info}.json')
+def get_analysis_info(directory, suffix_analysis_info=""):
+    target = os.path.join(temp_path, f"analysis_info{suffix_analysis_info}.json")
 
-    analysis_info = pd.read_json(
-        target, convert_dates=True
-    ).transpose()
+    analysis_info = pd.read_json(target, convert_dates=True).transpose()
     analysis_info.index.name = "folder_analysis"
     analysis_info.reset_index(inplace=True)
     return analysis_info
 
+
 def get_analysis_folders():
     analysis_folders = pd.DataFrame()
     for dire in os.walk(dropbox_path):
-        name_analysis = dire[0].split('\\')[-1].split('_')
-        if name_analysis[0] == 'Analysis':
+        name_analysis = dire[0].split("\\")[-1].split("_")
+        if name_analysis[0] == "Analysis":
             analysis_dir = dire[0]
             path_save = os.path.join(analysis_dir, "folder_info.json")
             if os.path.exists(path_save):
                 folders_plate = pd.read_json(path_save)
                 infos = folders_plate.iloc[0][1:10]
-                infos['total_path'] = analysis_dir
-                infos['time_plate'] = os.path.isfile(os.path.join(analysis_dir,'time_plate_info.json'))
-                infos['global_hypha'] = os.path.isfile(os.path.join(analysis_dir, 'global_hypha_info.json'))
-                infos['time_hypha'] = os.path.isdir(os.path.join(analysis_dir, 'time_hypha_info.json'))
+                infos["total_path"] = analysis_dir
+                infos["time_plate"] = os.path.isfile(
+                    os.path.join(analysis_dir, "time_plate_info.json")
+                )
+                infos["global_hypha"] = os.path.isfile(
+                    os.path.join(analysis_dir, "global_hypha_info.json")
+                )
+                infos["time_hypha"] = os.path.isdir(
+                    os.path.join(analysis_dir, "time_hypha_info.json")
+                )
 
-                infos['num_folders'] = len(folders_plate)
+                infos["num_folders"] = len(folders_plate)
                 analysis_folders = pd.concat([analysis_folders, infos], axis=1)
 
-    analysis_folders = analysis_folders.transpose().reset_index().drop('index', axis=1)
-    return(analysis_folders)
+    analysis_folders = analysis_folders.transpose().reset_index().drop("index", axis=1)
+    return analysis_folders
+
 
 def get_time_plate_info_from_analysis(analysis_folders):
-    analysis_dirs = analysis_folders['total_path']
+    analysis_dirs = analysis_folders["total_path"]
     time_plate_info = pd.DataFrame()
     folders = pd.DataFrame()
     for analysis_dir in analysis_dirs:
@@ -429,25 +446,33 @@ def get_time_plate_info_from_analysis(analysis_folders):
         path_save = os.path.join(analysis_dir, "folder_info.json")
         folders_plate = pd.read_json(path_save)
         folders_plate = folders_plate.reset_index()
-        table = pd.concat((table, (folders_plate['datetime'] - folders_plate['datetime'].iloc[0])), axis=1)
-        table = table.rename(columns={'datetime': 'time_since_begin'})
-        table['time_since_begin_h'] = (table['time_since_begin'].copy() / np.timedelta64(1, 'h'))
+        table = pd.concat(
+            (table, (folders_plate["datetime"] - folders_plate["datetime"].iloc[0])),
+            axis=1,
+        )
+        table = table.rename(columns={"datetime": "time_since_begin"})
+        table["time_since_begin_h"] = table["time_since_begin"].copy() / np.timedelta64(
+            1, "h"
+        )
         table = pd.concat((table, pd.DataFrame(folders_plate.index.values)), axis=1)
         table = table.rename(columns={0: "timestep"})
-        table = pd.concat((table, (folders_plate['folder'])), axis=1)
-        table = pd.concat((table, (folders_plate['Plate'])), axis=1)
-        table = pd.concat((table, (folders_plate['unique_id'])), axis=1)
-        table = pd.concat((table, (folders_plate['datetime'])), axis=1)
-        table = pd.concat((table, (folders_plate['PrincePos'])), axis=1)
-        table = pd.concat((table, (folders_plate['root'])), axis=1)
-        table = pd.concat((table, (folders_plate['strain'])), axis=1)
-        table = pd.concat((table, (folders_plate['medium'])), axis=1)
+        table = pd.concat((table, (folders_plate["folder"])), axis=1)
+        table = pd.concat((table, (folders_plate["Plate"])), axis=1)
+        table = pd.concat((table, (folders_plate["unique_id"])), axis=1)
+        table = pd.concat((table, (folders_plate["datetime"])), axis=1)
+        table = pd.concat((table, (folders_plate["PrincePos"])), axis=1)
+        table = pd.concat((table, (folders_plate["root"])), axis=1)
+        table = pd.concat((table, (folders_plate["strain"])), axis=1)
+        table = pd.concat((table, (folders_plate["medium"])), axis=1)
         time_plate_info = pd.concat([time_plate_info, table], ignore_index=True)
-        folders = pd.concat([folders.copy(), folders_plate.copy()], axis=0, ignore_index=True)
-    return(folders,time_plate_info)
+        folders = pd.concat(
+            [folders.copy(), folders_plate.copy()], axis=0, ignore_index=True
+        )
+    return (folders, time_plate_info)
+
 
 def get_global_hypha_info_from_analysis(analysis_folders):
-    analysis_dirs = analysis_folders['total_path']
+    analysis_dirs = analysis_folders["total_path"]
     global_hypha_info = pd.DataFrame()
     folders = pd.DataFrame()
     for analysis_dir in analysis_dirs:
@@ -460,18 +485,21 @@ def get_global_hypha_info_from_analysis(analysis_folders):
             folders_plate = pd.read_json(path_save)
             folders_plate = folders_plate.reset_index()
             table = table.reset_index()
-            table['unique_id'] = folders_plate['unique_id'].iloc[0]
-            table['PrincePos'] = folders_plate['PrincePos'].iloc[0]
-            table['root'] = folders_plate['root'].iloc[0]
-            table['strain'] = folders_plate['strain'].iloc[0]
-            table['medium'] = folders_plate['medium'].iloc[0]
+            table["unique_id"] = folders_plate["unique_id"].iloc[0]
+            table["PrincePos"] = folders_plate["PrincePos"].iloc[0]
+            table["root"] = folders_plate["root"].iloc[0]
+            table["strain"] = folders_plate["strain"].iloc[0]
+            table["medium"] = folders_plate["medium"].iloc[0]
             global_hypha_info = pd.concat([global_hypha_info, table], ignore_index=True)
-            folders = pd.concat([folders.copy(), folders_plate.copy()], axis=0, ignore_index=True)
+            folders = pd.concat(
+                [folders.copy(), folders_plate.copy()], axis=0, ignore_index=True
+            )
 
-    return(folders,global_hypha_info)
+    return (folders, global_hypha_info)
+
 
 def get_time_hypha_info_from_analysis(analysis_folders):
-    analysis_dirs = analysis_folders['total_path']
+    analysis_dirs = analysis_folders["total_path"]
     time_hypha_info = pd.DataFrame()
     folders = pd.DataFrame()
     time_hypha_infos = []
@@ -481,32 +509,35 @@ def get_time_hypha_info_from_analysis(analysis_folders):
             path_save = os.path.join(analysis_dir, "folder_info.json")
             folders_plate = pd.read_json(path_save)
             folders_plate = folders_plate.reset_index()
-            folders_plate = folders_plate.sort_values('datetime')
+            folders_plate = folders_plate.sort_values("datetime")
             json_paths = os.listdir(path_time_hypha)
             tables = []
             for path in json_paths:
-                index = int(path.split('_')[-1].split('.')[0])
+                index = int(path.split("_")[-1].split(".")[0])
                 line = folders_plate.iloc[index]
                 table = pd.read_json(os.path.join(path_time_hypha, path))
                 table = table.transpose()
                 tables.append(table)
                 table = table.fillna(-1)
-                table['time_since_begin_h'] =  (line['datetime'] - folders_plate['datetime'].iloc[0])
-                table['folder'] = line['folder']
-                table['Plate'] = line['Plate']
-                table['unique_id'] = line['unique_id']
-                table['datetime'] = line['datetime']
-                table['PrincePos'] = line['PrincePos']
-                table['root'] = line['root']
-                table['strain'] = line['strain']
-                table['medium'] = line['medium']
+                table["time_since_begin_h"] = (
+                    line["datetime"] - folders_plate["datetime"].iloc[0]
+                )
+                table["folder"] = line["folder"]
+                table["Plate"] = line["Plate"]
+                table["unique_id"] = line["unique_id"]
+                table["datetime"] = line["datetime"]
+                table["PrincePos"] = line["PrincePos"]
+                table["root"] = line["root"]
+                table["strain"] = line["strain"]
+                table["medium"] = line["medium"]
                 tables.append(table)
-            time_hypha_info_plate = pd.concat(tables, axis = 0,ignore_index=True)
+            time_hypha_info_plate = pd.concat(tables, axis=0, ignore_index=True)
             time_hypha_info_plate.reset_index(inplace=True, drop=True)
             time_hypha_infos.append(time_hypha_info_plate)
             folders = pd.concat([folders, folders_plate], axis=0, ignore_index=True)
     time_hypha_info = pd.concat(time_hypha_infos, axis=0, ignore_index=True)
-    return(folders,time_hypha_info)
+    return (folders, time_hypha_info)
+
 
 def get_data_tables(op_id=time_ns(), redownload=True):
     API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))

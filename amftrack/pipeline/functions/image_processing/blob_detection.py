@@ -6,6 +6,7 @@ import os
 from amftrack.util.sys import temp_path
 from amftrack.util.dbx import upload
 
+
 def detect_blobs(im):
     im2 = 255 - im
     im2_bw = im2 >= 200
@@ -23,9 +24,10 @@ def detect_blobs(im):
     spores = []
     for keypoint in keypoints:
         x, y = keypoint.pt
-        r = keypoint.size//2
-        spores.append((x,y,r))
-    return(spores)
+        r = keypoint.size // 2
+        spores.append((x, y, r))
+    return spores
+
 
 def plot_blobs_upload(im):
     im2 = 255 - im
@@ -55,14 +57,15 @@ def plot_blobs_upload(im):
         r = keypoint.size
         if r > 0:
             print(r // 2, np.pi * (r // 2) ** 2, x, y)
-            c = plt.Circle((x, y), r // 1.8, color="red", linewidth=1, fill=False, alpha=0.3)
+            c = plt.Circle(
+                (x, y), r // 1.8, color="red", linewidth=1, fill=False, alpha=0.3
+            )
             ax.add_patch(c)
     time = time_ns()
-    name_save = f'spore{time}.png'
+    name_save = f"spore{time}.png"
     path = os.path.join(temp_path, name_save)
     plt.savefig(path, dpi=600)
     dir_drop = "/DATA/PRINCE_OVERVIEW/SPORES"
-    target_drop = f'{dir_drop}/{name_save}'
+    target_drop = f"{dir_drop}/{name_save}"
     upload(path, target_drop, catch_exception=False)
     os.remove(path)
-

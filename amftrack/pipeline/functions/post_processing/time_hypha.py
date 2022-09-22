@@ -146,13 +146,16 @@ def get_distance_final_pos(hypha, t, tp1, args):
     pos_end = hypha.end.pos(tf)
     return ("distance_final_pos", np.linalg.norm(hypha.end.pos(t) - pos_end))
 
+
 def get_pos_x(hypha, t, tp1, args):
     pos_end = hypha.end.pos(t)
     return ("pos_x", int(pos_end[0]))
 
+
 def get_pos_y(hypha, t, tp1, args):
     pos_end = hypha.end.pos(t)
     return ("pos_y", int(pos_end[1]))
+
 
 def local_density(hypha, t, tp1, args):
     window = args[0]

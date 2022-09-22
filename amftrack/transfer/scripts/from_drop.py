@@ -12,7 +12,7 @@ directory = str(sys.argv[1])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
-run_info = run_info.sort_values('folder')
+run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
+run_info = run_info.sort_values("folder")
 folders = run_info.iloc[i : i + 1]
 download_folders_drop(folders, directory)
