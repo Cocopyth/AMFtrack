@@ -435,6 +435,7 @@ def get_time_plate_info_from_analysis(analysis_folders):
         table = pd.concat((table, pd.DataFrame(folders_plate.index.values)), axis=1)
         table = table.rename(columns={0: "timestep"})
         table = pd.concat((table, (folders_plate['folder'])), axis=1)
+        table = pd.concat((table, (folders_plate['Plate'])), axis=1)
         table = pd.concat((table, (folders_plate['unique_id'])), axis=1)
         table = pd.concat((table, (folders_plate['datetime'])), axis=1)
         table = pd.concat((table, (folders_plate['PrincePos'])), axis=1)
@@ -444,6 +445,68 @@ def get_time_plate_info_from_analysis(analysis_folders):
         time_plate_info = pd.concat([time_plate_info, table], ignore_index=True)
         folders = pd.concat([folders.copy(), folders_plate.copy()], axis=0, ignore_index=True)
     return(folders,time_plate_info)
+
+def get_global_hypha_info_from_analysis(analysis_folders):
+    analysis_dirs = analysis_folders['total_path']
+    global_hypha_info = pd.DataFrame()
+    folders = pd.DataFrame()
+    for analysis_dir in analysis_dirs:
+        path_save = os.path.join(analysis_dir, "global_hypha_info.json")
+        if os.path.exists(path_save):
+            table = pd.read_json(path_save)
+            table = table.transpose()
+            table = table.fillna(-1)
+            path_save = os.path.join(analysis_dir, "folder_info.json")
+            folders_plate = pd.read_json(path_save)
+            folders_plate = folders_plate.reset_index()
+            table = table.reset_index()
+            table['unique_id'] = folders_plate['unique_id'].iloc[0]
+            table['PrincePos'] = folders_plate['PrincePos'].iloc[0]
+            table['root'] = folders_plate['root'].iloc[0]
+            table['strain'] = folders_plate['strain'].iloc[0]
+            table['medium'] = folders_plate['medium'].iloc[0]
+            global_hypha_info = pd.concat([global_hypha_info, table], ignore_index=True)
+            folders = pd.concat([folders.copy(), folders_plate.copy()], axis=0, ignore_index=True)
+
+    return(folders,global_hypha_info)
+
+def get_time_hypha_info_from_analysis(analysis_folders):
+    analysis_dirs = analysis_folders['total_path']
+    time_hypha_info = pd.DataFrame()
+    folders = pd.DataFrame()
+    time_hypha_infos = []
+    for analysis_dir in analysis_dirs:
+        path_time_hypha = os.path.join(analysis_dir, "time_hypha_info")
+        if os.path.exists(path_time_hypha):
+            path_save = os.path.join(analysis_dir, "folder_info.json")
+            folders_plate = pd.read_json(path_save)
+            folders_plate = folders_plate.reset_index()
+            folders_plate = folders_plate.sort_values('datetime')
+            json_paths = os.listdir(path_time_hypha)
+            tables = []
+            for path in json_paths:
+                index = int(path.split('_')[-1].split('.')[0])
+                line = folders_plate.iloc[index]
+                table = pd.read_json(os.path.join(path_time_hypha, path))
+                table = table.transpose()
+                tables.append(table)
+                table = table.fillna(-1)
+                table['time_since_begin_h'] =  (line['datetime'] - folders_plate['datetime'].iloc[0])
+                table['folder'] = line['folder']
+                table['Plate'] = line['Plate']
+                table['unique_id'] = line['unique_id']
+                table['datetime'] = line['datetime']
+                table['PrincePos'] = line['PrincePos']
+                table['root'] = line['root']
+                table['strain'] = line['strain']
+                table['medium'] = line['medium']
+                tables.append(table)
+            time_hypha_info_plate = pd.concat(tables, axis = 0,ignore_index=True)
+            time_hypha_info_plate.reset_index(inplace=True, drop=True)
+            time_hypha_infos.append(time_hypha_info_plate)
+            folders = pd.concat([folders, folders_plate], axis=0, ignore_index=True)
+    time_hypha_info = pd.concat(time_hypha_infos, axis=0, ignore_index=True)
+    return(folders,time_hypha_info)
 
 def get_data_tables(op_id=time_ns(), redownload=True):
     API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))
