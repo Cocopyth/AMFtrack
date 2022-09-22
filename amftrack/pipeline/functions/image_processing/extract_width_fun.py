@@ -29,7 +29,6 @@ MODEL = keras.models.load_model(
 )
 
 
-
 def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
     """
     From the length of the pixel list, determine which pixel will be chosen to compute width
@@ -38,6 +37,7 @@ def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
     :param offset: offset at the begining and at the end where no points will be selected
     """
     return generate_index_along_sequence(n, resolution, offset)
+
 
 def compute_edge_width_profile(
     exp: Experiment,
@@ -62,6 +62,7 @@ def compute_edge_width_profile(
     predicted_widths = MODEL.predict(profile)
 
     return predicted_widths
+
 
 def compute_section_coordinates(
     pixel_list: List[coord_int], pivot_indexes: List, step: int, target_length=120

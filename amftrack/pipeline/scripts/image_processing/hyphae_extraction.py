@@ -23,7 +23,7 @@ i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
 
-run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
+run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 # print(run_info['unique_id'])
 plates = list(set(run_info["unique_id"].values))
 plates.sort()
@@ -51,13 +51,13 @@ for index in indexes:
     # confusion between plate number and position in Prince
     exp = Experiment(directory)
     select_folders = folders.loc[run_info["folder"].isin(select_folder_names)]
-    print(select_folders['unique_id'])
+    print(select_folders["unique_id"])
     exp.load(select_folders)
     exp.dates.sort()
     # when no width is included
     # width_based_cleaning(exp)
     if labeled:
-        resolve_anastomosis_crossing_by_root(exp,lim_considered=lim_considered)
+        resolve_anastomosis_crossing_by_root(exp, lim_considered=lim_considered)
     # get_mother(exp.hyphaes)
     # solve_two_ends = resolve_ambiguity_two_ends(exp_clean.hyphaes)
     # solved = solve_degree4(exp_clean)

@@ -17,7 +17,7 @@ overwrite = eval(sys.argv[2])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
+run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 list_f, list_args = pickle.load(open(f"{temp_path}/{op_id}.pick", "rb"))
 folder_list = list(run_info["folder_analysis"])
 directory_name = folder_list[i]
@@ -33,7 +33,7 @@ except AttributeError:
 
 load_study_zone(exp)
 
-load_graphs(exp,post_process=True)
+load_graphs(exp, post_process=True)
 exp.dates.sort()
 
 for f, args in zip(list_f, list_args):

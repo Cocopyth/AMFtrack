@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as pltlines
 from pymatreader import read_mat
 import cv2
-from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path,path_code
+from amftrack.util.sys import get_dates_datetime, get_dirname, temp_path, path_code
 import pandas as pd
 from amftrack.pipeline.launching.run_super import directory_project
 import ast
@@ -12,7 +12,7 @@ from time import time
 import imageio
 import scipy
 
-#old function to automatically extract center, should be restarted from scratch
+# old function to automatically extract center, should be restarted from scratch
 # def find_center_orth(directory, row):
 #     directory = directory_project
 #     directory_name = row["folder"]
@@ -380,21 +380,21 @@ def extract_study_zone(dr_orth, dr_center, exp, i=0):
 
 
 def load_study_zone(exp):
-    has_center = os.path.isfile(os.path.join(exp.save_location,"center.npy"))
+    has_center = os.path.isfile(os.path.join(exp.save_location, "center.npy"))
     if not has_center:
-        loc_load = os.path.join(path_code,
-                                'pipeline','functions','post_processing'
-                                ,'default_param')
+        loc_load = os.path.join(
+            path_code, "pipeline", "functions", "post_processing", "default_param"
+        )
     else:
         loc_load = exp.save_location
-    exp.center = np.load(os.path.join(loc_load,"center.npy"))
-    exp.orthog = np.load(os.path.join(loc_load,"orthog.npy"))
-    exp.reach_out = np.load(os.path.join(loc_load,"reach_out.npy"))
-    exp.num_trunk = np.load(os.path.join(loc_load,"num_trunk.npy"))
+    exp.center = np.load(os.path.join(loc_load, "center.npy"))
+    exp.orthog = np.load(os.path.join(loc_load, "orthog.npy"))
+    exp.reach_out = np.load(os.path.join(loc_load, "reach_out.npy"))
+    exp.num_trunk = np.load(os.path.join(loc_load, "num_trunk.npy"))
+
 
 def save_study_zone(exp):
-    exp.center = np.save(f"{exp.save_location}/center.npy",exp.center)
-    exp.orthog = np.save(f"{exp.save_location}/orthog.npy",exp.orthog)
+    exp.center = np.save(f"{exp.save_location}/center.npy", exp.center)
+    exp.orthog = np.save(f"{exp.save_location}/orthog.npy", exp.orthog)
     # exp.reach_out = np.load(f"{exp.save_location}/reach_out.npy")
     # exp.num_trunk = np.load(f"{exp.save_location}/num_trunk.npy")
-

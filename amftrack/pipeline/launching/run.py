@@ -99,8 +99,9 @@ def run(
                 + [f"{op_id}", f"{index}"]
             )
             print(" ".join(command))
-            process = subprocess.run(command,stdout=subprocess.DEVNULL)
+            process = subprocess.run(command, stdout=subprocess.DEVNULL)
             pbar.update(1)
+
 
 def run_all_time(
     code: str,
@@ -129,8 +130,9 @@ def run_all_time(
                 + [f"{op_id}", f"{index}"]
             )
             print(" ".join(command))
-            process = subprocess.run(command,stdout=subprocess.DEVNULL)
+            process = subprocess.run(command, stdout=subprocess.DEVNULL)
             pbar.update(1)
+
 
 def run_transfer(code: str, args: List, folders: pd.DataFrame) -> None:
     """

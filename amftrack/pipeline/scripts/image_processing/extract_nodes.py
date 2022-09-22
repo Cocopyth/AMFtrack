@@ -19,7 +19,7 @@ i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
 
-run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
+run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 
 plates = list(set(run_info["Plate"].values))
 plates.sort()

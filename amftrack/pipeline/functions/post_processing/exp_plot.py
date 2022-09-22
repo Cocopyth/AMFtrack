@@ -7,89 +7,142 @@ from matplotlib import cm
 import matplotlib as mpl
 from shapely.affinity import affine_transform, rotate
 import geopandas as gpd
-from amftrack.util.video_util import make_hull_images,make_video_tile,\
-    make_images_track, make_images_track2, make_images_track3,\
-    make_images_track4, make_images_track_hypha
+from amftrack.util.video_util import (
+    make_hull_images,
+    make_video_tile,
+    make_images_track,
+    make_images_track2,
+    make_images_track3,
+    make_images_track4,
+    make_images_track_hypha,
+)
 from amftrack.util.sys import temp_path
 import numpy as np
 from amftrack.pipeline.functions.post_processing.area_hulls import is_in_study_zone
 import os
+
 
 def delete_files(paths_list):
     for paths in paths_list:
         for path in paths:
             os.remove(path)
 
-def plot_hulls(exp,args = None):
-    paths_list = make_hull_images(exp,range(exp.ts))
+
+def plot_hulls(exp, args=None):
+    paths_list = make_hull_images(exp, range(exp.ts))
     dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
-    texts = [[folder] for folder in list(exp.folders['folder'])]
-    folder_analysis = exp.save_location.split('/')[-1]
+    texts = [[folder] for folder in list(exp.folders["folder"])]
+    folder_analysis = exp.save_location.split("/")[-1]
     upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/{id_unique}_hulls.mp4"
     print(upload_path)
-    make_video_tile(paths_list, texts, None, save_path=None, upload_path=upload_path, fontScale=3)
+    make_video_tile(
+        paths_list, texts, None, save_path=None, upload_path=upload_path, fontScale=3
+    )
     delete_files(paths_list)
 
-def plot_tracking(exp,args = None):
+
+def plot_tracking(exp, args=None):
     paths_list = make_images_track(exp)
     dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
-    folder_analysis = exp.save_location.split('/')[-1]
+    folder_analysis = exp.save_location.split("/")[-1]
     upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/{id_unique}_tracked.mp4"
-    texts = [(folder, '', '', '') for folder in list(exp.folders['folder'])]
+    texts = [(folder, "", "", "") for folder in list(exp.folders["folder"])]
     resize = (2048, 2048)
-    make_video_tile(paths_list, texts, resize, save_path=None, upload_path=upload_path, fontScale=3)
+    make_video_tile(
+        paths_list, texts, resize, save_path=None, upload_path=upload_path, fontScale=3
+    )
     delete_files(paths_list)
 
-def plot_tracking2(exp,args = None):
+
+def plot_tracking2(exp, args=None):
     for i in range(100):
         paths_list = make_images_track2(exp)
         dir_drop = "DATA/PRINCE"
         id_unique = exp.unique_id
-        folder_analysis = exp.save_location.split('/')[-1]
-        upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/{i}_tracked.mp4"
-        texts = [(folder, '', '', '') for folder in list(exp.folders['folder'])]
+        folder_analysis = exp.save_location.split("/")[-1]
+        upload_path = (
+            f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/{i}_tracked.mp4"
+        )
+        texts = [(folder, "", "", "") for folder in list(exp.folders["folder"])]
         resize = (2048, 2048)
-        make_video_tile(paths_list, texts, resize, save_path=None, upload_path=upload_path, fontScale=3)
+        make_video_tile(
+            paths_list,
+            texts,
+            resize,
+            save_path=None,
+            upload_path=upload_path,
+            fontScale=3,
+        )
         delete_files(paths_list)
 
-def plot_hypha(exp,args = None):
+
+def plot_hypha(exp, args=None):
     for i in range(100):
         paths_list = make_images_track3(exp)
         dir_drop = "DATA/PRINCE"
         id_unique = exp.unique_id
-        folder_analysis = exp.save_location.split('/')[-1]
-        upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/{i}_hyphae.mp4"
-        texts = [(folder, '', '', '') for folder in list(exp.folders['folder'])]
+        folder_analysis = exp.save_location.split("/")[-1]
+        upload_path = (
+            f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/{i}_hyphae.mp4"
+        )
+        texts = [(folder, "", "", "") for folder in list(exp.folders["folder"])]
         resize = (2048, 2048)
-        make_video_tile(paths_list, texts, resize, save_path=None, upload_path=upload_path, fontScale=3)
+        make_video_tile(
+            paths_list,
+            texts,
+            resize,
+            save_path=None,
+            upload_path=upload_path,
+            fontScale=3,
+        )
         delete_files(paths_list)
 
-def make_hypha_track(exp,hypha):
-    def plot(exp,args=None):
-        paths_list = make_images_track_hypha(exp,hypha)
+
+def make_hypha_track(exp, hypha):
+    def plot(exp, args=None):
+        paths_list = make_images_track_hypha(exp, hypha)
         dir_drop = "DATA/PRINCE"
         id_unique = exp.unique_id
-        folder_analysis = exp.save_location.split('/')[-1]
+        folder_analysis = exp.save_location.split("/")[-1]
         upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/tracked_hyphae/hypha_{hypha}.mp4"
-        texts = [(folder, '', '', '') for folder in list(exp.folders['folder'])]
+        texts = [(folder, "", "", "") for folder in list(exp.folders["folder"])]
         resize = (2048, 2048)
-        make_video_tile(paths_list, texts, resize, save_path=None, upload_path=upload_path, fontScale=3)
+        make_video_tile(
+            paths_list,
+            texts,
+            resize,
+            save_path=None,
+            upload_path=upload_path,
+            fontScale=3,
+        )
         delete_files(paths_list)
-    return(plot)
 
-def plot_anastomosis(exp,args = None):
+    return plot
+
+
+def plot_anastomosis(exp, args=None):
     for i in range(100):
         paths_list = make_images_track4(exp)
         dir_drop = "DATA/PRINCE"
         id_unique = exp.unique_id
-        folder_analysis = exp.save_location.split('/')[-1]
-        upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/{i}_anastomosis.mp4"
-        texts = [(folder, '', '', '') for folder in list(exp.folders['folder'])]
+        folder_analysis = exp.save_location.split("/")[-1]
+        upload_path = (
+            f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/{i}_anastomosis.mp4"
+        )
+        texts = [(folder, "", "", "") for folder in list(exp.folders["folder"])]
         resize = (2048, 2048)
-        make_video_tile(paths_list, texts, resize, save_path=None, upload_path=upload_path, fontScale=3)
+        make_video_tile(
+            paths_list,
+            texts,
+            resize,
+            save_path=None,
+            upload_path=upload_path,
+            fontScale=3,
+        )
         delete_files(paths_list)
+
 
 # def plot_anastomosis(exp,args=None):
 #     for t in range(exp.ts):
@@ -152,20 +205,6 @@ def plot_anastomosis(exp,args = None):
 #         #     f"/{dir_drop}/{id_unique}/anastomosis/{t}_tip{tip.label}.png",
 #         #     chunk_size=256 * 1024 * 1024,
 #         # )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))
