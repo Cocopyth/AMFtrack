@@ -136,7 +136,7 @@ run_parallel_post(
     name_job="plotting",
     node="fat",
 )
-time = "40:00"
+time = "3:40:00"
 directory = directory
 # list_f = [get_width_f,get_tot_length_C_f,get_tot_growth_C_f]
 # list_f = [get_timestep_anastomosis]
