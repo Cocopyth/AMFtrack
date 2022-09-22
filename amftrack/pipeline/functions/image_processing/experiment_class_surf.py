@@ -520,8 +520,9 @@ def save_graphs(exp, suf=2):
             pickle.dump((g, pos), open(path_save, "wb"))
 
 
-def load_graphs(exp, indexes=None, reload=True, post_process=False):
+def load_graphs(exp, directory, indexes=None, reload=True, post_process=False):
     # TODO : add as a class method
+    exp.directory = directory
     nx_graph_poss = []
     labeled = exp.labeled
     if indexes == None:

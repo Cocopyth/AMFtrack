@@ -22,7 +22,7 @@ select = run_info.loc[run_info["folder_analysis"] == directory_name]
 row = [row for index, row in select.iterrows()][0]
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
-load_graphs(exp)
+load_graphs(exp,directory)
 
 folder = row["folder_analysis"]
 path = f'{directory}{row["folder_analysis"]}'
