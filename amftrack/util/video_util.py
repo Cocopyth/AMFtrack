@@ -19,6 +19,8 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_full,
     reconstruct_image_from_general,
 )
+from amftrack.pipeline.functions.image_processing.hyphae_id_surf import get_anastomosing_hyphae
+
 from amftrack.pipeline.functions.post_processing.area_hulls import is_in_study_zone
 from amftrack.pipeline.functions.post_processing.extract_study_zone import (
     load_study_zone,
@@ -28,6 +30,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     save_graphs,
     load_graphs,
     load_skel,
+    Node
 )
 from amftrack.pipeline.functions.post_processing.area_hulls import (
     get_regular_hulls_area_fixed,
@@ -287,6 +290,122 @@ def make_images_track2(exp):
                 node
                 for node in get_all_nodes(exp, t)
                 if node.is_in(t) and np.linalg.norm(node.pos(t) - pos) <= window
+            ],
+            edges=get_all_edges(exp, t),
+            dilation=4,
+            prettify=False,
+            save_path=path,
+        )
+    return paths
+
+def make_images_track3(exp):
+    """
+    This function makes images centered on the initial position of some random nodes,
+    plots the skeleton on top of the raw image, the label of the nodes at different timesteps
+    it returns the paths_list of those plotted image in the format for tile video making
+    :param exp:
+    :param num_tiles: number of such images to tile together
+    """
+    paths = []
+    ends = [hypha.end for hypha in exp.hyphaes if len(hypha.end.ts())>0]
+    to_choose = [node for node in ends if node.ts()[0]<100 and len(node.ts())>4]
+    node_select = choice(to_choose)
+    t0 = node_select.ts()[-1]
+    pos = node_select.pos(t0)
+    for t in range(exp.ts):
+    # for t in node_select.ts():
+        window = 600
+        region = centered_bounding_box(pos, size=int(1.5 * window))
+
+        nodes = [
+                    node
+                    for node in ends
+                    if node.is_in(t) and np.linalg.norm(node.pos(t) - pos) <= window
+                ]
+
+        if len(nodes)>0:
+            exp.load_tile_information(t)
+            path = f"plot_nodes_{time_ns()}"
+            path = os.path.join(temp_path, path)
+            paths.append([path + ".png"])
+            plot_full(
+                exp,
+                t,
+                region=region,
+                downsizing=1,
+                nodes=nodes,
+                edges=get_all_edges(exp, t),
+                dilation=4,
+                prettify=False,
+                save_path=path,
+            )
+    return paths
+
+def make_images_track4(exp):
+    """
+    This function makes images centered on the initial position of some random nodes,
+    plots the skeleton on top of the raw image, the label of the nodes at different timesteps
+    it returns the paths_list of those plotted image in the format for tile video making
+    :param exp:
+    :param num_tiles: number of such images to tile together
+    """
+    paths = []
+    anastomosing_hyphae = get_anastomosing_hyphae(exp)
+    ends = [result[0].end for result in anastomosing_hyphae]
+    # ends = [hypha.end for hypha in exp.hyphaes]
+
+    node_select = choice(ends)
+    t0 = node_select.ts()[-1]
+    pos = node_select.pos(t0)
+    for t in range(exp.ts):
+        exp.load_tile_information(t)
+        window = 600
+        region = centered_bounding_box(pos, size=int(1.5*window))
+        path = f"plot_nodes_{time_ns()}"
+        path = os.path.join(temp_path, path)
+        paths.append([path + ".png"])
+        plot_full(
+            exp,
+            t,
+            region=region,
+            downsizing=1,
+            nodes=[
+                node
+                for node in ends
+                if node.is_in(t) and np.linalg.norm(node.pos(t) - pos) <= window
+            ],
+            edges=get_all_edges(exp, t),
+            dilation=4,
+            prettify=False,
+            save_path=path,
+        )
+    return paths
+
+def make_images_track_hypha(exp,hypha):
+    """
+    This function makes images centered on the initial position of some random nodes,
+    plots the skeleton on top of the raw image, the label of the nodes at different timesteps
+    it returns the paths_list of those plotted image in the format for tile video making
+    :param exp:
+    :param num_tiles: number of such images to tile together
+    """
+    paths = []
+    node_select = Node(hypha,exp)
+    for t in node_select.ts():
+        pos = node_select.pos(t)
+        exp.load_tile_information(t)
+        window = 600
+        region = centered_bounding_box(pos, size=int(1.5*window))
+        path = f"plot_nodes_{time_ns()}"
+        path = os.path.join(temp_path, path)
+        paths.append([path + ".png"])
+        plot_full(
+            exp,
+            t,
+            region=region,
+            downsizing=1,
+            nodes=[
+                node_select
             ],
             edges=get_all_edges(exp, t),
             dilation=4,
