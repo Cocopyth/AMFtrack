@@ -100,8 +100,8 @@ def plot_hypha(exp, args=None):
         delete_files(paths_list)
 
 
-def make_hypha_track(exp, hypha):
-    def plot(exp, args=None):
+def plot_hypha_track(exp,args = []):
+    for hypha in args:
         paths_list = make_images_track_hypha(exp, hypha)
         dir_drop = "DATA/PRINCE"
         id_unique = exp.unique_id
@@ -118,8 +118,6 @@ def make_hypha_track(exp, hypha):
             fontScale=3,
         )
         delete_files(paths_list)
-
-    return plot
 
 
 def plot_anastomosis(exp, args=None):
