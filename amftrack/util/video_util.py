@@ -226,12 +226,9 @@ def make_images_track(exp):
     """
     paths_list = []
     for t in range(exp.ts):
-    # for t in [0]:
+        # for t in [0]:
 
-        to_plot_nodes = [
-            node
-            for node in get_all_nodes(exp, t)
-        ]
+        to_plot_nodes = [node for node in get_all_nodes(exp, t)]
         path = f"plot_nodes_{time_ns()}"
         path = os.path.join(temp_path, path)
         paths_list.append([path + ".png"])
@@ -251,6 +248,7 @@ def make_images_track(exp):
         )
     return paths_list
 
+
 def make_images_spores(exp, num_tiles=4):
     """
     This function makes images centered on the initial position of some random nodes,
@@ -268,8 +266,13 @@ def make_images_spores(exp, num_tiles=4):
         select = exp.folders
         table = select.sort_values(by="datetime", ascending=True)
         path_spore_data = os.path.join(exp.directory, table["folder"].iloc[t])
-        spore_data = sio.loadmat(os.path.join(path_spore_data, "Analysis", "spores.mat"))["spores"]
-        positions = [exp.timestep_to_general(np.flip(spore_data[i, :2]), t) for i in range(len(spore_data))]
+        spore_data = sio.loadmat(
+            os.path.join(path_spore_data, "Analysis", "spores.mat")
+        )["spores"]
+        positions = [
+            exp.timestep_to_general(np.flip(spore_data[i, :2]), t)
+            for i in range(len(spore_data))
+        ]
         plot_full(
             exp,
             t,
@@ -282,6 +285,7 @@ def make_images_spores(exp, num_tiles=4):
             save_path=path,
         )
     return paths_list
+
 
 def make_images_track2(exp):
     """
@@ -381,11 +385,8 @@ def make_images_anas(exp):
     node_select = choice(ends)
     t0 = node_select.ts()[-1]
     for t in range(exp.ts):
-        positions = [node.pos(node.ts()[-1]) for node in ends if node.ts()[-1]<=t]
-        to_plot_nodes = [
-            node
-            for node in ends if node.is_in(t)
-        ]
+        positions = [node.pos(node.ts()[-1]) for node in ends if node.ts()[-1] <= t]
+        to_plot_nodes = [node for node in ends if node.is_in(t)]
         path = f"plot_nodes_{time_ns()}"
         path = os.path.join(temp_path, path)
         paths.append([path + ".png"])
@@ -402,7 +403,7 @@ def make_images_anas(exp):
             dpi=600,
             node_size=1,
             save_path=path,
-            positions = positions,
+            positions=positions,
         )
     return paths
 

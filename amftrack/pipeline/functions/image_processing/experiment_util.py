@@ -359,7 +359,7 @@ def plot_full(
     with_point_label=False,
     figsize=(12, 8),
     dpi=None,
-    node_size = 5,
+    node_size=5,
 ) -> None:
     """
     This is the general purpose function to plot the full image or a region `region` of the image at
@@ -414,7 +414,7 @@ def plot_full(
     skel_im, _ = reconstruct_skeletton(
         [edge.pixel_list(t) for edge in edges],
         region=region,
-        color_seeds = [(edge.begin.label+edge.end.label)%255 for edge in edges],
+        color_seeds=[(edge.begin.label + edge.end.label) % 255 for edge in edges],
         downsizing=downsizing,
         dilation=dilation,
     )
@@ -432,10 +432,10 @@ def plot_full(
     for node in nodes:
         c = f(list(node.pos(t)))
         color = make_random_color(node.label)[:3]
-        reciprocal_color = 255-color
-        color = tuple(color/255)
-        reciprocal_color = tuple(reciprocal_color/255)
-        bbox_props = dict(boxstyle="circle", fc=color,edgecolor = 'none')
+        reciprocal_color = 255 - color
+        color = tuple(color / 255)
+        reciprocal_color = tuple(reciprocal_color / 255)
+        bbox_props = dict(boxstyle="circle", fc=color, edgecolor="none")
         if is_in_bounding_box(c, new_region):
             node_text = ax.text(
                 c[1],
@@ -450,7 +450,7 @@ def plot_full(
     points = [f(c) for c in points]
     for i, c in enumerate(points):
         if is_in_bounding_box(c, new_region):
-            plt.plot(c[1], c[0], marker="x", color="red",markersize = 2)
+            plt.plot(c[1], c[0], marker="x", color="red", markersize=2)
             if with_point_label:
                 plt.text(c[1], c[0], f"{i}")
 
@@ -465,7 +465,7 @@ def plot_full(
         )
 
     if save_path:
-        plt.savefig(save_path,dpi=dpi)
+        plt.savefig(save_path, dpi=dpi)
     else:
         plt.show()
 

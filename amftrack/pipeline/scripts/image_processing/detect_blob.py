@@ -77,12 +77,12 @@ for index, name in enumerate(tileconfig[0]):
             plot_blobs_upload(im)
 
 complete_spores = np.array(complete_spores)
-#removing duplicate due to image overlap
+# removing duplicate due to image overlap
 to_remove = set()
 for i in range(len(complete_spores)):
-    distances = np.linalg.norm(complete_spores[i][:2]-complete_spores[:,:2],axis=1)
-    index = np.argpartition(distances,1)[1]
-    if distances[index]<10 and index<i:
+    distances = np.linalg.norm(complete_spores[i][:2] - complete_spores[:, :2], axis=1)
+    index = np.argpartition(distances, 1)[1]
+    if distances[index] < 10 and index < i:
         to_remove.add((i))
-spore_filtered = np.delete(complete_spores, list(to_remove),axis=0)
+spore_filtered = np.delete(complete_spores, list(to_remove), axis=0)
 sio.savemat(path_snap + "/Analysis/spores.mat", {"spores": spore_filtered})
