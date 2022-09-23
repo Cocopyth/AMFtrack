@@ -12,7 +12,7 @@ def detect_blobs(im):
     im2_bw = im2 >= 200
     kernel_size = (10, 10)
     params = cv2.SimpleBlobDetector_Params()
-
+    params.minDistBetweenBlobs = 5
     params.filterByArea = True
     params.minArea = 500
 

@@ -49,6 +49,7 @@ from amftrack.util.geometry import (
     is_in_bounding_box,
     centered_bounding_box,
 )
+import scipy.io as sio
 
 
 def make_video(
@@ -163,7 +164,59 @@ def make_video_tile(
     return imgs
 
 
-def make_images_track(exp, num_tiles=4):
+# def make_images_track(exp, num_tiles=4):
+#     """
+#     This function makes images centered on the initial position of some random nodes,
+#     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
+#     it returns the paths_list of those plotted image in the format for tile video making
+#     :param exp:
+#     :param num_tiles: number of such images to tile together
+#     """
+#     nodes = get_all_nodes(exp, 0)
+#     nodes = [
+#         node
+#         for node in nodes
+#         if node.is_in(0)
+#         and np.linalg.norm(node.pos(0) - node.pos(node.ts()[-1])) > 1000
+#         and len(node.ts()) > 3
+#     ]
+#
+#     paths_list = []
+#     node_select_list = [choice(nodes) for k in range(num_tiles)]
+#     for t in range(exp.ts):
+#         exp.load_tile_information(t)
+#         paths = []
+#         for k in range(num_tiles):
+#             node_select = node_select_list[k]
+#             pos = node_select.pos(0)
+#             window = 1500
+#             region = [
+#                 [pos[0] - window, pos[1] - window],
+#                 [pos[0] + window, pos[1] + window],
+#             ]
+#             path = f"plot_nodes_{time_ns()}"
+#             path = os.path.join(temp_path, path)
+#             paths.append(path + ".png")
+#             plot_full_image_with_features(
+#                 exp,
+#                 t,
+#                 region=region,
+#                 downsizing=5,
+#                 nodes=[
+#                     node
+#                     for node in get_all_nodes(exp, 0)
+#                     if node.is_in(t) and np.linalg.norm(node.pos(t) - pos) <= window
+#                 ],
+#                 edges=get_all_edges(exp, t),
+#                 dilation=5,
+#                 prettify=False,
+#                 save_path=path,
+#             )
+#         paths_list.append(paths)
+#     return paths_list
+
+
+def make_images_track(exp):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
@@ -171,51 +224,34 @@ def make_images_track(exp, num_tiles=4):
     :param exp:
     :param num_tiles: number of such images to tile together
     """
-    nodes = get_all_nodes(exp, 0)
-    nodes = [
-        node
-        for node in nodes
-        if node.is_in(0)
-        and np.linalg.norm(node.pos(0) - node.pos(node.ts()[-1])) > 1000
-        and len(node.ts()) > 3
-    ]
-
     paths_list = []
-    node_select_list = [choice(nodes) for k in range(num_tiles)]
     for t in range(exp.ts):
+    # for t in [0]:
+
+        to_plot_nodes = [
+            node
+            for node in get_all_nodes(exp, t)
+        ]
+        path = f"plot_nodes_{time_ns()}"
+        path = os.path.join(temp_path, path)
+        paths_list.append([path + ".png"])
         exp.load_tile_information(t)
-        paths = []
-        for k in range(num_tiles):
-            node_select = node_select_list[k]
-            pos = node_select.pos(0)
-            window = 1500
-            region = [
-                [pos[0] - window, pos[1] - window],
-                [pos[0] + window, pos[1] + window],
-            ]
-            path = f"plot_nodes_{time_ns()}"
-            path = os.path.join(temp_path, path)
-            paths.append(path + ".png")
-            plot_full_image_with_features(
-                exp,
-                t,
-                region=region,
-                downsizing=5,
-                nodes=[
-                    node
-                    for node in get_all_nodes(exp, 0)
-                    if node.is_in(t) and np.linalg.norm(node.pos(t) - pos) <= window
-                ],
-                edges=get_all_edges(exp, t),
-                dilation=5,
-                prettify=False,
-                save_path=path,
-            )
-        paths_list.append(paths)
+        fig = plot_full(
+            exp,
+            t,
+            downsizing=5,
+            nodes=to_plot_nodes,
+            edges=get_all_edges(exp, t),
+            dilation=4,
+            prettify=False,
+            figsize=(36, 24),
+            dpi=600,
+            node_size=1,
+            save_path=path,
+        )
     return paths_list
 
-
-def make_images_track(exp, num_tiles=4):
+def make_images_spores(exp, num_tiles=4):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
@@ -223,46 +259,29 @@ def make_images_track(exp, num_tiles=4):
     :param exp:
     :param num_tiles: number of such images to tile together
     """
-    nodes = get_all_nodes(exp, 0)
-    nodes = [
-        node
-        for node in nodes
-        if node.is_in(0)
-        and np.linalg.norm(node.pos(0) - node.pos(node.ts()[-1])) > 1000
-        and len(node.ts()) > 3
-    ]
-
     paths_list = []
-    node_select_list = [choice(nodes) for k in range(num_tiles)]
     for t in range(exp.ts):
+        path = f"plot_spores_{time_ns()}"
+        path = os.path.join(temp_path, path)
+        paths_list.append([path + ".png"])
         exp.load_tile_information(t)
-        paths = []
-        for k in range(num_tiles):
-            node_select = node_select_list[k]
-            pos = node_select.pos(0)
-            window = 1500
-            region = centered_bounding_box(pos, size=3000)
-            path = f"plot_nodes_{time_ns()}"
-            path = os.path.join(temp_path, path)
-            paths.append(path + ".png")
-            plot_full(
-                exp,
-                t,
-                region=region,
-                downsizing=5,
-                nodes=[
-                    node
-                    for node in get_all_nodes(exp, 0)
-                    if node.is_in(t) and np.linalg.norm(node.pos(t) - pos) <= window
-                ],
-                edges=get_all_edges(exp, t),
-                dilation=5,
-                prettify=False,
-                save_path=path,
-            )
-        paths_list.append(paths)
+        select = exp.folders
+        table = select.sort_values(by="datetime", ascending=True)
+        path_spore_data = os.path.join(exp.directory, table["folder"].iloc[t])
+        spore_data = sio.loadmat(os.path.join(path_spore_data, "Analysis", "spores.mat"))["spores"]
+        positions = [exp.timestep_to_general(np.flip(spore_data[i, :2]), t) for i in range(len(spore_data))]
+        plot_full(
+            exp,
+            t,
+            points=positions,
+            downsizing=10,
+            dilation=4,
+            prettify=False,
+            figsize=(24, 16),
+            dpi=100,
+            save_path=path,
+        )
     return paths_list
-
 
 def make_images_track2(exp):
     """
@@ -312,7 +331,9 @@ def make_images_track3(exp):
     """
     paths = []
     ends = [hypha.end for hypha in exp.hyphaes if len(hypha.end.ts()) > 0]
-    to_choose = [node for node in ends if node.ts()[0] < 100 and len(node.ts()) > 4]
+    # to_choose = [node for node in ends if node.ts()[0] < 100 and len(node.ts()) > 4]
+    to_choose = [node for node in ends]
+
     node_select = choice(to_choose)
     t0 = node_select.ts()[-1]
     pos = node_select.pos(t0)
@@ -346,7 +367,7 @@ def make_images_track3(exp):
     return paths
 
 
-def make_images_track4(exp):
+def make_images_anas(exp):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
@@ -357,32 +378,31 @@ def make_images_track4(exp):
     paths = []
     anastomosing_hyphae = get_anastomosing_hyphae(exp)
     ends = [result[0].end for result in anastomosing_hyphae]
-    # ends = [hypha.end for hypha in exp.hyphaes]
-
     node_select = choice(ends)
     t0 = node_select.ts()[-1]
-    pos = node_select.pos(t0)
     for t in range(exp.ts):
-        exp.load_tile_information(t)
-        window = 600
-        region = centered_bounding_box(pos, size=int(1.5 * window))
+        positions = [node.pos(node.ts()[-1]) for node in ends if node.ts()[-1]<=t]
+        to_plot_nodes = [
+            node
+            for node in ends if node.is_in(t)
+        ]
         path = f"plot_nodes_{time_ns()}"
         path = os.path.join(temp_path, path)
         paths.append([path + ".png"])
+        exp.load_tile_information(t)
         plot_full(
             exp,
             t,
-            region=region,
-            downsizing=1,
-            nodes=[
-                node
-                for node in ends
-                if node.is_in(t) and np.linalg.norm(node.pos(t) - pos) <= window
-            ],
+            downsizing=5,
+            nodes=to_plot_nodes,
             edges=get_all_edges(exp, t),
             dilation=4,
             prettify=False,
+            figsize=(36, 24),
+            dpi=600,
+            node_size=1,
             save_path=path,
+            positions = positions,
         )
     return paths
 
