@@ -212,9 +212,7 @@ def resolve_anastomosis_crossing_by_root(exp, lim_considered=1):
     print("relabeling")
     to_relabel = []
     corresp_hyph = {}
-    print(len(anastomosing_hyphae))
     for hyph, t0, tp1 in anastomosing_hyphae:
-        print(t0)
         corresp_hyph[hyph.end.label] = []
         for hypha in exp.hyphaes:
             pos_root_hyph = np.mean([hyph.root.pos(t) for t in hyph.root.ts()], axis=0)

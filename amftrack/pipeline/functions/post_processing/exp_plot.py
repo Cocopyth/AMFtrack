@@ -7,14 +7,19 @@ from matplotlib import cm
 import matplotlib as mpl
 from shapely.affinity import affine_transform, rotate
 import geopandas as gpd
+from amftrack.util.dbx import upload
+
+import cv2
+
 from amftrack.util.video_util import (
     make_hull_images,
     make_video_tile,
     make_images_track,
     make_images_track2,
     make_images_track3,
-    make_images_track4,
+    make_images_anas,
     make_images_track_hypha,
+    make_images_spores,
 )
 from amftrack.util.sys import temp_path
 import numpy as np
@@ -47,14 +52,54 @@ def plot_tracking(exp, args=None):
     dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
     folder_analysis = exp.save_location.split("/")[-1]
-    upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/{id_unique}_tracked.mp4"
-    texts = [(folder, "", "", "") for folder in list(exp.folders["folder"])]
-    resize = (2048, 2048)
-    make_video_tile(
-        paths_list, texts, resize, save_path=None, upload_path=upload_path, fontScale=3
-    )
+    upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/full_track/"
+    texts = [(folder) for folder in list(exp.folders["folder"])]
+    fontScale = 3
+    color = (0, 255, 255)
+    for i,paths in enumerate(paths_list):
+        path = paths[0]
+        img = cv2.imread(path, cv2.IMREAD_COLOR)
+        anchor = img.shape[0] // 10, img.shape[1] // 10
+        cv2.putText(
+            img=img,
+            text=texts[i],
+            org=anchor,
+            fontFace=cv2.FONT_HERSHEY_TRIPLEX,
+            fontScale=fontScale,
+            color=color,
+            thickness=3,
+        )
+        cv2.imwrite(path,img)
+        upload_path_im = os.path.join(upload_path,f'frame_{i}.png')
+        upload(path, upload_path_im)
     delete_files(paths_list)
 
+def plot_blobs(exp, args=None):
+    paths_list = make_images_spores(exp)
+    dir_drop = "DATA/PRINCE"
+    id_unique = exp.unique_id
+    folder_analysis = exp.save_location.split("/")[-1]
+    upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/full_spores/"
+    texts = [(folder) for folder in list(exp.folders["folder"])]
+    fontScale = 3
+    color = (0, 255, 255)
+    for i,paths in enumerate(paths_list):
+        path = paths[0]
+        img = cv2.imread(path, cv2.IMREAD_COLOR)
+        anchor = img.shape[0] // 10, img.shape[1] // 10
+        cv2.putText(
+            img=img,
+            text=texts[i],
+            org=anchor,
+            fontFace=cv2.FONT_HERSHEY_TRIPLEX,
+            fontScale=fontScale,
+            color=color,
+            thickness=3,
+        )
+        cv2.imwrite(path,img)
+        upload_path_im = os.path.join(upload_path,f'frame_{i}.png')
+        upload(path, upload_path_im)
+    delete_files(paths_list)
 
 def plot_tracking2(exp, args=None):
     for i in range(100):
@@ -121,88 +166,34 @@ def plot_hypha_track(exp,args = []):
 
 
 def plot_anastomosis(exp, args=None):
-    for i in range(100):
-        paths_list = make_images_track4(exp)
-        dir_drop = "DATA/PRINCE"
-        id_unique = exp.unique_id
-        folder_analysis = exp.save_location.split("/")[-1]
-        upload_path = (
-            f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/{i}_anastomosis.mp4"
+    paths_list = make_images_anas(exp)
+    dir_drop = "DATA/PRINCE"
+    id_unique = exp.unique_id
+    folder_analysis = exp.save_location.split("/")[-1]
+    upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/full_anas/"
+    texts = [(folder) for folder in list(exp.folders["folder"])]
+    fontScale = 3
+    color = (0, 255, 255)
+    for i,paths in enumerate(paths_list):
+        path = paths[0]
+        img = cv2.imread(path, cv2.IMREAD_COLOR)
+        anchor = img.shape[0] // 10, img.shape[1] // 10
+        cv2.putText(
+            img=img,
+            text=texts[i],
+            org=anchor,
+            fontFace=cv2.FONT_HERSHEY_TRIPLEX,
+            fontScale=fontScale,
+            color=color,
+            thickness=3,
         )
-        texts = [(folder, "", "", "") for folder in list(exp.folders["folder"])]
-        resize = (2048, 2048)
-        make_video_tile(
-            paths_list,
-            texts,
-            resize,
-            save_path=None,
-            upload_path=upload_path,
-            fontScale=3,
-        )
-        delete_files(paths_list)
+        cv2.imwrite(path,img)
+        upload_path_im = os.path.join(upload_path,f'frame_{i}.png')
+        upload(path, upload_path_im)
+    delete_files(paths_list)
 
 
-# def plot_anastomosis(exp,args=None):
-#     for t in range(exp.ts):
-#         nodes = [
-#             node
-#             for node in exp.nodes
-#             if node.is_in(t) and np.all(is_in_study_zone(node, t, 1000, 200))
-#         ]
-#         tips = [
-#             node
-#             for node in nodes
-#             if node.degree(t) == 1 and node.is_in(t + 1) and len(node.ts()) > 2
-#         ]
-#         growing_tips = [
-#             node
-#             for node in tips
-#             if np.linalg.norm(node.pos(t) - node.pos(node.ts()[-1])) >= 40
-#         ]
-#         growing_rhs = [
-#             node
-#             for node in growing_tips
-#             if np.linalg.norm(node.pos(node.ts()[0]) - node.pos(node.ts()[-1])) >= 1500
-#         ]
-#
-#         anas_tips = [
-#             tip
-#             for tip in growing_rhs
-#             if tip.degree(t) == 1
-#             and tip.degree(t + 1) == 3
-#             and 1 not in [tip.degree(t) for t in [tau for tau in tip.ts() if tau > t]]
-#         ]
-#         # for tip in anas_tips:
-#         #     node_list = [tip.label]
-#         #     fig, ax, center, radius = plot_raw_plus(exp, t, node_list, radius_imp=200)
-#         #     fig, ax, center, radius = plot_raw_plus(
-#         #         exp,
-#         #         t + 1,
-#         #         node_list,
-#         #         fig=fig,
-#         #         ax=ax,
-#         #         center=center,
-#         #         radius_imp=radius,
-#         #         n=2,
-#         #     )
-#         #     fig, ax, center, radius = plot_raw_plus(
-#         #         exp,
-#         #         t + 4,
-#         #         node_list,
-#         #         fig=fig,
-#         #         ax=ax,
-#         #         center=center,
-#         #         radius_imp=radius,
-#         #         n=4,
-#         #     )
-#         # path_save = f"{temp_path}/{plate_num}_anas_im{t}_tip{tip.label}"
-#         # plt.savefig(path_save + ".png")
-#         # plt.close(fig)
-#         # upload(
-#         #     path_save + ".png",
-#         #     f"/{dir_drop}/{id_unique}/anastomosis/{t}_tip{tip.label}.png",
-#         #     chunk_size=256 * 1024 * 1024,
-#         # )
+
 
 
 # API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))
