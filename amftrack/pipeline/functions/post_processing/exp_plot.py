@@ -56,7 +56,7 @@ def plot_tracking(exp, args=None):
     texts = [(folder) for folder in list(exp.folders["folder"])]
     fontScale = 3
     color = (0, 255, 255)
-    for i,paths in enumerate(paths_list):
+    for i, paths in enumerate(paths_list):
         path = paths[0]
         img = cv2.imread(path, cv2.IMREAD_COLOR)
         anchor = img.shape[0] // 10, img.shape[1] // 10
@@ -69,10 +69,11 @@ def plot_tracking(exp, args=None):
             color=color,
             thickness=3,
         )
-        cv2.imwrite(path,img)
-        upload_path_im = os.path.join(upload_path,f'frame_{i}.png')
+        cv2.imwrite(path, img)
+        upload_path_im = os.path.join(upload_path, f"frame_{i}.png")
         upload(path, upload_path_im)
     delete_files(paths_list)
+
 
 def plot_blobs(exp, args=None):
     paths_list = make_images_spores(exp)
@@ -83,7 +84,7 @@ def plot_blobs(exp, args=None):
     texts = [(folder) for folder in list(exp.folders["folder"])]
     fontScale = 3
     color = (0, 255, 255)
-    for i,paths in enumerate(paths_list):
+    for i, paths in enumerate(paths_list):
         path = paths[0]
         img = cv2.imread(path, cv2.IMREAD_COLOR)
         anchor = img.shape[0] // 10, img.shape[1] // 10
@@ -96,10 +97,11 @@ def plot_blobs(exp, args=None):
             color=color,
             thickness=3,
         )
-        cv2.imwrite(path,img)
-        upload_path_im = os.path.join(upload_path,f'frame_{i}.png')
+        cv2.imwrite(path, img)
+        upload_path_im = os.path.join(upload_path, f"frame_{i}.png")
         upload(path, upload_path_im)
     delete_files(paths_list)
+
 
 def plot_tracking2(exp, args=None):
     for i in range(100):
@@ -145,7 +147,7 @@ def plot_hypha(exp, args=None):
         delete_files(paths_list)
 
 
-def plot_hypha_track(exp,args = []):
+def plot_hypha_track(exp, args=[]):
     for hypha in args:
         paths_list = make_images_track_hypha(exp, hypha)
         dir_drop = "DATA/PRINCE"
@@ -174,7 +176,7 @@ def plot_anastomosis(exp, args=None):
     texts = [(folder) for folder in list(exp.folders["folder"])]
     fontScale = 3
     color = (0, 255, 255)
-    for i,paths in enumerate(paths_list):
+    for i, paths in enumerate(paths_list):
         path = paths[0]
         img = cv2.imread(path, cv2.IMREAD_COLOR)
         anchor = img.shape[0] // 10, img.shape[1] // 10
@@ -187,13 +189,10 @@ def plot_anastomosis(exp, args=None):
             color=color,
             thickness=3,
         )
-        cv2.imwrite(path,img)
-        upload_path_im = os.path.join(upload_path,f'frame_{i}.png')
+        cv2.imwrite(path, img)
+        upload_path_im = os.path.join(upload_path, f"frame_{i}.png")
         upload(path, upload_path_im)
     delete_files(paths_list)
-
-
-
 
 
 # API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))

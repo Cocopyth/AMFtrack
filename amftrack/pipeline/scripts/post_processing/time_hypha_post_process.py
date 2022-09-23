@@ -41,7 +41,7 @@ except AttributeError:
     exp.labeled = True  # For older versions of experiments, to be removed later
 load_study_zone(exp)
 if load_graphs_bool:
-    load_graphs(exp, directory,indexes=[t, tp1], post_process=True)
+    load_graphs(exp, directory, indexes=[t, tp1], post_process=True)
 # load_skel(exp,[t])
 # print('size after loading',get_size(exp)/10**6)
 
