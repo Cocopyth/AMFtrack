@@ -47,13 +47,18 @@ def plot_hulls(exp, args=None):
     )
     delete_files(paths_list)
 
+
 def get_hull_nodes(exp, args=None):
     for t in range(exp.ts):
         nodes = np.array([node.pos(t) for node in exp.nodes if node.is_in(t)])
         hull = spatial.ConvexHull(nodes)
         hull_nodes = [exp.nodes[vertice].label for vertice in hull.vertices]
-        os.mkdir(os.path.join(exp.save_location, 'time_hull_info'))
-        np.save(os.path.join(exp.save_location, 'time_hull_info', f'hull_nodes_{t}.npy'), hull_nodes)
+        os.mkdir(os.path.join(exp.save_location, "time_hull_info"))
+        np.save(
+            os.path.join(exp.save_location, "time_hull_info", f"hull_nodes_{t}.npy"),
+            hull_nodes,
+        )
+
 
 def plot_tracking(exp, args=None):
     paths_list = make_images_track(exp)

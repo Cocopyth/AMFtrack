@@ -345,7 +345,9 @@ def plot_full_image_with_features(
     else:
         plt.show()
 
+
 fpath = Path(mpl.get_data_path(), "fonts/ttf/lucidasansdemibold.ttf")
+
 
 def plot_full(
     exp: Experiment,
@@ -448,9 +450,8 @@ def plot_full(
                 va="center",
                 bbox=bbox_props,
                 font=fpath,
-                fontdict={'color': reciprocal_color},
+                fontdict={"color": reciprocal_color},
                 size=size,
-
                 # alpha = 0.5
             )
     # 4/ Plotting coordinates
