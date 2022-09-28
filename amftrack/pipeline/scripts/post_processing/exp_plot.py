@@ -26,6 +26,7 @@ row = [row for index, row in select.iterrows()][0]
 plate_num = row["Plate"]
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
+exp.save_location = '/'.join(path_exp.split('/')[:-1])
 try:
     exp.labeled
 except AttributeError:

@@ -46,7 +46,7 @@ elif stage == 0:
         "dropbox_uploader.py",
         [directory_targ, name_job],
         plates,
-        "3:00:00",
+        "12:00:00",
         dependency=True,
         name_job=name_job,
     )

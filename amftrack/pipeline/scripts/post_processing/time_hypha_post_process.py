@@ -32,7 +32,7 @@ select = run_info.loc[run_info["t"] == t]
 row = [row for index, row in select.iterrows()][0]
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
-# print('size before loading',get_size(exp)/10**6)
+exp.save_location = '/'.join(path_exp.split('/')[:-1])
 t = row["t"]
 tp1 = t + 1
 try:

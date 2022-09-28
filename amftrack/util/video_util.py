@@ -241,9 +241,9 @@ def make_images_track(exp):
             edges=get_all_edges(exp, t),
             dilation=4,
             prettify=False,
-            figsize=(36, 24),
-            dpi=600,
-            node_size=1,
+            figsize=(24, 16),
+            dpi=400,
+            node_size=1.5,
             save_path=path,
         )
     return paths_list
@@ -277,11 +277,11 @@ def make_images_spores(exp, num_tiles=4):
             exp,
             t,
             points=positions,
-            downsizing=10,
+            downsizing=5,
             dilation=4,
             prettify=False,
             figsize=(24, 16),
-            dpi=100,
+            dpi=200,
             save_path=path,
         )
     return paths_list
@@ -382,14 +382,13 @@ def make_images_anas(exp):
     paths = []
     anastomosing_hyphae = get_anastomosing_hyphae(exp)
     ends = [result[0].end for result in anastomosing_hyphae]
-    node_select = choice(ends)
-    t0 = node_select.ts()[-1]
     for t in range(exp.ts):
         positions = [node.pos(node.ts()[-1]) for node in ends if node.ts()[-1] <= t]
         to_plot_nodes = [node for node in ends if node.is_in(t)]
         path = f"plot_nodes_{time_ns()}"
         path = os.path.join(temp_path, path)
-        paths.append([path + ".png"])
+        path = path + ".png"
+        paths.append([path])
         exp.load_tile_information(t)
         plot_full(
             exp,
@@ -399,11 +398,11 @@ def make_images_anas(exp):
             edges=get_all_edges(exp, t),
             dilation=4,
             prettify=False,
-            figsize=(36, 24),
-            dpi=600,
-            node_size=1,
+            figsize=(24, 16),
+            dpi=400,
+            node_size=1.5,
             save_path=path,
-            positions=positions,
+            points=positions,
         )
     return paths
 

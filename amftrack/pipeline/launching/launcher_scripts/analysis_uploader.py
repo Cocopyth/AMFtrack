@@ -16,7 +16,7 @@ for index, row in analysis_folders.iterrows():
     path = os.path.join(directory_targ, folder)
     target_drop = f"/{dir_drop}/{id_unique}/{folder}"
     print(dir_drop)
-    upload_folder(path, target_drop)
+    upload_folder(path, target_drop,delete = True)
 
 run_launcher(
     "dropbox_uploader.py",
