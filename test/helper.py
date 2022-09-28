@@ -19,8 +19,10 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
 )
 from amftrack.util.dbx import get_dropbox_folders, get_dropbox_folders
+
 video_path = os.path.join(test_path, "video")
 from amftrack.pipeline.launching.run import run_transfer
+
 
 def is_equal_seq(list_of_list_1, list_of_list_2):
     for i in range(len(list_of_list_1)):
@@ -90,9 +92,9 @@ def make_experiment_object():
     update_plate_info(directory)
     folder_df = get_current_folders(directory)
     selected_df = folder_df.loc[folder_df["unique_id"] == plate_name]
-    if len(selected_df)<4:
+    if len(selected_df) < 4:
         all_folders_drop = get_dropbox_folders("/DATA/PRINCE", True)
-        folders_drop = all_folders_drop.loc[all_folders_drop["unique_id"]== plate_name]
+        folders_drop = all_folders_drop.loc[all_folders_drop["unique_id"] == plate_name]
         run_transfer(
             "from_drop.py",
             [directory],

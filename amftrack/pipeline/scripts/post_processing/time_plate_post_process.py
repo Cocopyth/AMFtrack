@@ -32,7 +32,7 @@ else:
     time_plate_info = json.load(open(f"{directory}{path_time_plate_info}", "r"))
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
-exp.save_location = '/'.join(path_exp.split('/')[:-1])
+exp.save_location = "/".join(path_exp.split("/")[:-1])
 try:
     exp.labeled
 except AttributeError:
