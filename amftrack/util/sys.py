@@ -369,6 +369,7 @@ def update_analysis_info(directory, suffix_analysis_info=""):
         op_id = int(folder.split("_")[-2])
         dt = datetime.fromtimestamp(op_id // 1000000000)
         path = f"{directory}{folder}/folder_info.json"
+        print(path)
         infos = pd.read_json(path, dtype={"unique_id": str})
         if len(infos) > 0:
             column_interest = [column for column in infos.columns if column[0] != "/"]
@@ -457,7 +458,6 @@ def get_time_plate_info_from_analysis(analysis_folders):
         table = pd.concat((table, pd.DataFrame(folders_plate.index.values)), axis=1)
         table = table.rename(columns={0: "timestep"})
         table = pd.concat((table, (folders_plate["folder"])), axis=1)
-        table = pd.concat((table, (folders_plate["Plate"])), axis=1)
         table = pd.concat((table, (folders_plate["unique_id"])), axis=1)
         table = pd.concat((table, (folders_plate["datetime"])), axis=1)
         table = pd.concat((table, (folders_plate["PrincePos"])), axis=1)
@@ -500,7 +500,6 @@ def get_global_hypha_info_from_analysis(analysis_folders):
 
 def get_time_hypha_info_from_analysis(analysis_folders):
     analysis_dirs = analysis_folders["total_path"]
-    time_hypha_info = pd.DataFrame()
     folders = pd.DataFrame()
     time_hypha_infos = []
     for analysis_dir in analysis_dirs:

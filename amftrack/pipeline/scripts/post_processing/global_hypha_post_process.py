@@ -36,6 +36,7 @@ else:
 # print(global_hypha_info)
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
+exp.save_location = '/'.join(path_exp.split('/')[:-1])
 try:
     exp.labeled
 except AttributeError:

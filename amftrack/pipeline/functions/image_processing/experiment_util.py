@@ -29,6 +29,9 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Node,
     Edge,
 )
+from pathlib import Path
+
+import matplotlib as mpl
 from amftrack.pipeline.functions.image_processing.extract_skel import bowler_hat
 from pymatreader import read_mat
 from matplotlib import cm
@@ -327,7 +330,6 @@ def plot_full_image_with_features(
     for c in points:
         if is_in_bounding_box(c, new_region):
             plt.plot(c[1], c[0], marker="x", color="red")
-
     # 5/ Plotting segments
     segments = [[f(segment[0]), f(segment[1])] for segment in segments]
     for s in segments:
@@ -343,6 +345,7 @@ def plot_full_image_with_features(
     else:
         plt.show()
 
+fpath = Path(mpl.get_data_path(), "fonts/ttf/lucidasansdemibold.ttf")
 
 def plot_full(
     exp: Experiment,
@@ -443,14 +446,18 @@ def plot_full(
                 str(node.label),
                 ha="center",
                 va="center",
-                size=size,
                 bbox=bbox_props,
+                font=fpath,
+                fontdict={'color': reciprocal_color},
+                size=size,
+
+                # alpha = 0.5
             )
     # 4/ Plotting coordinates
     points = [f(c) for c in points]
     for i, c in enumerate(points):
         if is_in_bounding_box(c, new_region):
-            plt.plot(c[1], c[0], marker="x", color="red", markersize=2)
+            plt.plot(c[1], c[0], marker="x", color="red", markersize=1, alpha=0.5)
             if with_point_label:
                 plt.text(c[1], c[0], f"{i}")
 

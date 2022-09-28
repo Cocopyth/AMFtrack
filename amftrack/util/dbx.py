@@ -124,7 +124,7 @@ def upload(file_path, target_path, chunk_size=4 * 1024 * 1024, catch_exception=T
             break
 
 
-def upload_folder(path, target_drop):
+def upload_folder(path, target_drop,delete=False):
     for root, dirs, files in os.walk(path):
         for filename in files:
             # construct the full local path
@@ -136,7 +136,10 @@ def upload_folder(path, target_drop):
             dropbox_path = os.path.join(target_drop, relative_path)
             dropbox_path = dropbox_path.replace("\\", "/")
             upload(local_path, dropbox_path, catch_exception=False)
-
+            if delete:
+                os.remove(local_path)
+    if delete:
+        shutil.rmtree(path)
 
 def get_size_dbx(path):
     dbx = load_dbx()
@@ -473,8 +476,7 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
                 directory_target, folder, path_drop.split("/")[-1]
             )
             print(path_drop, path_local)
-            if file.name != "time_hypha_info":
-
+            if file.name != "time_hypha_info" and not 'validation' in file.name:
                 download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
 
 

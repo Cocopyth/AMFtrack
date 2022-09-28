@@ -8,6 +8,7 @@ import matplotlib as mpl
 from shapely.affinity import affine_transform, rotate
 import geopandas as gpd
 from amftrack.util.dbx import upload
+from scipy import spatial
 
 import cv2
 
@@ -46,13 +47,20 @@ def plot_hulls(exp, args=None):
     )
     delete_files(paths_list)
 
+def get_hull_nodes(exp, args=None):
+    for t in range(exp.ts):
+        nodes = np.array([node.pos(t) for node in exp.nodes if node.is_in(t)])
+        hull = spatial.ConvexHull(nodes)
+        hull_nodes = [exp.nodes[vertice].label for vertice in hull.vertices]
+        os.mkdir(os.path.join(exp.save_location, 'time_hull_info'))
+        np.save(os.path.join(exp.save_location, 'time_hull_info', f'hull_nodes_{t}.npy'), hull_nodes)
 
 def plot_tracking(exp, args=None):
     paths_list = make_images_track(exp)
     dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
     folder_analysis = exp.save_location.split("/")[-1]
-    upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/full_track/"
+    upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/full_track/"
     texts = [(folder) for folder in list(exp.folders["folder"])]
     fontScale = 3
     color = (0, 255, 255)
@@ -80,7 +88,7 @@ def plot_blobs(exp, args=None):
     dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
     folder_analysis = exp.save_location.split("/")[-1]
-    upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/full_spores/"
+    upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/full_spores/"
     texts = [(folder) for folder in list(exp.folders["folder"])]
     fontScale = 3
     color = (0, 255, 255)
@@ -172,7 +180,7 @@ def plot_anastomosis(exp, args=None):
     dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
     folder_analysis = exp.save_location.split("/")[-1]
-    upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/full_anas/"
+    upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/full_anas/"
     texts = [(folder) for folder in list(exp.folders["folder"])]
     fontScale = 3
     color = (0, 255, 255)
