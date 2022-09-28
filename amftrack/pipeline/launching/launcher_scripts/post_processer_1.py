@@ -119,7 +119,7 @@ run_parallel_post(
     node="fat",
     dependency=True,
 )
-time = "3:40:00"
+time = "12:00:00"
 list_f = [plot_hulls, plot_tracking]
 
 list_args = [[]] * len(list_f)

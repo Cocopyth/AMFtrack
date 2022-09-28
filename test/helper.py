@@ -18,9 +18,9 @@ from amftrack.util.sys import (
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
 )
-
+from amftrack.util.dbx import get_dropbox_folders, get_dropbox_folders
 video_path = os.path.join(test_path, "video")
-
+from amftrack.pipeline.launching.run import run_transfer
 
 def is_equal_seq(list_of_list_1, list_of_list_2):
     for i in range(len(list_of_list_1)):
@@ -86,15 +86,24 @@ def has_test_plate():
 def make_experiment_object():
     "Build an experiment object using the plate that is in the test repository."
     directory = test_path
-    plate_name = "20220330_2357_Plate19"  # TODO(FK): find the name automaticaly (can be different based on the person)
+    plate_name = "111111_20600101"  # TODO(FK): find the name automaticaly (can be different based on the person)
     update_plate_info(directory)
     folder_df = get_current_folders(directory)
-    selected_df = folder_df.loc[folder_df["folder"] == plate_name]
-    i = 0
-    # directory_name = folder_list[i]
+    selected_df = folder_df.loc[folder_df["unique_id"] == plate_name]
+    if len(selected_df)<4:
+        all_folders_drop = get_dropbox_folders("/DATA/PRINCE", True)
+        folders_drop = all_folders_drop.loc[all_folders_drop["unique_id"]== plate_name]
+        run_transfer(
+            "from_drop.py",
+            [directory],
+            folders_drop,
+        )
     exp = Experiment(directory)
     exp.load(selected_df, suffix="")
     exp.load_tile_information(0)
+    exp.load_tile_information(1)
+    exp.load_tile_information(2)
+    exp.load_tile_information(3)
     return exp
 
 
