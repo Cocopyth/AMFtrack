@@ -4,7 +4,7 @@ import random
 import unittest
 import matplotlib as mpl
 
-mpl.use('AGG')
+mpl.use("AGG")
 
 import matplotlib.pyplot as plt
 from amftrack.util.geometry import (

@@ -70,8 +70,8 @@ def plot_get_hull_nodes(exp, args=None):
                     node.pos(t)
                     for node in exp.nodes
                     if node.is_in(t)
-                       and np.all(is_in_study_zone(node, t, 1000, 150))
-                       and (node.label in g.nodes)
+                    and np.all(is_in_study_zone(node, t, 1000, 150))
+                    and (node.label in g.nodes)
                 ]
             )
             nodes_label = np.array(
@@ -79,11 +79,11 @@ def plot_get_hull_nodes(exp, args=None):
                     node.label
                     for node in exp.nodes
                     if node.is_in(t)
-                       and np.all(is_in_study_zone(node, t, 1000, 150))
-                       and (node.label in g.nodes)
+                    and np.all(is_in_study_zone(node, t, 1000, 150))
+                    and (node.label in g.nodes)
                 ]
             )
-            if len(nodes_pos)>3:
+            if len(nodes_pos) > 3:
                 hull = spatial.ConvexHull(nodes_pos)
                 hull_nodes = [nodes_label[vertice] for vertice in hull.vertices]
                 full_hull_nodes += hull_nodes
