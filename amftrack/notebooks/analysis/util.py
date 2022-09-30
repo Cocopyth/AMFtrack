@@ -116,7 +116,7 @@ def get_rh_bas(exp, criter):
         ts = [c[0] for c in select_hyph[hyph]]
         tp1s = [c[1] for c in select_hyph[hyph]]
         if len(speeds) > 0:
-            length = amftrack.pipeline.functions.post_processing.util.get_length_um(
+            length = amftrack.pipeline.functions.post_processing.util.measure_length_um(
                 hyph.ts[-1]
             )
             nodes = hyph.get_nodes_within(hyph.ts[-1])[0]

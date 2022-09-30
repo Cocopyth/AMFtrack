@@ -63,7 +63,7 @@ list_f = [
     get_num_tips_study_zone,
     get_num_nodes_study_zone,
     get_length_study_zone,
-    is_out_study,
+    get_is_out_study,
 ]
 list_args = [{}] * len(list_f)
 overwrite = False

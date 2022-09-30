@@ -2,6 +2,10 @@ import os
 import numpy as np
 import random
 import unittest
+import matplotlib as mpl
+
+mpl.use('AGG')
+
 import matplotlib.pyplot as plt
 from amftrack.util.geometry import (
     expand_bounding_box,
@@ -88,7 +92,7 @@ class TestExperiment(unittest.TestCase):
 
     def test_plot_edge_save(self):
         edge = get_random_edge(self.exp)
-        plot_edge(edge, 0, save_path=os.path.join(test_path, "plot_edge_1"))
+        plot_edge(edge, 0, save_path=os.path.join(test_path, "plot_edge_8"))
 
     def test_plot_edge_cropped(self):
         edge = get_random_edge(self.exp)
