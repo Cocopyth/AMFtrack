@@ -40,10 +40,47 @@ def find_image_indexes(im_coord_list, x: float, y: float):
     return l
 
 
+def find_scaling_factor(old_coord_list, new_coord_list):
+    """Find the scaling factor between two coordinate referentials"""
+    # TODO(FK): add an error in case of two much variation in ratios
+    n = len(old_coord_list)
+    values = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            dx = np.linalg.norm(
+                np.array(old_coord_list[i]) - np.array(old_coord_list[j])
+            )
+            dfx = np.linalg.norm(
+                np.array(new_coord_list[i]) - np.array(new_coord_list[j])
+            )
+            values.append(dfx / dx)
+    print(values)
+    return np.median(values)
+
+
+def is_negative_similarity(old_coord_list, new_coord_list):
+    """
+    Given old and new coordinates of a list of points,
+    determines if the transformation has a negative determinant.
+    If the determinant is positive, the sign of the angle will
+    switch between old and new coords.
+    """
+    point1, point2, point3 = old_coord_list[:3]
+    point1_, point2_, point3_ = new_coord_list[:3]
+    v1 = np.array(point1) - np.array(point2)
+    v2 = np.array(point1) - np.array(point3)
+    v1_ = np.array(point1_) - np.array(point2_)
+    v2_ = np.array(point1_) - np.array(point3_)
+    return 0 > np.cross(v1, v2) * np.cross(v1_, v2_)
+
+
 def find_transformation(old_coord_list: List, new_coord_list: List):
     """
-    Computes the rotation and translation to transform the old plane into the new one.
+    Provided that the transformation of the plane is a positive isometry,
+    computes the rotation and translation to transform the old plane into the new one.
     old_coord_list and new_coord_list must contain at least 2 points.
+    For more general transformation (similarity positive or negative), see
+    find_similarity.
     Ex:
     find_transformation([[16420,26260],[17120, 28480]], [[15760, 26500],[16420, 28780]])
     :return: Two arrays: a rotation and a translation
@@ -59,6 +96,34 @@ def find_transformation(old_coord_list: List, new_coord_list: List):
     t = np.mean(new_coord_list, axis=0) - np.dot(R, np.mean(old_coord_list, axis=0))
 
     return R, t
+
+
+def find_similarity(old_coord_list: List, new_coord_list: List):
+    """
+    Find the transformation to go from old_coord_list to new_coord_list,
+    provided that the transformation is a similitude (transformation that
+    conserves distances or multiply them by a fixed factor).
+    """
+    # Finding the similarity ratio
+    ratio = find_scaling_factor(old_coord_list, new_coord_list)
+    f1 = lambda c: np.array(c) * ratio
+    print(f"Similarity ratio: {ratio}")
+
+    # Is it a negative similarity?
+    if is_negative_similarity(old_coord_list, new_coord_list):
+        f2 = lambda c: c[::-1]
+        print(f"Similarity is a negative similarity")
+    else:
+        f2 = lambda c: c
+        print(f"Similarity is a positive similarity")
+
+    # Find the rotation and translation
+    prov_coord_list = [f2(f1(c)) for c in old_coord_list]
+    R, t = find_transformation(prov_coord_list, new_coord_list)
+    f3 = get_transformation(R, t)
+    print(f"Rotation: {R}")
+    print(f"Translation: {t}")
+    return lambda c: f3(f2(f1(c)))
 
 
 def get_transformation(R, t):

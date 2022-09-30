@@ -102,9 +102,9 @@ data_augmentation = tf.keras.Sequential(
     [
         tf.keras.Input(shape=(ORIGINALSIZE, 1)),
         random_crop(ORIGINALSIZE, INPUTSIZE, offset=0),
-        random_invert(p=0.5),
+        # random_invert(p=0.5),
         random_mirror(p=0.5),
-        random_brightness(40),
+        # random_brightness(40),
     ]
 )
 

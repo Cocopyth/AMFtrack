@@ -5,7 +5,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 import numpy as np
 
 
-def get_length_um(seg):
+def measure_length_um(seg):
     pixel_conversion_factor = 1.725
     pixels = seg
     length_edge = 0
@@ -19,7 +19,7 @@ def get_length_um(seg):
     return length_edge * pixel_conversion_factor
 
 
-def get_length_um_edge(edge, t):
+def measure_length_um_edge(edge, t):
     pixel_conversion_factor = 1.725
     length_edge = 0
     pixels = edge.pixel_list(t)
@@ -39,7 +39,7 @@ def get_length_um_node_list(node_list, exp, t):
         nodea = Node(node_list[i], exp)
         nodeb = Node(node_list[i + 1], exp)
         edge_obj = Edge(nodea, nodeb, exp)
-        total_length += get_length_um_edge(edge_obj, t)
+        total_length += measure_length_um_edge(edge_obj, t)
     return total_length
 
 

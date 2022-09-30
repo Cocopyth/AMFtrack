@@ -3,10 +3,9 @@ import random
 import numpy as np
 from typing import List, Tuple, Optional, Callable
 import cv2 as cv
-import matplotlib.pyplot as plt
 from random import randrange
-import matplotlib.patches as mpatches
 from scipy import ndimage
+import logging
 
 from amftrack.util.aliases import coord_int, coord
 from amftrack.util.param import DIM_X, DIM_Y
@@ -28,15 +27,21 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Node,
     Edge,
 )
+from pathlib import Path
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
 from amftrack.pipeline.functions.image_processing.extract_skel import bowler_hat
 from pymatreader import read_mat
 from matplotlib import cm
 import cv2
-from shapely.geometry import Polygon, shape,Point
+from shapely.geometry import Polygon, shape, Point
 from shapely.affinity import affine_transform, rotate
-import geopandas as gpd
 from amftrack.util.sparse import dilate_coord_list
 from amftrack.util.other import is_in
+import geopandas as gpd
 
 
 def get_random_edge(exp: Experiment, t=0) -> Edge:
@@ -326,7 +331,6 @@ def plot_full_image_with_features(
     for c in points:
         if is_in_bounding_box(c, new_region):
             plt.plot(c[1], c[0], marker="x", color="red")
-
     # 5/ Plotting segments
     segments = [[f(segment[0]), f(segment[1])] for segment in segments]
     for s in segments:
@@ -343,6 +347,9 @@ def plot_full_image_with_features(
         plt.show()
 
 
+fpath = Path(mpl.get_data_path(), "fonts/ttf/lucidasansdemibold.ttf")
+
+
 def plot_full(
     exp: Experiment,
     t: int,
@@ -355,6 +362,10 @@ def plot_full(
     dilation=1,
     save_path="",
     prettify=False,
+    with_point_label=False,
+    figsize=(12, 8),
+    dpi=None,
+    node_size=5,
 ) -> None:
     """
     This is the general purpose function to plot the full image or a region `region` of the image at
@@ -371,6 +382,7 @@ def plot_full(
     :param dilation: only for edges: thickness of the edges (dilation applied to the pixel list)
     :param save_path: full path to the location where the plot will be saved
     :param prettify: if True, the image will be enhanced by smoothing the intersections between images
+    :param with_point_label: if True, the index of the point is ploted on top of it
 
     NB: the full region of a full image is typically [[0, 0], [26000, 52000]]
     NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
@@ -408,24 +420,28 @@ def plot_full(
     skel_im, _ = reconstruct_skeletton(
         [edge.pixel_list(t) for edge in edges],
         region=region,
-        color_seeds=None,  # Give color seed here
+        color_seeds=[(edge.begin.label + edge.end.label) % 255 for edge in edges],
         downsizing=downsizing,
         dilation=dilation,
     )
 
     # 3/ Fusing layers
     fig = plt.figure(
-        figsize=(12, 8)
+        figsize=figsize
     )  # width: 30 cm height: 20 cm # TODO(FK): change dpi
     ax = fig.add_subplot(111)
     ax.imshow(im, cmap="gray", interpolation="none")
     ax.imshow(skel_im, alpha=0.5, interpolation="none")
 
     # 3/ Plotting the Nodes
-    size = 5
-    bbox_props = dict(boxstyle="circle", fc="white")
+    size = node_size
     for node in nodes:
         c = f(list(node.pos(t)))
+        color = make_random_color(node.label)[:3]
+        reciprocal_color = 255 - color
+        color = tuple(color / 255)
+        reciprocal_color = tuple(reciprocal_color / 255)
+        bbox_props = dict(boxstyle="circle", fc=color, edgecolor="none")
         if is_in_bounding_box(c, new_region):
             node_text = ax.text(
                 c[1],
@@ -433,14 +449,19 @@ def plot_full(
                 str(node.label),
                 ha="center",
                 va="center",
-                size=size,
                 bbox=bbox_props,
+                font=fpath,
+                fontdict={"color": reciprocal_color},
+                size=size,
+                # alpha = 0.5
             )
     # 4/ Plotting coordinates
     points = [f(c) for c in points]
-    for c in points:
+    for i, c in enumerate(points):
         if is_in_bounding_box(c, new_region):
-            plt.plot(c[1], c[0], marker="x", color="red")
+            plt.plot(c[1], c[0], marker="x", color="red", markersize=1, alpha=0.5)
+            if with_point_label:
+                plt.text(c[1], c[0], f"{i}")
 
     # 5/ Plotting segments
     segments = [[f(segment[0]), f(segment[1])] for segment in segments]
@@ -453,7 +474,7 @@ def plot_full(
         )
 
     if save_path:
-        plt.savefig(save_path)
+        plt.savefig(save_path, dpi=dpi)
     else:
         plt.show()
 
@@ -539,6 +560,7 @@ def reconstruct_image(
     NB: returned image shape is ((int(a)-int(c))//downsizing, (int(b)-int(d))//downsizing)
     NB: the typical full region of a full image is [[0, 0], [26000, 52000]]
     NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
+    NB: output image format is np.uint8
     """
     # Load information from the stiching
     if exp.image_coordinates is None:
@@ -569,7 +591,7 @@ def reconstruct_image(
         background_value = 255
     else:
         background_value = 0
-    full_im = np.full((d_x, d_y), fill_value=background_value, dtype=np.uint32)
+    full_im = np.full((d_x, d_y), fill_value=background_value, dtype=np.uint8)
 
     # Copy each image into the frame
     for i, im_coord in enumerate(image_coodinates):
@@ -583,9 +605,9 @@ def reconstruct_image(
             im = exp.get_image(t, i)
             if prettify:
                 im = -bowler_hat(-im, 16, [45])
-                im = ((1+im)*255).astype(np.uint32)
+                im = ((1 + im) * 255).astype(np.uint32)
                 im = im + 255 - np.percentile(im.flatten(), 20)
-                im[np.where(im>=255)] = 255
+                im[np.where(im >= 255)] = 255
                 # im = im + 255 - np.max(im.flatten())
                 im = im.astype(np.uint8)
                 # im = ((im.astype(np.float)/np.max(im))*255).astype(np.uint8)
@@ -924,7 +946,7 @@ def reconstruct_image_from_general(
     NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
     """
 
-    # TODO(FK): add a test for size consistency
+    # TODO(FK): specify explicitly the dtype (here it is 32 why?)
 
     # Step 1: computing a region in the TIMESTEP referential that contains all point from the original region
     region = format_region(region)
@@ -993,31 +1015,31 @@ if __name__ == "__main__":
     im, f = reconstruct_skeletton_from_edges(exp, 0, dilation=10)
 
 
-def plot_hulls_skelet(exp,t,hulls,save_path='',close=True):
+def plot_hulls_skelet(exp, t, hulls, save_path="", close=True):
     if close:
-        plt.close('all')
+        plt.close("all")
     my_cmap = cm.Greys
     fig, ax = plt.subplots(figsize=(20, 10))
     skels = []
     ims = []
-    kernel = np.ones((5,5),np.uint8)
+    kernel = np.ones((5, 5), np.uint8)
     itera = 2
-    folders = list(exp.folders['total_path'])
+    folders = list(exp.folders["folder"])
     folders.sort()
-    for folder in folders[t:t+1]:
-        path_snap=folder
-        skel_info = read_mat(path_snap+'/Analysis/skeleton_realigned_compressed.mat')
-        skel = skel_info['skeleton']
-        skels.append(cv2.dilate(skel.astype(np.uint8),kernel,iterations = itera))
+    for folder in folders[t : t + 1]:
+        path_snap = os.path.join(exp.directory, folder)
+        skel_info = read_mat(path_snap + "/Analysis/skeleton_realigned_compressed.mat")
+        skel = skel_info["skeleton"]
+        skels.append(cv2.dilate(skel.astype(np.uint8), kernel, iterations=itera))
     ax.imshow(skels[0], cmap=my_cmap, interpolation=None, alpha=0.7)
     for polygon in hulls:
-        p = affine_transform(polygon,[0.2,0,0,-0.2,0,0])
-        p = rotate(p,90,origin=(0,0))
-        p =gpd.GeoSeries(p)
+        p = affine_transform(polygon, [0.2, 0, 0, -0.2, 0, 0])
+        p = rotate(p, 90, origin=(0, 0))
+        p = gpd.GeoSeries(p)
         try:
-            _ = p.boundary.plot(ax =ax,alpha = 0.9)
+            _ = p.boundary.plot(ax=ax, alpha=0.9)
         except ValueError:
             print(p)
         # _ = ax.plot(np.array(y)/5,np.array(x)/5)
-    if save_path != '':
+    if save_path != "":
         plt.savefig(save_path)

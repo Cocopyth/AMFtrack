@@ -5,6 +5,7 @@ from scipy import sparse
 import cv2
 from pymatreader import read_mat
 import sys
+
 # from extract_graph import dic_to_sparse
 from amftrack.pipeline.functions.image_processing.extract_graph import generate_skeleton
 from amftrack.pipeline.functions.image_processing.extract_graph import (
@@ -25,7 +26,7 @@ threshold = float(sys.argv[1])
 directory = str(sys.argv[2])
 
 
-run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
+run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]

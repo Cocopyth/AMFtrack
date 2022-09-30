@@ -14,7 +14,7 @@ import checksumdir
 import shutil
 
 # directory_origin = r'/mnt/sun/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE_syncing/'
-directory_origin = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$/Data/Prince/Images/"
+directory_origin = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$/Data/Prince2/Images/"
 directory_target = (
     r"/mnt/sun/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE_syncing/"
 )
@@ -27,6 +27,7 @@ update_plate_info(directory_target, local=True)
 
 all_folders_target = get_current_folders(directory_target, local=True)
 run_info = all_folders_target.copy()
+run_info = run_info.sort_values("datetime")
 folder_list = list(run_info["folder"])
 with tqdm(total=len(folder_list), desc="deleted") as pbar:
     for folder in folder_list:
