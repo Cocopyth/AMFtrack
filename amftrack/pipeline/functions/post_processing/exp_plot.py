@@ -22,6 +22,8 @@ from amftrack.util.video_util import (
     make_images_track_hypha,
     make_images_spores,
 )
+import networkx as nx
+
 from amftrack.util.sys import temp_path
 import numpy as np
 from amftrack.pipeline.functions.post_processing.area_hulls import is_in_study_zone
@@ -48,15 +50,46 @@ def plot_hulls(exp, args=None):
     delete_files(paths_list)
 
 
-def get_hull_nodes(exp, args=None):
+def plot_get_hull_nodes(exp, args=None):
+    dir_save = os.path.join(exp.save_location, "time_hull_info")
+    if not os.path.exists(dir_save):
+        os.mkdir(dir_save)
     for t in range(exp.ts):
-        nodes = np.array([node.pos(t) for node in exp.nodes if node.is_in(t)])
-        hull = spatial.ConvexHull(nodes)
-        hull_nodes = [exp.nodes[vertice].label for vertice in hull.vertices]
-        os.mkdir(os.path.join(exp.save_location, "time_hull_info"))
+        full_hull_nodes = []
+        nx_graph = exp.nx_graph[t]
+        threshold = 0.1
+        S = [nx_graph.subgraph(c).copy() for c in nx.connected_components(nx_graph)]
+        selected = [
+            g
+            for g in S
+            if g.size(weight="weight") * len(g.nodes) / 10**6 >= threshold
+        ]
+        for g in selected:
+            nodes_pos = np.array(
+                [
+                    node.pos(t)
+                    for node in exp.nodes
+                    if node.is_in(t)
+                       and np.all(is_in_study_zone(node, t, 1000, 150))
+                       and (node.label in g.nodes)
+                ]
+            )
+            nodes_label = np.array(
+                [
+                    node.label
+                    for node in exp.nodes
+                    if node.is_in(t)
+                       and np.all(is_in_study_zone(node, t, 1000, 150))
+                       and (node.label in g.nodes)
+                ]
+            )
+            if len(nodes_pos)>3:
+                hull = spatial.ConvexHull(nodes_pos)
+                hull_nodes = [nodes_label[vertice] for vertice in hull.vertices]
+                full_hull_nodes += hull_nodes
         np.save(
-            os.path.join(exp.save_location, "time_hull_info", f"hull_nodes_{t}.npy"),
-            hull_nodes,
+            os.path.join(dir_save, f"hull_nodes_{t}.npy"),
+            full_hull_nodes,
         )
 
 

@@ -3,7 +3,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Node,
 )
 from amftrack.pipeline.functions.post_processing.util import (
-    get_length_um_edge,
+    measure_length_um_edge,
     is_in_study_zone,
 )
 import numpy as np
@@ -13,7 +13,7 @@ import networkx as nx
 from amftrack.util.sys import *
 
 
-def is_out_study(exp, t, args):
+def get_is_out_study(exp, t, args):
     return ("out_study", int(t > exp.reach_out))
 
 
@@ -24,7 +24,7 @@ def get_length_study_zone(exp, t, args):
         is_in_end = np.all(is_in_study_zone(edge_obj.end, t, 1000, 150))
         is_in_begin = np.all(is_in_study_zone(edge_obj.begin, t, 1000, 150))
         if is_in_end and is_in_begin:
-            length += get_length_um_edge(edge_obj, t)
+            length += measure_length_um_edge(edge_obj, t)
     return ("tot_length_study", length)
 
 
@@ -135,7 +135,7 @@ def get_length(exp, t, args):
     length = 0
     for edge in exp.nx_graph[t].edges:
         edge_obj = Edge(Node(edge[0], exp), Node(edge[1], exp), exp)
-        length += get_length_um_edge(edge_obj, t)
+        length += measure_length_um_edge(edge_obj, t)
     return ("tot_length", length)
 
 

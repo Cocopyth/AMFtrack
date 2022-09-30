@@ -31,8 +31,8 @@ list_f = [
     get_width_tip_edge,
     get_width_root_edge,
     get_width_average,
-    has_reached_final_pos,
-    in_ROI,
+    get_has_reached_final_pos,
+    get_in_ROI,
 ]
 # list_f = [local_density,local_density,local_density]
 # list_f = [get_time_since_begin_exp]

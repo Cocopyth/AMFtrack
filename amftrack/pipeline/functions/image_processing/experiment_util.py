@@ -3,9 +3,7 @@ import random
 import numpy as np
 from typing import List, Tuple, Optional, Callable
 import cv2 as cv
-import matplotlib.pyplot as plt
 from random import randrange
-import matplotlib.patches as mpatches
 from scipy import ndimage
 import logging
 
@@ -32,6 +30,9 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 from pathlib import Path
 
 import matplotlib as mpl
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
 from amftrack.pipeline.functions.image_processing.extract_skel import bowler_hat
 from pymatreader import read_mat
 from matplotlib import cm
@@ -1023,10 +1024,10 @@ def plot_hulls_skelet(exp, t, hulls, save_path="", close=True):
     ims = []
     kernel = np.ones((5, 5), np.uint8)
     itera = 2
-    folders = list(exp.folders["total_path"])
+    folders = list(exp.folders["folder"])
     folders.sort()
     for folder in folders[t : t + 1]:
-        path_snap = folder
+        path_snap = os.path.join(exp.directory,folder)
         skel_info = read_mat(path_snap + "/Analysis/skeleton_realigned_compressed.mat")
         skel = skel_info["skeleton"]
         skels.append(cv2.dilate(skel.astype(np.uint8), kernel, iterations=itera))

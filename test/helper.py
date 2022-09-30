@@ -8,15 +8,19 @@ There are several sorts of utils for tests:
 import cv2
 import numpy as np
 import os
+import pickle
 from amftrack.util.sys import (
     test_path,
     get_current_folders,
     update_plate_info,
-    get_current_folders_local,
-    update_plate_info_local,
+    update_analysis_info,
+    get_analysis_info,
 )
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
-    Experiment,
+    Experiment,load_graphs
+)
+from amftrack.pipeline.functions.post_processing.extract_study_zone import (
+    load_study_zone,
 )
 from amftrack.util.dbx import get_dropbox_folders, get_dropbox_folders
 
@@ -102,22 +106,45 @@ def make_experiment_object():
         )
     exp = Experiment(directory)
     exp.load(selected_df, suffix="")
-    exp.load_tile_information(0)
-    exp.load_tile_information(1)
-    exp.load_tile_information(2)
-    exp.load_tile_information(3)
+    for t in range(len(exp.folders)):
+        exp.load_tile_information(t)
     return exp
 
+def make_experiment_object_analysis():
+    "Build an experiment object using the plate that is in the test repository."
+    directory = test_path
+    plate_name = "111111_20600101"  # TODO(FK): find the name automaticaly (can be different based on the person)
+    update_analysis_info(directory)
+
+    analysis_info = get_analysis_info(directory)
+    select = analysis_info.loc[analysis_info['unique_id']==plate_name]
+    path_exp = f'{directory}{select["path_exp"].iloc[0]}'
+    exp = pickle.load(open(path_exp, "rb"))
+    load_graphs(exp, directory, range(exp.ts), post_process=True)
+    for t in range(len(exp.folders)):
+        exp.load_tile_information(t)
+    exp.save_location = "/".join(path_exp.split("/")[:-1])
+    load_study_zone(exp)
+
+    return exp
 
 def make_experiment_object_multi():
     "Build an experiment object using the plate that is in the test repository."
-    directory = os.path.join(test_path, "plate_938")
-    update_plate_info_local(directory)
-    folder_df = get_current_folders_local(directory)
-    print(len(folder_df))
-    folder_df["unique_id"] = 10000
+    directory = test_path
+    plate_name = "111111_20600101"  # TODO(FK): find the name automaticaly (can be different based on the person)
+    update_plate_info(directory)
+    folder_df = get_current_folders(directory)
+    selected_df = folder_df.loc[folder_df["unique_id"] == plate_name]
+    if len(selected_df) < 4:
+        all_folders_drop = get_dropbox_folders("/DATA/PRINCE", True)
+        folders_drop = all_folders_drop.loc[all_folders_drop["unique_id"] == plate_name]
+        run_transfer(
+            "from_drop.py",
+            [directory],
+            folders_drop,
+        )
     exp = Experiment(directory)
-    exp.load(folder_df, suffix="")
+    exp.load(selected_df, suffix="")
     for t in range(len(exp.folders)):
         exp.load_tile_information(t)
     return exp
