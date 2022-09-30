@@ -1027,7 +1027,7 @@ def plot_hulls_skelet(exp, t, hulls, save_path="", close=True):
     folders = list(exp.folders["folder"])
     folders.sort()
     for folder in folders[t : t + 1]:
-        path_snap = os.path.join(exp.directory,folder)
+        path_snap = os.path.join(exp.directory, folder)
         skel_info = read_mat(path_snap + "/Analysis/skeleton_realigned_compressed.mat")
         skel = skel_info["skeleton"]
         skels.append(cv2.dilate(skel.astype(np.uint8), kernel, iterations=itera))

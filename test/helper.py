@@ -17,7 +17,8 @@ from amftrack.util.sys import (
     get_analysis_info,
 )
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
-    Experiment,load_graphs
+    Experiment,
+    load_graphs,
 )
 from amftrack.pipeline.functions.post_processing.extract_study_zone import (
     load_study_zone,
@@ -110,6 +111,7 @@ def make_experiment_object():
         exp.load_tile_information(t)
     return exp
 
+
 def make_experiment_object_analysis():
     "Build an experiment object using the plate that is in the test repository."
     directory = test_path
@@ -117,7 +119,7 @@ def make_experiment_object_analysis():
     update_analysis_info(directory)
 
     analysis_info = get_analysis_info(directory)
-    select = analysis_info.loc[analysis_info['unique_id']==plate_name]
+    select = analysis_info.loc[analysis_info["unique_id"] == plate_name]
     path_exp = f'{directory}{select["path_exp"].iloc[0]}'
     exp = pickle.load(open(path_exp, "rb"))
     load_graphs(exp, directory, range(exp.ts), post_process=True)
@@ -127,6 +129,7 @@ def make_experiment_object_analysis():
     load_study_zone(exp)
 
     return exp
+
 
 def make_experiment_object_multi():
     "Build an experiment object using the plate that is in the test repository."
