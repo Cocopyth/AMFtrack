@@ -2,7 +2,7 @@ from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
     get_pixel_growth_and_new_children,
 )
 from amftrack.pipeline.functions.post_processing.util import (
-    get_length_um_edge,
+    measure_length_um_edge,
     is_in_study_zone,
 )
 import numpy as np
@@ -17,7 +17,7 @@ def get_width_f(hyph, args):
     try:
         edges = hyph.get_nodes_within(t)[1]
         widths = np.array([edge.width(t) for edge in edges])
-        lengths = np.array([get_length_um_edge(edge, t) for edge in edges])
+        lengths = np.array([measure_length_um_edge(edge, t) for edge in edges])
         av_width = np.sum(widths * lengths) / np.sum(lengths)
         return ("av_width_final", av_width)
     except nx.exception.NetworkXNoPath:
@@ -28,7 +28,7 @@ def get_tot_length_C_f(hyph, args):
     t = hyph.end.ts()[-1]
     try:
         edges = hyph.get_nodes_within(t)[1]
-        lengths = np.array([get_length_um_edge(edge, t) for edge in edges])
+        lengths = np.array([measure_length_um_edge(edge, t) for edge in edges])
         tot_length_C = np.sum(lengths)
         return ("tot_length_C", tot_length_C)
     except nx.exception.NetworkXNoPath:

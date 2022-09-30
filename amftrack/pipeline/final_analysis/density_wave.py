@@ -9,7 +9,9 @@ import os
 import cv2
 from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
-
+import matplotlib as mpl
+cmap1 = mpl.cm.get_cmap('spring')
+cmap2 = mpl.cm.get_cmap('winter')
 
 def wave(xt, c, lamb, K, x0):
     x = xt[0, :]
@@ -132,3 +134,70 @@ def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
     ss_tot = np.sum((ys - np.mean(ys)) ** 2)
     r_squared_tips = 1 - (ss_res / ss_tot)
     return (popt_f, r_squared_dens, popt_f2, r_squared_tips)
+
+def plot_single_plate(plate,time_plate_info,timestep_max,maxi = 10,max_area = 50,savefig=None):
+    fig, ax = plt.subplots()
+    ax.set_title(f'plate {plate}')
+    ax2 = ax.twinx()
+    table = time_plate_info.loc[time_plate_info["Plate"]==plate].copy()
+    table = table.loc[table['timestep']<=timestep_max]
+    table= table.set_index('timestep')
+    ts = []
+    ys = []
+    ys2 = []
+    Cs = []
+    lambs = []
+    indexes = []
+    t0s = []
+    ds = []
+    for index in range(1, maxi):
+        column = f"ring_density_incr-100_index-{index}"
+        column2 = f"ring_active_tips_density_incr-100_index-{index}"
+
+        start = np.min(table.loc[table[column] >= 400]['time_since_begin']) / pd.Timedelta(hours=1)
+        if not np.isnan(start):
+            table[f'time_since_begin_{index}'] = table['time_since_begin'] / pd.Timedelta(hours=1) - start
+
+            area = np.sqrt(table["area_sep_comp"][0] + 100 * index)
+
+
+            selection_fit = table
+            popt0, pcov = curve_fit(S, selection_fit[f'time_since_begin_{index}'], selection_fit[column],
+                                    bounds=([0, 0, -np.inf], 3 * [np.inf]), p0=[1, 1, 0])
+            popt1, _ = curve_fit(dS, selection_fit[f'time_since_begin_{index}'], selection_fit[column2],
+                                 bounds=([0, 0, -np.inf], 3 * [np.inf]))
+            lamb, C, t0 = list(popt0)
+
+            table[f'time_since_begin_{index}'] = table['time_since_begin']-t0
+
+            ax.scatter(table[f'time_since_begin_{index}'], table[column], alpha=0.5, color=cmap2(area / max_area))
+            ax2.scatter(table[f'time_since_begin_{index}'], table[column2], alpha=0.5, color=cmap1(area / max_area))
+            Cs.append(C)
+            lambs.append(lamb)
+            indexes.append(index)
+            t0s.append(t0 + start)
+            ds.append(int(area / np.sqrt((np.pi / 2))))
+            x = np.linspace(-50, 50, 100)
+            ax.plot(x, S(x+t0, lamb, C, t0), color=cmap2(area / max_area),
+                    label=f'd = {int(area / np.sqrt((np.pi / 2)))}mm')
+            lamb, C, t0 = list(popt1)
+
+            ax2.plot(x, dS(x+t0, lamb, C, t0), color=cmap1(area / max_area),
+                     label=f'd = {int(area / np.sqrt((np.pi / 2)))}mm')
+    df = pd.DataFrame((np.array((ts, ys, ys2))).transpose(), columns=('ts', 'ys', 'ys2'))
+    factor = 4
+    df['ts_round'] = (df['ts'] / factor).astype(int) * factor
+    ax.set_xlim((-30, 30))
+    ax2.set_ylim((0, 0.25))
+    ax.set_ylim((0, 2500))
+
+    ax.set_ylabel('network density ($\mu m.mm^{-2}$)')
+    ax.set_xlabel('shifted time ($h$)')
+    ax2.set_ylabel('active tips density ($mm^{-2}$)')
+    ax.tick_params(axis='y', colors='blue')
+    ax2.tick_params(axis='y', colors='red')
+    ax.legend(fontsize=8)
+    plt.tight_layout()
+    if not savefig is None:
+        plt.savefig(savefig)
+    return(Cs,lambs,t0s)
