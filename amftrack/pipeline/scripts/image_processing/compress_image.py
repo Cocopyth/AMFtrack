@@ -16,7 +16,7 @@ op_id = int(sys.argv[-2])
 directory = str(sys.argv[1])
 
 
-run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
+run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]
@@ -77,5 +77,5 @@ for index, name in enumerate(tileconfig[0]):
 
 output = mask
 mask_compressed = cv.resize(output, (dim[1] // 15, dim[0] // 15))
-bckgr_rm = bowler_hat(-mask_compressed,16,[15])
+bckgr_rm = bowler_hat(-mask_compressed, 16, [15])
 sio.savemat(path_snap + "/Analysis/raw_image.mat", {"raw": bckgr_rm})

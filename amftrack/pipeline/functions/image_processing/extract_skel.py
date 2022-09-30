@@ -50,7 +50,7 @@ def stredisk(radius):
     return cv.getStructuringElement(cv.MORPH_ELLIPSE, (2 * radius - 1, 2 * radius - 1))
 
 
-def remove_component(dilated):
+def remove_component(dilated, min_size=4000):
     nb_components, output, stats, centroids = cv.connectedComponentsWithStats(
         dilated.astype(np.uint8), connectivity=8
     )
@@ -61,7 +61,6 @@ def remove_component(dilated):
 
     # minimum size of particles we want to keep (number of pixels)
     # here, it's a fixed value, but you can set it as you want, eg the mean of the sizes or whatever
-    min_size = 4000
 
     # your answer image
     img_f = np.zeros((dilated.shape))
@@ -115,7 +114,7 @@ def extract_skel_new_prince(im, params, perc_low, perc_high):
     imname = foldname + f"/{foldname}it{args[4]}.tif"
     path_modif = place_save + "/" + imname
     im2 = imageio.imread(path_modif)
-    shutil.rmtree(os.path.join(place_save,foldname))
+    shutil.rmtree(os.path.join(place_save, foldname))
     low = max(20, np.percentile(im2, perc_low))
     high = max(90, np.percentile(im2, perc_high))
     transformed = im2
@@ -123,7 +122,7 @@ def extract_skel_new_prince(im, params, perc_low, perc_high):
     dilated = remove_holes(hyst)
     dilated = dilated.astype(np.uint8)
     connected = remove_component(dilated)
-
+    os.remove(imtransformed_path)
     return connected
 
 

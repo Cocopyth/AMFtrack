@@ -251,9 +251,10 @@ def get_regular_hulls_area_ratio(num, exp, ts):
 
 
 def get_regular_hulls_area_fixed(exp, ts, incr):
-    path = (
-        os.path.join(temp_path,f"hulls_{exp.unique_id}_{incr}_"
-        f"{np.sum(pd.util.hash_pandas_object(exp.folders.iloc[ts]))}.pick")
+    path = os.path.join(
+        temp_path,
+        f"hulls_{exp.unique_id}_{incr}_"
+        f"{np.sum(pd.util.hash_pandas_object(exp.folders.iloc[ts]))}.pick",
     )
     if os.path.isfile(path):
         (regular_hulls, indexes) = pickle.load(open(path, "rb"))

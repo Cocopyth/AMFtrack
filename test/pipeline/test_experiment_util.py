@@ -2,6 +2,10 @@ import os
 import numpy as np
 import random
 import unittest
+import matplotlib as mpl
+
+mpl.use("AGG")
+
 import matplotlib.pyplot as plt
 from amftrack.util.geometry import (
     expand_bounding_box,
@@ -88,7 +92,7 @@ class TestExperiment(unittest.TestCase):
 
     def test_plot_edge_save(self):
         edge = get_random_edge(self.exp)
-        plot_edge(edge, 0, save_path=os.path.join(test_path, "plot_edge_1"))
+        plot_edge(edge, 0, save_path=os.path.join(test_path, "plot_edge_8"))
 
     def test_plot_edge_cropped(self):
         edge = get_random_edge(self.exp)
@@ -394,7 +398,7 @@ class TestExperiment(unittest.TestCase):
         im_pil.save(os.path.join(test_path, "reconstruct_from_general.png"))
 
 
-@unittest.skip("Shouldn't be run each time because very costly")
+# @unittest.skip("Shouldn't be run each time because very costly")
 class TestExperimentHeavy(unittest.TestCase):
     """Tests that need a plate with multiple timesteps"""
 
@@ -583,3 +587,22 @@ class TestExperimentHeavy(unittest.TestCase):
                         test_path, f"plot_around_node_{i}_{t}_not_prettify"
                     ),
                 )
+
+    def test_plot_full_5(self):
+        # Test label for points
+        plot_full(
+            self.exp,
+            0,
+            downsizing=10,
+            region=[[0, 0], [20000, 55000]],
+            points=[
+                [11191, 39042],
+                [11923, 45165],
+                [11850, 42000],
+                [14225, 41750],
+                [14450, 38425],
+                [15750, 34325],
+            ],
+            save_path=os.path.join(test_path, "plot_full_with_point_labels"),
+            with_point_label=True,
+        )

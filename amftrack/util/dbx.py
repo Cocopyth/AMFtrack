@@ -123,7 +123,8 @@ def upload(file_path, target_path, chunk_size=4 * 1024 * 1024, catch_exception=T
                     return e
             break
 
-def upload_folder(path,target_drop):
+
+def upload_folder(path, target_drop, delete=False):
     for root, dirs, files in os.walk(path):
         for filename in files:
             # construct the full local path
@@ -135,6 +136,10 @@ def upload_folder(path,target_drop):
             dropbox_path = os.path.join(target_drop, relative_path)
             dropbox_path = dropbox_path.replace("\\", "/")
             upload(local_path, dropbox_path, catch_exception=False)
+            if delete:
+                os.remove(local_path)
+    if delete:
+        shutil.rmtree(path)
 
 
 def get_size_dbx(path):
@@ -305,22 +310,76 @@ def get_dropbox_folders_old(dir_drop: str, file_metadata=False) -> pd.DataFrame:
 
 
 def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
-    data = []
     dbx = load_dbx()
     response = dbx.files_list_folder(dir_drop, recursive=True)
     # for fil in response.entries:
     listfiles = []
-    listjson = []
+    folders_interest = ["param.m", "experiment.pick"]
     while response.has_more:
         listfiles += [
-            file for file in response.entries if file.name.split("/")[-1] == "param.m"
+            file
+            for file in response.entries
+            if file.name.split("/")[-1] in folders_interest
         ]
         response = dbx.files_list_folder_continue(response.cursor)
     listfiles += [
-        file for file in response.entries if file.name.split("/")[-1] == "param.m"
+        file
+        for file in response.entries
+        if file.name.split("/")[-1] in folders_interest
     ]
     # print([((file.path_lower.split(".")[0]) + "_info.json") for file in listfiles if (file.name.split(".")[-1] == "zip") &
     #        (((file.path_lower.split(".")[0]) + "_info.json") not in listjson)])
+    listfiles.reverse()
+    names = [file.path_display.split("/")[-2] for file in listfiles]
+    path_drop = [os.path.join(*file.path_lower.split("/")[:-1]) for file in listfiles]
+    id_uniques = [path.split("/")[-2] for path in path_drop]
+    plate_num = [idi.split("_")[0] for idi in id_uniques]
+    date_cross = [idi.split("_")[1] for idi in id_uniques]
+    if skip_size:
+        sizes = [np.nan for path in path_drop]
+    else:
+        sizes = []
+        with tqdm(total=len(path_drop), desc="sizes") as pbar:
+            for path in path_drop:
+                try:
+                    sizes.append(get_size_dbx("/" + path))
+                except:
+                    sizes.append(None)
+                pbar.update(1)
+    modified = [file.client_modified for file in listfiles]
+    df = pd.DataFrame(
+        (names, sizes, modified, path_drop, plate_num, date_cross, id_uniques)
+    ).transpose()
+    df = df.rename(
+        columns={
+            0: "folder",
+            1: "size",
+            2: "change_date",
+            3: "tot_path_drop",
+            4: "Plate",
+            5: "CrossDate",
+            6: "unique_id",
+        }
+    )
+    return df
+
+
+def get_dropbox_analysis_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
+    dbx = load_dbx()
+    response = dbx.files_list_folder(dir_drop, recursive=True)
+    listfiles = []
+    while response.has_more:
+        listfiles += [
+            file
+            for file in response.entries
+            if file.name.split("/")[-1] == "experiment.pick"
+        ]
+        response = dbx.files_list_folder_continue(response.cursor)
+    listfiles += [
+        file
+        for file in response.entries
+        if file.name.split("/")[-1] == "experiment.pick"
+    ]
     listfiles.reverse()
     names = [file.path_display.split("/")[-2] for file in listfiles]
     path_drop = [os.path.join(*file.path_lower.split("/")[:-1]) for file in listfiles]
@@ -375,7 +434,7 @@ def upload_folders(
                     + str(int(str(line["CrossDate"].iloc[0]).replace("'", "")))
                 )
             except:
-                id_unique='faulty_param_files'
+                id_unique = "faulty_param_files"
             path_snap = line["total_path"].iloc[0]
             for subfolder in os.listdir(path_snap):
                 path_total = os.path.join(path_snap, subfolder)
@@ -386,8 +445,9 @@ def upload_folders(
                 )
             pbar.update(1)
             if delete:
-                os.remove(os.path.join(path_snap, "param.m"))
-                os.rmdir(path_snap)
+                if len(os.listdir(path_snap)) == 1:
+                    os.remove(os.path.join(path_snap, "param.m"))
+                    os.rmdir(path_snap)
 
 
 def download_folders_old(folders_drop: pd.DataFrame, directory_target):
@@ -417,8 +477,12 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
                 directory_target, folder, path_drop.split("/")[-1]
             )
             print(path_drop, path_local)
-
-            download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
+            if (
+                file.name != "time_hypha_info"
+                and not "validation" in file.name
+                and not "time_hull_info" in file.name
+            ):
+                download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
 
 
 def compute_dropbox_hash(filename):

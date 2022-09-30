@@ -5,7 +5,6 @@ from typing import Tuple, List, Dict
 import os
 import logging
 from random import choice
-from tensorflow import keras
 
 from amftrack.notebooks.analysis.util import *
 from amftrack.util.aliases import coord, coord_int
@@ -15,14 +14,19 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 )
 from amftrack.util.geometry import get_section_segment, generate_index_along_sequence
 from amftrack.util.image_analysis import is_in_image, find_image_indexes
-from amftrack.util.sys import storage_path
+from tensorflow import keras
 
 logger = logging.getLogger(os.path.basename(__file__))
 
 a = 2.3196552
 
-save_path = os.path.join(storage_path, "models", "20220601-default")
-MODEL = keras.models.load_model(save_path)
+# save_path = os.path.join(
+#     storage_path, "models", "dense_02_focused_edge", "saved_model_retrained"
+# )
+# QUICKFIX: temporary
+MODEL = keras.models.load_model(
+    os.path.join(path_code[:-1], "ml", "models", "default_model")
+)
 
 
 def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
@@ -35,6 +39,31 @@ def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
     return generate_index_along_sequence(n, resolution, offset)
 
 
+def compute_edge_width_profile(
+    exp: Experiment,
+    t: int,
+    edge: Edge,
+    resolution=5,
+    offset=4,
+    step=3,
+    target_length=120,
+) -> float:
+
+    profile, _, __ = extract_section_profiles_for_edge(
+        exp,
+        t,
+        edge,
+        resolution=resolution,
+        offset=offset,
+        step=step,
+        target_length=target_length,
+    )
+
+    predicted_widths = MODEL.predict(profile)
+
+    return predicted_widths
+
+
 def compute_section_coordinates(
     pixel_list: List[coord_int], pivot_indexes: List, step: int, target_length=120
 ) -> List[Tuple[coord_int, coord_int]]:
@@ -44,7 +73,7 @@ def compute_section_coordinates(
     :param step: this determine which neibooring points to use for computing the tangent
     :param target_length: the approximate target_length that we want for the segment
     WARNING: taget_length is not exact as the coordinates are ints
-    NB: the coordinates are all in the GENERAL referential
+    NB: the coordinates are all in the general referential
     """
     # TODO(FK): handle case where the step is bigger than the offset, raise error instead of logging
     if step > pivot_indexes[0]:
@@ -229,34 +258,6 @@ def extract_section_profiles_for_edge(
     return np.concatenate(l, axis=0), list_of_segments, new_section_coord_list
 
 
-def compute_edge_width_profile(
-    exp: Experiment,
-    t: int,
-    edge: Edge,
-    resolution=5,
-    offset=4,
-    step=3,
-    target_length=120,
-) -> float:
-
-    profile, _, __ = extract_section_profiles_for_edge(
-        exp,
-        t,
-        edge,
-        resolution=resolution,
-        offset=offset,
-        step=step,
-        target_length=target_length,
-    )
-
-    predicted_widths = MODEL.predict(profile)
-
-    return predicted_widths
-
-
-## Older functions ##
-
-
 def get_source_image(
     experiment: Experiment, pos: coord, t: int, local: bool, force_selection=None
 ):
@@ -428,6 +429,35 @@ def get_width_info(experiment, t, resolution=50, skip=False):
         else:
             # Maybe change to Nan if it doesnt break the rest
             edge_width[edge] = 40
+    return edge_width
+
+
+def get_width_info_new(experiment, t, resolution=50, skip=False) -> Dict:
+    "Felix version"
+    print(not skip)
+    edge_width = {}
+    graph = experiment.nx_graph[t]
+    for edge in graph.edges:
+        if not skip:
+            edge_exp = Edge(
+                Node(edge[0], experiment), Node(edge[1], experiment), experiment
+            )
+            if len(edge_exp.pixel_list(t)) > 100:
+                prediction = compute_edge_width_profile(
+                    experiment,
+                    t,
+                    edge_exp,
+                    resolution=resolution,
+                    offset=8,
+                    step=6,
+                    target_length=100,
+                )
+                median = np.median(prediction)
+                edge_width[edge] = median
+            else:
+                edge_width[edge] = 0
+        else:
+            edge_width[edge] = 0
     return edge_width
 
 

@@ -17,7 +17,7 @@ i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
 
-run_info = pd.read_json(f"{temp_path}/{op_id}.json",dtype = {'unique_id':str})
+run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 
 unique_ids = list(set(run_info["unique_id"].values))
 unique_ids.sort()
@@ -28,7 +28,7 @@ create_labeled_graph(exp)
 exp.save_graphs(suffix="_labeled")
 
 for i, date in enumerate(exp.dates):
-    tab = from_nx_to_tab(exp.nx_graph[i],exp.positions[i])
+    tab = from_nx_to_tab(exp.nx_graph[i], exp.positions[i])
     directory_name = get_dirname(date, exp.folders)
     path_snap = os.path.join(exp.directory, directory_name)
     path_save = path_snap + "/Analysis/graph_full_labeled.mat"

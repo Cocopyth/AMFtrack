@@ -5,6 +5,8 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
     prune_graph,
 )
 from amftrack.pipeline.functions.image_processing.node_id_2 import reconnect_degree_2
+from amftrack.pipeline.functions.image_processing.node_id import reduce_labels
+
 import scipy.io as sio
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Node,
@@ -202,17 +204,15 @@ def get_anastomosing_hyphae(exp):
     return anastomosing_hyphae
 
 
-def resolve_anastomosis_crossing_by_root(exp,lim_considered=1):
-    hyphaes, problems = get_hyphae(exp,lim_considered=1)
+def resolve_anastomosis_crossing_by_root(exp, lim_considered=1):
+    hyphaes, problems = get_hyphae(exp, lim_considered=lim_considered)
     exp.hyphaes = hyphaes
     print("getting anastomosing", len(hyphaes))
     anastomosing_hyphae = get_anastomosing_hyphae(exp)
     print("relabeling")
     to_relabel = []
     corresp_hyph = {}
-    print(len(anastomosing_hyphae))
     for hyph, t0, tp1 in anastomosing_hyphae:
-        print(t0)
         corresp_hyph[hyph.end.label] = []
         for hypha in exp.hyphaes:
             pos_root_hyph = np.mean([hyph.root.pos(t) for t in hyph.root.ts()], axis=0)
@@ -275,18 +275,23 @@ def resolve_anastomosis_crossing_by_root(exp,lim_considered=1):
         new_graph = nx.relabel_nodes(nx_graph, mapping, copy=True)
         exp.nx_graph[t] = new_graph
         exp.positions[t] = new_poss
-        labels = {node for g in exp.nx_graph for node in g}
+    new_graph_list, new_poss_list = reduce_labels(exp.nx_graph, exp.positions)
+    exp.nx_graph, exp.positions = new_graph_list, new_poss_list
+    labels = {node for g in exp.nx_graph for node in g}
     exp.nodes = []
     for label in labels:
         exp.nodes.append(Node(label, exp))
     print("getting hyphae again")
-    hyphaes, problems = get_hyphae(exp)
+    hyphaes, problems = get_hyphae(exp, lim_considered=lim_considered)
     exp.hyphaes = hyphaes
 
 
-def get_hyphae(experiment,lim_considered=1):
-    tips = [node for node in experiment.nodes if node.degree(node.ts()[0]) == 1
-            and len(node.ts())>=lim_considered]
+def get_hyphae(experiment, lim_considered=1):
+    tips = [
+        node
+        for node in experiment.nodes
+        if node.degree(node.ts()[0]) == 1 and len(node.ts()) >= lim_considered
+    ]
     problems = []
     hyphaes = []
     for i, tip in enumerate(tips):

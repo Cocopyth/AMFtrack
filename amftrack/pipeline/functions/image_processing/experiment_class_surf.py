@@ -64,6 +64,33 @@ class Experiment:
     def __repr__(self):
         return f"Experiment({self.directory})"
 
+    def load_light(self, folders: pd.DataFrame, suffix="_labeled"):
+        """Loads only the tile reconstruction to make plots."""
+        self.folders = folders
+        assert len(folders["unique_id"].unique()) == 1, "multiple plate id"
+        self.unique_id = folders["unique_id"].unique()[0]
+        self.image_coordinates = [None] * len(folders)
+        self.image_transformation = [None] * len(folders)
+        self.image_paths = [None] * len(folders)
+        # Reindexing the dataframe based on time order
+        self.folders["datetime"] = pd.to_datetime(
+            self.folders["date"], format="%d.%m.%Y, %H:%M:"
+        )
+        self.folders = self.folders.sort_values(by=["datetime"], ignore_index=True)
+        self.dates = list(self.folders["datetime"])
+        self.dates.sort()
+
+        self.nodes = []
+        self.positions = []
+        self.nx_graph = []
+
+        self.ts = len(self.dates)
+
+        for t in range(len(self.dates)):
+            R0 = np.array([[1, 0], [0, 1]])
+            t0 = np.array([0, 0])
+            self.image_transformation[t] = (R0, t0)
+
     def load(self, folders: pd.DataFrame, suffix="_labeled"):
         """Loads the graphs from the different time points and other useful attributes"""
         self.folders = folders
@@ -118,6 +145,19 @@ class Experiment:
             g = self.nx_graph[i]
             pos = self.positions[i]
             pickle.dump((g, pos), open(path_save, "wb"))
+
+    def save_mat(self):
+        tabs_labeled = []
+        for i, date in enumerate(self.dates):
+            tab_labeled = from_nx_to_tab(self.nx_graph[i], self.positions[i])
+            directory_name = get_dirname(date, self.folders)
+            path_snap = os.path.join(self.directory, directory_name)
+            file = os.path.join(f"Analysis", f"graph_full_labeled.mat")
+            path_save = os.path.join(path_snap, file)
+            sio.savemat(
+                path_save,
+                {name: col.values for name, col in tab_labeled.items()},
+            )
 
     def load_compressed_skel(self, factor=5):
         """
@@ -452,6 +492,18 @@ class Experiment:
         else:
             plt.show()
 
+    def t_to_name(self, t: int):
+        """Conversion between timestep index and timestep folder name"""
+        date = self.dates[t]
+        directory_name = get_dirname(date, self.folders)
+        return directory_name
+
+    def name_to_t(self, name: str):
+        """Conversion between timestep index and timestep folder name"""
+        for t in range(self.__len__()):
+            if name == get_dirname(self.dates[t], self.folders):
+                return t
+
 
 def save_graphs(exp, suf=2):
     for i, date in enumerate(exp.dates):
@@ -468,8 +520,9 @@ def save_graphs(exp, suf=2):
             pickle.dump((g, pos), open(path_save, "wb"))
 
 
-def load_graphs(exp, indexes=None,reload=True):
-    #TODO : add as a class method
+def load_graphs(exp, directory, indexes=None, reload=True, post_process=False):
+    # TODO : add as a class method
+    exp.directory = directory
     nx_graph_poss = []
     labeled = exp.labeled
     if indexes == None:
@@ -481,11 +534,13 @@ def load_graphs(exp, indexes=None,reload=True):
             suffix = "/Analysis/nx_graph_pruned_labeled.p"
         else:
             suffix = "/Analysis/nx_graph_pruned.p"
+        if post_process:
+            suffix = "/Analysis/nx_graph_pruned_labeled2.p"
         path_save = path_snap + suffix
         if (reload and index in indexes) or (exp.nx_graph is None):
             (g, pos) = pickle.load(open(path_save, "rb"))
         else:
-            (g, pos) = exp.nx_graph[index],exp.positions[index]
+            (g, pos) = exp.nx_graph[index], exp.positions[index]
         if index in indexes:
             nx_graph_poss.append((g, pos))
         else:
@@ -630,6 +685,7 @@ class Node:
         if self.is_in(t):
             return self
         else:
+            identifier = 0
             mini = np.inf
             poss = self.experiment.positions[t]
             pos_root = np.mean([self.pos(t) for t in self.ts()], axis=0)
