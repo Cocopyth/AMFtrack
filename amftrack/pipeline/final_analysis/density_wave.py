@@ -170,22 +170,28 @@ def plot_single_plate(
             area = np.sqrt(table["area_sep_comp"][0] + 100 * index)
 
             selection_fit = table
-            popt0, pcov = curve_fit(
-                S,
-                selection_fit[f"time_since_begin_{index}"],
-                selection_fit[column],
-                bounds=([0, 0, -np.inf], 3 * [np.inf]),
-                p0=[1, 1, 0],
-            )
-            popt1, _ = curve_fit(
-                dS,
-                selection_fit[f"time_since_begin_{index}"],
-                selection_fit[column2],
-                bounds=([0, 0, -np.inf], 3 * [np.inf]),
-            )
+            try:
+                popt0, pcov = curve_fit(
+                    S,
+                    selection_fit[f"time_since_begin_{index}"],
+                    selection_fit[column],
+                    bounds=([0, 0, -np.inf], 3 * [np.inf]),
+                    p0=[1, 1, 0],
+                )
+                popt1, _ = curve_fit(
+                    dS,
+                    selection_fit[f"time_since_begin_{index}"],
+                    selection_fit[column2],
+                    bounds=([0, 0, -np.inf], 3 * [np.inf]),
+                    p0 = [0.2,0.5,0]
+                )
+                # print(popt1)
+            except:
+                # print(selection_fit[column2])
+                continue
             lamb, C, t0 = list(popt0)
 
-            table[f"time_since_begin_{index}"] = table["time_since_begin"] - t0
+            table[f"time_since_begin_{index}"] = table[f"time_since_begin_{index}"] - t0
 
             ax.scatter(
                 table[f"time_since_begin_{index}"],
@@ -211,19 +217,26 @@ def plot_single_plate(
                 color=cmap2(area / max_area),
                 label=f"d = {int(area / np.sqrt((np.pi / 2)))}mm",
             )
-            lamb, C, t0 = list(popt1)
+            lamb, C, t1 = list(popt1)
 
             ax2.plot(
                 x,
-                dS(x + t0, lamb, C, t0),
+                dS(x + t0, lamb, C, t1),
                 color=cmap1(area / max_area),
                 label=f"d = {int(area / np.sqrt((np.pi / 2)))}mm",
             )
+            ts +=table[f'time_since_begin_{index}'].to_list()
+            ys += table[column].to_list()
+            ys2+=table[column2].astype(float).to_list()
     df = pd.DataFrame(
         (np.array((ts, ys, ys2))).transpose(), columns=("ts", "ys", "ys2")
     )
     factor = 4
     df["ts_round"] = (df["ts"] / factor).astype(int) * factor
+    meancurve = df.groupby('ts_round')['ys'].mean()
+    ax.plot(meancurve.index,meancurve,label=plate,color="black")
+    meancurve2 = df.groupby('ts_round')['ys2'].mean()
+    ax2.plot(meancurve.index,meancurve2,label=plate,linestyle="")
     ax.set_xlim((-30, 30))
     ax2.set_ylim((0, 0.25))
     ax.set_ylim((0, 2500))
@@ -237,4 +250,4 @@ def plot_single_plate(
     plt.tight_layout()
     if not savefig is None:
         plt.savefig(savefig)
-    return (Cs, lambs, t0s)
+    return (Cs, lambs,ds,indexes, t0s,meancurve,meancurve2)

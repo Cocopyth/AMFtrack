@@ -28,13 +28,14 @@ def get_queue_size():
 
 def call_code(path_job, dependency):
     len_queue = get_queue_size()
-    while len_queue > 700:
-        sleep(360)
+    while len_queue > 50:
+        sleep(120)
         len_queue = get_queue_size()
     if not dependency:
         call(f"sbatch {path_job}", shell=True)
     else:
         call(f"sbatch --dependency=singleton {path_job}", shell=True)
+    sleep(1)
 
 
 def run_parallel(
