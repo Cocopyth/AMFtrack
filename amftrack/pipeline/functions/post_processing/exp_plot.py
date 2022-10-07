@@ -1,12 +1,3 @@
-import matplotlib.pyplot as plt
-from IPython.display import clear_output
-from amftrack.plotutil import plot_t_tp1
-import imageio
-import matplotlib
-from matplotlib import cm
-import matplotlib as mpl
-from shapely.affinity import affine_transform, rotate
-import geopandas as gpd
 from amftrack.util.dbx import upload
 from scipy import spatial
 

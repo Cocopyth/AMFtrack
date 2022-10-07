@@ -6,7 +6,7 @@ import cv2 as cv
 from random import randrange
 from scipy import ndimage
 import logging
-
+import os
 from amftrack.util.aliases import coord_int, coord
 from amftrack.util.param import DIM_X, DIM_Y
 from amftrack.util.geometry import (
@@ -345,9 +345,11 @@ def plot_full_image_with_features(
         plt.savefig(save_path)
     else:
         plt.show()
-
-
-fpath = Path(mpl.get_data_path(), "fonts/ttf/lucidasansdemibold.ttf")
+font_path = os.path.join(mpl.get_data_path(), "fonts/ttf/lucidasansdemibold.ttf")
+if os.path.exists(font_path):
+    fpath = Path(mpl.get_data_path(), "fonts/ttf/lucidasansdemibold.ttf")
+else:
+    fpath = None
 
 
 def plot_full(
