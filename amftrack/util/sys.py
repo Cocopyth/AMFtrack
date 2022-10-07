@@ -514,7 +514,10 @@ def get_time_hypha_info_from_analysis(analysis_folders):
             for path in json_paths:
                 index = int(path.split("_")[-1].split(".")[0])
                 line = folders_plate.iloc[index]
-                table = pd.read_json(os.path.join(path_time_hypha, path))
+                try:
+                    table = pd.read_json(os.path.join(path_time_hypha, path))
+                except:
+                    print(os.path.join(path_time_hypha, path))
                 table = table.transpose()
                 tables.append(table)
                 table = table.fillna(-1)

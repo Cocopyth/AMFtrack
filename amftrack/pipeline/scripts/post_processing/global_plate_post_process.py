@@ -8,6 +8,9 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 )
 import pickle
 from amftrack.util.sys import *
+from amftrack.pipeline.functions.post_processing.extract_study_zone import (
+    load_study_zone,
+)
 
 directory = str(sys.argv[1])
 overwrite = eval(sys.argv[2])
@@ -28,9 +31,8 @@ load_graphs(exp, directory)
 folder = row["folder_analysis"]
 path = f'{directory}{row["folder_analysis"]}'
 path_global_plate_info = row["path_global_plate_info"]
-exp.center = np.load(f"{path}/center.npy")
-exp.orthog = np.load(f"{path}/orthog.npy")
-exp.reach_out = np.load(f"{path}/reach_out.npy")
+load_study_zone(exp)
+
 if not os.path.isfile(f"{directory}{path_global_plate_info}") or overwrite:
     global_plate_info = {}
 else:
