@@ -120,7 +120,7 @@ run_parallel_post(
     dependency=True,
 )
 time = "12:00:00"
-list_f = [plot_hulls, plot_tracking]
+list_f = [plot_hulls, plot_tracking,plot_get_hull_nodes,plot_anastomosis]
 
 list_args = [[]] * len(list_f)
 overwrite = True
@@ -135,7 +135,7 @@ run_parallel_post(
     time,
     "global_plate_post_process",
     cpus=32,
-    name_job="plotting",
+    name_job=name_job,
     node="fat",
 )
 time = "3:40:00"
