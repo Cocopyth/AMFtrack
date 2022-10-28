@@ -176,12 +176,13 @@ def filter_kymo_left(kymo):
     middle_slice = np.s_[shape_v : 2 * shape_v, shape_h : 2 * shape_h]
     middle = filtered[middle_slice]
     filtered_left = A - np.abs(middle)
-    return (filtered_left)
+    return filtered_left
+
 
 def filter_kymo(kymo):
     filtered_left = filter_kymo_left(kymo)
-    filtered_right = np.flip(filter_kymo_left(np.flip(kymo,axis=1)),axis=1)
-    return(filtered_left,filtered_right)
+    filtered_right = np.flip(filter_kymo_left(np.flip(kymo, axis=1)), axis=1)
+    return (filtered_left, filtered_right)
 
 
 def nan_helper(y):
@@ -200,4 +201,3 @@ def nan_helper(y):
     """
 
     return np.isnan(y), lambda z: z.nonzero()[0]
-

@@ -32,7 +32,7 @@ def get_timedelta(hypha, t, tp1, args=None):
 def get_speed(hypha, t, tp1, args=None):
     try:
         pixels, nodes = get_pixel_growth_and_new_children(hypha, t, tp1)
-        if len(pixels)>0:
+        if len(pixels) > 0:
             speed = (
                 np.sum([measure_length_um(seg) for seg in pixels])
                 / get_timedelta(hypha, t, tp1, None)[1]
@@ -74,7 +74,7 @@ def get_tot_length_C(hyph, t, tp1, args=None):
     try:
 
         edges = hyph.get_nodes_within(t)[1]
-        if len(edges)>0:
+        if len(edges) > 0:
 
             lengths = np.array([measure_length_um_edge(edge, t) for edge in edges])
             tot_length_C = np.sum(lengths)
@@ -133,7 +133,7 @@ def get_width_average(hypha, t, tp1, args=None):
         edges = hypha.get_nodes_within(t)[1]
         widths = np.array([edge.width(t) for edge in edges])
         lengths = np.array([measure_length_um_edge(edge, t) for edge in edges])
-        if len(edges)>0:
+        if len(edges) > 0:
             av_width = np.sum(widths * lengths) / np.sum(lengths)
             return ("av_width", float(av_width))
         else:

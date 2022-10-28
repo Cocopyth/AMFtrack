@@ -12,6 +12,7 @@ from random import choice
 import matplotlib as mpl
 import json
 from amftrack.util.sys import test_path
+
 mpl.use("AGG")
 
 
@@ -46,6 +47,6 @@ class TestExperiment(unittest.TestCase):
         for f in plot_fs:
             column, result = getattr(time_hypha, f)(hypha, 0, 1)
         data_hypha[column] = result
-        path_hyph_info = os.path.join(test_path,'time_hypha.json')
+        path_hyph_info = os.path.join(test_path, "time_hypha.json")
         with open(path_hyph_info, "w") as jsonf:
             json.dump(data_hypha, jsonf, indent=4)

@@ -71,7 +71,7 @@ skel = np.zeros(dim, dtype=np.uint8)
 params = [30]
 list_debug = ["Img_r06_c15.tif"]
 for index, name in enumerate(tileconfig[0]):
-# for index, name in enumerate(list_debug):
+    # for index, name in enumerate(list_debug):
     print(name)
     imname = "/Img3/" + name.split("/")[-1]
     im = imageio.imread(directory + directory_name + imname)

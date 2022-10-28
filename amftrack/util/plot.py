@@ -8,9 +8,10 @@ from amftrack.util.aliases import coord_int
 
 import math
 
+
 def gridplot(
     n: int,
-    ncols = None,
+    ncols=None,
     subw: float = 4.0,
     subh: float = 4.0,
     **kwargs,
@@ -21,6 +22,7 @@ def gridplot(
     figsize = (subw * ncols, subh * nrows)
     fig, axs = plt.subplots(nrows, ncols, figsize=figsize, **kwargs)
     return fig, iter(axs.flatten())
+
 
 def make_random_color(seed):
     """
