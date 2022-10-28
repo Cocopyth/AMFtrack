@@ -7,7 +7,7 @@ import ast
 from scipy import sparse
 import scipy.io as sio
 import cv2
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 import scipy.sparse
 import os
@@ -69,20 +69,22 @@ dim = (int(np.max(ys) - np.min(ys)) + 4096, int(np.max(xs) - np.min(xs)) + 4096)
 ims = []
 skel = np.zeros(dim, dtype=np.uint8)
 params = [30]
-
+list_debug = ["Img_r06_c15.tif"]
 for index, name in enumerate(tileconfig[0]):
+# for index, name in enumerate(list_debug):
+    print(name)
     imname = "/Img3/" + name.split("/")[-1]
     im = imageio.imread(directory + directory_name + imname)
     imname2 = "/Img/" + name.split("/")[-1]
     im2 = imageio.imread(directory + directory_name + imname2)
     bowled2 = bowler_hat(-im2, 32, params)
-    im[bowled2 <= 0.09] = 254
+    im[bowled2 <= 0.09] = 250
     shape = im.shape
+    print("segmenting")
     segmented = extract_skel_new_prince(im, [hyph_width], perc_low, perc_high)
     # low = np.percentile(-im+255, perc_low)
     # high = np.percentile(-im+255, perc_high)
     # segmented = filters.apply_hysteresis_threshold(-im+255, low, high)
-
     boundaries = int(tileconfig[2][index][0] - np.min(xs)), int(
         tileconfig[2][index][1] - np.min(ys)
     )

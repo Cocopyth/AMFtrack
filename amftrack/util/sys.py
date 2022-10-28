@@ -290,15 +290,16 @@ def get_data_info(local=False, suffix_data_info=""):
     if not local:
         download(source, target, end="")
     data_info = pd.read_json(target, convert_dates=True).transpose()
-    data_info.index.name = "total_path"
-    data_info.reset_index(inplace=True)
-    data_info["unique_id"] = (
-        data_info["Plate"].astype(str)
-        + "_"
-        + data_info["CrossDate"].str.replace("'", "").astype(str)
-    )
+    if len(data_info)>0:
+        data_info.index.name = "total_path"
+        data_info.reset_index(inplace=True)
+        data_info["unique_id"] = (
+            data_info["Plate"].astype(str)
+            + "_"
+            + data_info["CrossDate"].str.replace("'", "").astype(str)
+        )
 
-    data_info["datetime"] = pd.to_datetime(data_info["date"], format="%d.%m.%Y, %H:%M:")
+        data_info["datetime"] = pd.to_datetime(data_info["date"], format="%d.%m.%Y, %H:%M:")
     return data_info
 
 
@@ -335,10 +336,13 @@ def get_current_folders(
     # TODO(FK): solve the / problem
     plate_info = get_data_info(local, suffix_data_info)
     listdir = os.listdir(directory)
-    return plate_info.loc[
-        np.isin(plate_info["folder"], listdir)
-        & (plate_info["total_path"] == directory + plate_info["folder"])
-    ]
+    if len(plate_info)>0:
+        return plate_info.loc[
+            np.isin(plate_info["folder"], listdir)
+            & (plate_info["total_path"] == directory + plate_info["folder"])
+        ]
+    else:
+        return(plate_info)
 
 
 def get_folders_by_plate_id(plate_id, begin=0, end=-1, directory=None):
@@ -518,6 +522,7 @@ def get_time_hypha_info_from_analysis(analysis_folders):
                     table = pd.read_json(os.path.join(path_time_hypha, path))
                 except:
                     print(os.path.join(path_time_hypha, path))
+                    continue
                 table = table.transpose()
                 tables.append(table)
                 table = table.fillna(-1)
