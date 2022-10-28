@@ -290,7 +290,7 @@ def get_data_info(local=False, suffix_data_info=""):
     if not local:
         download(source, target, end="")
     data_info = pd.read_json(target, convert_dates=True).transpose()
-    if len(data_info)>0:
+    if len(data_info) > 0:
         data_info.index.name = "total_path"
         data_info.reset_index(inplace=True)
         data_info["unique_id"] = (
@@ -299,7 +299,9 @@ def get_data_info(local=False, suffix_data_info=""):
             + data_info["CrossDate"].str.replace("'", "").astype(str)
         )
 
-        data_info["datetime"] = pd.to_datetime(data_info["date"], format="%d.%m.%Y, %H:%M:")
+        data_info["datetime"] = pd.to_datetime(
+            data_info["date"], format="%d.%m.%Y, %H:%M:"
+        )
     return data_info
 
 
@@ -336,13 +338,13 @@ def get_current_folders(
     # TODO(FK): solve the / problem
     plate_info = get_data_info(local, suffix_data_info)
     listdir = os.listdir(directory)
-    if len(plate_info)>0:
+    if len(plate_info) > 0:
         return plate_info.loc[
             np.isin(plate_info["folder"], listdir)
             & (plate_info["total_path"] == directory + plate_info["folder"])
         ]
     else:
-        return(plate_info)
+        return plate_info
 
 
 def get_folders_by_plate_id(plate_id, begin=0, end=-1, directory=None):

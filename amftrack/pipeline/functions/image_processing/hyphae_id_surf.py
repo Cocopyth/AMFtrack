@@ -215,14 +215,12 @@ def resolve_anastomosis_crossing_by_root(exp, lim_considered=1):
     i = 0
     poss_root_hypha = {}
     for hypha in exp.hyphaes:
-        pos_root_hypha = np.mean(
-            [hypha.root.pos(t) for t in hypha.root.ts()], axis=0
-        )
+        pos_root_hypha = np.mean([hypha.root.pos(t) for t in hypha.root.ts()], axis=0)
         poss_root_hypha[hypha] = pos_root_hypha
     for hyph, t0, tp1 in anastomosing_hyphae:
         if i % 200 == 0:
             print(i / len(anastomosing_hyphae))
-        i+=1
+        i += 1
         corresp_hyph[hyph.end.label] = []
         pos_root_hyph = np.mean([hyph.root.pos(t) for t in hyph.root.ts()], axis=0)
 

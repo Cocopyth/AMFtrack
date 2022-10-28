@@ -37,7 +37,7 @@ def S(t, lamb, C, t0):
     return C * (1 / (1 + np.exp(lamb * (t0 - t))))
 
 
-def get_wave_fit(time_plate_info, plate, timesteps,max_indexes, lamb=-1, C=0.2):
+def get_wave_fit(time_plate_info, plate, timesteps, max_indexes, lamb=-1, C=0.2):
     table = time_plate_info.loc[time_plate_info["Plate"] == plate]
     table = table.replace(np.nan, -1)
     ts = list(table["timestep"])
@@ -138,7 +138,7 @@ def get_wave_fit(time_plate_info, plate, timesteps,max_indexes, lamb=-1, C=0.2):
 
 
 def plot_single_plate(
-    plate, time_plate_info, timestep_max,ax, maxi=10, max_area=50, savefig=None
+    plate, time_plate_info, timestep_max, ax, maxi=10, max_area=50, savefig=None
 ):
     ax.set_title(f"plate {plate}")
     ax2 = ax.twinx()
@@ -208,12 +208,12 @@ def plot_single_plate(
                 label=f"d = {int(area / np.sqrt((np.pi / 2)))}mm",
             )
             try:
-                    popt1, _ = curve_fit(
+                popt1, _ = curve_fit(
                     dS,
                     selection_fit[f"time_since_begin_{index}"],
                     selection_fit[column2],
                     bounds=([0, 0, -np.inf], 3 * [np.inf]),
-                    p0 = [0.2,0.5,0]
+                    p0=[0.2, 0.5, 0],
                 )
             except:
                 continue
@@ -225,18 +225,18 @@ def plot_single_plate(
                 color=cmap1(area / max_area),
                 label=f"d = {int(area / np.sqrt((np.pi / 2)))}mm",
             )
-            ts +=table[f'time_since_begin_{index}'].to_list()
+            ts += table[f"time_since_begin_{index}"].to_list()
             ys += table[column].to_list()
-            ys2+=table[column2].astype(float).to_list()
+            ys2 += table[column2].astype(float).to_list()
     df = pd.DataFrame(
         (np.array((ts, ys, ys2))).transpose(), columns=("ts", "ys", "ys2")
     )
     factor = 4
     df["ts_round"] = (df["ts"] / factor).astype(int) * factor
-    meancurve = df.groupby('ts_round')['ys'].mean()
-    ax.plot(meancurve.index,meancurve,label=plate,color="black")
-    meancurve2 = df.groupby('ts_round')['ys2'].mean()
-    ax2.plot(meancurve.index,meancurve2,label=plate,linestyle="")
+    meancurve = df.groupby("ts_round")["ys"].mean()
+    ax.plot(meancurve.index, meancurve, label=plate, color="black")
+    meancurve2 = df.groupby("ts_round")["ys2"].mean()
+    ax2.plot(meancurve.index, meancurve2, label=plate, linestyle="")
     ax.set_xlim((-30, 30))
     ax2.set_ylim((0, 0.25))
     ax.set_ylim((0, 2500))
@@ -250,6 +250,4 @@ def plot_single_plate(
     plt.tight_layout()
     if not savefig is None:
         plt.savefig(savefig)
-    return (Cs, lambs,ds,indexes, t0s,meancurve,meancurve2)
-
-
+    return (Cs, lambs, ds, indexes, t0s, meancurve, meancurve2)

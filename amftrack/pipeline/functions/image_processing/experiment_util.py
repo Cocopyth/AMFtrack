@@ -345,6 +345,8 @@ def plot_full_image_with_features(
         plt.savefig(save_path)
     else:
         plt.show()
+
+
 font_path = os.path.join(mpl.get_data_path(), "fonts/ttf/lucidasansdemibold.ttf")
 if os.path.exists(font_path):
     fpath = Path(mpl.get_data_path(), "fonts/ttf/lucidasansdemibold.ttf")

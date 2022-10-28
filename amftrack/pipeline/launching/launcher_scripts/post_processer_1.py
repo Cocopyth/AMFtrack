@@ -121,7 +121,7 @@ run_parallel_post(
 )
 
 time = "12:00:00"
-list_f = [plot_hulls, plot_tracking,plot_anastomosis]
+list_f = [plot_hulls, plot_tracking, plot_anastomosis]
 
 list_args = [[]] * len(list_f)
 overwrite = True
