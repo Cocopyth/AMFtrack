@@ -28,7 +28,7 @@ def get_queue_size():
 
 def call_code(path_job, dependency):
     len_queue = get_queue_size()
-    while len_queue > 50:
+    while len_queue > 100:
         sleep(120)
         len_queue = get_queue_size()
     if not dependency:
@@ -287,7 +287,7 @@ def run_parallel_transfer(
         my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
-            f"\t python {path_code}transfer/scripts/{code} {arg_str} {op_id} $i &\n"
+            f"\t python {path_code}transfer/scripts/{code} {arg_str} {op_id} $i \n"
         )
         my_file.write("done\n")
         my_file.write("wait\n")

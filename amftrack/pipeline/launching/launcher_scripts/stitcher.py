@@ -21,9 +21,10 @@ folders = folders.loc[folders["/Img/TileConfiguration.txt.registered"] == False]
 
 num_parallel = 50
 time = "40:00"
-run_parallel_stitch(
-    directory_targ, folders, num_parallel, time, cpus=128, node="fat", name_job=name_job
-)
+if len(folders)>0:
+    run_parallel_stitch(
+        directory_targ, folders, num_parallel, time, cpus=128, node="fat", name_job=name_job
+    )
 if stage > 0:
     run_launcher(
         "video_maker.py",

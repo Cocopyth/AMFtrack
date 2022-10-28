@@ -119,8 +119,29 @@ run_parallel_post(
     node="fat",
     dependency=True,
 )
+
 time = "12:00:00"
-list_f = [plot_hulls, plot_tracking,plot_get_hull_nodes,plot_anastomosis]
+list_f = [plot_hulls, plot_tracking,plot_anastomosis]
+
+list_args = [[]] * len(list_f)
+overwrite = True
+num_parallel = 6
+run_parallel_post(
+    "exp_plot.py",
+    list_f,
+    list_args,
+    [directory, overwrite],
+    analysis_folders,
+    num_parallel,
+    time,
+    "global_plate_post_process",
+    cpus=128,
+    name_job=name_job,
+    node="fat",
+)
+
+time = "12:00:00"
+list_f = [plot_get_hull_nodes]
 
 list_args = [[]] * len(list_f)
 overwrite = True
@@ -134,7 +155,7 @@ run_parallel_post(
     num_parallel,
     time,
     "global_plate_post_process",
-    cpus=32,
+    cpus=128,
     name_job=name_job,
     node="fat",
 )
@@ -181,7 +202,7 @@ if stage > 0:
         "post_processer_2.py",
         [directory_targ, name_job, stage - 1],
         plates,
-        "20:00",
+        "12:00:00",
         dependency=True,
         name_job=name_job,
     )

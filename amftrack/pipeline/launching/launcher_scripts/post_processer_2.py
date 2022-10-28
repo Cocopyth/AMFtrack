@@ -74,7 +74,8 @@ if stage >= 0:
         "analysis_uploader.py",
         [directory_targ, name_job],
         plates,
-        "3:00:00",
+        "12:00:00",
+        name="upload_analysis",
         dependency=True,
         name_job=name_job,
     )
