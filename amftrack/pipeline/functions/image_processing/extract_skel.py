@@ -11,7 +11,7 @@ from datetime import datetime
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
 import scipy.io as sio
 import cv2 as cv
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 from skimage.filters import frangi
 from skimage import filters
@@ -96,7 +96,7 @@ def bowler_hat(im, no, si):
 
 
 def extract_skel_new_prince(im, params, perc_low, perc_high):
-    bowled = bowler_hat(-im, 32, params)
+    bowled = bowler_hat(-im.astype(np.uint8), 32, params)
     filename = time_ns()
     place_save = temp_path
     to_smooth = bowled * 255
@@ -107,13 +107,18 @@ def extract_skel_new_prince(im, params, perc_low, perc_high):
     args = [0.1, 7, 0.9, 10, 50]
     command = [path_anis, imtransformed_path] + args
     command = [str(elem) for elem in command]
+    print("anis filtering")
     process = subprocess.run(command, cwd=place_save, stdout=subprocess.DEVNULL)
     foldname = (
         f"{filename}_ani-K{int(args[0]*10)}s{args[1]}g{int(args[2]*10)}itD{args[3]}"
     )
     imname = foldname + f"/{foldname}it{args[4]}.tif"
     path_modif = place_save + "/" + imname
-    im2 = imageio.imread(path_modif)
+    try:
+        im2 = imageio.imread(path_modif)
+    except:
+        im2 = to_smooth.astype(np.uint8)
+    print("image_reading")
     shutil.rmtree(os.path.join(place_save, foldname))
     low = max(20, np.percentile(im2, perc_low))
     high = max(90, np.percentile(im2, perc_high))
@@ -122,7 +127,7 @@ def extract_skel_new_prince(im, params, perc_low, perc_high):
     dilated = remove_holes(hyst)
     dilated = dilated.astype(np.uint8)
     connected = remove_component(dilated)
-    os.remove(imtransformed_path)
+    # os.remove(imtransformed_path)
     return connected
 
 
