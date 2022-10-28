@@ -152,7 +152,7 @@ def get_kymo(edge, pos, images_adress, nx_graph_pruned):
     return np.array(kymo)
 
 
-def filter_kymo(kymo):
+def filter_kymo_left(kymo):
     A = kymo[:, :]
     B = np.flip(A, axis=0)
     C = np.flip(A, axis=1)
@@ -176,13 +176,12 @@ def filter_kymo(kymo):
     middle_slice = np.s_[shape_v : 2 * shape_v, shape_h : 2 * shape_h]
     middle = filtered[middle_slice]
     filtered_left = A - np.abs(middle)
-    filtered_fourrier = dark_image_grey_fourier
-    filtered_fourrier[RT_quadrant] = 0
-    filtered_fourrier[LB_quadrant] = 0
-    filtered = np.fft.ifft2(filtered_fourrier)
-    middle = filtered[middle_slice]
-    filtered_right = A - np.abs(middle)
-    return (filtered_left, filtered_right)
+    return (filtered_left)
+
+def filter_kymo(kymo):
+    filtered_left = filter_kymo_left(kymo)
+    filtered_right = np.flip(filter_kymo_left(np.flip(kymo,axis=1)),axis=1)
+    return(filtered_left,filtered_right)
 
 
 def nan_helper(y):

@@ -10,7 +10,8 @@ import amftrack.pipeline.functions.post_processing.time_plate as time_plate
 import amftrack.pipeline.functions.post_processing.time_hypha as time_hypha
 from random import choice
 import matplotlib as mpl
-
+import json
+from amftrack.util.sys import test_path
 mpl.use("AGG")
 
 
@@ -41,5 +42,10 @@ class TestExperiment(unittest.TestCase):
         fs = dir(time_hypha)
         plot_fs = [f for f in fs if f.split("_")[0] == "get"]
         hypha = choice(self.exp.hyphaes)
+        data_hypha = {}
         for f in plot_fs:
-            getattr(time_hypha, f)(hypha, 0, 1)
+            column, result = getattr(time_hypha, f)(hypha, 0, 1)
+        data_hypha[column] = result
+        path_hyph_info = os.path.join(test_path,'time_hypha.json')
+        with open(path_hyph_info, "w") as jsonf:
+            json.dump(data_hypha, jsonf, indent=4)

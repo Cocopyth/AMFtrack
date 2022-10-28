@@ -14,32 +14,35 @@ from scipy import sparse
 def get_time_since_start(hypha, t, tp1, args=None):
     exp = hypha.experiment
     seconds = (exp.dates[t] - exp.dates[hypha.ts[0]]).total_seconds()
-    return ("time_since_emergence", seconds / 3600)
+    return ("time_since_emergence", float(seconds / 3600))
 
 
 def get_time_since_begin_exp(hypha, t, tp1, args=None):
     exp = hypha.experiment
     seconds = (exp.dates[t] - exp.dates[0]).total_seconds()
-    return ("time_since_begin_exp", seconds / 3600)
+    return ("time_since_begin_exp", float(seconds / 3600))
 
 
 def get_timedelta(hypha, t, tp1, args=None):
     exp = hypha.experiment
     seconds = (exp.dates[tp1] - exp.dates[t]).total_seconds()
-    return ("timedelta", seconds / 3600)
+    return ("timedelta", float(seconds / 3600))
 
 
 def get_speed(hypha, t, tp1, args=None):
     try:
         pixels, nodes = get_pixel_growth_and_new_children(hypha, t, tp1)
-        speed = (
-            np.sum([measure_length_um(seg) for seg in pixels])
-            / get_timedelta(hypha, t, tp1, None)[1]
-        )
-        return ("speed", speed)
+        if len(pixels)>0:
+            speed = (
+                np.sum([measure_length_um(seg) for seg in pixels])
+                / get_timedelta(hypha, t, tp1, None)[1]
+            )
+            return ("speed", float(speed))
+        else:
+            return ("speed", -1)
     except nx.exception.NetworkXNoPath:
         print("not_connected", hypha.end.label, hypha.get_root(tp1).label)
-        return ("speed", None)
+        return ("speed", -1)
 
 
 def find_angle(veca, vecb):
@@ -61,7 +64,7 @@ def get_absolute_angle_growth(hypha, t, tp1, args=None):
         vec1 = curve_array[-1] - curve_array[0]
         vec2 = [0, 1]
         angle = find_angle(vec1, vec2)
-        return ("absolute_angle", angle)
+        return ("absolute_angle", float(angle))
     except nx.exception.NetworkXNoPath:
         print("not_connected", hypha.end.label, hypha.get_root(tp1).label)
         return ("absolute_angle", None)
@@ -69,10 +72,15 @@ def get_absolute_angle_growth(hypha, t, tp1, args=None):
 
 def get_tot_length_C(hyph, t, tp1, args=None):
     try:
+
         edges = hyph.get_nodes_within(t)[1]
-        lengths = np.array([measure_length_um_edge(edge, t) for edge in edges])
-        tot_length_C = np.sum(lengths)
-        return ("tot_length_C", tot_length_C)
+        if len(edges)>0:
+
+            lengths = np.array([measure_length_um_edge(edge, t) for edge in edges])
+            tot_length_C = np.sum(lengths)
+            return ("tot_length_C", float(tot_length_C))
+        else:
+            return ("tot_length_C", None)
     except nx.exception.NetworkXNoPath:
         return ("tot_length_C", None)
 
@@ -99,7 +107,7 @@ def get_width_tip_edge(hypha, t, tp1, args=None):
         if len(edges) > 0:
             edge = edges[-1]
             width = edge.width(t)
-            return ("width_tip_edge", width)
+            return ("width_tip_edge", float(width))
         else:
             return ("width_tip_edge", None)
     except nx.exception.NetworkXNoPath:
@@ -112,7 +120,7 @@ def get_width_root_edge(hypha, t, tp1, args=None):
         if len(edges) > 0:
             edge = edges[0]
             width = edge.width(t)
-            return ("width_tip_edge", width)
+            return ("width_tip_edge", float(width))
         else:
             return ("width_tip_edge", None)
     except nx.exception.NetworkXNoPath:
@@ -125,8 +133,11 @@ def get_width_average(hypha, t, tp1, args=None):
         edges = hypha.get_nodes_within(t)[1]
         widths = np.array([edge.width(t) for edge in edges])
         lengths = np.array([measure_length_um_edge(edge, t) for edge in edges])
-        av_width = np.sum(widths * lengths) / np.sum(lengths)
-        return ("av_width", av_width)
+        if len(edges)>0:
+            av_width = np.sum(widths * lengths) / np.sum(lengths)
+            return ("av_width", float(av_width))
+        else:
+            return ("av_width", None)
     except nx.exception.NetworkXNoPath:
         return ("av_width", None)
 
@@ -144,7 +155,7 @@ def get_has_reached_final_pos(hypha, t, tp1, args=None):
 def get_distance_final_pos(hypha, t, tp1, args=None):
     tf = hypha.end.ts()[-1]
     pos_end = hypha.end.pos(tf)
-    return ("distance_final_pos", np.linalg.norm(hypha.end.pos(t) - pos_end))
+    return ("distance_final_pos", float(np.linalg.norm(hypha.end.pos(t) - pos_end)))
 
 
 def get_pos_x(hypha, t, tp1, args=None):

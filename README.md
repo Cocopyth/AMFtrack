@@ -76,6 +76,10 @@ cd cycpd
 sudo python setup.py install
 ```
 
+For github authentification 
+
+conda install gh --channel conda-forge 
+
 Install Fiji:
 
 Chose a location on the computer and download:
@@ -119,6 +123,7 @@ STORAGE_PATH=/scratch-shared/amftrack/temp #careful no backslash here
 PASTIS_PATH=/home/cbisot/anis_filter/anifilters/bin/ani2D 
 #the path to the executable of anisotropic filtering
 SLURM_PATH=/scratch-shared/amftrack/slurm #this is for parallelizez job on snellius
+DROPBOX_PATH = C:\Users\coren\AMOLF-SHIMIZU Dropbox\DATA\PRINCE
 
 #For Dropbox transfers, ask dropbox admin for these values
 APP_KEY=___

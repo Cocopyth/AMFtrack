@@ -37,7 +37,7 @@ def S(t, lamb, C, t0):
     return C * (1 / (1 + np.exp(lamb * (t0 - t))))
 
 
-def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
+def get_wave_fit(time_plate_info, plate, timesteps,max_indexes, lamb=-1, C=0.2):
     table = time_plate_info.loc[time_plate_info["Plate"] == plate]
     table = table.replace(np.nan, -1)
     ts = list(table["timestep"])
@@ -46,7 +46,6 @@ def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
     dic = {}
     tot_t = list(table.index)
     tot_t.sort()
-    timesteps = tot_t[10:80]
     # timesteps = [tot_t[0],tot_t[80]]
 
     ts = []
@@ -65,7 +64,7 @@ def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
             column = f"ring_density_incr-100_index-{index}"
             return float(table[column][time])
 
-        xvalues = np.array([np.sqrt(100 * i) for i in range(20)])
+        xvalues = np.array([np.sqrt(100 * i) for i in range(max_indexes[plate])])
         yvalues = [density(x) for x in xvalues]
         xvalues = np.sqrt((xvalues**2 + table["area_sep_comp"][0]) / (np.pi / 2))
         xvalues = list(xvalues)
@@ -81,13 +80,13 @@ def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
         bounds=([0, 0, 0, -np.inf], [np.inf, np.inf, np.inf, np.inf]),
         p0=[0.2, -lamb, C, 0],
     )
-    popt_f, cov = curve_fit(
-        wave,
-        xt,
-        ys,
-        bounds=([0, 0, 0, -np.inf], [np.inf, np.inf, np.inf, np.inf]),
-        p0=[0.2] + list(popt_f[1:]),
-    )
+    # popt_f, cov = curve_fit(
+    #     wave,
+    #     xt,
+    #     ys,
+    #     bounds=([0, 0, 0, -np.inf], [np.inf, np.inf, np.inf, np.inf]),
+    #     p0=[0.2] + list(popt_f[1:]),
+    # )
     # popt_f[0]/=1.5
 
     popt_f
@@ -111,7 +110,7 @@ def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
             column = f"ring_active_tips_density_incr-100_index-{index}"
             return float(table[column][time])
 
-        xvalues = np.array([np.sqrt(100 * i) for i in range(20)])
+        xvalues = np.array([np.sqrt(100 * i) for i in range(max_indexes[plate])])
         yvalues = [density(x) for x in xvalues]
         xvalues = np.sqrt((xvalues**2 + table["area_sep_comp"][0]) / (np.pi / 2))
         xvalues = list(xvalues)
@@ -129,7 +128,7 @@ def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
         xt,
         ys,
         bounds=([0, 0, 0, -np.inf], [np.inf, np.inf, np.inf, np.inf]),
-        p0=[0.2, popt_f[1], popt_f[2] / 3000, popt_f[3]],
+        p0=[0.2, 1, 0.3, 0],
     )
     residuals = ys - dwave(xt, *popt_f2)
     ss_res = np.sum(residuals**2)
@@ -139,9 +138,8 @@ def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
 
 
 def plot_single_plate(
-    plate, time_plate_info, timestep_max, maxi=10, max_area=50, savefig=None
+    plate, time_plate_info, timestep_max,ax, maxi=10, max_area=50, savefig=None
 ):
-    fig, ax = plt.subplots()
     ax.set_title(f"plate {plate}")
     ax2 = ax.twinx()
     table = time_plate_info.loc[time_plate_info["Plate"] == plate].copy()
@@ -178,14 +176,6 @@ def plot_single_plate(
                     bounds=([0, 0, -np.inf], 3 * [np.inf]),
                     p0=[1, 1, 0],
                 )
-                popt1, _ = curve_fit(
-                    dS,
-                    selection_fit[f"time_since_begin_{index}"],
-                    selection_fit[column2],
-                    bounds=([0, 0, -np.inf], 3 * [np.inf]),
-                    p0 = [0.2,0.5,0]
-                )
-                # print(popt1)
             except:
                 # print(selection_fit[column2])
                 continue
@@ -217,6 +207,16 @@ def plot_single_plate(
                 color=cmap2(area / max_area),
                 label=f"d = {int(area / np.sqrt((np.pi / 2)))}mm",
             )
+            try:
+                    popt1, _ = curve_fit(
+                    dS,
+                    selection_fit[f"time_since_begin_{index}"],
+                    selection_fit[column2],
+                    bounds=([0, 0, -np.inf], 3 * [np.inf]),
+                    p0 = [0.2,0.5,0]
+                )
+            except:
+                continue
             lamb, C, t1 = list(popt1)
 
             ax2.plot(
@@ -251,3 +251,5 @@ def plot_single_plate(
     if not savefig is None:
         plt.savefig(savefig)
     return (Cs, lambs,ds,indexes, t0s,meancurve,meancurve2)
+
+
