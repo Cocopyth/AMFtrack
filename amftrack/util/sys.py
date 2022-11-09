@@ -19,7 +19,6 @@ import shutil
 import hashlib
 
 
-
 DOTENV_FILE = (
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     + "/local.env"
@@ -440,22 +439,25 @@ def get_analysis_folders():
                 analysis_folders = pd.concat([analysis_folders, infos], axis=1)
 
     analysis_folders = analysis_folders.transpose().reset_index().drop("index", axis=1)
-    analysis_folders['unique_id'] = analysis_folders['Plate'].astype(str) + "_" + analysis_folders['CrossDate'].astype(
-        str).str.replace("'", "")
+    analysis_folders["unique_id"] = (
+        analysis_folders["Plate"].astype(str)
+        + "_"
+        + analysis_folders["CrossDate"].astype(str).str.replace("'", "")
+    )
     return analysis_folders
 
 
-def get_time_plate_info_from_analysis(analysis_folders,use_saved=True):
-    plates_in = analysis_folders['unique_id'].unique()
+def get_time_plate_info_from_analysis(analysis_folders, use_saved=True):
+    plates_in = analysis_folders["unique_id"].unique()
     plates_in.sort()
     ide = hashlib.sha256(np.sum(plates_in).encode("utf-8")).hexdigest()
-    path_save_info = os.path.join(temp_path,f'time_plate_info_{ide}')
-    path_save_folders = os.path.join(temp_path,f'folders_{ide}')
+    path_save_info = os.path.join(temp_path, f"time_plate_info_{ide}")
+    path_save_folders = os.path.join(temp_path, f"folders_{ide}")
 
     if os.path.exists(path_save_info) and use_saved:
         time_plate_info = pd.read_json(path_save_info)
         folders = pd.read_json(path_save_folders)
-        return(time_plate_info,folders)
+        return (time_plate_info, folders)
     analysis_dirs = analysis_folders["total_path"]
     time_plate_info = pd.DataFrame()
     folders = pd.DataFrame()
@@ -493,17 +495,17 @@ def get_time_plate_info_from_analysis(analysis_folders,use_saved=True):
     return (folders, time_plate_info)
 
 
-def get_global_hypha_info_from_analysis(analysis_folders,use_saved=True):
-    plates_in = analysis_folders['unique_id'].unique()
+def get_global_hypha_info_from_analysis(analysis_folders, use_saved=True):
+    plates_in = analysis_folders["unique_id"].unique()
     plates_in.sort()
     ide = hashlib.sha256(np.sum(plates_in).encode("utf-8")).hexdigest()
-    path_save_info = os.path.join(temp_path,f'global_hypha_info_{ide}')
-    path_save_folders = os.path.join(temp_path,f'folders_{ide}')
+    path_save_info = os.path.join(temp_path, f"global_hypha_info_{ide}")
+    path_save_folders = os.path.join(temp_path, f"folders_{ide}")
 
     if os.path.exists(path_save_info) and use_saved:
         global_hypha_info = pd.read_json(path_save_info)
         folders = pd.read_json(path_save_folders)
-        return(global_hypha_info,folders)
+        return (global_hypha_info, folders)
     analysis_dirs = analysis_folders["total_path"]
     global_hypha_info = pd.DataFrame()
     folders = pd.DataFrame()
@@ -531,17 +533,17 @@ def get_global_hypha_info_from_analysis(analysis_folders,use_saved=True):
     return (folders, global_hypha_info)
 
 
-def get_time_hypha_info_from_analysis(analysis_folders,use_saved=True):
-    plates_in = analysis_folders['unique_id'].unique()
+def get_time_hypha_info_from_analysis(analysis_folders, use_saved=True):
+    plates_in = analysis_folders["unique_id"].unique()
     plates_in.sort()
     ide = hashlib.sha256(np.sum(plates_in).encode("utf-8")).hexdigest()
-    path_save_info = os.path.join(temp_path,f'time_hypha_info_{ide}')
-    path_save_folders = os.path.join(temp_path,f'folders_{ide}')
+    path_save_info = os.path.join(temp_path, f"time_hypha_info_{ide}")
+    path_save_folders = os.path.join(temp_path, f"folders_{ide}")
 
     if os.path.exists(path_save_info) and use_saved:
         time_hypha_infos = pd.read_json(path_save_info)
         folders = pd.read_json(path_save_folders)
-        return(time_hypha_infos,folders)
+        return (time_hypha_infos, folders)
     analysis_dirs = analysis_folders["total_path"]
     folders = pd.DataFrame()
     time_hypha_infos = []

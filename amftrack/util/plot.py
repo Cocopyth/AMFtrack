@@ -9,15 +9,18 @@ from amftrack.util.aliases import coord_int
 import math
 import statsmodels.api as sm
 
-def make_stat(x0,ax):
-    def statistic(x,y):
+
+def make_stat(x0, ax):
+    def statistic(x, y):
         X = sm.add_constant(x, prepend=False)
-        model = sm.OLS(y,X)
+        model = sm.OLS(y, X)
         res = model.fit()
-        a,b = res.params[0],res.params[1]
-        ax.plot(x0,np.array(x0)*a+b,color = 'grey', alpha = 0.01)
-        return(a)
-    return(statistic)
+        a, b = res.params[0], res.params[1]
+        ax.plot(x0, np.array(x0) * a + b, color="grey", alpha=0.01)
+        return a
+
+    return statistic
+
 
 def gridplot(
     n: int,
@@ -33,6 +36,7 @@ def gridplot(
     fig, axs = plt.subplots(nrows, ncols, figsize=figsize, **kwargs)
     return fig, iter(axs.flatten())
 
+
 def gridplot_fig(
     n: int,
     ncols=None,
@@ -46,9 +50,10 @@ def gridplot_fig(
     nrows = math.ceil(n / ncols)
     figsize = (subw * ncols, subh * nrows)
     fig = plt.figure(figsize=figsize, **kwargs)
-    subfigs = fig.subfigures(nrows, ncols, wspace=wspace,hspace = wspace)
+    subfigs = fig.subfigures(nrows, ncols, wspace=wspace, hspace=wspace)
     axs = [subfig.subplots() for subfig in iter(subfigs.flatten())]
     return fig, axs, iter(subfigs.flatten())
+
 
 def make_random_color(seed):
     """

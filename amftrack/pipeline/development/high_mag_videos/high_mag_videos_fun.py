@@ -87,8 +87,8 @@ def extract_section_profiles_for_edge(
     offset=4,
     step=15,
     target_length=120,
-    bound1 =0,
-    bound2 = 1
+    bound1=0,
+    bound2=1,
 ) -> np.array:
     """
     Main function to extract section profiles of an edge.
@@ -118,15 +118,16 @@ def extract_section_profiles_for_edge(
         im = raw_im
         point1 = np.array([sect[0][0], sect[0][1]])
         point2 = np.array([sect[1][0], sect[1][1]])
-        profile = profile_line(im, point1, point2, mode="constant")[int(bound1*target_length):int(bound2*target_length)]
+        profile = profile_line(im, point1, point2, mode="constant")[
+            int(bound1 * target_length) : int(bound2 * target_length)
+        ]
         profile = profile.reshape((1, len(profile)))
         # TODO(FK): Add thickness of the profile here
         l.append(profile)
     return np.concatenate(l, axis=0), list_of_segments
 
-def plot_segments_on_image(segments, ax,color="red",
-    bound1 =0,
-    bound2 = 1):
+
+def plot_segments_on_image(segments, ax, color="red", bound1=0, bound2=1):
     for (point1_pivot, point2_pivot) in segments:
         point1 = (1 - bound1) * point1_pivot + bound1 * point2_pivot
         point2 = (1 - bound2) * point1_pivot + bound2 * point2_pivot
@@ -137,13 +138,19 @@ def plot_segments_on_image(segments, ax,color="red",
             linewidth=2,
         )
 
-def get_kymo(edge, pos, images_adress, nx_graph_pruned,resolution=1,
-            offset=4,
-            step=15,
-            target_length=10,
-            bound1=0,
-            bound2=1
-             ):
+
+def get_kymo(
+    edge,
+    pos,
+    images_adress,
+    nx_graph_pruned,
+    resolution=1,
+    offset=4,
+    step=15,
+    target_length=10,
+    bound1=0,
+    bound2=1,
+):
     kymo = []
     for image_adress in images_adress:
         image = imageio.imread(image_adress)
@@ -157,7 +164,7 @@ def get_kymo(edge, pos, images_adress, nx_graph_pruned,resolution=1,
             step=step,
             target_length=target_length,
             bound1=bound1,
-            bound2=bound2
+            bound2=bound2,
         )
         kymo_line = np.mean(slices, axis=1)
         kymo.append(kymo_line)
