@@ -139,10 +139,13 @@ def get_wave_fit(time_plate_info, plate, timesteps, max_indexes, lamb=-1, C=0.2)
 
 def plot_single_plate(
     plate, time_plate_info, timestep_max, ax, maxi=10, max_area=50, savefig=None
-):
+,unique_id = False):
     ax.set_title(f"plate {plate}")
     ax2 = ax.twinx()
-    table = time_plate_info.loc[time_plate_info["Plate"] == plate].copy()
+    if unique_id:
+        table = time_plate_info.loc[time_plate_info["unique_id"] == plate].copy()
+    else:
+        table = time_plate_info.loc[time_plate_info["Plate"] == plate].copy()
     table = table.loc[table["timestep"] <= timestep_max]
     table = table.set_index("timestep")
     ts = []
@@ -234,9 +237,9 @@ def plot_single_plate(
     factor = 4
     df["ts_round"] = (df["ts"] / factor).astype(int) * factor
     meancurve = df.groupby("ts_round")["ys"].mean()
-    ax.plot(meancurve.index, meancurve, label=plate, color="black")
+    ax.plot(meancurve.index, meancurve, label="mean", color="black")
     meancurve2 = df.groupby("ts_round")["ys2"].mean()
-    ax2.plot(meancurve.index, meancurve2, label=plate, linestyle="")
+    # ax2.plot(meancurve.index, meancurve2, label=plate, color = 'red')
     ax.set_xlim((-30, 30))
     ax2.set_ylim((0, 0.25))
     ax.set_ylim((0, 2500))

@@ -426,6 +426,7 @@ def get_width_info(experiment, t, resolution=50, skip=False):
             #         print(np.mean(list(get_width_edge(edge_exp,resolution,t).values())))
             edge_width[edge] = mean
             # print(mean)
+
         else:
             # Maybe change to Nan if it doesnt break the rest
             edge_width[edge] = 40

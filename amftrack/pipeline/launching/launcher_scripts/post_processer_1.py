@@ -66,7 +66,7 @@ list_f = [
     get_is_out_study,
 ]
 list_args = [{}] * len(list_f)
-overwrite = False
+overwrite = True
 num_parallel = 30
 run_parallel_post(
     "time_plate_post_process.py",
@@ -82,7 +82,7 @@ run_parallel_post(
     node="fat",
 )
 
-time = "5:40:00"
+time = "24:00:00"
 directory = directory
 max_ind = 20
 incr = 100
@@ -90,8 +90,8 @@ incr = 100
 fs = [
     get_density_in_ring,
     get_density_anastomose_in_ring,
-    get_density_branch_rate_in_ring,
-    get_density_stop_rate_in_ring,
+    # get_density_branch_rate_in_ring,
+    # get_density_stop_rate_in_ring,
     get_density_active_tips_in_ring,
 ]
 # fs = [get_mean_speed_in_ring]
@@ -120,7 +120,7 @@ run_parallel_post(
     dependency=True,
 )
 
-time = "12:00:00"
+time = "24:00:00"
 list_f = [plot_hulls, plot_tracking, plot_anastomosis]
 
 list_args = [[]] * len(list_f)
@@ -181,7 +181,7 @@ list_f = [
 # list_f = [get_num_branch]
 # list_f = [gets_out_of_ROI]
 list_args = [{}] * len(list_f)
-overwrite = False
+overwrite = True
 num_parallel = 32
 run_parallel_post(
     "global_hypha_post_process.py",
