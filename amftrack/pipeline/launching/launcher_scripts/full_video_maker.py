@@ -19,21 +19,21 @@ all_folders = get_current_folders(
 )
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Analysis/nx_graph_pruned_labeled.p"] == True]
-num_parallel = 30
-time = "6:00:00"
-args = [directory_targ]
-run_parallel_all_time(
-    "make_video_full.py",
-    args,
-    folders,
-    num_parallel,
-    time,
-    "make_video_full",
-    cpus=32,
-    node="fat",
-    dependency=False,
-    name_job=name_job,
-)
+# num_parallel = 30
+# time = "6:00:00"
+# args = [directory_targ]
+# run_parallel_all_time(
+#     "make_video_full.py",
+#     args,
+#     folders,
+#     num_parallel,
+#     time,
+#     "make_video_full",
+#     cpus=32,
+#     node="fat",
+#     dependency=False,
+#     name_job=name_job,
+# )
 
 if stage > 0:
     run_launcher(
