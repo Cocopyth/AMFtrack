@@ -63,7 +63,10 @@ ys = [c[1] for c in tileconfig[2]]
 name = tileconfig[0][0]
 imname = "/Img3/" + name.split("/")[-1]
 im = imageio.imread(directory + directory_name + imname)
-dim = (int(np.max(ys) - np.min(ys)) + max(im.shape), int(np.max(xs) - np.min(xs)) + max(im.shape))
+dim = (
+    int(np.max(ys) - np.min(ys)) + max(im.shape),
+    int(np.max(xs) - np.min(xs)) + max(im.shape),
+)
 ims = []
 skel = np.zeros(dim, dtype=np.uint8)
 for index, name in enumerate(tileconfig[0]):

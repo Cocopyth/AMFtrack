@@ -138,8 +138,15 @@ def get_wave_fit(time_plate_info, plate, timesteps, max_indexes, lamb=-1, C=0.2)
 
 
 def plot_single_plate(
-    plate, time_plate_info, timestep_max, ax, maxi=10, max_area=50, savefig=None
-,unique_id = False):
+    plate,
+    time_plate_info,
+    timestep_max,
+    ax,
+    maxi=10,
+    max_area=50,
+    savefig=None,
+    unique_id=False,
+):
     ax.set_title(f"plate {plate}")
     ax2 = ax.twinx()
     if unique_id:

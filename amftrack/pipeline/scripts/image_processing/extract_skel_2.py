@@ -68,7 +68,10 @@ ys = [c[1] for c in tileconfig[2]]
 name = tileconfig[0][0]
 imname = "/Img3/" + name.split("/")[-1]
 im = imageio.imread(directory + directory_name + imname)
-dim = (int(np.max(ys) - np.min(ys)) + max(im.shape), int(np.max(xs) - np.min(xs)) + max(im.shape))
+dim = (
+    int(np.max(ys) - np.min(ys)) + max(im.shape),
+    int(np.max(xs) - np.min(xs)) + max(im.shape),
+)
 ims = []
 skel = np.zeros(dim, dtype=np.uint8)
 params = [30]
@@ -80,7 +83,7 @@ for index, name in enumerate(tileconfig[0]):
     imname2 = "/Img/" + name.split("/")[-1]
     im2 = imageio.imread(directory + directory_name + imname2)
     bowled2 = bowler_hat(-im2, 32, params)
-    im[bowled2 <= 0.09] = np.maximum(im[bowled2 <= 0.09],250)
+    im[bowled2 <= 0.09] = np.maximum(im[bowled2 <= 0.09], 250)
     shape = im.shape
     print("segmenting")
     segmented = extract_skel_new_prince(im, [hyph_width], perc_low, perc_high)
