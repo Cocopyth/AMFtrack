@@ -223,7 +223,8 @@ def nan_helper(y):
 
     return np.isnan(y), lambda z: z.nonzero()[0]
 
-def get_speeds(kymo,W,C_Thr,fps,binning,magnification):
+
+def get_speeds(kymo, W, C_Thr, fps, binning, magnification):
     time_pixel_size = 1 / fps  # s.pixel
 
     space_pixel_size = 2 * 1.725 / (magnification) * binning  # um.pixel
@@ -231,5 +232,7 @@ def get_speeds(kymo,W,C_Thr,fps,binning,magnification):
     nans = np.empty(imgOrientation.shape)
     nans.fill(np.nan)
 
-    real_movement = np.where(imgCoherency>C_Thr,imgOrientation,nans)
-    speed=np.tan((real_movement-90)/180*np.pi)*space_pixel_size/time_pixel_size #um.s-1
+    real_movement = np.where(imgCoherency > C_Thr, imgOrientation, nans)
+    speed = (
+        np.tan((real_movement - 90) / 180 * np.pi) * space_pixel_size / time_pixel_size
+    )  # um.s-1
