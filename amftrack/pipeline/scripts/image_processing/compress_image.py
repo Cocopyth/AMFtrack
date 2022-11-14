@@ -52,7 +52,7 @@ t = time()
 xs = [c[0] for c in tileconfig[2]]
 ys = [c[1] for c in tileconfig[2]]
 name = tileconfig[0][0]
-imname = "/Img3/" + name.split("/")[-1]
+imname = "/Img/" + name.split("/")[-1]
 im = imageio.imread(directory + directory_name + imname)
 dim = (
     int(np.max(ys) - np.min(ys)) + max(im.shape),

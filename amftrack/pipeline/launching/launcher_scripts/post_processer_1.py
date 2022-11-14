@@ -64,6 +64,9 @@ list_f = [
     get_num_nodes_study_zone,
     get_length_study_zone,
     get_is_out_study,
+    get_mean_edge_straight,
+    get_spore_volume,
+    get_num_spores,
 ]
 list_args = [{}] * len(list_f)
 overwrite = True
