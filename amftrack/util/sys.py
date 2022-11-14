@@ -457,7 +457,7 @@ def get_time_plate_info_from_analysis(analysis_folders, use_saved=True):
     if os.path.exists(path_save_info) and use_saved:
         time_plate_info = pd.read_json(path_save_info)
         folders = pd.read_json(path_save_folders)
-        return (time_plate_info, folders)
+        return (folders,time_plate_info)
     analysis_dirs = analysis_folders["total_path"]
     time_plate_info = pd.DataFrame()
     folders = pd.DataFrame()
@@ -505,7 +505,7 @@ def get_global_hypha_info_from_analysis(analysis_folders, use_saved=True):
     if os.path.exists(path_save_info) and use_saved:
         global_hypha_info = pd.read_json(path_save_info)
         folders = pd.read_json(path_save_folders)
-        return (global_hypha_info, folders)
+        return (folders,global_hypha_info)
     analysis_dirs = analysis_folders["total_path"]
     global_hypha_info = pd.DataFrame()
     folders = pd.DataFrame()
@@ -543,7 +543,7 @@ def get_time_hypha_info_from_analysis(analysis_folders, use_saved=True):
     if os.path.exists(path_save_info) and use_saved:
         time_hypha_infos = pd.read_json(path_save_info)
         folders = pd.read_json(path_save_folders)
-        return (time_hypha_infos, folders)
+        return (folders,time_hypha_infos)
     analysis_dirs = analysis_folders["total_path"]
     folders = pd.DataFrame()
     time_hypha_infos = []

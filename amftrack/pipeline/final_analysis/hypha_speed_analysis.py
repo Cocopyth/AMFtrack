@@ -43,9 +43,9 @@ def get_order(plate, folders):
     return orders[treatment]
 
 
-def select_movement(plate, time_hypha_info, min_num_occ=1):
+def select_movement(plate_id, time_hypha_info, min_num_occ=1):
     time_hypha_plate = time_hypha_info.loc[
-        time_hypha_info["unique_id"].astype(str).str[: len(str(plate))] == str(plate)
+        time_hypha_info["unique_id"] == plate_id
     ]
     select = time_hypha_plate
     max_speeds = select.groupby("end").max()["speed"]
@@ -61,8 +61,8 @@ def select_movement(plate, time_hypha_info, min_num_occ=1):
     return select_movements
 
 
-def get_average_time_data(plate, time_hypha_info, min_num_occ=1):
-    select_movements = select_movement(plate, time_hypha_info, min_num_occ)
+def get_average_time_data(plate_id, time_hypha_info, min_num_occ=1):
+    select_movements = select_movement(plate_id, time_hypha_info, min_num_occ)
     group = select_movements.groupby(["time_since_begin_h"])["speed"]
     data = group.median()
     dy = group.std() / np.sqrt(group.count())
@@ -90,3 +90,5 @@ def get_hyphae_hull(plate_id, analysis_folders):
                 hyphae = np.load(os.path.join(path_time_hypha, path))
                 hyphae_hull.append(hyphae)
     return hyphae_hull
+
+
