@@ -81,7 +81,7 @@ complete_spores = np.array(complete_spores)
 to_remove = set()
 for i in range(len(complete_spores)):
     distances = np.linalg.norm(complete_spores[i][:2] - complete_spores[:, :2], axis=1)
-    if len(distances)>1:
+    if len(distances) > 1:
         index = np.argpartition(distances, 1)[1]
         if distances[index] < 10 and index < i:
             to_remove.add((i))

@@ -13,6 +13,7 @@ import networkx as nx
 import scipy.io as sio
 import os
 
+
 def get_is_out_study(exp, t, args=None):
     return ("out_study", int(t > exp.reach_out))
 
@@ -142,52 +143,54 @@ def get_length(exp, t, args=None):
 def get_num_trunks(exp, t, args=None):
     return ("num_trunks", int(exp.num_trunk))
 
-def get_num_spores(exp,t,args=None):
-    table = exp.folders
-    directory = exp.directory
-    folder = table["folder"].iloc[t]
-    path_file = os.path.join(directory,folder, "Analysis", "spores.mat")
-    if os.path.exists(path_file):
-        spore_data = sio.loadmat(path_file)["spores"]
-        num_spore = len(spore_data)
-        return('num_spores',num_spore)
-    else:
-        return('num_spores',None)
 
-def get_spore_volume(exp,t,args=None):
+def get_num_spores(exp, t, args=None):
     table = exp.folders
     directory = exp.directory
     folder = table["folder"].iloc[t]
-    path_file = os.path.join(directory,folder, "Analysis", "spores.mat")
+    path_file = os.path.join(directory, folder, "Analysis", "spores.mat")
     if os.path.exists(path_file):
         spore_data = sio.loadmat(path_file)["spores"]
         num_spore = len(spore_data)
-        if num_spore>0:
+        return ("num_spores", num_spore)
+    else:
+        return ("num_spores", None)
+
+
+def get_spore_volume(exp, t, args=None):
+    table = exp.folders
+    directory = exp.directory
+    folder = table["folder"].iloc[t]
+    path_file = os.path.join(directory, folder, "Analysis", "spores.mat")
+    if os.path.exists(path_file):
+        spore_data = sio.loadmat(path_file)["spores"]
+        num_spore = len(spore_data)
+        if num_spore > 0:
             spore_volume = np.sum(4 / 3 * np.pi * (spore_data[:, 2] * 1.725) ** 3)
-            return('spore_volume',spore_volume)
+            return ("spore_volume", spore_volume)
         else:
-            return('spore_volume',0)
+            return ("spore_volume", 0)
     else:
-        return('spore_volume',None)
+        return ("spore_volume", None)
 
-def get_mean_edge_straight(exp,t,args=None):
+
+def get_mean_edge_straight(exp, t, args=None):
     (G, pos) = exp.nx_graph[t], exp.positions[t]
-    edges =  [
+    edges = [
         Edge(Node(edge_coord[0], exp), Node(edge_coord[1], exp), exp)
         for edge_coord in list(G.edges)
     ]
     straightesses = []
     for edge in edges:
-        length = measure_length_um_edge(edge,t)
-        straight_distance = np.linalg.norm(
-            edge.end.pos(t) - edge.begin.pos(t)
-        )*1.725
-        if straight_distance>40:
-            straightesses.append(straight_distance/length)
-    if len(straightesses)>0:
-        return ('mean_straightness', np.mean(straightesses))
+        length = measure_length_um_edge(edge, t)
+        straight_distance = np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725
+        if straight_distance > 40:
+            straightesses.append(straight_distance / length)
+    if len(straightesses) > 0:
+        return ("mean_straightness", np.mean(straightesses))
     else:
-        return ('mean_straightness', None)
+        return ("mean_straightness", None)
+
 
 # def get_L_RH(exp, t, args=None):
 #     plate = exp.folders["Plate"].unique()[0]

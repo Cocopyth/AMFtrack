@@ -37,7 +37,7 @@ class TestExperiment(unittest.TestCase):
         fs = dir(time_plate)
         plot_fs = [f for f in fs if f.split("_")[0] == "get"]
         for f in plot_fs:
-            print(f,getattr(time_plate, f)(self.exp, 0))
+            print(f, getattr(time_plate, f)(self.exp, 0))
 
     def test_time_hypha_f(self):
         fs = dir(time_hypha)

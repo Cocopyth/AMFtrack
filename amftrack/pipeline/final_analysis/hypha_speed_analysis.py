@@ -44,9 +44,7 @@ def get_order(plate, folders):
 
 
 def select_movement(plate_id, time_hypha_info, min_num_occ=1):
-    time_hypha_plate = time_hypha_info.loc[
-        time_hypha_info["unique_id"] == plate_id
-    ]
+    time_hypha_plate = time_hypha_info.loc[time_hypha_info["unique_id"] == plate_id]
     select = time_hypha_plate
     max_speeds = select.groupby("end").max()["speed"]
     correct_tracks = max_speeds.loc[max_speeds <= 450]
@@ -90,5 +88,3 @@ def get_hyphae_hull(plate_id, analysis_folders):
                 hyphae = np.load(os.path.join(path_time_hypha, path))
                 hyphae_hull.append(hyphae)
     return hyphae_hull
-
-
