@@ -27,6 +27,8 @@ imgs = []
 kernel = np.ones((3, 3), np.uint8)
 itera = 1
 resize = (2624, 1312)
+resize = (2624, 2624)
+
 texts = list(select["folder"])
 fontScale = 3
 color = (0, 255, 255)
@@ -39,7 +41,9 @@ for path in select["total_path"]:
     print(path)
     # print(folder)
     path_snap = path
+    # skel_info = read_mat(path_snap + "/Analysis/skeleton_masked.mat")
     skel_info = read_mat(path_snap + "/Analysis/skeleton.mat")
+
     skel = skel_info["skeleton"]
     im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
     compressed = sparse.csr_matrix(

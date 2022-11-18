@@ -1,9 +1,6 @@
 import os
-import numpy as np
-import random
 import unittest
-import matplotlib as mpl
-from test import helper
+from test.util import helper
 import matplotlib.pyplot as plt
 import amftrack.pipeline.functions.post_processing.exp_plot as exp_plot
 import amftrack.pipeline.functions.post_processing.time_plate as time_plate
