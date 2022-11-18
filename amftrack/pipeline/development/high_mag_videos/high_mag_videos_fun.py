@@ -236,3 +236,4 @@ def get_speeds(kymo, W, C_Thr, fps, binning, magnification):
     speed = (
         np.tan((real_movement - 90) / 180 * np.pi) * space_pixel_size / time_pixel_size
     )  # um.s-1
+

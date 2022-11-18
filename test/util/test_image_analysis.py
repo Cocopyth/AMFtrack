@@ -66,14 +66,14 @@ class TestTransformations(unittest.TestCase):
         assert convert_to_micrometer(10) == 17.25
 
     def test_is_in_image(self):
-        self.assertTrue(is_in_image(0, 0, 100, 100))
-        self.assertFalse(is_in_image(0, 100, -1000, -1000))
+        self.assertTrue(is_in_image(0, 0, 100, 100,3000,4096))
+        self.assertFalse(is_in_image(0, 100, -1000, -1000,3000,4096))
 
     def test_find_image_index(self):
         self.assertEqual(
             find_image_index(
                 [[0, 0], [10_000, 10_000], [9500, 9500], [0, 0]], 11000, 9900
-            ),
+            ,3000,4096),
             2,
         )
 

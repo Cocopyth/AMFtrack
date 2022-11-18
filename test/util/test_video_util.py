@@ -1,6 +1,6 @@
 import os
 import unittest
-from test import helper
+from test.util import helper
 from amftrack.util.sys import (
     test_path,
 )
