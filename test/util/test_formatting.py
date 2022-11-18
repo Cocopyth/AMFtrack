@@ -1,7 +1,6 @@
-import numpy as np
 import unittest
 from amftrack.util.formatting import str_to_coord_list, coord_list_to_str
-from test import helper
+from test.util import helper
 
 
 class TestFormatting(unittest.TestCase):

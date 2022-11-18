@@ -133,6 +133,7 @@ class Experiment:
         ypos = [pos[1] for poss in self.positions for pos in poss.values()]
         self.ts = len(self.dates)
         self.labeled = suffix == "_labeled"
+        self.dimX_dimY = self.get_image(0, 0).shape
 
     def save_graphs(self, suffix):
         for i, date in enumerate(self.dates):
@@ -378,7 +379,8 @@ class Experiment:
         Take as input coordinates in the TIMESTEP referential.
         And determine the index of the image.
         """
-        return find_image_indexes(self.get_image_coords(t), xs, ys)
+        dim_x, dim_y = self.dimX_dimY
+        return find_image_indexes(self.get_image_coords(t), xs, ys,dim_x,dim_y)
 
     def find_im_indexes_from_general(self, x: float, y: float, t: int) -> List[int]:
         """
@@ -386,7 +388,9 @@ class Experiment:
         And determine the index of the image.
         """
         xt, yt = self.general_to_timestep([x, y], t)
-        return find_image_indexes(self.get_image_coords(t), xt, yt)
+        dim_x, dim_y = self.dimX_dimY
+
+        return find_image_indexes(self.get_image_coords(t), xt, yt, dim_x,dim_y)
 
     def find_image_pos(
         self, xs: int, ys: int, t: int, local=False

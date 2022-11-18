@@ -8,7 +8,6 @@ from scipy import ndimage
 import logging
 import os
 from amftrack.util.aliases import coord_int, coord
-from amftrack.util.param import DIM_X, DIM_Y
 from amftrack.util.geometry import (
     distance_point_pixel_line,
     get_closest_line_opt,
@@ -62,6 +61,13 @@ def get_all_edges(exp: Experiment, t: int) -> List[Edge]:
         for edge_coord in list(G.edges)
     ]
 
+def get_dimX_dimY(exp):
+    try:
+        return(exp.dimX_dimY)
+    except:
+        im = exp.get_image(0, 0)
+        exp.dimX_dimY = im.shape
+        return(exp.dimX_dimY)
 
 def get_all_nodes(exp, t) -> List[Node]:
     """
@@ -268,6 +274,7 @@ def plot_full_image_with_features(
     # TODO(FK): fetch image size from experiment object here, and use it in reconstruct image
     # TODO(FK): add is_in_bounding_box to discard points out of interest zone
     # NB: possible other parameters that could be added: alpha between layers, colors for object, figure_size
+    DIM_X, DIM_Y = get_dimX_dimY(exp)
     if region == None:
         # Full image
         image_coodinates = exp.image_coordinates[t]
@@ -397,6 +404,7 @@ def plot_full(
     # TODO(FK): fetch image size from experiment object here, and use it in reconstruct image
     # TODO(FK): colors for edges are not consistent
     # NB: possible other parameters that could be added: alpha between layers, colors for object, figure_size
+    DIM_X, DIM_Y = get_dimX_dimY(exp)
 
     if region == None:
         # Full image
@@ -503,6 +511,7 @@ def reconstruct_image_simple(
         exp.load_tile_information(t)
 
     image_coodinates = exp.image_coordinates[t]
+    DIM_X, DIM_Y = get_dimX_dimY(exp)
 
     # Find the maximum dimension
     m_x = np.max([c[0] for c in image_coodinates])
@@ -545,8 +554,6 @@ def reconstruct_image(
     downsizing=5,
     prettify=False,
     white_background=True,
-    dim_x=DIM_X,
-    dim_y=DIM_Y,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
     """
     This function reconstructs the full size image or a part of it given by `region` at
@@ -574,6 +581,8 @@ def reconstruct_image(
     image_coodinates = exp.image_coordinates[t]
 
     # Define canvas dimension
+    dim_x, dim_y = get_dimX_dimY(exp)
+
     if region == None:
         # Full image
         region = get_bounding_box(image_coodinates)
@@ -823,6 +832,7 @@ def plot_edge_width(
     :param save_path: full path to the location where the plot will be saved
     :param intervals: different width intervals that will be given different colors
     """
+    DIM_X, DIM_Y = get_dimX_dimY(exp)
 
     if region == None:
         # Full image
@@ -927,8 +937,6 @@ def reconstruct_image_from_general(
     downsizing=5,
     prettify=False,
     white_background=True,
-    dim_x=DIM_X,
-    dim_y=DIM_Y,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
     """
     This function reconstructs the full size image or a part of it given by `region` at
@@ -968,7 +976,6 @@ def reconstruct_image_from_general(
         exp.general_to_timestep(point, t) for point in region_vertices
     ]
     region_ts = get_bounding_box(region_vertices_ts, margin=0)
-
     # Step 2: fetch this region
     image_ts, f = reconstruct_image(
         exp,
@@ -977,8 +984,6 @@ def reconstruct_image_from_general(
         downsizing=downsizing,
         prettify=prettify,
         white_background=white_background,
-        dim_x=dim_x,
-        dim_y=dim_y,
     )
 
     # Step 3: extract only the region of interest from the TIMESTEP image
