@@ -1,22 +1,12 @@
-import os
 import unittest
-from amftrack.util.sys import (
-    update_plate_info_local,
-    get_current_folders_local,
-    test_path,
-)
-from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
-    Experiment,
-)
 from amftrack.pipeline.functions.image_processing.extract_width_fun import (
-    generate_pivot_indexes,
     compute_section_coordinates,
     extract_section_profiles_for_edge,
     find_source_images_filtered,
 )
 from amftrack.pipeline.functions.image_processing.experiment_util import get_random_edge
 
-from test import helper
+from test.util import helper
 
 
 class TestWidthLight(unittest.TestCase):
@@ -30,7 +20,7 @@ class TestWidthLight(unittest.TestCase):
         image3 = [0, 3900]
 
         im_indexes, sections = find_source_images_filtered(
-            [sec1, sec2, sec3, sec4], [image1, image2, image3]
+            [sec1, sec2, sec3, sec4], [image1, image2, image3],3000,4096
         )
         self.assertListEqual(im_indexes, [0, 0, 2])
         self.assertListEqual(sections[2][0], [1500, 100])

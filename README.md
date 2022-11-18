@@ -3,45 +3,82 @@ AMF segmentation
 
 
 # Setup
-## Setup with conda
-*For the script*
 
-```bash
-conda install -c open3d-admin open3d==0.9.0
-conda install -c anaconda scipy
-conda install -c anaconda pandas
-conda install -c anaconda networkx
-conda install -c conda-forge matplotlib
-pip install pymatreader
-conda install -c anaconda numpy
-conda install -c conda-forge opencv
-pip install imageio #use pip here to avoid conflict
-conda install -c conda-forge jupyterlab
-pip install pycpd
-pip install cython
-git clone https://github.com/gattia/cycpd
-cd cycpd
-sudo python setup.py install
-pip install bresenham
-conda install scikit-image
-conda install -c conda-forge scikit-learn 
-pip install Shapely
-pip install tqdm
-pip install dropbox
-pip install imageio-ffmpeg
-```
-<!-- - conda install -c anaconda ipykernel -->
+[//]: # (## Setup with conda)
 
-*For nice display*
-```bash
-conda install -c conda-forge ipympl
-conda install -c conda-forge nodejs
-conda install -c conda-forge/label/gcc7 nodejs
-conda install -c conda-forge/label/cf201901 nodejs
-conda install -c conda-forge/label/cf202003 nodejs
-jupyter labextension install @jupyter-widgets/jupyterlab-manager
-jupyter lab build
-```
+[//]: # (*For the script*)
+
+[//]: # ()
+[//]: # (```bash)
+
+[//]: # (conda install -c open3d-admin open3d==0.9.0)
+
+[//]: # (conda install -c anaconda scipy)
+
+[//]: # (conda install -c anaconda pandas)
+
+[//]: # (conda install -c anaconda networkx)
+
+[//]: # (conda install -c conda-forge matplotlib)
+
+[//]: # (pip install pymatreader)
+
+[//]: # (conda install -c anaconda numpy)
+
+[//]: # (conda install -c conda-forge opencv)
+
+[//]: # (pip install imageio #use pip here to avoid conflict)
+
+[//]: # (conda install -c conda-forge jupyterlab)
+
+[//]: # (pip install pycpd)
+
+[//]: # (pip install cython)
+
+[//]: # (git clone https://github.com/gattia/cycpd)
+
+[//]: # (cd cycpd)
+
+[//]: # (sudo python setup.py install)
+
+[//]: # (pip install bresenham)
+
+[//]: # (conda install scikit-image)
+
+[//]: # (conda install -c conda-forge scikit-learn )
+
+[//]: # (pip install Shapely)
+
+[//]: # (pip install tqdm)
+
+[//]: # (pip install dropbox)
+
+[//]: # (pip install imageio-ffmpeg)
+
+[//]: # (```)
+
+[//]: # (<!-- - conda install -c anaconda ipykernel -->)
+
+[//]: # ()
+[//]: # (*For nice display*)
+
+[//]: # (```bash)
+
+[//]: # (conda install -c conda-forge ipympl)
+
+[//]: # (conda install -c conda-forge nodejs)
+
+[//]: # (conda install -c conda-forge/label/gcc7 nodejs)
+
+[//]: # (conda install -c conda-forge/label/cf201901 nodejs)
+
+[//]: # (conda install -c conda-forge/label/cf202003 nodejs)
+
+[//]: # (jupyter labextension install @jupyter-widgets/jupyterlab-manager)
+
+[//]: # (jupyter lab build)
+
+[//]: # (```)
 
 useful jupyterlab extensions:
 https://github.com/jpmorganchase/jupyter-fs

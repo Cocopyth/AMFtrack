@@ -95,7 +95,7 @@ def extract_skel_new_prince(im, params, perc_low, perc_high):
     bowled = bowler_hat(-im.astype(np.uint8), 32, params)
     filename = time_ns()
     place_save = temp_path
-    to_smooth = bowled * 255
+    to_smooth = np.minimum(bowled * 255,255-im)
     # to_smooth = 255-im
     imtransformed_path = f"{place_save}/{filename}.tif"
     imageio.imsave(imtransformed_path, to_smooth.astype(np.uint8))
