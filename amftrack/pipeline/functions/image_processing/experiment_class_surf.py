@@ -380,7 +380,7 @@ class Experiment:
         And determine the index of the image.
         """
         dim_x, dim_y = self.dimX_dimY
-        return find_image_indexes(self.get_image_coords(t), xs, ys,dim_x,dim_y)
+        return find_image_indexes(self.get_image_coords(t), xs, ys, dim_x, dim_y)
 
     def find_im_indexes_from_general(self, x: float, y: float, t: int) -> List[int]:
         """
@@ -390,7 +390,7 @@ class Experiment:
         xt, yt = self.general_to_timestep([x, y], t)
         dim_x, dim_y = self.dimX_dimY
 
-        return find_image_indexes(self.get_image_coords(t), xt, yt, dim_x,dim_y)
+        return find_image_indexes(self.get_image_coords(t), xt, yt, dim_x, dim_y)
 
     def find_image_pos(
         self, xs: int, ys: int, t: int, local=False

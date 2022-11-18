@@ -61,13 +61,15 @@ def get_all_edges(exp: Experiment, t: int) -> List[Edge]:
         for edge_coord in list(G.edges)
     ]
 
+
 def get_dimX_dimY(exp):
     try:
-        return(exp.dimX_dimY)
+        return exp.dimX_dimY
     except:
         im = exp.get_image(0, 0)
         exp.dimX_dimY = im.shape
-        return(exp.dimX_dimY)
+        return exp.dimX_dimY
+
 
 def get_all_nodes(exp, t) -> List[Node]:
     """

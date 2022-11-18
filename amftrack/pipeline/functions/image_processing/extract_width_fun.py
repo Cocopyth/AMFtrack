@@ -12,9 +12,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Edge,
 )
-from amftrack.pipeline.functions.image_processing.experiment_util import (
-get_dimX_dimY
-)
+from amftrack.pipeline.functions.image_processing.experiment_util import get_dimX_dimY
 from amftrack.util.geometry import get_section_segment, generate_index_along_sequence
 from amftrack.util.image_analysis import is_in_image, find_image_indexes
 from tensorflow import keras
@@ -165,7 +163,11 @@ def compute_section_coordinates(
 
 
 def find_source_images_filtered(
-    section_coord_list: List[Tuple[coord_int]], image_coord_list: List[Tuple[coord_int]],DIM_X, DIM_Y) -> Tuple[List[int], List[Tuple[coord, coord]]]:
+    section_coord_list: List[Tuple[coord_int]],
+    image_coord_list: List[Tuple[coord_int]],
+    DIM_X,
+    DIM_Y,
+) -> Tuple[List[int], List[Tuple[coord, coord]]]:
     """
     For each segment in section_coord_list, determine the index of an
     image in `image_coord_list` which contains the segment.
@@ -184,8 +186,12 @@ def find_source_images_filtered(
     for sec in section_coord_list:
         (point1, point2) = sec
         if not (
-            is_in_image(current_image[0], current_image[1], point1[0], point1[1],DIM_X, DIM_Y)
-            and is_in_image(current_image[0], current_image[1], point2[0], point2[1],DIM_X, DIM_Y)
+            is_in_image(
+                current_image[0], current_image[1], point1[0], point1[1], DIM_X, DIM_Y
+            )
+            and is_in_image(
+                current_image[0], current_image[1], point2[0], point2[1], DIM_X, DIM_Y
+            )
         ):
             logging.debug("New image needed")
             images1 = find_image_indexes(image_coord_list, point1[0], point1[1])
