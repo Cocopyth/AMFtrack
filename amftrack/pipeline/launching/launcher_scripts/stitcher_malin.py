@@ -31,7 +31,6 @@ if len(folders) > 0:
         node="fat",
         name_job=name_job,
         is_mini_PRINCE=True,
-
     )
 run_launcher(
     "correct_stitcher.py",

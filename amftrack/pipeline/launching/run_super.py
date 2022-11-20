@@ -177,10 +177,11 @@ def run_parallel_post(
         call_code(path_job, dependency)
 
 
-def make_stitching_loop(directory, dirname, op_id,is_mini_PRINCE = False):
+def make_stitching_loop(directory, dirname, op_id, is_mini_PRINCE=False):
     if is_mini_PRINCE:
         a_file = open(
-            f"{path_code}pipeline/scripts/stitching_loops/stitching_loop_miniPRINCE.ijm", "r"
+            f"{path_code}pipeline/scripts/stitching_loops/stitching_loop_miniPRINCE.ijm",
+            "r",
         )
     else:
         a_file = open(
@@ -208,7 +209,7 @@ def run_parallel_stitch(
     node="thin",
     name_job="stitch",
     dependency=False,
-    is_mini_PRINCE = False
+    is_mini_PRINCE=False,
 ):
     folder_list = list(folders["folder"])
     folder_list.sort()
@@ -242,7 +243,7 @@ def run_parallel_stitch(
         stop = num_parallel * j + num_parallel
         for k in range(start, min(stop, len(folder_list))):
             op_id = time_ns()
-            make_stitching_loop(directory, folder_list[k], op_id,is_mini_PRINCE)
+            make_stitching_loop(directory, folder_list[k], op_id, is_mini_PRINCE)
             op_ids.append(op_id)
         ide = time_ns()
         my_file = open(path_job, "w")

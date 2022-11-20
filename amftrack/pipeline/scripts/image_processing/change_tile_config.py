@@ -59,10 +59,10 @@ lines_modified = []
 for line in lines[:4]:
     lines_modified.append(line)
 for line in lines[4:]:
-    x = str(float(line.split(';')[2].split('\n')[0].split(',')[0][2:])*2)
-    y = str(float(line.split(';')[2].split('\n')[0].split(',')[1][:-1])*2)
-    line_new = ';'.join([line.split(';')[0],line.split(';')[1],f' ({x},{y}) \n'])
+    x = str(float(line.split(";")[2].split("\n")[0].split(",")[0][2:]) * 2)
+    y = str(float(line.split(";")[2].split("\n")[0].split(",")[1][:-1]) * 2)
+    line_new = ";".join([line.split(";")[0], line.split(";")[1], f" ({x},{y}) \n"])
     lines_modified.append(line_new)
-with open(path_tile, 'w') as f:
+with open(path_tile, "w") as f:
     for line in lines_modified:
         f.write(f"{line}")
