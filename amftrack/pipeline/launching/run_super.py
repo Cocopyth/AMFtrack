@@ -177,10 +177,15 @@ def run_parallel_post(
         call_code(path_job, dependency)
 
 
-def make_stitching_loop(directory, dirname, op_id):
-    a_file = open(
-        f"{path_code}pipeline/scripts/stitching_loops/stitching_loop.ijm", "r"
-    )
+def make_stitching_loop(directory, dirname, op_id,is_mini_PRINCE = False):
+    if is_mini_PRINCE:
+        a_file = open(
+            f"{path_code}pipeline/scripts/stitching_loops/stitching_loop_miniPRINCE.ijm", "r"
+        )
+    else:
+        a_file = open(
+            f"{path_code}pipeline/scripts/stitching_loops/stitching_loop.ijm", "r"
+        )
 
     list_of_lines = a_file.readlines()
 
@@ -203,6 +208,7 @@ def run_parallel_stitch(
     node="thin",
     name_job="stitch",
     dependency=False,
+    is_mini_PRINCE = False
 ):
     folder_list = list(folders["folder"])
     folder_list.sort()
@@ -212,26 +218,31 @@ def run_parallel_stitch(
     folder_list = list(folders["folder"])
     folder_list.sort()
     path_job = f"{path_bash}{name_job}"
+    size_x = 14 if is_mini_PRINCE else 11
+    size_y = 10 if is_mini_PRINCE else 16
+
     for folder in folder_list:
         path_im_copy = f"{directory}/{folder}/Img/Img_r03_c05.tif"
         if os.path.isfile(path_im_copy):
-            im = imageio.imread(path_im_copy)
-            for x in range(1, 11):
-                for y in range(1, 16):
+            # im = imageio.imread(path_im_copy)
+            for x in range(1, size_x):
+                for y in range(1, size_y):
                     strix = str(x) if x >= 10 else f"0{x}"
                     striy = str(y) if y >= 10 else f"0{y}"
                     path = f"{directory}/{folder}/Img/Img_r{strix}_c{striy}.tif"
                     if not os.path.isfile(path):
                         f = open(path, "w")
                     if os.path.getsize(path) == 0:
+                        im = imageio.imread(path_im_copy)
                         imageio.imwrite(path, im * 0)
+                        print(path)
     for j in range(begin_skel, end_skel):
         op_ids = []
         start = num_parallel * j
         stop = num_parallel * j + num_parallel
         for k in range(start, min(stop, len(folder_list))):
             op_id = time_ns()
-            make_stitching_loop(directory, folder_list[k], op_id)
+            make_stitching_loop(directory, folder_list[k], op_id,is_mini_PRINCE)
             op_ids.append(op_id)
         ide = time_ns()
         my_file = open(path_job, "w")
