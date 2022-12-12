@@ -376,7 +376,6 @@ def update_analysis_info(directory, suffix_analysis_info=""):
         op_id = int(folder.split("_")[-2])
         dt = datetime.fromtimestamp(op_id // 1000000000)
         path = f"{directory}{folder}/folder_info.json"
-        print(path)
         infos = pd.read_json(path, dtype={"unique_id": str})
         if len(infos) > 0:
             column_interest = [column for column in infos.columns if column[0] != "/"]
