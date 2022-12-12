@@ -131,7 +131,7 @@ def extract_section_profiles_for_edge(
     return np.concatenate(l, axis=0), list_of_segments
 
 
-def plot_segments_on_image(segments, ax, color="red", bound1=0, bound2=1,alpha = 1):
+def plot_segments_on_image(segments, ax, color="red", bound1=0, bound2=1, alpha=1):
     for (point1_pivot, point2_pivot) in segments:
         point1 = (1 - bound1) * point1_pivot + bound1 * point2_pivot
         point2 = (1 - bound2) * point1_pivot + bound2 * point2_pivot
@@ -140,7 +140,7 @@ def plot_segments_on_image(segments, ax, color="red", bound1=0, bound2=1,alpha =
             [point1[0], point2[0]],  # y1, y2
             color=color,
             linewidth=2,
-            alpha = alpha
+            alpha=alpha,
         )
 
 
@@ -240,7 +240,8 @@ def get_speeds(kymo, W, C_Thr, fps, binning, magnification):
         np.tan((real_movement - 90) / 180 * np.pi) * space_pixel_size / time_pixel_size
     )  # um.s-1
 
-def get_width_from_graph_im(edge,pos,image,nx_graph_pruned,slice_length=400):
+
+def get_width_from_graph_im(edge, pos, image, nx_graph_pruned, slice_length=400):
     bound1 = 0
     bound2 = 1
     offset = 100
@@ -257,31 +258,45 @@ def get_width_from_graph_im(edge,pos,image,nx_graph_pruned,slice_length=400):
         step=step,
         target_length=target_length,
         bound1=bound1,
-        bound2=bound2
+        bound2=bound2,
     )
-    return(get_width(slices))
+    return get_width(slices)
 
-def get_width(slices,avearing_window = 50,num_std = 4):
+
+def get_width(slices, avearing_window=50, num_std=4):
     widths = []
     for index in range(len(slices)):
-        thresh = np.mean((np.mean(slices[index, :avearing_window]), np.mean(slices[index, -avearing_window:])))
-        std = np.std((np.concatenate((slices[index, :avearing_window], slices[index, -avearing_window:]))))
+        thresh = np.mean(
+            (
+                np.mean(slices[index, :avearing_window]),
+                np.mean(slices[index, -avearing_window:]),
+            )
+        )
+        std = np.std(
+            (
+                np.concatenate(
+                    (slices[index, :avearing_window], slices[index, -avearing_window:])
+                )
+            )
+        )
         try:
-            deb, end = np.min(np.argwhere(slices[index, :] < thresh - num_std * std)), np.max(
-                np.argwhere(slices[index, :] < thresh - num_std * std))
-            width = (end - deb)
+            deb, end = np.min(
+                np.argwhere(slices[index, :] < thresh - num_std * std)
+            ), np.max(np.argwhere(slices[index, :] < thresh - num_std * std))
+            width = end - deb
             widths.append(width)
         except ValueError:
             continue
-    return(np.median(widths))
+    return np.median(widths)
 
-def segment_brightfield(image,thresh = 0.5e-6,frangi_range = range(60,120,30)):
+
+def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 120, 30)):
 
     smooth_im = cv2.blur(-image, (11, 11))
     segmented = frangi(-smooth_im, frangi_range)
-    skeletonized = skeletonize(segmented>thresh)
+    skeletonized = skeletonize(segmented > thresh)
 
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
     nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
-    return(segmented>thresh,nx_graph_pruned,pos)
+    return (segmented > thresh, nx_graph_pruned, pos)

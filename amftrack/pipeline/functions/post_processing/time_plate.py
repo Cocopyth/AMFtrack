@@ -36,6 +36,7 @@ def get_length_tot(exp, t, args=None):
         length += measure_length_um_edge(edge_obj, t)
     return ("tot_length", length)
 
+
 # def get_length_in_ring_rough(exp, t, args=None):
 #     length = 0
 #     for edge in exp.nx_graph[t].edges:

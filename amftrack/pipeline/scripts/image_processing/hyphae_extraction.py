@@ -26,7 +26,7 @@ op_id = int(sys.argv[-2])
 run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 # print(run_info['unique_id'])
 plates = list(set(run_info["unique_id"].values))
-print(i,op_id,run_info)
+print(i, op_id, run_info)
 plates.sort()
 unique_id = plates[i]
 folders = run_info.loc[run_info["unique_id"] == unique_id]

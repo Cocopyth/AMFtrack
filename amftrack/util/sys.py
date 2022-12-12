@@ -482,7 +482,7 @@ def get_time_plate_info_from_analysis(analysis_folders, use_saved=True):
         table = pd.concat((table, (folders_plate["folder"])), axis=1)
         table = pd.concat((table, (folders_plate["unique_id"])), axis=1)
         table = pd.concat((table, (folders_plate["datetime"])), axis=1)
-        for column in ["PrincePos","root","strain","medium"]:
+        for column in ["PrincePos", "root", "strain", "medium"]:
             try:
                 table = pd.concat((table, (folders_plate[column])), axis=1)
             except KeyError:
@@ -588,6 +588,7 @@ def get_time_hypha_info_from_analysis(analysis_folders, use_saved=True):
     folders.to_json(path_save_folders)
     return (folders, time_hypha_info)
 
+
 def get_time_edge_info_from_analysis(analysis_folders, use_saved=True):
     plates_in = analysis_folders["unique_id"].unique()
     plates_in.sort()
@@ -643,6 +644,7 @@ def get_time_edge_info_from_analysis(analysis_folders, use_saved=True):
     time_edge_info.to_json(path_save_info)
     folders.to_json(path_save_folders)
     return (folders, time_edge_info)
+
 
 def get_data_tables(op_id=time_ns(), redownload=True):
     API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))

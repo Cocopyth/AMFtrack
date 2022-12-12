@@ -14,7 +14,10 @@ from amftrack.pipeline.functions.post_processing.extract_study_zone import (
     load_study_zone,
 )
 import sys
-from amftrack.pipeline.functions.image_processing.experiment_class_surf import Edge, Node
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
+    Edge,
+    Node,
+)
 import numpy as np
 
 
