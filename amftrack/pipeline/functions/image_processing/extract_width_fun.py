@@ -5,6 +5,7 @@ from typing import Tuple, List, Dict
 import os
 import logging
 from random import choice
+from amftrack.pipeline.functions.image_processing.experiment_util import get_dimX_dimY
 
 from amftrack.notebooks.analysis.util import *
 from amftrack.util.aliases import coord, coord_int
@@ -31,6 +32,7 @@ MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "CN
 #MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "CNN_combine_HB_crop_80_best_model"))
 
 
+
 def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
     """
     From the length of the pixel list, determine which pixel will be chosen to compute width
@@ -48,8 +50,7 @@ def compute_edge_width_profile(
     resolution=5,
     offset=4,
     step=3,
-    target_length=TARGET_LENGTH,# change the target_length from 120 to global variable
-    model = MODEL,# add model here to fix the bug
+    target_length=TARGET_LENGTH,
 ) -> float:
 
     profile, _, __ = extract_section_profiles_for_edge(
@@ -62,13 +63,13 @@ def compute_edge_width_profile(
         target_length=target_length,
     )
 
-    predicted_widths = model.predict(profile)
-    # add model here to fix the bug
+    predicted_widths = MODEL.predict(profile)
+
     return predicted_widths
 
 
 def compute_section_coordinates(
-    pixel_list: List[coord_int], pivot_indexes: List, step: int, target_length=TARGET_LENGTH,# change the target_length from 120 to global variable
+    pixel_list: List[coord_int], pivot_indexes: List, step: int, target_length=TARGET_LENGTH
 ) -> List[Tuple[coord_int, coord_int]]:
     """
     Compute the coordinates of each segment section where the width will be computed
@@ -165,7 +166,10 @@ def compute_section_coordinates(
 
 
 def find_source_images_filtered(
-    section_coord_list: List[Tuple[coord_int]], image_coord_list: List[Tuple[coord_int]]
+    section_coord_list: List[Tuple[coord_int]],
+    image_coord_list: List[Tuple[coord_int]],
+    DIM_X,
+    DIM_Y,
 ) -> Tuple[List[int], List[Tuple[coord, coord]]]:
     """
     For each segment in section_coord_list, determine the index of an
@@ -185,8 +189,12 @@ def find_source_images_filtered(
     for sec in section_coord_list:
         (point1, point2) = sec
         if not (
-            is_in_image(current_image[0], current_image[1], point1[0], point1[1])
-            and is_in_image(current_image[0], current_image[1], point2[0], point2[1])
+            is_in_image(
+                current_image[0], current_image[1], point1[0], point1[1], DIM_X, DIM_Y
+            )
+            and is_in_image(
+                current_image[0], current_image[1], point2[0], point2[1], DIM_X, DIM_Y
+            )
         ):
             logging.debug("New image needed")
             images1 = find_image_indexes(image_coord_list, point1[0], point1[1],DIM_X,DIM_Y)
@@ -217,7 +225,7 @@ def extract_section_profiles_for_edge(
     resolution=5,
     offset=4,
     step=3,
-    target_length=TARGET_LENGTH,# change the target_length from 120 to global variable
+    target_length=TARGET_LENGTH,
 ) -> np.array:
     """
     Main function to extract section profiles of an edge.
@@ -243,8 +251,9 @@ def extract_section_profiles_for_edge(
     )  # target_length + 1 to be sure to have length all superior to target_length when cropping
     # TODO (FK): is a +1 enough?
     image_coord_list = exp.get_image_coords(t)
+    DIM_X, DIM_Y = get_dimX_dimY(exp)
     image_indexes, new_section_coord_list = find_source_images_filtered(
-        list_of_segments, image_coord_list
+        list_of_segments, image_coord_list, DIM_X, DIM_Y
     )
     images = {}
     for im_index in set(image_indexes):
@@ -429,6 +438,7 @@ def get_width_info(experiment, t, resolution=50, skip=False):
             #         print(np.mean(list(get_width_edge(edge_exp,resolution,t).values())))
             edge_width[edge] = mean
             # print(mean)
+
         else:
             # Maybe change to Nan if it doesnt break the rest
             edge_width[edge] = 40
@@ -453,7 +463,7 @@ def get_width_info_new(experiment, t, resolution=50, skip=False) -> Dict:
                     resolution=resolution,
                     offset=8,
                     step=6,
-                    target_length=100,
+                    target_length=TARGET_LENGTH,
                 )
                 median = np.median(prediction)
                 edge_width[edge] = median
@@ -502,3 +512,4 @@ if __name__ == "__main__":
     ## Run the width function
     edge = get_random_edge(exp, 0)
     extract_section_profiles_for_edge(exp, 0, edge)
+
