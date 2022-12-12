@@ -509,19 +509,22 @@ class Experiment:
                 return t
 
 
-def save_graphs(exp, suf=2):
+def save_graphs(exp, suf=2,ts = None):
+    if not ts:
+        ts = range(exp.ts)
     for i, date in enumerate(exp.dates):
-        directory_name = get_dirname(date, exp.folders)
-        path_snap = exp.directory + directory_name
-        labeled = exp.labeled
-        print(date, labeled)
-        if labeled:
-            suffix = f"/Analysis/nx_graph_pruned_labeled{suf}.p"
-            path_save = path_snap + suffix
-            # print(path_save)
-            g = exp.nx_graph[i]
-            pos = exp.positions[i]
-            pickle.dump((g, pos), open(path_save, "wb"))
+        if i in ts:
+            directory_name = get_dirname(date, exp.folders)
+            path_snap = exp.directory + directory_name
+            labeled = exp.labeled
+            print(date, labeled)
+            if labeled:
+                suffix = f"/Analysis/nx_graph_pruned_labeled{suf}.p"
+                path_save = path_snap + suffix
+                # print(path_save)
+                g = exp.nx_graph[i]
+                pos = exp.positions[i]
+                pickle.dump((g, pos), open(path_save, "wb"))
 
 
 def load_graphs(exp, directory, indexes=None, reload=True, post_process=False):

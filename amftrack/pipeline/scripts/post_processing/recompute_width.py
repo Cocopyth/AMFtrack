@@ -36,7 +36,6 @@ op_id = int(sys.argv[-2])
 resolution = 50
 skip = False
 run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
-list_f, list_args = pickle.load(open(f"{temp_path}/{op_id}.pick", "rb"))
 
 folder_list = list(run_info["t"])
 t = folder_list[i]
@@ -62,4 +61,4 @@ for t in range(exp.ts):
 edge_test = get_width_info_new(exp,t, resolution=resolution, skip=skip)
 nx.set_edge_attributes(G, edge_test, "width")
 exp.nx_graph[t] = G
-save_graphs(exp)
+save_graphs(exp,ts = [t])
