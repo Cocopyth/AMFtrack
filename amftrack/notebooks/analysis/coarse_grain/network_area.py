@@ -59,7 +59,7 @@ from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
 from collections import Counter
 from IPython.display import clear_output
 from amftrack.notebooks.analysis.data_info import *
-from amftrack.pipeline.functions.image_processing.node_id_2 import reconnect_degree_2
+from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     generate_skeleton,
     from_nx_to_tab,
