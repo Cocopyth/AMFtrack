@@ -194,8 +194,8 @@ def find_source_images_filtered(
             )
         ):
             logging.debug("New image needed")
-            images1 = find_image_indexes(image_coord_list, point1[0], point1[1])
-            images2 = find_image_indexes(image_coord_list, point2[0], point2[1])
+            images1 = find_image_indexes(image_coord_list, point1[0], point1[1],DIM_X,DIM_Y)
+            images2 = find_image_indexes(image_coord_list, point2[0], point2[1],DIM_X,DIM_Y)
             possible_choices = list(set(images1) & set(images2))
             if possible_choices == []:
                 logger.debug(

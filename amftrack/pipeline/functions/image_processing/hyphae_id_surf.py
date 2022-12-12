@@ -4,8 +4,7 @@ import numpy as np
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     prune_graph,
 )
-from amftrack.pipeline.functions.image_processing.node_id_2 import reconnect_degree_2
-from amftrack.pipeline.functions.image_processing.node_id import reduce_labels
+from amftrack.pipeline.functions.image_processing.node_id import reconnect_degree_2, reduce_labels
 
 import scipy.io as sio
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (

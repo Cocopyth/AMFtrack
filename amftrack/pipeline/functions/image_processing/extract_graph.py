@@ -344,10 +344,10 @@ def prune_graph(nx_graph, threshold):
     # should implement threshold!
     S = [nx_graph.subgraph(c).copy() for c in nx.connected_components(nx_graph)]
     selected = [
-        g for g in S if g.size(weight="weight") * len(g.nodes) / 10**6 >= threshold
+        g for g in S if g.size(weight="weight") / 10**6 >= threshold
     ]
     len_connected = [
-        (nx_graph.size(weight="weight") * len(nx_graph.nodes) / 10**6)
+        (nx_graph.size(weight="weight") / 10**6)
         for nx_graph in selected
     ]
     print(len_connected)
