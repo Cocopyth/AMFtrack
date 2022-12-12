@@ -41,6 +41,7 @@ from shapely.affinity import affine_transform, rotate
 from amftrack.util.sparse import dilate_coord_list
 from amftrack.util.other import is_in
 import geopandas as gpd
+import matplotlib as mpl
 
 
 def get_random_edge(exp: Experiment, t=0) -> Edge:
@@ -658,6 +659,7 @@ def reconstruct_skeletton(
     coord_list_list: List[List[coord_int]],
     region=[[0, 0], [20000, 40000]],
     color_seeds: List[int] = None,
+    color_list: List[Tuple[int, int, int,int]] = None,
     downsizing=5,
     dilation=2,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
@@ -670,6 +672,7 @@ def reconstruct_skeletton(
     It also returns a function f to plot points in the image.
 
     :param color_seeds: list of ints of same length as coord_list_list, list of points with same int will have same color
+    :param color_list: List of colors
     :param region: [[a, b], [c, d]] defining a zone that we want, it can be np.array or lists, int or floats
     :param downsizing: factor by which the image is downsized, 1 returns the original image
 
@@ -699,10 +702,12 @@ def reconstruct_skeletton(
 
     if not color_seeds:
         color_seeds = [random.randrange(255) for _ in range(len(coord_list_list))]
-
     # Plot edges
     for i, coord_list in enumerate(coord_list_list):
-        color = make_random_color(color_seeds[i])
+        if not color_list:
+            color = make_random_color(color_seeds[i])
+        else:
+            color = color_list[i]
         skel = [
             f_int(coordinates) for coordinates in coord_list
         ]  # nb: coordinates are not unique after downsizing
@@ -783,6 +788,7 @@ def reconstruct_skeletton_from_edges(
     edges: List[Edge],
     region=[[0, 0], [20000, 40000]],  # add get bounding box
     color_seeds: List[int] = None,
+    color_list: List[Tuple[int, int, int,int]] = None,
     downsizing=5,
     dilation=2,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
@@ -806,6 +812,7 @@ def reconstruct_skeletton_from_edges(
         pixels_,
         region=region,
         color_seeds=color_seeds,
+        color_list = color_list,
         downsizing=downsizing,
         dilation=dilation,
     )
@@ -818,6 +825,9 @@ def plot_edge_width(
     width_fun: Callable,
     region=None,
     intervals=[[1, 4], [4, 6], [6, 10], [10, 20]],
+    cmap = cm.get_cmap('Reds', 100),
+    plot_cmap = False,
+    max_width = 10,
     nodes: List[Node] = [],
     downsizing=5,
     dilation=5,
@@ -853,32 +863,41 @@ def plot_edge_width(
     # Give colors to edges
     default_color = 1000
     colors = []
+    widths = []
     for edge in edges:
         width = width_fun(edge)
-        color = default_color
-        for i, interval in enumerate(intervals):
-            if interval[0] <= width and width < interval[1]:
-                color = i + color_seed
-        colors.append(color)
-
+        widths.append(width)
+        if not plot_cmap:
+            color = default_color
+            for i, interval in enumerate(intervals):
+                if interval[0] <= width and width < interval[1]:
+                    color = i + color_seed
+            colors.append(color)
+    if plot_cmap:
+        colors = [cmap(width/max_width) for width in widths]
     # 0/ Make color legend
     def convert(c):
         c_ = c / 255
         return (c_[0], c_[1], c_[2])
-
-    handles = []
-    for i, interval in enumerate(intervals):
-        handles.append(
-            mpatches.Patch(
-                color=convert(make_random_color(i + color_seed)),
-                label=str(interval),
+    if not plot_cmap:
+        handles = []
+        for i, interval in enumerate(intervals):
+            handles.append(
+                mpatches.Patch(
+                    color=convert(make_random_color(i + color_seed)),
+                    label=str(interval),
+                )
             )
+        handles.append(
+            mpatches.Patch(color=convert(make_random_color(1000)), label="out of bound")
         )
-    handles.append(
-        mpatches.Patch(color=convert(make_random_color(1000)), label="out of bound")
-    )
-    fig.legend(handles=handles)
-
+        fig.legend(handles=handles)
+    else:
+        norm = mpl.colors.Normalize(vmin=0, vmax=max_width)
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])
+        N = 5
+        plt.colorbar(sm, ticks=np.linspace(0, max_width, N), label="Width ($\mu m)$")
     # 1/ Image layer
     im, f = reconstruct_image(
         exp,
@@ -891,12 +910,14 @@ def plot_edge_width(
     f_int = lambda c: f(c).astype(int)
 
     # 2/ Edges layer
+    color_list = [(np.array(color) * 255).astype(int) for color in colors] if plot_cmap else None
     skel_im, _ = reconstruct_skeletton_from_edges(
         exp,
         t,
         edges=edges,
         region=region,
         color_seeds=colors,
+        color_list = color_list,
         downsizing=downsizing,
         dilation=dilation,
     )
