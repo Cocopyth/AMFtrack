@@ -50,9 +50,12 @@ for i, directory_name in enumerate(folder_list[1:]):
     except:
         transform = sio.loadmat(path_snap + "/Analysis/transform_corrupt.mat")
     R, t = transform["R"], transform["t"]
-    Rs.append(R)
-    ts.append(t)
-
+    if R[1,1]>=0.99 and np.linalg.norm(t)<5000:
+        Rs.append(R)
+        ts.append(t)
+    else:
+        Rs.append(np.array([[1, 0], [0, 1]]))
+        ts.append(np.array([0, 0]))
 
 R0 = np.array([[1, 0], [0, 1]])
 t0 = np.array([0, 0])

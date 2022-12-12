@@ -4,7 +4,7 @@ import pandas as pd
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
 )
-from amftrack.pipeline.functions.image_processing.node_id_2 import create_labeled_graph
+from amftrack.pipeline.functions.image_processing.node_id import create_labeled_graph
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_nx_to_tab,
 )

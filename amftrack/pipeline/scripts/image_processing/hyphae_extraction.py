@@ -26,6 +26,7 @@ op_id = int(sys.argv[-2])
 run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 # print(run_info['unique_id'])
 plates = list(set(run_info["unique_id"].values))
+print(i,op_id,run_info)
 plates.sort()
 unique_id = plates[i]
 folders = run_info.loc[run_info["unique_id"] == unique_id]
@@ -42,6 +43,8 @@ indexes = [folder_list.index(corrupt_folder) for corrupt_folder in corrupted_rot
 indexes = [index for index in indexes if index < limit]
 indexes.sort()
 indexes += [limit]
+indexes = [limit]
+
 start = 0
 labeled = suffix == "_labeled"
 for index in indexes:
@@ -78,6 +81,5 @@ for index in indexes:
     # exp.save(f"{directory}Analysis_Plate{plate}_{dates[0]}_{dates[-1]}/")
     exp.save_location = dirName
     exp.pickle_save(f"{dirName}/")
-    folders.to_json(f"{temp_path}/{op_id}.json")
     select_folders.to_json(f"{dirName}/folder_info.json")
     start = stop

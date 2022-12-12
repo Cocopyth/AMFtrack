@@ -482,10 +482,11 @@ def get_time_plate_info_from_analysis(analysis_folders, use_saved=True):
         table = pd.concat((table, (folders_plate["folder"])), axis=1)
         table = pd.concat((table, (folders_plate["unique_id"])), axis=1)
         table = pd.concat((table, (folders_plate["datetime"])), axis=1)
-        table = pd.concat((table, (folders_plate["PrincePos"])), axis=1)
-        table = pd.concat((table, (folders_plate["root"])), axis=1)
-        table = pd.concat((table, (folders_plate["strain"])), axis=1)
-        table = pd.concat((table, (folders_plate["medium"])), axis=1)
+        for column in ["PrincePos","root","strain","medium"]:
+            try:
+                table = pd.concat((table, (folders_plate[column])), axis=1)
+            except KeyError:
+                continue
         time_plate_info = pd.concat([time_plate_info, table], ignore_index=True)
         folders = pd.concat(
             [folders.copy(), folders_plate.copy()], axis=0, ignore_index=True
@@ -565,7 +566,6 @@ def get_time_hypha_info_from_analysis(analysis_folders, use_saved=True):
                     print(os.path.join(path_time_hypha, path))
                     continue
                 table = table.transpose()
-                tables.append(table)
                 table = table.fillna(-1)
                 table["time_since_begin_h"] = (
                     line["datetime"] - folders_plate["datetime"].iloc[0]
@@ -588,6 +588,61 @@ def get_time_hypha_info_from_analysis(analysis_folders, use_saved=True):
     folders.to_json(path_save_folders)
     return (folders, time_hypha_info)
 
+def get_time_edge_info_from_analysis(analysis_folders, use_saved=True):
+    plates_in = analysis_folders["unique_id"].unique()
+    plates_in.sort()
+    ide = hashlib.sha256(np.sum(plates_in).encode("utf-8")).hexdigest()
+    path_save_info = os.path.join(temp_path, f"time_edge_info_{ide}")
+    path_save_folders = os.path.join(temp_path, f"folders_{ide}")
+
+    if os.path.exists(path_save_info) and use_saved:
+        time_edge_infos = pd.read_json(path_save_info)
+        folders = pd.read_json(path_save_folders)
+        return (folders, time_edge_infos)
+    analysis_dirs = analysis_folders["total_path"]
+    folders = pd.DataFrame()
+    time_edge_infos = []
+    for analysis_dir in analysis_dirs:
+        path_time_edge = os.path.join(analysis_dir, "time_edge_info")
+        if os.path.exists(path_time_edge):
+            path_save = os.path.join(analysis_dir, "folder_info.json")
+            folders_plate = pd.read_json(path_save)
+            folders_plate = folders_plate.reset_index()
+            folders_plate = folders_plate.sort_values("datetime")
+            json_paths = os.listdir(path_time_edge)
+            tables = []
+            for path in json_paths:
+                index = int(path.split("_")[-1].split(".")[0])
+                line = folders_plate.iloc[index]
+                try:
+                    table = pd.read_json(os.path.join(path_time_edge, path))
+                except:
+                    print(os.path.join(path_time_edge, path))
+                    continue
+                table = table.transpose()
+                table = table.fillna(-1)
+                table["time_since_begin_h"] = (
+                    line["datetime"] - folders_plate["datetime"].iloc[0]
+                )
+                table["folder"] = line["folder"]
+                table["Plate"] = line["Plate"]
+                table["unique_id"] = line["unique_id"]
+                table["datetime"] = line["datetime"]
+                for column in ["PrincePos", "root", "strain", "medium"]:
+                    try:
+                        table[column] = line[column]
+                    except KeyError:
+                        continue
+
+                tables.append(table)
+            time_edge_info_plate = pd.concat(tables, axis=0, ignore_index=True)
+            time_edge_info_plate.reset_index(inplace=True, drop=True)
+            time_edge_infos.append(time_edge_info_plate)
+            folders = pd.concat([folders, folders_plate], axis=0, ignore_index=True)
+    time_edge_info = pd.concat(time_edge_infos, axis=0, ignore_index=True)
+    time_edge_info.to_json(path_save_info)
+    folders.to_json(path_save_folders)
+    return (folders, time_edge_info)
 
 def get_data_tables(op_id=time_ns(), redownload=True):
     API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))
