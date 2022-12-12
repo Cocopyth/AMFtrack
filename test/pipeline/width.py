@@ -3,6 +3,7 @@ from amftrack.pipeline.functions.image_processing.extract_width_fun import (
     compute_section_coordinates,
     extract_section_profiles_for_edge,
     find_source_images_filtered,
+    get_width_info_new
 )
 from amftrack.pipeline.functions.image_processing.experiment_util import get_random_edge
 
@@ -42,7 +43,7 @@ class TestWidthLight(unittest.TestCase):
 class TestWidth(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        self.exp = helper.make_experiment_object()
+        cls.exp = helper.make_experiment_object()
 
     def test_extract_section_profiles_for_edge(self):
         import random
@@ -50,3 +51,6 @@ class TestWidth(unittest.TestCase):
         random.seed(13)
         edge = get_random_edge(self.exp, 0)
         extract_section_profiles_for_edge(self.exp, 0, edge)
+    def test_extract_width_exp(self):
+        exp = self.exp
+        get_width_info_new(exp,2,resolution = 50)
