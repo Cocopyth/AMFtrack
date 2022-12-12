@@ -97,6 +97,7 @@ fs = [
     # get_density_branch_rate_in_ring,
     # get_density_stop_rate_in_ring,
     get_density_active_tips_in_ring,
+    get_biovolume_density_in_ring,
 ]
 # fs = [get_mean_speed_in_ring]
 
@@ -124,82 +125,82 @@ run_parallel_post(
     dependency=True,
 )
 
-time = "24:00:00"
-list_f = [plot_hulls, plot_tracking, plot_anastomosis]
-
-list_args = [[]] * len(list_f)
-overwrite = True
-num_parallel = 6
-run_parallel_post(
-    "exp_plot.py",
-    list_f,
-    list_args,
-    [directory, overwrite],
-    analysis_folders,
-    num_parallel,
-    time,
-    "global_plate_post_process",
-    cpus=128,
-    name_job=name_job,
-    node="fat",
-)
-
-time = "12:00:00"
-list_f = [plot_get_hull_nodes]
-
-list_args = [[]] * len(list_f)
-overwrite = True
-num_parallel = 30
-run_parallel_post(
-    "exp_plot.py",
-    list_f,
-    list_args,
-    [directory, overwrite],
-    analysis_folders,
-    num_parallel,
-    time,
-    "global_plate_post_process",
-    cpus=128,
-    name_job=name_job,
-    node="fat",
-)
-time = "3:40:00"
-directory = directory
-# list_f = [get_width_f,get_tot_length_C_f,get_tot_growth_C_f]
-# list_f = [get_timestep_anastomosis]
-list_f = [
-    gets_out_of_ROI,
-    get_width_f,
-    get_tot_length_C_f,
-    get_tot_growth_C_f,
-    get_tot_length_pp_f,
-    get_tot_growth_pp_f,
-    get_timestep_stop_growth,
-    get_time_stop_growth,
-    get_time_init_growth,
-    get_mean_speed_growth,
-    get_stop_track,
-    get_timestep_anastomosis,
-    get_timestep_biological_stop_growth,
-]
-# list_f = [get_num_branch]
-# list_f = [gets_out_of_ROI]
-list_args = [{}] * len(list_f)
-overwrite = True
-num_parallel = 32
-run_parallel_post(
-    "global_hypha_post_process.py",
-    list_f,
-    list_args,
-    [directory, overwrite],
-    analysis_folders,
-    num_parallel,
-    time,
-    "global_hypha_post_process",
-    cpus=32,
-    name_job=name_job,
-    node="fat",
-)
+# time = "24:00:00"
+# list_f = [plot_hulls, plot_tracking, plot_anastomosis]
+#
+# list_args = [[]] * len(list_f)
+# overwrite = True
+# num_parallel = 6
+# run_parallel_post(
+#     "exp_plot.py",
+#     list_f,
+#     list_args,
+#     [directory, overwrite],
+#     analysis_folders,
+#     num_parallel,
+#     time,
+#     "global_plate_post_process",
+#     cpus=128,
+#     name_job=name_job,
+#     node="fat",
+# )
+#
+# time = "12:00:00"
+# list_f = [plot_get_hull_nodes]
+#
+# list_args = [[]] * len(list_f)
+# overwrite = True
+# num_parallel = 30
+# run_parallel_post(
+#     "exp_plot.py",
+#     list_f,
+#     list_args,
+#     [directory, overwrite],
+#     analysis_folders,
+#     num_parallel,
+#     time,
+#     "global_plate_post_process",
+#     cpus=128,
+#     name_job=name_job,
+#     node="fat",
+# )
+# time = "3:40:00"
+# directory = directory
+# # list_f = [get_width_f,get_tot_length_C_f,get_tot_growth_C_f]
+# # list_f = [get_timestep_anastomosis]
+# list_f = [
+#     gets_out_of_ROI,
+#     get_width_f,
+#     get_tot_length_C_f,
+#     get_tot_growth_C_f,
+#     get_tot_length_pp_f,
+#     get_tot_growth_pp_f,
+#     get_timestep_stop_growth,
+#     get_time_stop_growth,
+#     get_time_init_growth,
+#     get_mean_speed_growth,
+#     get_stop_track,
+#     get_timestep_anastomosis,
+#     get_timestep_biological_stop_growth,
+# ]
+# # list_f = [get_num_branch]
+# # list_f = [gets_out_of_ROI]
+# list_args = [{}] * len(list_f)
+# overwrite = True
+# num_parallel = 32
+# run_parallel_post(
+#     "global_hypha_post_process.py",
+#     list_f,
+#     list_args,
+#     [directory, overwrite],
+#     analysis_folders,
+#     num_parallel,
+#     time,
+#     "global_hypha_post_process",
+#     cpus=32,
+#     name_job=name_job,
+#     node="fat",
+# )
 
 if stage > 0:
     run_launcher(
