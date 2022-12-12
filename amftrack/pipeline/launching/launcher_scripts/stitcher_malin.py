@@ -17,7 +17,7 @@ all_folders = get_current_folders(
     directory_targ, local=True, suffix_data_info=suffix_data_info
 )
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
-folders = folders.loc[folders["/Img/TileConfiguration.txt.registered"] == False]
+# folders = folders.loc[folders["/Img/TileConfiguration.txt.registered"] == False]
 
 num_parallel = 50
 time = "40:00"

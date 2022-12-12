@@ -5,11 +5,14 @@ import matplotlib.pyplot as plt
 import amftrack.pipeline.functions.post_processing.exp_plot as exp_plot
 import amftrack.pipeline.functions.post_processing.time_plate as time_plate
 import amftrack.pipeline.functions.post_processing.time_hypha as time_hypha
+import amftrack.pipeline.functions.post_processing.time_edge as time_edge
+
 from random import choice
 import matplotlib as mpl
 import json
 from amftrack.util.sys import test_path
-
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import Edge, Node
+import numpy as np
 mpl.use("AGG")
 
 
@@ -45,5 +48,17 @@ class TestExperiment(unittest.TestCase):
             column, result = getattr(time_hypha, f)(hypha, 0, 1)
         data_hypha[column] = result
         path_hyph_info = os.path.join(test_path, "time_hypha.json")
+        with open(path_hyph_info, "w") as jsonf:
+            json.dump(data_hypha, jsonf, indent=4)
+    def test_time_edge_f(self):
+        fs = dir(time_edge)
+        plot_fs = [f for f in fs if f.split("_")[0] == "get"]
+        edge = choice(list(self.exp.nx_graph[0].edges))
+        edge = Edge(Node(np.min(edge),self.exp),Node(np.max(edge),self.exp),self.exp)
+        data_hypha = {}
+        for f in plot_fs:
+            column, result = getattr(time_edge, f)(edge, 0)
+        data_hypha[column] = result
+        path_hyph_info = os.path.join(test_path, "time_edge.json")
         with open(path_hyph_info, "w") as jsonf:
             json.dump(data_hypha, jsonf, indent=4)

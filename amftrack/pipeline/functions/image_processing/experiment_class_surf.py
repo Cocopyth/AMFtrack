@@ -168,7 +168,7 @@ class Experiment:
         # TODO(FK): rename function, `load` is ambiguous
         skeletons = []
         for nx_graph in self.nx_graph:
-            skeletons.append(generate_skeleton(nx_graph, dim=(30000, 60000)))
+            skeletons.append(generate_skeleton(nx_graph, dim=(50000, 60000)))
         self.skeletons = skeletons
         compressed_images = []
         for t in range(len(self.dates)):
@@ -566,7 +566,7 @@ def load_skel(exp, ts):
     skeletons = []
     for t, nx_graph in enumerate(exp.nx_graph):
         if t in ts:
-            skeletons.append(generate_skeleton(nx_graph, dim=(30000, 60000)))
+            skeletons.append(generate_skeleton(nx_graph, dim=(50000, 60000)))
         else:
             skeletons.append(None)
     exp.skeletons = skeletons

@@ -19,8 +19,8 @@ all_folders = get_current_folders(
 )
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Img/TileConfiguration.txt.registered"] == True]
-num_parallel = 50
-time = "10:00"
+num_parallel = 100
+time = "1:00"
 args = [directory_targ]
 run_parallel(
     "change_tile_config.py",

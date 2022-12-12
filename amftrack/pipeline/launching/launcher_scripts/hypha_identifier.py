@@ -22,7 +22,7 @@ all_folders = get_current_folders(
 )
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Analysis/nx_graph_pruned_labeled.p"] == True]
-# folders = folders.iloc[:10]
+
 args = [directory_targ]
 num_parallel = 32
 time = "24:00:00"
