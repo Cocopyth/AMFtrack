@@ -26,11 +26,12 @@ a = 2.3196552
 # )
 # QUICKFIX: temporary
 TARGET_LENGTH = 100
-#MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "default_model"))
-MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "CNN_combine_best_BO"))
-#TARGET_LENGTH = 80
-#MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "CNN_combine_HB_crop_80_best_model"))
-
+# MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "default_model"))
+MODEL = keras.models.load_model(
+    os.path.join(path_code[:-1], "ml", "models", "CNN_combine_best_BO")
+)
+# TARGET_LENGTH = 80
+# MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "CNN_combine_HB_crop_80_best_model"))
 
 
 def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
@@ -69,7 +70,10 @@ def compute_edge_width_profile(
 
 
 def compute_section_coordinates(
-    pixel_list: List[coord_int], pivot_indexes: List, step: int, target_length=TARGET_LENGTH
+    pixel_list: List[coord_int],
+    pivot_indexes: List,
+    step: int,
+    target_length=TARGET_LENGTH,
 ) -> List[Tuple[coord_int, coord_int]]:
     """
     Compute the coordinates of each segment section where the width will be computed
@@ -197,8 +201,12 @@ def find_source_images_filtered(
             )
         ):
             logging.debug("New image needed")
-            images1 = find_image_indexes(image_coord_list, point1[0], point1[1],DIM_X,DIM_Y)
-            images2 = find_image_indexes(image_coord_list, point2[0], point2[1],DIM_X,DIM_Y)
+            images1 = find_image_indexes(
+                image_coord_list, point1[0], point1[1], DIM_X, DIM_Y
+            )
+            images2 = find_image_indexes(
+                image_coord_list, point2[0], point2[1], DIM_X, DIM_Y
+            )
             possible_choices = list(set(images1) & set(images2))
             if possible_choices == []:
                 logger.debug(
@@ -512,4 +520,3 @@ if __name__ == "__main__":
     ## Run the width function
     edge = get_random_edge(exp, 0)
     extract_section_profiles_for_edge(exp, 0, edge)
-

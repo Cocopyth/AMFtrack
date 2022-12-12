@@ -22,9 +22,13 @@ def first_identification(nx_graph_tm1, nx_graph_t, pos_tm1, pos_t, tolerance):
     degree_3sup_nodes_t = [
         node for node in nx_graph_t.nodes if nx_graph_t.degree(node) >= 3
     ]
-    xs = [pos_tm1[node][0] for node in degree_3sup_nodes_tm1]+[pos_t[node][0] for node in degree_3sup_nodes_t]
-    ys = [pos_tm1[node][1] for node in degree_3sup_nodes_tm1]+[pos_t[node][1] for node in degree_3sup_nodes_t]
-    bounds = (np.max(xs)+10000,np.max(ys)+10000)
+    xs = [pos_tm1[node][0] for node in degree_3sup_nodes_tm1] + [
+        pos_t[node][0] for node in degree_3sup_nodes_t
+    ]
+    ys = [pos_tm1[node][1] for node in degree_3sup_nodes_tm1] + [
+        pos_t[node][1] for node in degree_3sup_nodes_t
+    ]
+    bounds = (np.max(xs) + 10000, np.max(ys) + 10000)
     Stm1 = sparse.csr_matrix(bounds, dtype=int)
     St = sparse.csr_matrix(bounds, dtype=int)
     for node in degree_3sup_nodes_tm1:
