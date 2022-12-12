@@ -80,6 +80,14 @@ def get_length_in_ring(hull1, hull2, t, exp):
     )
     return tot_length
 
+def get_biovolume_in_ring(hull1, hull2, t, exp):
+    nodes = get_nodes_in_ring(hull1, hull2, t, exp)
+    edges = {edge for node in nodes for edge in node.edges(t)}
+    edges = {Edge(Node(np.min(edge), exp), Node(np.max(edge), exp), exp) for edge in edges}
+    tot_biovolume = np.sum(
+        [np.pi*(edge.width(t)/2)**2 * np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725 for edge in edges]
+    )
+    return tot_biovolume
 
 # def get_BAS_length_in_ring(hull1, hull2, t, exp, op_id):
 #     hyphae_ring = get_hyphae_in_ring(hull1, hull2, t, exp)
@@ -289,6 +297,17 @@ def get_density_in_ring(exp, t, args):
     else:
         return (f"ring_density_incr-{incr}_index-{i}", None)
 
+def get_biovolume_density_in_ring(exp, t, args):
+    incr = args["incr"]
+    i = args["i"]
+    regular_hulls, indexes = get_regular_hulls_area_fixed(exp, range(exp.ts), incr)
+    if i + 2 <= len(regular_hulls):
+        hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
+        biomass = get_biovolume_in_ring(hull1, hull2, t, exp)
+        area = ring_area(hull1, hull2)
+        return (f"ring_biovolume_density_incr-{incr}_index-{i}", biomass / area)
+    else:
+        return (f"ring_biovolume_density_incr-{incr}_index-{i}", None)
 
 # def get_density_BAS_in_ring(exp, t, args):
 #     incr = args["incr"]
