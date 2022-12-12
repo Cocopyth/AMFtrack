@@ -672,7 +672,7 @@ def reconstruct_skeletton(
     It also returns a function f to plot points in the image.
 
     :param color_seeds: list of ints of same length as coord_list_list, list of points with same int will have same color
-    :param color_list: List of colors
+    :param color_list: List of colors (to replace color_seeds if given)
     :param region: [[a, b], [c, d]] defining a zone that we want, it can be np.array or lists, int or floats
     :param downsizing: factor by which the image is downsized, 1 returns the original image
 
