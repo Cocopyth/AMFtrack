@@ -12,7 +12,6 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Edge,
 )
-from amftrack.pipeline.functions.image_processing.experiment_util import get_dimX_dimY
 from amftrack.util.geometry import get_section_segment, generate_index_along_sequence
 from amftrack.util.image_analysis import is_in_image, find_image_indexes
 from tensorflow import keras
@@ -25,9 +24,11 @@ a = 2.3196552
 #     storage_path, "models", "dense_02_focused_edge", "saved_model_retrained"
 # )
 # QUICKFIX: temporary
-MODEL = keras.models.load_model(
-    os.path.join(path_code[:-1], "ml", "models", "default_model")
-)
+TARGET_LENGTH = 100
+#MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "default_model"))
+MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "CNN_combine_best_BO"))
+#TARGET_LENGTH = 80
+#MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "CNN_combine_HB_crop_80_best_model"))
 
 
 def generate_pivot_indexes(n: int, resolution=3, offset=5) -> List[int]:
@@ -47,7 +48,8 @@ def compute_edge_width_profile(
     resolution=5,
     offset=4,
     step=3,
-    target_length=120,
+    target_length=TARGET_LENGTH,# change the target_length from 120 to global variable
+    model = MODEL,# add model here to fix the bug
 ) -> float:
 
     profile, _, __ = extract_section_profiles_for_edge(
@@ -60,13 +62,13 @@ def compute_edge_width_profile(
         target_length=target_length,
     )
 
-    predicted_widths = MODEL.predict(profile)
-
+    predicted_widths = model.predict(profile)
+    # add model here to fix the bug
     return predicted_widths
 
 
 def compute_section_coordinates(
-    pixel_list: List[coord_int], pivot_indexes: List, step: int, target_length=120
+    pixel_list: List[coord_int], pivot_indexes: List, step: int, target_length=TARGET_LENGTH,# change the target_length from 120 to global variable
 ) -> List[Tuple[coord_int, coord_int]]:
     """
     Compute the coordinates of each segment section where the width will be computed
@@ -163,10 +165,7 @@ def compute_section_coordinates(
 
 
 def find_source_images_filtered(
-    section_coord_list: List[Tuple[coord_int]],
-    image_coord_list: List[Tuple[coord_int]],
-    DIM_X,
-    DIM_Y,
+    section_coord_list: List[Tuple[coord_int]], image_coord_list: List[Tuple[coord_int]]
 ) -> Tuple[List[int], List[Tuple[coord, coord]]]:
     """
     For each segment in section_coord_list, determine the index of an
@@ -186,12 +185,8 @@ def find_source_images_filtered(
     for sec in section_coord_list:
         (point1, point2) = sec
         if not (
-            is_in_image(
-                current_image[0], current_image[1], point1[0], point1[1], DIM_X, DIM_Y
-            )
-            and is_in_image(
-                current_image[0], current_image[1], point2[0], point2[1], DIM_X, DIM_Y
-            )
+            is_in_image(current_image[0], current_image[1], point1[0], point1[1])
+            and is_in_image(current_image[0], current_image[1], point2[0], point2[1])
         ):
             logging.debug("New image needed")
             images1 = find_image_indexes(image_coord_list, point1[0], point1[1])
@@ -222,7 +217,7 @@ def extract_section_profiles_for_edge(
     resolution=5,
     offset=4,
     step=3,
-    target_length=120,
+    target_length=TARGET_LENGTH,# change the target_length from 120 to global variable
 ) -> np.array:
     """
     Main function to extract section profiles of an edge.
@@ -248,9 +243,8 @@ def extract_section_profiles_for_edge(
     )  # target_length + 1 to be sure to have length all superior to target_length when cropping
     # TODO (FK): is a +1 enough?
     image_coord_list = exp.get_image_coords(t)
-    DIM_X, DIM_Y = get_dimX_dimY(exp)
     image_indexes, new_section_coord_list = find_source_images_filtered(
-        list_of_segments, image_coord_list, DIM_X, DIM_Y
+        list_of_segments, image_coord_list
     )
     images = {}
     for im_index in set(image_indexes):
@@ -435,7 +429,6 @@ def get_width_info(experiment, t, resolution=50, skip=False):
             #         print(np.mean(list(get_width_edge(edge_exp,resolution,t).values())))
             edge_width[edge] = mean
             # print(mean)
-
         else:
             # Maybe change to Nan if it doesnt break the rest
             edge_width[edge] = 40
