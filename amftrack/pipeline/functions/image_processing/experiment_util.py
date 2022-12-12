@@ -843,6 +843,9 @@ def plot_edge_width(
     :param dilation: only for edges: thickness of the edges (dilation applied to the pixel list)
     :param save_path: full path to the location where the plot will be saved
     :param intervals: different width intervals that will be given different colors
+    :param cmap: a colormap to map width to color
+    :param plot_cmap: a boolean, whether or not to plot with cmap
+    :param max_width: the max width for the colorbar/colormap
     """
     DIM_X, DIM_Y = get_dimX_dimY(exp)
 
