@@ -55,8 +55,7 @@ if load_graphs_bool:
 # load_skel(exp,[t])
 # print('size after loading',get_size(exp)/10**6)
 
-for t in range(exp.ts):
-    exp.load_tile_information(t)
+exp.load_tile_information(t)
 (G, pos) = exp.nx_graph[t], exp.positions[t]
 edge_test = get_width_info_new(exp,t, resolution=resolution, skip=skip)
 nx.set_edge_attributes(G, edge_test, "width")

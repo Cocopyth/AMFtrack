@@ -1,7 +1,11 @@
 from amftrack.pipeline.functions.post_processing.area_hulls import *
 from amftrack.util.dbx import upload_folder
 from amftrack.pipeline.launching.run_super import run_parallel, run_launcher
-
+import sys
+from amftrack.util.sys import (
+    update_analysis_info,
+    get_analysis_info,
+)
 directory_targ = str(sys.argv[1])
 name_job = str(sys.argv[2])
 plates = sys.argv[3:]
