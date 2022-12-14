@@ -5,9 +5,16 @@ from scipy import spatial
 from amftrack.pipeline.functions.post_processing.util import (
     is_in_study_zone,
 )
-from amftrack.notebooks.analysis.util import *
-from amftrack.util.sys import *
-
+from amftrack.notebooks.analysis.util import get_time
+from amftrack.util.sys import temp_path
+import numpy as np
+import pandas as pd
+import networkx as nx
+import pickle
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
+    Edge,
+    Node,
+)
 
 def get_hulls(exp, ts):
     hulls = []
@@ -83,7 +90,6 @@ def get_length_in_ring(hull1, hull2, t, exp):
 def get_biovolume_in_ring(hull1, hull2, t, exp):
     nodes = get_nodes_in_ring(hull1, hull2, t, exp)
     edges = {edge for node in nodes for edge in node.edges(t)}
-    edges = {Edge(Node(np.min(edge), exp), Node(np.max(edge), exp), exp) for edge in edges}
     tot_biovolume = np.sum(
         [np.pi*(edge.width(t)/2)**2 * np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725 for edge in edges]
     )
