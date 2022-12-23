@@ -20,13 +20,13 @@ for index, row in analysis_folders.iterrows():
     path = os.path.join(directory_targ, folder)
     target_drop = f"/{dir_drop}/{id_unique}/{folder}"
     print(dir_drop)
-    upload_folder(path, target_drop, delete=True)
+    upload_folder(path, target_drop, delete=False)
 
-run_launcher(
-    "dropbox_uploader.py",
-    [directory_targ, name_job],
-    plates,
-    "24:00:00",
-    dependency=True,
-    name_job=name_job,
-)
+# run_launcher(
+#     "dropbox_uploader.py",
+#     [directory_targ, name_job],
+#     plates,
+#     "24:00:00",
+#     dependency=True,
+#     name_job=name_job,
+# )

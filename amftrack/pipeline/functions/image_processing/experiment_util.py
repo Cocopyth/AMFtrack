@@ -859,7 +859,7 @@ def plot_edge_width(
     edges = get_all_edges(exp, t)
 
     fig = plt.figure(
-        figsize=(12, 8)
+        figsize=(36, 24)
     )  # width: 30 cm height: 20 cm # TODO(FK): change dpi
     ax = fig.add_subplot(111)
 
