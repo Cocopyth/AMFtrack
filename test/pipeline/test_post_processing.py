@@ -6,6 +6,7 @@ import amftrack.pipeline.functions.post_processing.exp_plot as exp_plot
 import amftrack.pipeline.functions.post_processing.time_plate as time_plate
 import amftrack.pipeline.functions.post_processing.time_hypha as time_hypha
 import amftrack.pipeline.functions.post_processing.time_edge as time_edge
+import amftrack.pipeline.functions.post_processing.area_hulls as area_hulls
 
 from random import choice
 import matplotlib as mpl
@@ -42,6 +43,12 @@ class TestExperiment(unittest.TestCase):
         plot_fs = [f for f in fs if f.split("_")[0] == "get"]
         for f in plot_fs:
             print(f, getattr(time_plate, f)(self.exp, 0))
+
+    def test_area_hulls_f(self):
+        fs = [area_hulls.get_biovolume_density_in_ring]
+        args = {'incr':100,'i':0}
+        for f in fs:
+            print(f, f(self.exp, 2,args))
 
     def test_time_hypha_f(self):
         fs = dir(time_hypha)
