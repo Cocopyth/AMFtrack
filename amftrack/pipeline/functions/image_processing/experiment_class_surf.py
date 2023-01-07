@@ -133,6 +133,7 @@ class Experiment:
         ypos = [pos[1] for poss in self.positions for pos in poss.values()]
         self.ts = len(self.dates)
         self.labeled = suffix == "_labeled"
+        self.dimX_dimY = self.get_image(0, 0).shape
 
     def save_graphs(self, suffix):
         for i, date in enumerate(self.dates):
@@ -167,7 +168,7 @@ class Experiment:
         # TODO(FK): rename function, `load` is ambiguous
         skeletons = []
         for nx_graph in self.nx_graph:
-            skeletons.append(generate_skeleton(nx_graph, dim=(30000, 60000)))
+            skeletons.append(generate_skeleton(nx_graph, dim=(50000, 60000)))
         self.skeletons = skeletons
         compressed_images = []
         for t in range(len(self.dates)):
@@ -378,7 +379,8 @@ class Experiment:
         Take as input coordinates in the TIMESTEP referential.
         And determine the index of the image.
         """
-        return find_image_indexes(self.get_image_coords(t), xs, ys)
+        dim_x, dim_y = self.dimX_dimY
+        return find_image_indexes(self.get_image_coords(t), xs, ys, dim_x, dim_y)
 
     def find_im_indexes_from_general(self, x: float, y: float, t: int) -> List[int]:
         """
@@ -386,7 +388,9 @@ class Experiment:
         And determine the index of the image.
         """
         xt, yt = self.general_to_timestep([x, y], t)
-        return find_image_indexes(self.get_image_coords(t), xt, yt)
+        dim_x, dim_y = self.dimX_dimY
+
+        return find_image_indexes(self.get_image_coords(t), xt, yt, dim_x, dim_y)
 
     def find_image_pos(
         self, xs: int, ys: int, t: int, local=False
@@ -505,19 +509,22 @@ class Experiment:
                 return t
 
 
-def save_graphs(exp, suf=2):
+def save_graphs(exp, suf=2,ts = None):
+    if not ts:
+        ts = range(exp.ts)
     for i, date in enumerate(exp.dates):
-        directory_name = get_dirname(date, exp.folders)
-        path_snap = exp.directory + directory_name
-        labeled = exp.labeled
-        print(date, labeled)
-        if labeled:
-            suffix = f"/Analysis/nx_graph_pruned_labeled{suf}.p"
-            path_save = path_snap + suffix
-            # print(path_save)
-            g = exp.nx_graph[i]
-            pos = exp.positions[i]
-            pickle.dump((g, pos), open(path_save, "wb"))
+        if i in ts:
+            directory_name = get_dirname(date, exp.folders)
+            path_snap = exp.directory + directory_name
+            labeled = exp.labeled
+            print(date, labeled)
+            if labeled:
+                suffix = f"/Analysis/nx_graph_pruned_labeled{suf}.p"
+                path_save = path_snap + suffix
+                # print(path_save)
+                g = exp.nx_graph[i]
+                pos = exp.positions[i]
+                pickle.dump((g, pos), open(path_save, "wb"))
 
 
 def load_graphs(exp, directory, indexes=None, reload=True, post_process=False):
@@ -562,7 +569,7 @@ def load_skel(exp, ts):
     skeletons = []
     for t, nx_graph in enumerate(exp.nx_graph):
         if t in ts:
-            skeletons.append(generate_skeleton(nx_graph, dim=(30000, 60000)))
+            skeletons.append(generate_skeleton(nx_graph, dim=(50000, 60000)))
         else:
             skeletons.append(None)
     exp.skeletons = skeletons

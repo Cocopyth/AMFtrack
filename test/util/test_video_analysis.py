@@ -1,10 +1,7 @@
 import unittest
 import numpy as np
-import os
-from test import helper
-from amftrack.util.sys import test_path
+from test.util import helper
 from amftrack.util.video_analysis import extract_kymograph
-from test.helper import has_video
 from numpy.testing import assert_array_equal
 
 

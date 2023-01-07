@@ -12,15 +12,8 @@ from amftrack.util.geometry import (
     get_bounding_box,
     centered_bounding_box,
 )
-from amftrack.util.sys import (
-    update_plate_info_local,
-    get_current_folders_local,
-    test_path,
-)
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
-    Experiment,
     Node,
-    Edge,
 )
 from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_random_edge,
@@ -41,7 +34,7 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_full,
 )
 from amftrack.util.sys import test_path
-from test import helper
+from test.util import helper
 from PIL import Image
 
 

@@ -1,22 +1,13 @@
-import os
 import unittest
-from amftrack.util.sys import (
-    update_plate_info_local,
-    get_current_folders_local,
-    test_path,
-)
-from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
-    Experiment,
-)
 from amftrack.pipeline.functions.image_processing.extract_width_fun import (
-    generate_pivot_indexes,
     compute_section_coordinates,
     extract_section_profiles_for_edge,
     find_source_images_filtered,
+    get_width_info_new,
 )
 from amftrack.pipeline.functions.image_processing.experiment_util import get_random_edge
 
-from test import helper
+from test.util import helper
 
 
 class TestWidthLight(unittest.TestCase):
@@ -30,7 +21,7 @@ class TestWidthLight(unittest.TestCase):
         image3 = [0, 3900]
 
         im_indexes, sections = find_source_images_filtered(
-            [sec1, sec2, sec3, sec4], [image1, image2, image3]
+            [sec1, sec2, sec3, sec4], [image1, image2, image3], 3000, 4096
         )
         self.assertListEqual(im_indexes, [0, 0, 2])
         self.assertListEqual(sections[2][0], [1500, 100])
@@ -52,7 +43,7 @@ class TestWidthLight(unittest.TestCase):
 class TestWidth(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        self.exp = helper.make_experiment_object()
+        cls.exp = helper.make_experiment_object()
 
     def test_extract_section_profiles_for_edge(self):
         import random
@@ -60,3 +51,7 @@ class TestWidth(unittest.TestCase):
         random.seed(13)
         edge = get_random_edge(self.exp, 0)
         extract_section_profiles_for_edge(self.exp, 0, edge)
+
+    def test_extract_width_exp(self):
+        exp = self.exp
+        get_width_info_new(exp, 2, resolution=50)

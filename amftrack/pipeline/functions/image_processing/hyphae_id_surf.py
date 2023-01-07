@@ -4,8 +4,10 @@ import numpy as np
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     prune_graph,
 )
-from amftrack.pipeline.functions.image_processing.node_id_2 import reconnect_degree_2
-from amftrack.pipeline.functions.image_processing.node_id import reduce_labels
+from amftrack.pipeline.functions.image_processing.node_id import (
+    reconnect_degree_2,
+    reduce_labels,
+)
 
 import scipy.io as sio
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
@@ -212,13 +214,20 @@ def resolve_anastomosis_crossing_by_root(exp, lim_considered=1):
     print("relabeling")
     to_relabel = []
     corresp_hyph = {}
+    i = 0
+    poss_root_hypha = {}
+    for hypha in exp.hyphaes:
+        pos_root_hypha = np.mean([hypha.root.pos(t) for t in hypha.root.ts()], axis=0)
+        poss_root_hypha[hypha] = pos_root_hypha
     for hyph, t0, tp1 in anastomosing_hyphae:
+        if i % 200 == 0:
+            print(i / len(anastomosing_hyphae))
+        i += 1
         corresp_hyph[hyph.end.label] = []
+        pos_root_hyph = np.mean([hyph.root.pos(t) for t in hyph.root.ts()], axis=0)
+
         for hypha in exp.hyphaes:
-            pos_root_hyph = np.mean([hyph.root.pos(t) for t in hyph.root.ts()], axis=0)
-            pos_root_hypha = np.mean(
-                [hypha.root.pos(t) for t in hypha.root.ts()], axis=0
-            )
+            pos_root_hypha = poss_root_hypha[hypha]
             if np.linalg.norm(pos_root_hyph - pos_root_hypha) <= 100:
                 t00 = hypha.ts[0]
                 if (
@@ -244,6 +253,7 @@ def resolve_anastomosis_crossing_by_root(exp, lim_considered=1):
     for end_label in corresp_hyph.keys():
         corresp_node[end_label] = [hypha.end.label for hypha in corresp_hyph[end_label]]
     for t in range(exp.ts):
+        print(t)
         nx_graph = exp.nx_graph[t]
         new_poss = {}
         poss = exp.positions[t]

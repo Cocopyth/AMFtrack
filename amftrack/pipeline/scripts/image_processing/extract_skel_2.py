@@ -7,7 +7,7 @@ import ast
 from scipy import sparse
 import scipy.io as sio
 import cv2
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 import scipy.sparse
 import os
@@ -33,6 +33,7 @@ run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]
+print(directory_name)
 run_back_sub(directory, directory_name)
 path_snap = os.path.join(directory, directory_name)
 path_tile = os.path.join(path_snap, "Img/TileConfiguration.txt.registered")
@@ -65,24 +66,31 @@ except FileExistsError:
 t = time()
 xs = [c[0] for c in tileconfig[2]]
 ys = [c[1] for c in tileconfig[2]]
-dim = (int(np.max(ys) - np.min(ys)) + 4096, int(np.max(xs) - np.min(xs)) + 4096)
+name = tileconfig[0][0]
+imname = "/Img3/" + name.split("/")[-1]
+im = imageio.imread(directory + directory_name + imname)
+dim = (
+    int(np.max(ys) - np.min(ys)) + max(im.shape),
+    int(np.max(xs) - np.min(xs)) + max(im.shape),
+)
 ims = []
 skel = np.zeros(dim, dtype=np.uint8)
 params = [30]
-
 for index, name in enumerate(tileconfig[0]):
+    # for index, name in enumerate(list_debug):
+    print(name)
     imname = "/Img3/" + name.split("/")[-1]
     im = imageio.imread(directory + directory_name + imname)
     imname2 = "/Img/" + name.split("/")[-1]
     im2 = imageio.imread(directory + directory_name + imname2)
     bowled2 = bowler_hat(-im2, 32, params)
-    im[bowled2 <= 0.09] = 254
+    im[bowled2 <= 0.09] = np.maximum(im[bowled2 <= 0.09], 250)
     shape = im.shape
+    print("segmenting")
     segmented = extract_skel_new_prince(im, [hyph_width], perc_low, perc_high)
     # low = np.percentile(-im+255, perc_low)
     # high = np.percentile(-im+255, perc_high)
     # segmented = filters.apply_hysteresis_threshold(-im+255, low, high)
-
     boundaries = int(tileconfig[2][index][0] - np.min(xs)), int(
         tileconfig[2][index][1] - np.min(ys)
     )

@@ -1,18 +1,13 @@
 import unittest
-import os
-import numpy as np
 
-from amftrack.util.sys import storage_path
 from amftrack.ml.width_training import fetch_labels, label_edges, make_extended_dataset
 from amftrack.util.sys import (
     update_plate_info_local,
     get_current_folders_local,
-    test_path,
 )
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
 )
-from test import helper
 
 
 @unittest.skip("In progress")

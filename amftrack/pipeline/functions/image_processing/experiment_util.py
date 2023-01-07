@@ -8,7 +8,6 @@ from scipy import ndimage
 import logging
 import os
 from amftrack.util.aliases import coord_int, coord
-from amftrack.util.param import DIM_X, DIM_Y
 from amftrack.util.geometry import (
     distance_point_pixel_line,
     get_closest_line_opt,
@@ -42,6 +41,7 @@ from shapely.affinity import affine_transform, rotate
 from amftrack.util.sparse import dilate_coord_list
 from amftrack.util.other import is_in
 import geopandas as gpd
+import matplotlib as mpl
 
 
 def get_random_edge(exp: Experiment, t=0) -> Edge:
@@ -61,6 +61,15 @@ def get_all_edges(exp: Experiment, t: int) -> List[Edge]:
         Edge(Node(edge_coord[0], exp), Node(edge_coord[1], exp), exp)
         for edge_coord in list(G.edges)
     ]
+
+
+def get_dimX_dimY(exp):
+    try:
+        return exp.dimX_dimY
+    except:
+        im = exp.get_image(0, 0)
+        exp.dimX_dimY = im.shape
+        return exp.dimX_dimY
 
 
 def get_all_nodes(exp, t) -> List[Node]:
@@ -268,6 +277,7 @@ def plot_full_image_with_features(
     # TODO(FK): fetch image size from experiment object here, and use it in reconstruct image
     # TODO(FK): add is_in_bounding_box to discard points out of interest zone
     # NB: possible other parameters that could be added: alpha between layers, colors for object, figure_size
+    DIM_X, DIM_Y = get_dimX_dimY(exp)
     if region == None:
         # Full image
         image_coodinates = exp.image_coordinates[t]
@@ -345,6 +355,8 @@ def plot_full_image_with_features(
         plt.savefig(save_path)
     else:
         plt.show()
+
+
 font_path = os.path.join(mpl.get_data_path(), "fonts/ttf/lucidasansdemibold.ttf")
 if os.path.exists(font_path):
     fpath = Path(mpl.get_data_path(), "fonts/ttf/lucidasansdemibold.ttf")
@@ -395,6 +407,7 @@ def plot_full(
     # TODO(FK): fetch image size from experiment object here, and use it in reconstruct image
     # TODO(FK): colors for edges are not consistent
     # NB: possible other parameters that could be added: alpha between layers, colors for object, figure_size
+    DIM_X, DIM_Y = get_dimX_dimY(exp)
 
     if region == None:
         # Full image
@@ -501,6 +514,7 @@ def reconstruct_image_simple(
         exp.load_tile_information(t)
 
     image_coodinates = exp.image_coordinates[t]
+    DIM_X, DIM_Y = get_dimX_dimY(exp)
 
     # Find the maximum dimension
     m_x = np.max([c[0] for c in image_coodinates])
@@ -543,8 +557,6 @@ def reconstruct_image(
     downsizing=5,
     prettify=False,
     white_background=True,
-    dim_x=DIM_X,
-    dim_y=DIM_Y,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
     """
     This function reconstructs the full size image or a part of it given by `region` at
@@ -572,6 +584,8 @@ def reconstruct_image(
     image_coodinates = exp.image_coordinates[t]
 
     # Define canvas dimension
+    dim_x, dim_y = get_dimX_dimY(exp)
+
     if region == None:
         # Full image
         region = get_bounding_box(image_coodinates)
@@ -645,6 +659,7 @@ def reconstruct_skeletton(
     coord_list_list: List[List[coord_int]],
     region=[[0, 0], [20000, 40000]],
     color_seeds: List[int] = None,
+    color_list: List[Tuple[int, int, int,int]] = None,
     downsizing=5,
     dilation=2,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
@@ -657,6 +672,7 @@ def reconstruct_skeletton(
     It also returns a function f to plot points in the image.
 
     :param color_seeds: list of ints of same length as coord_list_list, list of points with same int will have same color
+    :param color_list: List of colors (to replace color_seeds if given)
     :param region: [[a, b], [c, d]] defining a zone that we want, it can be np.array or lists, int or floats
     :param downsizing: factor by which the image is downsized, 1 returns the original image
 
@@ -686,10 +702,12 @@ def reconstruct_skeletton(
 
     if not color_seeds:
         color_seeds = [random.randrange(255) for _ in range(len(coord_list_list))]
-
     # Plot edges
     for i, coord_list in enumerate(coord_list_list):
-        color = make_random_color(color_seeds[i])
+        if not color_list:
+            color = make_random_color(color_seeds[i])
+        else:
+            color = color_list[i]
         skel = [
             f_int(coordinates) for coordinates in coord_list
         ]  # nb: coordinates are not unique after downsizing
@@ -770,6 +788,7 @@ def reconstruct_skeletton_from_edges(
     edges: List[Edge],
     region=[[0, 0], [20000, 40000]],  # add get bounding box
     color_seeds: List[int] = None,
+    color_list: List[Tuple[int, int, int,int]] = None,
     downsizing=5,
     dilation=2,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
@@ -793,6 +812,7 @@ def reconstruct_skeletton_from_edges(
         pixels_,
         region=region,
         color_seeds=color_seeds,
+        color_list = color_list,
         downsizing=downsizing,
         dilation=dilation,
     )
@@ -805,6 +825,9 @@ def plot_edge_width(
     width_fun: Callable,
     region=None,
     intervals=[[1, 4], [4, 6], [6, 10], [10, 20]],
+    cmap = cm.get_cmap('Reds', 100),
+    plot_cmap = False,
+    max_width = 10,
     nodes: List[Node] = [],
     downsizing=5,
     dilation=5,
@@ -820,7 +843,11 @@ def plot_edge_width(
     :param dilation: only for edges: thickness of the edges (dilation applied to the pixel list)
     :param save_path: full path to the location where the plot will be saved
     :param intervals: different width intervals that will be given different colors
+    :param cmap: a colormap to map width to color
+    :param plot_cmap: a boolean, whether or not to plot with cmap
+    :param max_width: the max width for the colorbar/colormap
     """
+    DIM_X, DIM_Y = get_dimX_dimY(exp)
 
     if region == None:
         # Full image
@@ -832,39 +859,48 @@ def plot_edge_width(
     edges = get_all_edges(exp, t)
 
     fig = plt.figure(
-        figsize=(12, 8)
+        figsize=(36, 24)
     )  # width: 30 cm height: 20 cm # TODO(FK): change dpi
     ax = fig.add_subplot(111)
 
     # Give colors to edges
     default_color = 1000
     colors = []
+    widths = []
     for edge in edges:
         width = width_fun(edge)
-        color = default_color
-        for i, interval in enumerate(intervals):
-            if interval[0] <= width and width < interval[1]:
-                color = i + color_seed
-        colors.append(color)
-
+        widths.append(width)
+        if not plot_cmap:
+            color = default_color
+            for i, interval in enumerate(intervals):
+                if interval[0] <= width and width < interval[1]:
+                    color = i + color_seed
+            colors.append(color)
+    if plot_cmap:
+        colors = [cmap(width/max_width) for width in widths]
     # 0/ Make color legend
     def convert(c):
         c_ = c / 255
         return (c_[0], c_[1], c_[2])
-
-    handles = []
-    for i, interval in enumerate(intervals):
-        handles.append(
-            mpatches.Patch(
-                color=convert(make_random_color(i + color_seed)),
-                label=str(interval),
+    if not plot_cmap:
+        handles = []
+        for i, interval in enumerate(intervals):
+            handles.append(
+                mpatches.Patch(
+                    color=convert(make_random_color(i + color_seed)),
+                    label=str(interval),
+                )
             )
+        handles.append(
+            mpatches.Patch(color=convert(make_random_color(1000)), label="out of bound")
         )
-    handles.append(
-        mpatches.Patch(color=convert(make_random_color(1000)), label="out of bound")
-    )
-    fig.legend(handles=handles)
-
+        fig.legend(handles=handles)
+    else:
+        norm = mpl.colors.Normalize(vmin=0, vmax=max_width)
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])
+        N = 5
+        plt.colorbar(sm, ticks=np.linspace(0, max_width, N), label="Width ($\mu m)$")
     # 1/ Image layer
     im, f = reconstruct_image(
         exp,
@@ -877,12 +913,14 @@ def plot_edge_width(
     f_int = lambda c: f(c).astype(int)
 
     # 2/ Edges layer
+    color_list = [(np.array(color) * 255).astype(int) for color in colors] if plot_cmap else None
     skel_im, _ = reconstruct_skeletton_from_edges(
         exp,
         t,
         edges=edges,
         region=region,
         color_seeds=colors,
+        color_list = color_list,
         downsizing=downsizing,
         dilation=dilation,
     )
@@ -925,8 +963,6 @@ def reconstruct_image_from_general(
     downsizing=5,
     prettify=False,
     white_background=True,
-    dim_x=DIM_X,
-    dim_y=DIM_Y,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
     """
     This function reconstructs the full size image or a part of it given by `region` at
@@ -966,7 +1002,6 @@ def reconstruct_image_from_general(
         exp.general_to_timestep(point, t) for point in region_vertices
     ]
     region_ts = get_bounding_box(region_vertices_ts, margin=0)
-
     # Step 2: fetch this region
     image_ts, f = reconstruct_image(
         exp,
@@ -975,8 +1010,6 @@ def reconstruct_image_from_general(
         downsizing=downsizing,
         prettify=prettify,
         white_background=white_background,
-        dim_x=dim_x,
-        dim_y=dim_y,
     )
 
     # Step 3: extract only the region of interest from the TIMESTEP image

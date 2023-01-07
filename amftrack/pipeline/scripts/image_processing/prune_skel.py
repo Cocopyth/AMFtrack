@@ -42,8 +42,10 @@ nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
 nx_graph, pos = remove_spurs(nx_graph, pos)
 
 nx_graph_pruned = clean_degree_4(prune_graph(nx_graph, threshold), pos)[0]
-
-skeleton = generate_skeleton(nx_graph_pruned, (30000, 60000))
+shape_skel = skel.shape
+skeleton = generate_skeleton(
+    nx_graph_pruned, (max(30000, shape_skel[0]), max(60000, shape_skel[1]))
+)
 skel = scipy.sparse.csc_matrix(skeleton, dtype=np.uint8)
 sio.savemat(path_snap + "/Analysis/skeleton_pruned.mat", {"skeleton": skel})
 dim = skel.shape
