@@ -474,7 +474,7 @@ def plot_full(
     points = [f(c) for c in points]
     for i, c in enumerate(points):
         if is_in_bounding_box(c, new_region):
-            plt.plot(c[1], c[0], marker="x", color="red", markersize=1, alpha=0.5)
+            plt.plot(c[1], c[0], marker="x", color="red", markersize=10, alpha=0.5)
             if with_point_label:
                 plt.text(c[1], c[0], f"{i}")
 
