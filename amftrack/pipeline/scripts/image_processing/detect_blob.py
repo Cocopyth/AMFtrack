@@ -7,7 +7,7 @@ import ast
 from scipy import sparse
 import scipy.io as sio
 import cv2
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 import scipy.sparse
 import os
@@ -81,8 +81,9 @@ complete_spores = np.array(complete_spores)
 to_remove = set()
 for i in range(len(complete_spores)):
     distances = np.linalg.norm(complete_spores[i][:2] - complete_spores[:, :2], axis=1)
-    index = np.argpartition(distances, 1)[1]
-    if distances[index] < 10 and index < i:
-        to_remove.add((i))
+    if len(distances) > 1:
+        index = np.argpartition(distances, 1)[1]
+        if distances[index] < 10 and index < i:
+            to_remove.add((i))
 spore_filtered = np.delete(complete_spores, list(to_remove), axis=0)
 sio.savemat(path_snap + "/Analysis/spores.mat", {"spores": spore_filtered})

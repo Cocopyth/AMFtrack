@@ -2,7 +2,7 @@ import numpy as np
 from scipy import ndimage
 from typing import Tuple, List
 import matplotlib.pyplot as plt
-from amftrack.util.param import DIM_X, DIM_Y, CAMERA_RES
+from amftrack.util.param import CAMERA_RES
 
 
 def convert_to_micrometer(pixel_length, magnification=2):
@@ -12,30 +12,32 @@ def convert_to_micrometer(pixel_length, magnification=2):
     return pixel_length * CAMERA_RES / magnification
 
 
-def is_in_image(x_im: float, y_im: float, x: float, y: float) -> bool:
+def is_in_image(
+    x_im: float, y_im: float, x: float, y: float, DIM_X: int, DIM_Y: int
+) -> bool:
     """
     Determines if (x,y) is in the image of coordinates (x_im, y_im)
     """
     return x >= x_im and x < x_im + DIM_X and y >= y_im and y < y_im + DIM_Y
 
 
-def find_image_index(im_coord_list, x: float, y: float):
+def find_image_index(im_coord_list, x: float, y: float, DIM_X: int, DIM_Y: int):
     """
     Find the first image that contains the coordinates (x, y)
     """
     for (i, (x_im, y_im)) in enumerate(im_coord_list):
-        if is_in_image(x_im, y_im, x, y):
+        if is_in_image(x_im, y_im, x, y, DIM_X, DIM_Y):
             return i
 
 
-def find_image_indexes(im_coord_list, x: float, y: float):
+def find_image_indexes(im_coord_list, x: float, y: float, DIM_X: int, DIM_Y: int):
     """
     Find the images that contain the coordinates
     contained in the list of (x, y) coordinates.
     """
     l = []
     for (i, (x_im, y_im)) in enumerate(im_coord_list):
-        if is_in_image(x_im, y_im, x, y):
+        if is_in_image(x_im, y_im, x, y, DIM_X, DIM_Y):
             l.append(i)
     return l
 

@@ -37,7 +37,7 @@ def S(t, lamb, C, t0):
     return C * (1 / (1 + np.exp(lamb * (t0 - t))))
 
 
-def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
+def get_wave_fit(time_plate_info, plate, timesteps, max_indexes, lamb=-1, C=0.2):
     table = time_plate_info.loc[time_plate_info["Plate"] == plate]
     table = table.replace(np.nan, -1)
     ts = list(table["timestep"])
@@ -46,7 +46,6 @@ def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
     dic = {}
     tot_t = list(table.index)
     tot_t.sort()
-    timesteps = tot_t[10:80]
     # timesteps = [tot_t[0],tot_t[80]]
 
     ts = []
@@ -65,7 +64,7 @@ def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
             column = f"ring_density_incr-100_index-{index}"
             return float(table[column][time])
 
-        xvalues = np.array([np.sqrt(100 * i) for i in range(20)])
+        xvalues = np.array([np.sqrt(100 * i) for i in range(max_indexes[plate])])
         yvalues = [density(x) for x in xvalues]
         xvalues = np.sqrt((xvalues**2 + table["area_sep_comp"][0]) / (np.pi / 2))
         xvalues = list(xvalues)
@@ -81,13 +80,13 @@ def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
         bounds=([0, 0, 0, -np.inf], [np.inf, np.inf, np.inf, np.inf]),
         p0=[0.2, -lamb, C, 0],
     )
-    popt_f, cov = curve_fit(
-        wave,
-        xt,
-        ys,
-        bounds=([0, 0, 0, -np.inf], [np.inf, np.inf, np.inf, np.inf]),
-        p0=[0.2] + list(popt_f[1:]),
-    )
+    # popt_f, cov = curve_fit(
+    #     wave,
+    #     xt,
+    #     ys,
+    #     bounds=([0, 0, 0, -np.inf], [np.inf, np.inf, np.inf, np.inf]),
+    #     p0=[0.2] + list(popt_f[1:]),
+    # )
     # popt_f[0]/=1.5
 
     popt_f
@@ -111,7 +110,7 @@ def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
             column = f"ring_active_tips_density_incr-100_index-{index}"
             return float(table[column][time])
 
-        xvalues = np.array([np.sqrt(100 * i) for i in range(20)])
+        xvalues = np.array([np.sqrt(100 * i) for i in range(max_indexes[plate])])
         yvalues = [density(x) for x in xvalues]
         xvalues = np.sqrt((xvalues**2 + table["area_sep_comp"][0]) / (np.pi / 2))
         xvalues = list(xvalues)
@@ -129,7 +128,7 @@ def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
         xt,
         ys,
         bounds=([0, 0, 0, -np.inf], [np.inf, np.inf, np.inf, np.inf]),
-        p0=[0.2, popt_f[1], popt_f[2] / 3000, popt_f[3]],
+        p0=[0.2, 1, 0.3, 0],
     )
     residuals = ys - dwave(xt, *popt_f2)
     ss_res = np.sum(residuals**2)
@@ -139,12 +138,21 @@ def get_wave_fit(time_plate_info, plate, timesteps, lamb=-1, C=0.2):
 
 
 def plot_single_plate(
-    plate, time_plate_info, timestep_max, maxi=10, max_area=50, savefig=None
+    plate,
+    time_plate_info,
+    timestep_max,
+    ax,
+    maxi=10,
+    max_area=50,
+    savefig=None,
+    unique_id=False,
 ):
-    fig, ax = plt.subplots()
     ax.set_title(f"plate {plate}")
     ax2 = ax.twinx()
-    table = time_plate_info.loc[time_plate_info["Plate"] == plate].copy()
+    if unique_id:
+        table = time_plate_info.loc[time_plate_info["unique_id"] == plate].copy()
+    else:
+        table = time_plate_info.loc[time_plate_info["Plate"] == plate].copy()
     table = table.loc[table["timestep"] <= timestep_max]
     table = table.set_index("timestep")
     ts = []
@@ -178,14 +186,6 @@ def plot_single_plate(
                     bounds=([0, 0, -np.inf], 3 * [np.inf]),
                     p0=[1, 1, 0],
                 )
-                popt1, _ = curve_fit(
-                    dS,
-                    selection_fit[f"time_since_begin_{index}"],
-                    selection_fit[column2],
-                    bounds=([0, 0, -np.inf], 3 * [np.inf]),
-                    p0 = [0.2,0.5,0]
-                )
-                # print(popt1)
             except:
                 # print(selection_fit[column2])
                 continue
@@ -217,6 +217,16 @@ def plot_single_plate(
                 color=cmap2(area / max_area),
                 label=f"d = {int(area / np.sqrt((np.pi / 2)))}mm",
             )
+            try:
+                popt1, _ = curve_fit(
+                    dS,
+                    selection_fit[f"time_since_begin_{index}"],
+                    selection_fit[column2],
+                    bounds=([0, 0, -np.inf], 3 * [np.inf]),
+                    p0=[0.2, 0.5, 0],
+                )
+            except:
+                continue
             lamb, C, t1 = list(popt1)
 
             ax2.plot(
@@ -225,18 +235,18 @@ def plot_single_plate(
                 color=cmap1(area / max_area),
                 label=f"d = {int(area / np.sqrt((np.pi / 2)))}mm",
             )
-            ts +=table[f'time_since_begin_{index}'].to_list()
+            ts += table[f"time_since_begin_{index}"].to_list()
             ys += table[column].to_list()
-            ys2+=table[column2].astype(float).to_list()
+            ys2 += table[column2].astype(float).to_list()
     df = pd.DataFrame(
         (np.array((ts, ys, ys2))).transpose(), columns=("ts", "ys", "ys2")
     )
     factor = 4
     df["ts_round"] = (df["ts"] / factor).astype(int) * factor
-    meancurve = df.groupby('ts_round')['ys'].mean()
-    ax.plot(meancurve.index,meancurve,label=plate,color="black")
-    meancurve2 = df.groupby('ts_round')['ys2'].mean()
-    ax2.plot(meancurve.index,meancurve2,label=plate,linestyle="")
+    meancurve = df.groupby("ts_round")["ys"].mean()
+    ax.plot(meancurve.index, meancurve, label="mean", color="black")
+    meancurve2 = df.groupby("ts_round")["ys2"].mean()
+    # ax2.plot(meancurve.index, meancurve2, label=plate, color = 'red')
     ax.set_xlim((-30, 30))
     ax2.set_ylim((0, 0.25))
     ax.set_ylim((0, 2500))
@@ -250,4 +260,129 @@ def plot_single_plate(
     plt.tight_layout()
     if not savefig is None:
         plt.savefig(savefig)
-    return (Cs, lambs,ds,indexes, t0s,meancurve,meancurve2)
+    return (Cs, lambs, ds, indexes, t0s, meancurve, meancurve2)
+
+def plot_single_plate_biovolume(
+    plate,
+    time_plate_info,
+    timestep_max,
+    ax,
+    maxi=10,
+    max_area=50,
+    savefig=None,
+    unique_id=False,
+):
+    ax.set_title(f"plate {plate}")
+    ax2 = ax.twinx()
+    if unique_id:
+        table = time_plate_info.loc[time_plate_info["unique_id"] == plate].copy()
+    else:
+        table = time_plate_info.loc[time_plate_info["Plate"] == plate].copy()
+    table = table.loc[table["timestep"] <= timestep_max]
+    table = table.set_index("timestep")
+    ts = []
+    ys = []
+    ys2 = []
+    Cs = []
+    lambs = []
+    indexes = []
+    t0s = []
+    ds = []
+    for index in range(1, maxi):
+        column = f"ring_biovolume_density_incr-100_index-{index}"
+        column2 = f"ring_active_tips_density_incr-100_index-{index}"
+
+        start = np.min(
+            table.loc[table[column] >= 5000]["time_since_begin"]
+        ) / pd.Timedelta(hours=1)
+        if not np.isnan(start):
+            table[f"time_since_begin_{index}"] = (
+                table["time_since_begin"] / pd.Timedelta(hours=1) - start
+            )
+
+            area = np.sqrt(table["area_sep_comp"][0] + 100 * index)
+
+            selection_fit = table
+            try:
+                popt0, pcov = curve_fit(
+                    S,
+                    selection_fit[f"time_since_begin_{index}"],
+                    selection_fit[column],
+                    bounds=([0, 0, -np.inf], 3 * [np.inf]),
+                    p0=[1, 1, 0],
+                )
+            except:
+                # print(selection_fit[column2])
+                continue
+            lamb, C, t0 = list(popt0)
+
+            table[f"time_since_begin_{index}"] = table[f"time_since_begin_{index}"] - t0
+
+            ax.scatter(
+                table[f"time_since_begin_{index}"],
+                table[column],
+                alpha=0.5,
+                color=cmap2(area / max_area),
+            )
+            ax2.scatter(
+                table[f"time_since_begin_{index}"],
+                table[column2],
+                alpha=0.5,
+                color=cmap1(area / max_area),
+            )
+            Cs.append(C)
+            lambs.append(lamb)
+            indexes.append(index)
+            t0s.append(t0 + start)
+            ds.append(int(area / np.sqrt((np.pi / 2))))
+            x = np.linspace(-50, 50, 100)
+            ax.plot(
+                x,
+                S(x + t0, lamb, C, t0),
+                color=cmap2(area / max_area),
+                label=f"d = {int(area / np.sqrt((np.pi / 2)))}mm",
+            )
+            try:
+                popt1, _ = curve_fit(
+                    dS,
+                    selection_fit[f"time_since_begin_{index}"],
+                    selection_fit[column2],
+                    bounds=([0, 0, -np.inf], 3 * [np.inf]),
+                    p0=[0.2, 0.5, 0],
+                )
+            except:
+                continue
+            lamb, C, t1 = list(popt1)
+
+            ax2.plot(
+                x,
+                dS(x + t0, lamb, C, t1),
+                color=cmap1(area / max_area),
+                label=f"d = {int(area / np.sqrt((np.pi / 2)))}mm",
+            )
+            ts += table[f"time_since_begin_{index}"].to_list()
+            ys += table[column].to_list()
+            ys2 += table[column2].astype(float).to_list()
+    df = pd.DataFrame(
+        (np.array((ts, ys, ys2))).transpose(), columns=("ts", "ys", "ys2")
+    )
+    factor = 4
+    df["ts_round"] = (df["ts"] / factor).astype(int) * factor
+    meancurve = df.groupby("ts_round")["ys"].mean()
+    ax.plot(meancurve.index, meancurve, label="mean", color="black")
+    meancurve2 = df.groupby("ts_round")["ys2"].mean()
+    # ax2.plot(meancurve.index, meancurve2, label=plate, color = 'red')
+    ax.set_xlim((-30, 30))
+    ax2.set_ylim((0, 0.25))
+    ax.set_ylim((0, 30000))
+
+    ax.set_ylabel("network biovolume density ($\mu^{3} m.mm^{-2}$)")
+    ax.set_xlabel("shifted time ($h$)")
+    ax2.set_ylabel("active tips density ($mm^{-2}$)")
+    ax.tick_params(axis="y", colors="blue")
+    ax2.tick_params(axis="y", colors="red")
+    ax.legend(fontsize=8)
+    plt.tight_layout()
+    if not savefig is None:
+        plt.savefig(savefig)
+    return (Cs, lambs, ds, indexes, t0s, meancurve, meancurve2)

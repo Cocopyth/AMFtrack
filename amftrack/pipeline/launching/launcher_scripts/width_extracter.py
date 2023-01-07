@@ -30,7 +30,7 @@ run_parallel(
     num_parallel,
     time,
     "extract_width2",
-    cpus=32,
+    cpus=128,
     node="fat",
     name_job=name_job,
 )

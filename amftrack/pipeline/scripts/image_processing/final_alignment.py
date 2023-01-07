@@ -96,12 +96,12 @@ for order in [(0, 1), (1, 0)]:
             [0.0, 0.0, 0.0, 1.0],
         ]
     )
-    reg_p2p = o3d.registration.registration_icp(
+    reg_p2p = o3d.pipelines.registration.registration_icp(
         source,
         target,
         threshold,
         trans_init,
-        o3d.registration.TransformationEstimationPointToPoint(),
+        o3d.pipelines.registration.TransformationEstimationPointToPoint(),
     )
     print(reg_p2p)
     Rfound = reg_p2p.transformation[0:2, 0:2]

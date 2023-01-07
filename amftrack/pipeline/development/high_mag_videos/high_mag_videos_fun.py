@@ -21,6 +21,10 @@ from amftrack.pipeline.functions.image_processing.extract_width_fun import (
 )
 from skimage.measure import profile_line
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
+from skimage.filters import frangi
+from skimage.morphology import skeletonize
+
+from scipy.interpolate import griddata
 
 
 def get_length_um_edge(edge, nx_graph, space_pixel_size):
@@ -87,6 +91,8 @@ def extract_section_profiles_for_edge(
     offset=4,
     step=15,
     target_length=120,
+    bound1=0,
+    bound2=1,
 ) -> np.array:
     """
     Main function to extract section profiles of an edge.
@@ -116,24 +122,40 @@ def extract_section_profiles_for_edge(
         im = raw_im
         point1 = np.array([sect[0][0], sect[0][1]])
         point2 = np.array([sect[1][0], sect[1][1]])
-        profile = profile_line(im, point1, point2, mode="constant")[:target_length]
+        profile = profile_line(im, point1, point2, mode="constant")[
+            int(bound1 * target_length) : int(bound2 * target_length)
+        ]
         profile = profile.reshape((1, len(profile)))
         # TODO(FK): Add thickness of the profile here
         l.append(profile)
     return np.concatenate(l, axis=0), list_of_segments
 
 
-def plot_segments_on_image(segments, ax):
-    for (point1, point2) in segments:
+def plot_segments_on_image(segments, ax, color="red", bound1=0, bound2=1, alpha=1):
+    for (point1_pivot, point2_pivot) in segments:
+        point1 = (1 - bound1) * point1_pivot + bound1 * point2_pivot
+        point2 = (1 - bound2) * point1_pivot + bound2 * point2_pivot
         ax.plot(
             [point1[1], point2[1]],  # x1, x2
             [point1[0], point2[0]],  # y1, y2
-            color="red",
+            color=color,
             linewidth=2,
+            alpha=alpha,
         )
 
 
-def get_kymo(edge, pos, images_adress, nx_graph_pruned):
+def get_kymo(
+    edge,
+    pos,
+    images_adress,
+    nx_graph_pruned,
+    resolution=1,
+    offset=4,
+    step=15,
+    target_length=10,
+    bound1=0,
+    bound2=1,
+):
     kymo = []
     for image_adress in images_adress:
         image = imageio.imread(image_adress)
@@ -142,17 +164,19 @@ def get_kymo(edge, pos, images_adress, nx_graph_pruned):
             pos,
             image,
             nx_graph_pruned,
-            resolution=1,
-            offset=4,
-            step=15,
-            target_length=10,
+            resolution=resolution,
+            offset=offset,
+            step=step,
+            target_length=target_length,
+            bound1=bound1,
+            bound2=bound2,
         )
         kymo_line = np.mean(slices, axis=1)
         kymo.append(kymo_line)
     return np.array(kymo)
 
 
-def filter_kymo(kymo):
+def filter_kymo_left(kymo):
     A = kymo[:, :]
     B = np.flip(A, axis=0)
     C = np.flip(A, axis=1)
@@ -176,12 +200,12 @@ def filter_kymo(kymo):
     middle_slice = np.s_[shape_v : 2 * shape_v, shape_h : 2 * shape_h]
     middle = filtered[middle_slice]
     filtered_left = A - np.abs(middle)
-    filtered_fourrier = dark_image_grey_fourier
-    filtered_fourrier[RT_quadrant] = 0
-    filtered_fourrier[LB_quadrant] = 0
-    filtered = np.fft.ifft2(filtered_fourrier)
-    middle = filtered[middle_slice]
-    filtered_right = A - np.abs(middle)
+    return filtered_left
+
+
+def filter_kymo(kymo):
+    filtered_left = filter_kymo_left(kymo)
+    filtered_right = np.flip(filter_kymo_left(np.flip(kymo, axis=1)), axis=1)
     return (filtered_left, filtered_right)
 
 
@@ -202,3 +226,77 @@ def nan_helper(y):
 
     return np.isnan(y), lambda z: z.nonzero()[0]
 
+
+def get_speeds(kymo, W, C_Thr, fps, binning, magnification):
+    time_pixel_size = 1 / fps  # s.pixel
+
+    space_pixel_size = 2 * 1.725 / (magnification) * binning  # um.pixel
+    imgCoherency, imgOrientation = calcGST(kymo, W)
+    nans = np.empty(imgOrientation.shape)
+    nans.fill(np.nan)
+
+    real_movement = np.where(imgCoherency > C_Thr, imgOrientation, nans)
+    speed = (
+        np.tan((real_movement - 90) / 180 * np.pi) * space_pixel_size / time_pixel_size
+    )  # um.s-1
+
+
+def get_width_from_graph_im(edge, pos, image, nx_graph_pruned, slice_length=400):
+    bound1 = 0
+    bound2 = 1
+    offset = 100
+    step = 30
+    target_length = slice_length
+    resolution = 1
+    slices, _ = extract_section_profiles_for_edge(
+        edge,
+        pos,
+        image,
+        nx_graph_pruned,
+        resolution=resolution,
+        offset=offset,
+        step=step,
+        target_length=target_length,
+        bound1=bound1,
+        bound2=bound2,
+    )
+    return get_width(slices)
+
+
+def get_width(slices, avearing_window=50, num_std=4):
+    widths = []
+    for index in range(len(slices)):
+        thresh = np.mean(
+            (
+                np.mean(slices[index, :avearing_window]),
+                np.mean(slices[index, -avearing_window:]),
+            )
+        )
+        std = np.std(
+            (
+                np.concatenate(
+                    (slices[index, :avearing_window], slices[index, -avearing_window:])
+                )
+            )
+        )
+        try:
+            deb, end = np.min(
+                np.argwhere(slices[index, :] < thresh - num_std * std)
+            ), np.max(np.argwhere(slices[index, :] < thresh - num_std * std))
+            width = end - deb
+            widths.append(width)
+        except ValueError:
+            continue
+    return np.median(widths)
+
+
+def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 120, 30)):
+
+    smooth_im = cv2.blur(-image, (11, 11))
+    segmented = frangi(-smooth_im, frangi_range)
+    skeletonized = skeletonize(segmented > thresh)
+
+    skeleton = scipy.sparse.dok_matrix(skeletonized)
+    nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
+    nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
+    return (segmented > thresh, nx_graph_pruned, pos)
