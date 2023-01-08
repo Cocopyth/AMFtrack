@@ -371,6 +371,7 @@ def update_analysis_info(directory, suffix_analysis_info=""):
     analysis_dir = [fold for fold in listdir if fold.split("_")[0] == "Analysis"]
     infos_analysed = {}
     for folder in analysis_dir:
+        # print(folder)
         metadata = {}
         version = folder.split("_")[-1]
         op_id = int(folder.split("_")[-2])

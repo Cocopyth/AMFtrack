@@ -20,33 +20,33 @@ analysis_info = get_analysis_info(directory_targ)
 analysis_folders = analysis_info.loc[analysis_info["unique_id"].isin(plates)]
 directory = directory_targ
 print(len(analysis_folders))
-time = "10:00"
-list_f = [
-    num_hypha,
-    prop_lost_tracks_junction,
-    prop_lost_tracks_tips,
-    prop_lost_tracks_junction,
-    prop_lost_tracks_tips,
-    prop_inconsistent_root,
-    number_of_timepoints_withing_boundaries,
-    number_of_timepoints,
-]
-list_args = [None, [1], [1], [10], [10]] + [[]] * len(list_f)
-overwrite = True
-num_parallel = 30
-run_parallel_post(
-    "global_plate_post_process.py",
-    list_f,
-    list_args,
-    [directory, overwrite],
-    analysis_folders,
-    num_parallel,
-    time,
-    "global_plate_post_process",
-    cpus=32,
-    name_job=name_job,
-    node="fat",
-)
+# time = "10:00"
+# list_f = [
+#     num_hypha,
+#     prop_lost_tracks_junction,
+#     prop_lost_tracks_tips,
+#     prop_lost_tracks_junction,
+#     prop_lost_tracks_tips,
+#     prop_inconsistent_root,
+#     number_of_timepoints_withing_boundaries,
+#     number_of_timepoints,
+# ]
+# list_args = [None, [1], [1], [10], [10]] + [[]] * len(list_f)
+# overwrite = True
+# num_parallel = 6
+# run_parallel_post(
+#     "global_plate_post_process.py",
+#     list_f,
+#     list_args,
+#     [directory, overwrite],
+#     analysis_folders,
+#     num_parallel,
+#     time,
+#     "global_plate_post_process",
+#     cpus=32,
+#     name_job=name_job,
+#     node="fat",
+# )
 
 time = "6:40:00"
 directory = directory
@@ -68,10 +68,12 @@ list_f = [
     get_mean_edge_straight,
     get_spore_volume,
     get_num_spores,
+    get_tot_biovolume_study,
+    get_tot_biovolume
 ]
 list_args = [{}] * len(list_f)
 overwrite = True
-num_parallel = 30
+num_parallel = 6
 run_parallel_post(
     "time_plate_post_process.py",
     list_f,
@@ -92,12 +94,12 @@ max_ind = 20
 incr = 100
 
 fs = [
+    get_biovolume_density_in_ring,
     get_density_in_ring,
     get_density_anastomose_in_ring,
     # get_density_branch_rate_in_ring,
     # get_density_stop_rate_in_ring,
     get_density_active_tips_in_ring,
-    get_biovolume_density_in_ring,
 ]
 # fs = [get_mean_speed_in_ring]
 
@@ -109,7 +111,7 @@ for f in fs:
 
     list_args += [{"incr": incr, "i": i, "rh_only": True} for i in range(max_ind)]
 overwrite = False
-num_parallel = 30
+num_parallel = 6
 run_parallel_post(
     "time_plate_post_process.py",
     list_f,

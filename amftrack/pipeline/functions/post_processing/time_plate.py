@@ -37,6 +37,25 @@ def get_length_tot(exp, t, args=None):
     return ("tot_length", length)
 
 
+def get_tot_biovolume(exp, t, args=None):
+    nodes = [node for node in exp.nodes if node.is_in(t)]
+    edges = {edge for node in nodes for edge in node.edges(t)}
+    tot_biovolume = np.sum(
+        [np.pi * (edge.width(t) / 2) ** 2 * np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725 for edge in
+         edges]
+    )
+    return ("tot_biovolume", tot_biovolume)
+
+def get_tot_biovolume_study(exp, t, args=None):
+    nodes = [node for node in exp.nodes if node.is_in(t)
+             and np.all(is_in_study_zone(node, t, 1000, 200))
+]
+    edges = {edge for node in nodes for edge in node.edges(t)}
+    tot_biovolume = np.sum(
+        [np.pi * (edge.width(t) / 2) ** 2 * np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725 for edge in
+         edges]
+    )
+    return ("tot_biovolume_study", tot_biovolume)
 # def get_length_in_ring_rough(exp, t, args=None):
 #     length = 0
 #     for edge in exp.nx_graph[t].edges:
