@@ -234,7 +234,7 @@ def make_images_track(exp,is_circle=False):
         paths_list.append([path + ".png"])
         exp.load_tile_information(t)
         edges = get_all_edges(exp, t)
-        edges_center = [edge for edge in edges if (np.all(is_in_study_zone(edge.end, t, 1000, 150,is_circle)) or np.all(is_in_study_zone(edge_obj.begin, t, 1000, 150,is_circle)))]
+        edges_center = [edge for edge in edges if (np.all(is_in_study_zone(edge.end, t, 1000, 150,is_circle)) or np.all(is_in_study_zone(edge.begin, t, 1000, 150,is_circle)))]
         fig = plot_full(
             exp,
             t,
