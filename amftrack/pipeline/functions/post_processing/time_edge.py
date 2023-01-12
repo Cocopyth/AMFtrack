@@ -1,8 +1,8 @@
 import numpy as np
 from amftrack.pipeline.functions.post_processing.util import (
-    measure_length_um_edge,
+    measure_length_um_edge, is_in_study_zone
 )
-
+is_circle = True
 
 def get_time_since_start(edge, t, args=None):
     exp = edge.experiment
@@ -40,3 +40,6 @@ def get_pos_x(edge, t, args=None):
 def get_pos_y(edge, t, args=None):
     pos_end = edge.end.pos(t)
     return ("pos_y", int(pos_end[1]))
+
+def get_in_ROI(hypha, t, tp1, args=None):
+    return ("in_ROI", str(np.all(is_in_study_zone(hypha.end, t, 1000, 150,is_circle))))
