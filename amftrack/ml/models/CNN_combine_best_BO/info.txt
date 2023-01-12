@@ -1,6 +1,0 @@
-This model is trained by varying_lum_and_focus_train dataset from Felix and vary_width dataset from Kai-Kai.
-Notice the new dataset should use the code train_test_split(X, y, test_size=0.3, random_state=42,shuffle=True)
-Then combine it with felix's dataset.
-The tuner is bayesianoptimization. Input segment was crop from 120 to 100.This model is trained by varying_lum_and_focus_train dataset from Felix 
-and vary_width dataset from Kai-Kai.
-The tuner is bayesianoptimization. Input segment was crop from 120 to 100.
