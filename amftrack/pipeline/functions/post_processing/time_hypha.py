@@ -9,7 +9,7 @@ from amftrack.pipeline.functions.post_processing.util import (
     measure_length_um,
 )
 from scipy import sparse
-
+is_circle = True
 
 def get_time_since_start(hypha, t, tp1, args=None):
     exp = hypha.experiment
@@ -180,4 +180,4 @@ def get_pos_y(hypha, t, tp1, args=None):
 
 
 def get_in_ROI(hypha, t, tp1, args=None):
-    return ("in_ROI", str(np.all(is_in_study_zone(hypha.end, t, 1000, 150))))
+    return ("in_ROI", str(np.all(is_in_study_zone(hypha.end, t, 1000, 150,is_circle))))
