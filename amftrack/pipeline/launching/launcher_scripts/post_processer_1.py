@@ -47,46 +47,46 @@ print(len(analysis_folders))
 #     name_job=name_job,
 #     node="fat",
 # )
-#
-# time = "6:40:00"
-# directory = directory
-# max_ind = 20
-# incr = 100
-#
-# list_f = [
-#     get_num_trunks,
-#     get_area,
-#     get_area_separate_connected_components,
-#     get_num_tips,
-#     get_num_nodes,
-#     get_area_study_zone,
-#     get_num_tips_study_zone,
-#     get_num_nodes_study_zone,
-#     get_length_tot,
-#     get_length_study_zone,
-#     get_is_out_study,
-#     get_mean_edge_straight,
-#     get_spore_volume,
-#     get_num_spores,
-#     get_tot_biovolume_study,
-#     get_tot_biovolume
-# ]
-# list_args = [{}] * len(list_f)
-# overwrite = True
-# num_parallel = 6
-# run_parallel_post(
-#     "time_plate_post_process.py",
-#     list_f,
-#     list_args,
-#     [directory, overwrite],
-#     analysis_folders,
-#     num_parallel,
-#     time,
-#     "time_plate_post_process",
-#     cpus=32,
-#     name_job=name_job,
-#     node="fat",
-# )
+
+time = "6:40:00"
+directory = directory
+max_ind = 20
+incr = 100
+
+list_f = [
+    get_num_trunks,
+    get_area,
+    get_area_separate_connected_components,
+    get_num_tips,
+    get_num_nodes,
+    get_area_study_zone,
+    get_num_tips_study_zone,
+    get_num_nodes_study_zone,
+    get_length_tot,
+    get_length_study_zone,
+    get_is_out_study,
+    get_mean_edge_straight,
+    get_spore_volume,
+    get_num_spores,
+    get_tot_biovolume_study,
+    get_tot_biovolume
+]
+list_args = [{}] * len(list_f)
+overwrite = True
+num_parallel = 6
+run_parallel_post(
+    "time_plate_post_process.py",
+    list_f,
+    list_args,
+    [directory, overwrite],
+    analysis_folders,
+    num_parallel,
+    time,
+    "time_plate_post_process",
+    cpus=32,
+    name_job=name_job,
+    node="fat",
+)
 
 time = "24:00:00"
 directory = directory
@@ -124,7 +124,7 @@ run_parallel_post(
     cpus=32,
     name_job=name_job,
     node="fat",
-    dependency=False,
+    dependency=True,
 )
 
 # time = "24:00:00"
