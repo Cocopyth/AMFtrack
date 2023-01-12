@@ -12,7 +12,7 @@ from shapely.geometry import Polygon, shape
 import networkx as nx
 import scipy.io as sio
 import os
-
+is_malin = True
 
 def get_is_out_study(exp, t, args=None):
     return ("out_study", int(t > exp.reach_out))
