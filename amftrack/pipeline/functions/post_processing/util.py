@@ -43,20 +43,25 @@ def get_length_um_node_list(node_list, exp, t):
     return total_length
 
 
-def is_in_study_zone(node, t, radius, dist):
+def is_in_study_zone(node, t, radius, dist,is_circle=False):
     exp = node.experiment
     compress = 25
-    center = np.array(exp.center)
-    x0, y0 = exp.center
-    direction = exp.orthog
-    pos_line = np.array((x0, y0)) + dist * compress * direction
-    x_line, y_line = pos_line[0], pos_line[1]
-    orth_direct = np.array([direction[1], -direction[0]])
-    x_orth, y_orth = orth_direct[0], orth_direct[1]
-    a = y_orth / x_orth
-    b = y_line - a * x_line
-    dist_center = np.linalg.norm(np.flip(node.pos(t)) - center)
-    y, x = node.pos(t)
+    if is_circle:
+        center = np.array([4700*5,4400*5])
+        radius = 3900*5
+        return(is_in_circle(node.pos(t),center,radius))
+    else:
+        y, x = node.pos(t)
+        center = np.array(exp.center)
+        x0, y0 = exp.center
+        direction = exp.orthog
+        pos_line = np.array((x0, y0)) + dist * compress * direction
+        x_line, y_line = pos_line[0], pos_line[1]
+        orth_direct = np.array([direction[1], -direction[0]])
+        x_orth, y_orth = orth_direct[0], orth_direct[1]
+        a = y_orth / x_orth
+        b = y_line - a * x_line
+        dist_center = np.linalg.norm(np.flip(node.pos(t)) - center)
     return (dist_center < radius * compress, a * x + b > y)
 
 def is_in_circle(pos,center,radius):

@@ -28,7 +28,7 @@ a = 2.3196552
 TARGET_LENGTH = 100
 # MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "default_model"))
 MODEL = keras.models.load_model(
-    os.path.join(path_code[:-1], "ml", "models", "CNN_combine_best_BO")
+    os.path.join(path_code[:-1], "ml", "models", "bin2_BO_crop_100_best_model_val_version")
 )
 # TARGET_LENGTH = 80
 # MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "CNN_combine_HB_crop_80_best_model"))
