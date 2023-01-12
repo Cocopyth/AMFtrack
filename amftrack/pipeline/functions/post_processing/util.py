@@ -58,3 +58,6 @@ def is_in_study_zone(node, t, radius, dist):
     dist_center = np.linalg.norm(np.flip(node.pos(t)) - center)
     y, x = node.pos(t)
     return (dist_center < radius * compress, a * x + b > y)
+
+def is_in_circle(pos,center,radius):
+    return(np.linalg.norm(pos-center)<=radius)
