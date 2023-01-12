@@ -1,0 +1,4 @@
+This model is trained by 50X_groundtruth_dataset_10point_each_segment from Kai-Kai.
+The dataset is from Plate705_20221116.
+Notice the dataset should use the code train_test_split(X, y, test_size=0.3, random_state=42,shuffle=True)
+The tuner is bayesianoptimization. Input segment were 200.
