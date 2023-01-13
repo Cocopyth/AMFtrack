@@ -509,7 +509,7 @@ class Experiment:
                 return t
 
 
-def save_graphs(exp, suf=2,ts = None):
+def save_graphs(exp, suf=2, ts=None):
     if not ts:
         ts = range(exp.ts)
     for i, date in enumerate(exp.dates):

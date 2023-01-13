@@ -57,7 +57,7 @@ if load_graphs_bool:
 
 exp.load_tile_information(t)
 (G, pos) = exp.nx_graph[t], exp.positions[t]
-edge_test = get_width_info_new(exp,t, resolution=resolution, skip=skip)
+edge_test = get_width_info_new(exp, t, resolution=resolution, skip=skip)
 nx.set_edge_attributes(G, edge_test, "width")
 exp.nx_graph[t] = G
-save_graphs(exp,ts = [t])
+save_graphs(exp, ts=[t])

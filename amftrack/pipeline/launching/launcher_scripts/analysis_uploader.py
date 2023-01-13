@@ -6,6 +6,7 @@ from amftrack.util.sys import (
     update_analysis_info,
     get_analysis_info,
 )
+
 directory_targ = str(sys.argv[1])
 name_job = str(sys.argv[2])
 plates = sys.argv[3:]

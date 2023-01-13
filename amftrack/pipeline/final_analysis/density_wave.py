@@ -262,6 +262,7 @@ def plot_single_plate(
         plt.savefig(savefig)
     return (Cs, lambs, ds, indexes, t0s, meancurve, meancurve2)
 
+
 def plot_single_plate_biovolume(
     plate,
     time_plate_info,

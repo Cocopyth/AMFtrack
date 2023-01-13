@@ -659,7 +659,7 @@ def reconstruct_skeletton(
     coord_list_list: List[List[coord_int]],
     region=[[0, 0], [20000, 40000]],
     color_seeds: List[int] = None,
-    color_list: List[Tuple[int, int, int,int]] = None,
+    color_list: List[Tuple[int, int, int, int]] = None,
     downsizing=5,
     dilation=2,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
@@ -788,7 +788,7 @@ def reconstruct_skeletton_from_edges(
     edges: List[Edge],
     region=[[0, 0], [20000, 40000]],  # add get bounding box
     color_seeds: List[int] = None,
-    color_list: List[Tuple[int, int, int,int]] = None,
+    color_list: List[Tuple[int, int, int, int]] = None,
     downsizing=5,
     dilation=2,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
@@ -812,7 +812,7 @@ def reconstruct_skeletton_from_edges(
         pixels_,
         region=region,
         color_seeds=color_seeds,
-        color_list = color_list,
+        color_list=color_list,
         downsizing=downsizing,
         dilation=dilation,
     )
@@ -825,9 +825,9 @@ def plot_edge_width(
     width_fun: Callable,
     region=None,
     intervals=[[1, 4], [4, 6], [6, 10], [10, 20]],
-    cmap = cm.get_cmap('Reds', 100),
-    plot_cmap = False,
-    max_width = 10,
+    cmap=cm.get_cmap("Reds", 100),
+    plot_cmap=False,
+    max_width=10,
     nodes: List[Node] = [],
     downsizing=5,
     dilation=5,
@@ -877,11 +877,12 @@ def plot_edge_width(
                     color = i + color_seed
             colors.append(color)
     if plot_cmap:
-        colors = [cmap(width/max_width) for width in widths]
+        colors = [cmap(width / max_width) for width in widths]
     # 0/ Make color legend
     def convert(c):
         c_ = c / 255
         return (c_[0], c_[1], c_[2])
+
     if not plot_cmap:
         handles = []
         for i, interval in enumerate(intervals):
@@ -913,14 +914,16 @@ def plot_edge_width(
     f_int = lambda c: f(c).astype(int)
 
     # 2/ Edges layer
-    color_list = [(np.array(color) * 255).astype(int) for color in colors] if plot_cmap else None
+    color_list = (
+        [(np.array(color) * 255).astype(int) for color in colors] if plot_cmap else None
+    )
     skel_im, _ = reconstruct_skeletton_from_edges(
         exp,
         t,
         edges=edges,
         region=region,
         color_seeds=colors,
-        color_list = color_list,
+        color_list=color_list,
         downsizing=downsizing,
         dilation=dilation,
     )

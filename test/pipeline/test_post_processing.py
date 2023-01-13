@@ -46,9 +46,9 @@ class TestExperiment(unittest.TestCase):
 
     def test_area_hulls_f(self):
         fs = [area_hulls.get_biovolume_density_in_ring]
-        args = {'incr':100,'i':0}
+        args = {"incr": 100, "i": 0}
         for f in fs:
-            print(f, f(self.exp, 2,args))
+            print(f, f(self.exp, 2, args))
 
     def test_time_hypha_f(self):
         fs = dir(time_hypha)
