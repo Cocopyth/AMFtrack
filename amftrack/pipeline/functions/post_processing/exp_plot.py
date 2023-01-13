@@ -20,6 +20,7 @@ import numpy as np
 from amftrack.pipeline.functions.post_processing.area_hulls import is_in_study_zone
 import os
 
+is_circle=True
 
 def delete_files(paths_list):
     for paths in paths_list:
@@ -85,7 +86,7 @@ def plot_get_hull_nodes(exp, args=None):
 
 
 def plot_tracking(exp, args=None):
-    paths_list = make_images_track(exp)
+    paths_list = make_images_track(exp,is_circle)
     dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
     folder_analysis = exp.save_location.split("/")[-1]

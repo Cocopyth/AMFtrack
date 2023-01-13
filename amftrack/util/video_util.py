@@ -216,7 +216,7 @@ def make_video_tile(
 #     return paths_list
 
 
-def make_images_track(exp):
+def make_images_track(exp,is_circle=False):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
@@ -233,16 +233,18 @@ def make_images_track(exp):
         path = os.path.join(temp_path, path)
         paths_list.append([path + ".png"])
         exp.load_tile_information(t)
+        edges = get_all_edges(exp, t)
+        edges_center = [edge for edge in edges if (np.all(is_in_study_zone(edge.end, t, 1000, 150,is_circle)) or np.all(is_in_study_zone(edge.begin, t, 1000, 150,is_circle)))]
         fig = plot_full(
             exp,
             t,
             downsizing=5,
             nodes=to_plot_nodes,
-            edges=get_all_edges(exp, t),
+            edges=edges_center,
             dilation=4,
             prettify=False,
             figsize=(24, 16),
-            dpi=400,
+            dpi=390,
             node_size=1.5,
             save_path=path,
         )

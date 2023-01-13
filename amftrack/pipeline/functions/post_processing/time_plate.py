@@ -22,8 +22,8 @@ def get_length_study_zone(exp, t, args=None):
     length = 0
     for edge in exp.nx_graph[t].edges:
         edge_obj = Edge(Node(edge[0], exp), Node(edge[1], exp), exp)
-        is_in_end = np.all(is_in_study_zone(edge_obj.end, t, 1000, 150))
-        is_in_begin = np.all(is_in_study_zone(edge_obj.begin, t, 1000, 150))
+        is_in_end = np.all(is_in_study_zone(edge_obj.end, t, 1000, 150,is_circle))
+        is_in_begin = np.all(is_in_study_zone(edge_obj.begin, t, 1000, 150,is_circle))
         if is_in_end and is_in_begin:
             length += measure_length_um_edge(edge_obj, t)
     return ("tot_length_study", length)
@@ -48,7 +48,7 @@ def get_tot_biovolume(exp, t, args=None):
 
 def get_tot_biovolume_study(exp, t, args=None):
     nodes = [node for node in exp.nodes if node.is_in(t)
-             and np.all(is_in_study_zone(node, t, 1000, 200))
+             and np.all(is_in_study_zone(node, t, 1000, 200,is_circle))
 ]
     edges = {edge for node in nodes for edge in node.edges(t)}
     tot_biovolume = np.sum(
@@ -56,6 +56,7 @@ def get_tot_biovolume_study(exp, t, args=None):
          edges]
     )
     return ("tot_biovolume_study", tot_biovolume)
+
 # def get_length_in_ring_rough(exp, t, args=None):
 #     length = 0
 #     for edge in exp.nx_graph[t].edges:
@@ -83,7 +84,7 @@ def get_area_study_zone(exp, t, args=None):
         [
             node.pos(t)
             for node in exp.nodes
-            if node.is_in(t) and np.all(is_in_study_zone(node, t, 1000, 150))
+            if node.is_in(t) and np.all(is_in_study_zone(node, t, 1000, 150,is_circle))
         ]
     )
     if len(nodes) > 3:
@@ -109,7 +110,7 @@ def get_area_separate_connected_components(exp, t, args=None):
                 node.pos(t)
                 for node in exp.nodes
                 if node.is_in(t)
-                and np.all(is_in_study_zone(node, t, 1000, 150))
+                and np.all(is_in_study_zone(node, t, 1000, 150,is_circle))
                 and (node.label in g.nodes)
             ]
         )
@@ -136,7 +137,7 @@ def get_num_tips_study_zone(exp, t, args=None):
                 for node in exp.nodes
                 if node.is_in(t)
                 and node.degree(t) == 1
-                and np.all(is_in_study_zone(node, t, 1000, 150))
+                and np.all(is_in_study_zone(node, t, 1000, 150,is_circle))
             ]
         ),
     )
@@ -153,7 +154,7 @@ def get_num_nodes_study_zone(exp, t, args=None):
             [
                 node
                 for node in exp.nodes
-                if node.is_in(t) and np.all(is_in_study_zone(node, t, 1000, 150))
+                if node.is_in(t) and np.all(is_in_study_zone(node, t, 1000, 150,is_circle))
             ]
         ),
     )
@@ -207,14 +208,17 @@ def get_mean_edge_straight(exp, t, args=None):
         Edge(Node(edge_coord[0], exp), Node(edge_coord[1], exp), exp)
         for edge_coord in list(G.edges)
     ]
-    straightesses = []
+    straightnesses = []
     for edge in edges:
-        length = measure_length_um_edge(edge, t)
-        straight_distance = np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725
-        if straight_distance > 40:
-            straightesses.append(straight_distance / length)
-    if len(straightesses) > 0:
-        return ("mean_straightness", np.mean(straightesses))
+        is_in_end = np.all(is_in_study_zone(edge.end, t, 1000, 150, is_circle))
+        is_in_begin = np.all(is_in_study_zone(edge.begin, t, 1000, 150, is_circle))
+        if is_in_end and is_in_begin:
+            length = measure_length_um_edge(edge, t)
+            straight_distance = np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725
+            if straight_distance > 40:
+                straightnesses.append(straight_distance / length)
+    if len(straightnesses) > 0:
+        return ("mean_straightness", np.mean(straightnesses))
     else:
         return ("mean_straightness", None)
 
