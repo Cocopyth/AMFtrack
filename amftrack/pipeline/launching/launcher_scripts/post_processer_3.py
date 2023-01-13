@@ -24,6 +24,7 @@ list_f = [
     get_width_edge,
     get_pos_x,
     get_pos_y,
+    get_in_ROI,
 ]
 list_args = [{}] * len(list_f)
 # list_args= [[500],[1000],[2000]]+[[]]
