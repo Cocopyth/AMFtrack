@@ -240,11 +240,11 @@ def make_images_track(exp,is_circle=False):
             t,
             downsizing=5,
             nodes=to_plot_nodes,
-            edges=edges,
+            edges=edges_center,
             dilation=4,
             prettify=False,
             figsize=(24, 16),
-            dpi=400,
+            dpi=390,
             node_size=1.5,
             save_path=path,
         )
