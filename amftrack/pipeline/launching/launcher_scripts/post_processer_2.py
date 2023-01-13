@@ -79,7 +79,7 @@ if stage >= 0:
         dependency=True,
         name_job=name_job,
     )
-elif stage==0:
+elif stage == 0:
     run_launcher(
         "dropbox_uploader.py",
         [directory_targ, name_job],

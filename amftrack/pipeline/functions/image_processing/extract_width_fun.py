@@ -28,7 +28,9 @@ a = 2.3196552
 TARGET_LENGTH = 100
 # MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "default_model"))
 MODEL = keras.models.load_model(
-    os.path.join(path_code[:-1], "ml", "models", "bin2_BO_crop_100_best_model_val_version")
+    os.path.join(
+        path_code[:-1], "ml", "models", "bin2_BO_crop_100_best_model_val_version"
+    )
 )
 # TARGET_LENGTH = 80
 # MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "CNN_combine_HB_crop_80_best_model"))
@@ -64,7 +66,7 @@ def compute_edge_width_profile(
         target_length=target_length,
     )
 
-    predicted_widths = MODEL.predict(profile,verbose=0)
+    predicted_widths = MODEL.predict(profile, verbose=0)
 
     return predicted_widths
 
