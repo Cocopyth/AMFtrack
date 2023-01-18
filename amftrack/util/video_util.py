@@ -228,7 +228,7 @@ def make_images_track(exp, is_circle=False):
     for t in range(exp.ts):
         # for t in [0]:
 
-        to_plot_nodes = [node for node in get_all_nodes(exp, t)]
+        to_plot_nodes = [node for node in get_all_nodes(exp, t) if is_in_study_zone(node, t, 1000, 150, is_circle)]
         path = f"plot_nodes_{time_ns()}"
         path = os.path.join(temp_path, path)
         paths_list.append([path + ".png"])
