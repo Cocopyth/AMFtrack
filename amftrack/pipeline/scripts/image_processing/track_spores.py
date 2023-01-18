@@ -25,6 +25,7 @@ from amftrack.util.sys import (
 )
 import json
 import os
+
 directory = str(sys.argv[1])
 overwrite = eval(sys.argv[2])
 i = int(sys.argv[-1])
@@ -39,17 +40,19 @@ select = run_info.loc[run_info["folder_analysis"] == directory_name]
 row = [row for index, row in select.iterrows()][0]
 path_time_plate_info = row["path_time_plate_info"]
 
-unique_id = row['unique_id']
+unique_id = row["unique_id"]
 update_plate_info(directory, local=True)
 all_folders = get_current_folders(directory, local=True)
 folders = all_folders.loc[all_folders["unique_id"] == unique_id]
 folders = folders.sort_values(by="datetime", ascending=True)
-folders = folders.loc[folders['/Analysis/nx_graph_pruned.p']]
+folders = folders.loc[folders["/Analysis/nx_graph_pruned.p"]]
 exp = Experiment(directory)
 exp.load(folders, suffix="")
 exp.dates.sort()
 spore_datatable = make_spore_data(exp)
-path_save = path_time_plate_info.split('/')[0]
-with open(os.path.join((directory,path_time_plate_info,'spore_data.json')), "w") as jsonf:
+path_save = path_time_plate_info.split("/")[0]
+with open(
+    os.path.join((directory, path_time_plate_info, "spore_data.json")), "w"
+) as jsonf:
     print("saving")
     json.dump(spore_datatable, jsonf, indent=4)
