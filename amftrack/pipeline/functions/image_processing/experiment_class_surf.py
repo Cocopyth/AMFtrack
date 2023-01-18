@@ -535,6 +535,7 @@ def load_graphs(exp, directory, indexes=None, reload=True, post_process=False):
     if indexes == None:
         indexes = range(exp.ts)
     for index, date in enumerate(exp.dates):
+        # print(date)
         directory_name = get_dirname(date, exp.folders)
         path_snap = exp.directory + directory_name
         if labeled:
