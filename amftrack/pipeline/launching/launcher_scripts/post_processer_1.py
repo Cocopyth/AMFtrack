@@ -127,46 +127,46 @@ run_parallel_post(
     dependency=True,
 )
 
-# time = "24:00:00"
-# list_f = [plot_hulls, plot_tracking, plot_anastomosis]
+time = "24:00:00"
+list_f = [plot_hulls, plot_tracking]
 # list_f = [plot_tracking]
+
+list_args = [[]] * len(list_f)
+overwrite = True
+num_parallel = 6
+run_parallel_post(
+    "exp_plot.py",
+    list_f,
+    list_args,
+    [directory, overwrite],
+    analysis_folders,
+    num_parallel,
+    time,
+    "global_plate_post_process",
+    cpus=128,
+    name_job=name_job,
+    node="fat",
+)
 #
-# list_args = [[]] * len(list_f)
-# overwrite = True
-# num_parallel = 6
-# run_parallel_post(
-#     "exp_plot.py",
-#     list_f,
-#     list_args,
-#     [directory, overwrite],
-#     analysis_folders,
-#     num_parallel,
-#     time,
-#     "global_plate_post_process",
-#     cpus=128,
-#     name_job=name_job,
-#     node="fat",
-# )
-#
-# time = "12:00:00"
-# list_f = [plot_get_hull_nodes]
-#
-# list_args = [[]] * len(list_f)
-# overwrite = True
-# num_parallel = 30
-# run_parallel_post(
-#     "exp_plot.py",
-#     list_f,
-#     list_args,
-#     [directory, overwrite],
-#     analysis_folders,
-#     num_parallel,
-#     time,
-#     "global_plate_post_process",
-#     cpus=128,
-#     name_job=name_job,
-#     node="fat",
-# )
+time = "12:00:00"
+list_f = [plot_get_hull_nodes]
+
+list_args = [[]] * len(list_f)
+overwrite = True
+num_parallel = 30
+run_parallel_post(
+    "exp_plot.py",
+    list_f,
+    list_args,
+    [directory, overwrite],
+    analysis_folders,
+    num_parallel,
+    time,
+    "global_plate_post_process",
+    cpus=128,
+    name_job=name_job,
+    node="fat",
+)
 time = "3:40:00"
 directory = directory
 # list_f = [get_width_f,get_tot_length_C_f,get_tot_growth_C_f]

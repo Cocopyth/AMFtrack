@@ -32,7 +32,6 @@ i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
 run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
-list_f, list_args = pickle.load(open(f"{temp_path}/{op_id}.pick", "rb"))
 folder_list = list(run_info["folder_analysis"])
 run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 directory_name = folder_list[i]
@@ -51,8 +50,7 @@ exp.load(folders, suffix="")
 exp.dates.sort()
 spore_datatable = make_spore_data(exp)
 path_save = path_time_plate_info.split("/")[0]
-with open(
-    os.path.join((directory, path_time_plate_info, "spore_data.json")), "w"
-) as jsonf:
-    print("saving")
-    json.dump(spore_datatable, jsonf, indent=4)
+print(path_save)
+path_save = os.path.join(directory, path_save, "spore_data.json")
+spore_datatable.reset_index(inplace=True)
+spore_datatable.to_json(path_save)
