@@ -346,7 +346,9 @@ def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
                 except:
                     sizes.append(None)
                 pbar.update(1)
-    modified = [file.client_modified for file in listfiles]
+    # modified = [file.client_modified for file in listfiles]
+    modified = [0 for file in listfiles]
+
     df = pd.DataFrame(
         (names, sizes, modified, path_drop, plate_num, date_cross, id_uniques)
     ).transpose()
