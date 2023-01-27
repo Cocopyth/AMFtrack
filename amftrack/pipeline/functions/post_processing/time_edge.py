@@ -4,7 +4,7 @@ from amftrack.pipeline.functions.post_processing.util import (
     is_in_study_zone,
 )
 
-is_circle = True
+is_circle = False
 
 
 def get_time_since_start(edge, t, args=None):

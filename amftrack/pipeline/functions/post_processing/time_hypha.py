@@ -10,7 +10,7 @@ from amftrack.pipeline.functions.post_processing.util import (
 )
 from scipy import sparse
 
-is_circle = True
+is_circle = False
 
 
 def get_time_since_start(hypha, t, tp1, args=None):

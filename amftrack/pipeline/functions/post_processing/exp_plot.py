@@ -20,7 +20,7 @@ import numpy as np
 from amftrack.pipeline.functions.post_processing.area_hulls import is_in_study_zone
 import os
 
-is_circle = True
+is_circle = False
 
 
 def delete_files(paths_list):
