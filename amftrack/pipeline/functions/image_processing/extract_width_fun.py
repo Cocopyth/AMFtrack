@@ -25,11 +25,11 @@ a = 2.3196552
 #     storage_path, "models", "dense_02_focused_edge", "saved_model_retrained"
 # )
 # QUICKFIX: temporary
-TARGET_LENGTH = 100
+TARGET_LENGTH = 120
 # MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "default_model"))
 MODEL = keras.models.load_model(
     os.path.join(
-        path_code[:-1], "ml", "models", "bin2_BO_crop_100_best_model_val_version"
+        path_code[:-1], "ml", "models", "default_CNN_model"
     )
 )
 # TARGET_LENGTH = 80
