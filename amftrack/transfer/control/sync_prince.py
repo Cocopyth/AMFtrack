@@ -12,7 +12,9 @@ from amftrack.util.sys import (
 from amftrack.util.dbx import sync_fold
 from tqdm.autonotebook import tqdm
 
-directory = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$/Data/Prince2/Images/"
+# directory = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$/Data/Prince2/Images/"
+directory = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$,user=bisot/Data/Prince2/Images/"
+
 update_plate_info(directory, strong_constraint=False, local=True)
 
 all_folders = get_current_folders(directory, local=True)

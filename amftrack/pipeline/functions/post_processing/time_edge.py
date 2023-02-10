@@ -3,6 +3,7 @@ from amftrack.pipeline.functions.post_processing.util import (
     measure_length_um_edge,
     is_in_study_zone,
 )
+import networkx as nx
 
 is_circle = False
 
@@ -53,3 +54,13 @@ def get_in_ROI(edge, t, args=None):
             or is_in_study_zone(edge.begin, t, 1000, 150, is_circle)
         ),
     )
+
+def get_connected_component_id(edge,t,args = None):
+    nx_graph = edge.experiment.nx_graph[t]
+    S = [nx_graph.subgraph(c).copy() for c in nx.connected_components(nx_graph)]
+    for j,subgraph in enumerate(S):
+        nodes = subgraph.nodes
+        if edge.begin.label in nodes and edge.end.label in nodes:
+            return("component_id",j)
+
+

@@ -14,7 +14,7 @@ import checksumdir
 import shutil
 
 # directory_origin = r'/mnt/sun/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE_syncing/'
-directory_origin = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$/Data/Prince2/Images/"
+directory_origin = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$,user=bisot/Data/Prince2/Images/"
 directory_target = (
     r"/mnt/sun/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE_syncing/"
 )
@@ -37,7 +37,7 @@ with tqdm(total=len(folder_list), desc="deleted") as pbar:
         if len(origin) > 0:
             origin = origin.iloc[0]
         else:
-            # print(folder)
+            # print(folder) 
             continue
         target = all_folders_target.loc[all_folders_target["folder"] == folder][
             "total_path"
