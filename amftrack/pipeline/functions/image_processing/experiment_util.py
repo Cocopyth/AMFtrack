@@ -492,6 +492,7 @@ def plot_full(
         plt.savefig(save_path, dpi=dpi)
     else:
         plt.show()
+    return(ax)
 
 
 def reconstruct_image_simple(
