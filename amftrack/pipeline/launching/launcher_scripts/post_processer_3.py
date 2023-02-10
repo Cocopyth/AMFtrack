@@ -25,7 +25,7 @@ list_f = [
     get_pos_x,
     get_pos_y,
     get_in_ROI,
-    get_connected_component_id
+    get_connected_component_id,
 ]
 list_args = [{}] * len(list_f)
 # list_args= [[500],[1000],[2000]]+[[]]

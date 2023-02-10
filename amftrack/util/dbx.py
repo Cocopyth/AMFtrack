@@ -310,7 +310,7 @@ def get_dropbox_folders_old(dir_drop: str, file_metadata=False) -> pd.DataFrame:
 
 
 def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
-    print('go')
+    print("go")
     dbx = load_dbx()
     response = dbx.files_list_folder(dir_drop, recursive=True)
     # for fil in response.entries:
@@ -323,23 +323,23 @@ def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
             if file.name.split("/")[-1] in folders_interest
         ]
         response = dbx.files_list_folder_continue(response.cursor)
-    listfiles += [
-        file
-        for file in response.entries
-        if file.name in folders_interest
-    ]
+    listfiles += [file for file in response.entries if file.name in folders_interest]
     # print([((file.path_lower.split(".")[0]) + "_info.json") for file in listfiles if (file.name.split(".")[-1] == "zip") &
     #        (((file.path_lower.split(".")[0]) + "_info.json") not in listjson)])
     listfiles.reverse()
-    names = [file.path_display.split('/')[-2] for file in listfiles]
-    path_drop = [os.path.join(*file.path_lower.split(os.path.sep)[:-1]) for file in listfiles]
+    names = [file.path_display.split("/")[-2] for file in listfiles]
+    path_drop = [
+        os.path.join(*file.path_lower.split(os.path.sep)[:-1]) for file in listfiles
+    ]
     print(path_drop)
     id_uniques = [path.split(os.path.sep)[-2] for path in path_drop]
 
-    path_drop = [path for k,path in enumerate(path_drop) if len(id_uniques[k].split("_"))>=2]
-    names = [name for k,name in enumerate(names) if len(id_uniques[k].split("_"))>=2]
+    path_drop = [
+        path for k, path in enumerate(path_drop) if len(id_uniques[k].split("_")) >= 2
+    ]
+    names = [name for k, name in enumerate(names) if len(id_uniques[k].split("_")) >= 2]
 
-    id_uniques = [idi for idi in id_uniques if len(idi.split("_"))>=2]
+    id_uniques = [idi for idi in id_uniques if len(idi.split("_")) >= 2]
     plate_num = [idi.split("_")[0] for idi in id_uniques]
     date_cross = [idi.split("_")[1] for idi in id_uniques]
     if skip_size:
@@ -372,16 +372,18 @@ def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     )
     return df
 
+
 def save_dropbox_state(dir_drop: str, skip_size: bool = True):
-    df =  get_dropbox_folders(dir_drop, skip_size)
-    source = os.path.join(f'{os.getenv("TEMP")}','{dir_drop}_info.json')
+    df = get_dropbox_folders(dir_drop, skip_size)
+    source = os.path.join(f'{os.getenv("TEMP")}', "{dir_drop}_info.json")
     df.to_json(source)
     target = f"/{dir_drop}/folder_info.json"
     upload(
-                source,
-                target,
-                chunk_size=256 * 1024 * 1024,
-            )
+        source,
+        target,
+        chunk_size=256 * 1024 * 1024,
+    )
+
 
 def upload_folders(
     folders: pd.DataFrame, dir_drop="DATA", catch_exception=True, delete=False

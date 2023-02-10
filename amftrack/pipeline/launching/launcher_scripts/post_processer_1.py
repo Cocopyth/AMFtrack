@@ -128,7 +128,7 @@ run_parallel_post(
 )
 
 time = "24:00:00"
-list_f = [plot_hulls, plot_tracking,plot_anastomosis]
+list_f = [plot_hulls, plot_tracking, plot_anastomosis]
 # list_f = [plot_tracking]
 # list_f = [plot_anastomosis]
 
