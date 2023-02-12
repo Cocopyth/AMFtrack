@@ -1,0 +1,13 @@
+This model is retrained by the data from
+data_list =["50X_groundtruth_20221116_Plate21",
+            "50X_groundtruth_20230109_Plate521",
+            "50X_groundtruth_20230111_Plate521",
+            "50X_groundtruth_20230113_Plate521",
+            "50X_groundtruth_20230111_Plate493"]
+
+The hyperparameter is set by bin2_BOGroundTruthML_10point_each_segment_best_model_val_version model.
+The data can be check by
+
+X_train, y_train, X_test , y_test = combine_dataset(data_list,value_size=2)
+
+The model is trained by KFold and split to 3. So, there is no validation data.
