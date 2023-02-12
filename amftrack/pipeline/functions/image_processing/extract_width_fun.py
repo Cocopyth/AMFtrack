@@ -54,7 +54,7 @@ def compute_edge_width_profile(
     target_length=TARGET_LENGTH,
 ) -> float:
 
-    profile, _, __ = extract_section_profiles_for_edge(
+    profile, _, __ = extract_section_profiles_for_edge_exp(
         exp,
         t,
         edge,
@@ -226,7 +226,7 @@ def find_source_images_filtered(
     return image_indexes, new_section_coord_list
 
 
-def extract_section_profiles_for_edge(
+def extract_section_profiles_for_edge_exp(
     exp: Experiment,
     t: int,
     edge: Edge,
@@ -519,4 +519,4 @@ if __name__ == "__main__":
 
     ## Run the width function
     edge = get_random_edge(exp, 0)
-    extract_section_profiles_for_edge(exp, 0, edge)
+    extract_section_profiles_for_edge_exp(exp, 0, edge)

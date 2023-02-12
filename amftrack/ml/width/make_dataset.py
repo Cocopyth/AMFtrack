@@ -28,7 +28,7 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_all_edges,
 )
 from amftrack.pipeline.functions.image_processing.extract_width_fun import (
-    extract_section_profiles_for_edge,
+    extract_section_profiles_for_edge_exp,
     compute_section_coordinates,
 )
 from amftrack.util.sys import storage_path
@@ -189,7 +189,7 @@ def make_extended_dataset(exp: Experiment, t: 0, dataset_name="dataset_test"):
                 profiles,
                 list_of_segments,
                 new_section_coord_list,
-            ) = extract_section_profiles_for_edge(
+            ) = extract_section_profiles_for_edge_exp(
                 exp,
                 t,
                 edge,
