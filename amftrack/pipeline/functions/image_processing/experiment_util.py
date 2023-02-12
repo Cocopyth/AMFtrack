@@ -834,6 +834,7 @@ def plot_edge_width(
     dilation=5,
     save_path="",
     color_seed=12,
+    dpi = None
 ) -> None:
     """
     Plot the width for all the edges at a given timestep.
@@ -955,7 +956,7 @@ def plot_edge_width(
             )
 
     if save_path:
-        plt.savefig(save_path)
+        plt.savefig(save_path,dpi=dpi)
     else:
         plt.show()
 
