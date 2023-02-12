@@ -18,6 +18,7 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_hulls_skelet,
     plot_full,
     reconstruct_image_from_general,
+    plot_edge_width
 )
 from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
     get_anastomosing_hyphae,
@@ -419,6 +420,34 @@ def make_images_anas(exp):
         )
     return paths
 
+def make_images_width(exp):
+    """
+    This function makes images centered on the initial position of some random nodes,
+    plots the skeleton on top of the raw image, the label of the nodes at different timesteps
+    it returns the paths_list of those plotted image in the format for tile video making
+    :param exp:
+    :param num_tiles: number of such images to tile together
+    """
+    paths = []
+
+    for t in range(exp.ts):
+        path = f"plot_width_{time_ns()}"
+        path = os.path.join(temp_path, path)
+        path = path + ".png"
+        paths.append([path])
+        exp.load_tile_information(t)
+        plot_edge_width(
+            exp, t,
+            lambda edge: edge.width(t),
+            plot_cmap=True,
+            dilation=4,
+
+            max_width=13,
+            save_path=path,
+            dpi=400,
+
+        )
+    return paths
 
 def make_images_track_hypha(exp, hypha):
     """
