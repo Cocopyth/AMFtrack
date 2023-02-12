@@ -1,0 +1,15 @@
+This model is retrained by the data from
+data_list_k = ["20221116_Plate21","20230109_Plate521","20230111_Plate521","20230113_Plate521","20230111_Plate493"]
+data_list_f = ["varying_lum_and_focus_train","varying_lum_and_focus_test"].
+
+The hyperparameter is set by bin2_BO_without_crop_best_model_val_version model.
+The data can be check by
+X_train_k, y_train_k, X_test_k , y_test_k = combine_dataset(data_list_k,2)
+X_train_f, y_train_f, X_test_f , y_test_f = combine_dataset(data_list_f,1)
+X_train = np.concatenate([X_train_k,X_train_f], axis=0)
+X_test = np.concatenate ([X_test_k ,X_test_f] , axis=0)
+y_train = np.concatenate([y_train_k,y_train_f], axis=0)
+y_test = np.concatenate ([y_test_k ,y_test_f] , axis=0)
+
+The model is trained by KFold and split to 3. So, there is no validation data.
+
