@@ -118,8 +118,9 @@ def extract_section_profiles_for_edge(
     # TODO (FK): is a +1 enough?
     images = {}
     l = []
+    im = raw_im
+
     for i, sect in enumerate(list_of_segments):
-        im = raw_im
         point1 = np.array([sect[0][0], sect[0][1]])
         point2 = np.array([sect[1][0], sect[1][1]])
         profile = profile_line(im, point1, point2, mode="constant")[
