@@ -1,9 +1,10 @@
 import sys
-from amftrack.util.dbx import get_dropbox_folders
+from amftrack.util.dbx import read_saved_dropbox_state
 from amftrack.pipeline.launching.run_super import run_parallel_transfer, run_launcher
 from amftrack.util.sys import (
     update_plate_info,
     get_current_folders,
+
 )
 from time import sleep
 
@@ -14,7 +15,7 @@ next = str(sys.argv[4])
 plates = sys.argv[5:]
 
 dir_drop = "DATA/PRINCE"
-all_folders_drop = get_dropbox_folders("/DATA/PRINCE", True)
+all_folders_drop = read_saved_dropbox_state("/DATA/PRINCE")
 folders_drop = all_folders_drop.loc[all_folders_drop["unique_id"].isin(plates)]
 update_plate_info(directory_targ, local=True, strong_constraint=False)
 all_folders = get_current_folders(directory_targ, local=True)

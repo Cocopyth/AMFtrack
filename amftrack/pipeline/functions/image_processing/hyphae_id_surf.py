@@ -122,8 +122,8 @@ def get_pixel_growth_and_new_children(hyphae, t1, t2):
                         hyphae.end.pos(t1) - np.array(edge.pixel_list(t2)), axis=1
                     )
                 )
-        if mini > 50:
-            print("failure in finding closest edge")
+        # if mini > 50:
+            # print("failure in finding closest edge")
         pixels = [last_edge.pixel_list(t2)[index_nearest_pixel:]]
         nodes = [-1, last_edge.end]
         for edge in edges[index + 1 :]:
@@ -209,9 +209,9 @@ def get_anastomosing_hyphae(exp):
 def resolve_anastomosis_crossing_by_root(exp, lim_considered=1):
     hyphaes, problems = get_hyphae(exp, lim_considered=lim_considered)
     exp.hyphaes = hyphaes
-    print("getting anastomosing", len(hyphaes))
+    # print("getting anastomosing", len(hyphaes))
     anastomosing_hyphae = get_anastomosing_hyphae(exp)
-    print("relabeling")
+    # print("relabeling")
     to_relabel = []
     corresp_hyph = {}
     i = 0
@@ -220,8 +220,8 @@ def resolve_anastomosis_crossing_by_root(exp, lim_considered=1):
         pos_root_hypha = np.mean([hypha.root.pos(t) for t in hypha.root.ts()], axis=0)
         poss_root_hypha[hypha] = pos_root_hypha
     for hyph, t0, tp1 in anastomosing_hyphae:
-        if i % 200 == 0:
-            print(i / len(anastomosing_hyphae))
+        # if i % 200 == 0:
+            # print(i / len(anastomosing_hyphae))
         i += 1
         corresp_hyph[hyph.end.label] = []
         pos_root_hyph = np.mean([hyph.root.pos(t) for t in hyph.root.ts()], axis=0)
@@ -253,7 +253,7 @@ def resolve_anastomosis_crossing_by_root(exp, lim_considered=1):
     for end_label in corresp_hyph.keys():
         corresp_node[end_label] = [hypha.end.label for hypha in corresp_hyph[end_label]]
     for t in range(exp.ts):
-        print(t)
+        # print(t)
         nx_graph = exp.nx_graph[t]
         new_poss = {}
         poss = exp.positions[t]
@@ -291,7 +291,7 @@ def resolve_anastomosis_crossing_by_root(exp, lim_considered=1):
     exp.nodes = []
     for label in labels:
         exp.nodes.append(Node(label, exp))
-    print("getting hyphae again")
+    # print("getting hyphae again")
     hyphaes, problems = get_hyphae(exp, lim_considered=lim_considered)
     exp.hyphaes = hyphaes
 
@@ -305,8 +305,8 @@ def get_hyphae(experiment, lim_considered=1):
     problems = []
     hyphaes = []
     for i, tip in enumerate(tips):
-        if i % 200 == 0:
-            print(i / len(tips))
+        # if i % 200 == 0:
+            # print(i / len(tips))
         #         tip = choice(tips)
         hyphae = Hyphae(tip)
         roots = []
@@ -328,8 +328,8 @@ def get_hyphae(experiment, lim_considered=1):
             hyphae.root = occurence_count.most_common(2)[0][0]
             hyphae.ts = hyphae.end.ts()
             hyphaes.append(hyphae)
-    print(
-        f"Detected problems during hyphae detection, {len(problems)} hyphaes have inconsistent root over time"
-    )
+    # print(
+    #     f"Detected problems during hyphae detection, {len(problems)} hyphaes have inconsistent root over time"
+    # )
     experiment.inconsistent_root = problems
     return (hyphaes, problems)
