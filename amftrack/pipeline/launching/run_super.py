@@ -16,7 +16,7 @@ directory_archive = "/archive/cbisot/"
 directory_sun = "/run/user/357100554/gvfs/smb-share:server=sun.amolf.nl,share=shimizu-data,user=bisot/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE/"
 
 
-path_bash = os.getenv("HOME") + "/bash/"
+path_bash = "C:\\cygwin64\\bin\\bash\\"
 path_stitch = f"{temp_path}/stitching_loops/"
 if not os.path.isdir(path_stitch):
     os.mkdir(path_stitch)
