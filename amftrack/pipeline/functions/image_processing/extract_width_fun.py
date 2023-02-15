@@ -25,12 +25,10 @@ a = 2.3196552
 #     storage_path, "models", "dense_02_focused_edge", "saved_model_retrained"
 # )
 # QUICKFIX: temporary
-TARGET_LENGTH = 100
+TARGET_LENGTH = 120
 # MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "default_model"))
 MODEL = keras.models.load_model(
-    os.path.join(
-        path_code[:-1], "ml", "models", "bin2_BO_crop_100_best_model_val_version"
-    )
+    os.path.join(path_code[:-1], "ml", "models", "default_CNN_model.h5")
 )
 # TARGET_LENGTH = 80
 # MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "CNN_combine_HB_crop_80_best_model"))
@@ -56,7 +54,7 @@ def compute_edge_width_profile(
     target_length=TARGET_LENGTH,
 ) -> float:
 
-    profile, _, __ = extract_section_profiles_for_edge(
+    profile, _, __ = extract_section_profiles_for_edge_exp(
         exp,
         t,
         edge,
@@ -228,7 +226,7 @@ def find_source_images_filtered(
     return image_indexes, new_section_coord_list
 
 
-def extract_section_profiles_for_edge(
+def extract_section_profiles_for_edge_exp(
     exp: Experiment,
     t: int,
     edge: Edge,
@@ -521,4 +519,4 @@ if __name__ == "__main__":
 
     ## Run the width function
     edge = get_random_edge(exp, 0)
-    extract_section_profiles_for_edge(exp, 0, edge)
+    extract_section_profiles_for_edge_exp(exp, 0, edge)
