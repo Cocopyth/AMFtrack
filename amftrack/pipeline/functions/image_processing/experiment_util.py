@@ -355,6 +355,7 @@ def plot_full_image_with_features(
         plt.savefig(save_path)
     else:
         plt.show()
+    return(ax)
 
 
 font_path = os.path.join(mpl.get_data_path(), "fonts/ttf/lucidasansdemibold.ttf")
@@ -492,6 +493,7 @@ def plot_full(
         plt.savefig(save_path, dpi=dpi)
     else:
         plt.show()
+    return ax
 
 
 def reconstruct_image_simple(
@@ -833,6 +835,7 @@ def plot_edge_width(
     dilation=5,
     save_path="",
     color_seed=12,
+    dpi = None
 ) -> None:
     """
     Plot the width for all the edges at a given timestep.
@@ -954,7 +957,7 @@ def plot_edge_width(
             )
 
     if save_path:
-        plt.savefig(save_path)
+        plt.savefig(save_path,dpi=dpi)
     else:
         plt.show()
 

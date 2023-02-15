@@ -1,3 +1,0 @@
-This model is trained by varying_lum_and_focus_train dataset from Felix 
-and vary_width dataset from Kai-Kai.
-The tuner is hyper band. Input segment was crop from 120 to 80.
