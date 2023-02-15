@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import pandas
 from PIL import Image
 import numpy as np
 from scipy import sparse
@@ -167,7 +168,8 @@ def from_sparse_to_graph(doc_skel):
     for branch in edges:
         if len(edges[branch]["origin"]) > 0 and len(edges[branch]["end"]) > 0:
             # TODO(FK): Use pandas.concat instead (Frame.append soon deprecated)
-            graph = graph.append(pd.DataFrame(edges[branch]), ignore_index=True)
+            # graph = graph.append(pd.DataFrame(edges[branch]), ignore_index=True)
+            graph = pandas.concat([graph, pd.DataFrame(edges[branch])])
     for index, row in graph.iterrows():
         row["pixel_list"] = order_pixel(row["origin"], row["end"], row["pixel_list"])
     return graph

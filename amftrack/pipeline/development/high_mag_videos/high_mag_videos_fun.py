@@ -83,16 +83,16 @@ def segment(images_adress, threshold=10):
 
 
 def extract_section_profiles_for_edge(
-    edge: tuple,
-    pos: dict,
-    raw_im: np.array,
-    nx_graph,
-    resolution=5,
-    offset=4,
-    step=15,
-    target_length=120,
-    bound1=0,
-    bound2=1,
+        edge: tuple,
+        pos: dict,
+        raw_im: np.array,
+        nx_graph,
+        resolution=5,
+        offset=4,
+        step=15,
+        target_length=120,
+        bound1=0,
+        bound2=1,
 ) -> np.array:
     """
     Main function to extract section profiles of an edge.
@@ -124,8 +124,8 @@ def extract_section_profiles_for_edge(
         point1 = np.array([sect[0][0], sect[0][1]])
         point2 = np.array([sect[1][0], sect[1][1]])
         profile = profile_line(im, point1, point2, mode="constant")[
-            int(bound1 * target_length) : int(bound2 * target_length)
-        ]
+                  int(bound1 * target_length): int(bound2 * target_length)
+                  ]
         profile = profile.reshape((1, len(profile)))
         # TODO(FK): Add thickness of the profile here
         l.append(profile)
@@ -146,16 +146,16 @@ def plot_segments_on_image(segments, ax, color="red", bound1=0, bound2=1, alpha=
 
 
 def get_kymo(
-    edge,
-    pos,
-    images_adress,
-    nx_graph_pruned,
-    resolution=1,
-    offset=4,
-    step=15,
-    target_length=10,
-    bound1=0,
-    bound2=1,
+        edge,
+        pos,
+        images_adress,
+        nx_graph_pruned,
+        resolution=1,
+        offset=4,
+        step=15,
+        target_length=10,
+        bound1=0,
+        bound2=1,
 ):
     kymo = []
     for image_adress in images_adress:
@@ -188,9 +188,9 @@ def filter_kymo_left(kymo):
     dark_image_grey_fourier = np.fft.fftshift(np.fft.fft2(tiling_for_fourrier))
     coordinates_middle = np.array(dark_image_grey_fourier.shape) // 2
     LT_quadrant = np.s_[: coordinates_middle[0], : coordinates_middle[1]]
-    LB_quadrant = np.s_[coordinates_middle[0] + 1 :, : coordinates_middle[1]]
-    RB_quadrant = np.s_[coordinates_middle[0] + 1 :, coordinates_middle[1] :]
-    RT_quadrant = np.s_[: coordinates_middle[0], coordinates_middle[1] :]
+    LB_quadrant = np.s_[coordinates_middle[0] + 1:, : coordinates_middle[1]]
+    RB_quadrant = np.s_[coordinates_middle[0] + 1:, coordinates_middle[1]:]
+    RT_quadrant = np.s_[: coordinates_middle[0], coordinates_middle[1]:]
 
     filtered_fourrier = dark_image_grey_fourier
     filtered_fourrier[LT_quadrant] = 0
@@ -198,7 +198,7 @@ def filter_kymo_left(kymo):
     filtered = np.fft.ifft2(filtered_fourrier)
     shape_v, shape_h = filtered.shape
     shape_v, shape_h = shape_v // 3, shape_h // 3
-    middle_slice = np.s_[shape_v : 2 * shape_v, shape_h : 2 * shape_h]
+    middle_slice = np.s_[shape_v: 2 * shape_v, shape_h: 2 * shape_h]
     middle = filtered[middle_slice]
     filtered_left = A - np.abs(middle)
     return filtered_left
@@ -238,7 +238,7 @@ def get_speeds(kymo, W, C_Thr, fps, binning, magnification):
 
     real_movement = np.where(imgCoherency > C_Thr, imgOrientation, nans)
     speed = (
-        np.tan((real_movement - 90) / 180 * np.pi) * space_pixel_size / time_pixel_size
+            np.tan((real_movement - 90) / 180 * np.pi) * space_pixel_size / time_pixel_size
     )  # um.s-1
 
 
@@ -292,7 +292,6 @@ def get_width(slices, avearing_window=50, num_std=4):
 
 
 def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 120, 30)):
-
     smooth_im = cv2.blur(-image, (11, 11))
     segmented = frangi(-smooth_im, frangi_range)
     skeletonized = skeletonize(segmented > thresh)
@@ -302,12 +301,26 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 120, 30)):
     nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
     return (segmented > thresh, nx_graph_pruned, pos)
 
-def segment_fluo(image, thresh=0.5e-7):
-    smooth_im = cv2.GaussianBlur(image, (11,11), 0)
-    _, segmented = cv2.threshold(smooth_im,20,255,cv2.THRESH_BINARY)
+
+def segment_fluo(image, thresh=0.5e-7, k_size=5):
+    kernel = np.ones((k_size, k_size), np.uint8)
+    smooth_im = cv2.GaussianBlur(image, (11, 11), 0)
+    smooth_im = cv2.morphologyEx(smooth_im, cv2.MORPH_OPEN, kernel)
+    smooth_im = cv2.morphologyEx(smooth_im, cv2.MORPH_CLOSE, kernel)
+    _, segmented = cv2.threshold(smooth_im, 10, 255, cv2.THRESH_BINARY)
     skeletonized = skeletonize(segmented > thresh)
 
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
     nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
-    return (segmented > thresh, nx_graph_pruned, pos)
+    return (segmented > thresh, nx_graph, pos)
+
+
+def find_thresh_fluo(blurred_image, thresh_guess=40, fold_thresh=0.005):
+    histr = cv2.calcHist([blurred_image], [0], None, [256], [0, 256])
+    histr_sum = np.sum(histr[0:thresh_guess])
+    for i in range(thresh_guess, 1, -1):
+        diff = (histr[i] - histr[i - 1]) / histr_sum
+        if -1 * diff > fold_thresh:
+            break
+    return i
