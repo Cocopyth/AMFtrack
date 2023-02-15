@@ -301,3 +301,13 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 120, 30)):
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
     nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
     return (segmented > thresh, nx_graph_pruned, pos)
+
+def segment_fluo(image, thresh=0.5e-7):
+    smooth_im = cv2.GaussianBlur(image, (11,11), 0)
+    _, segmented = cv2.threshold(smooth_im,20,255,cv2.THRESH_BINARY)
+    skeletonized = skeletonize(segmented > thresh)
+
+    skeleton = scipy.sparse.dok_matrix(skeletonized)
+    nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
+    nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
+    return (segmented > thresh, nx_graph_pruned, pos)

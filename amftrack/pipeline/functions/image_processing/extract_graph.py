@@ -259,13 +259,13 @@ def generate_nx_graph(graph_tab, labeled=False):
         if labeled:
             identifier1 = row["origin_label"]
             identifier2 = row["end_label"]
-            pos[identifier1] = np.array(row["origin_pos"]).astype(np.int)
-            pos[identifier2] = np.array(row["end_pos"]).astype(np.int)
+            pos[identifier1] = np.array(row["origin_pos"]).astype(np.int32)
+            pos[identifier2] = np.array(row["end_pos"]).astype(np.int32)
         else:
             identifier1 = nodes.index(row["origin"])
             identifier2 = nodes.index(row["end"])
-            pos[identifier1] = np.array(row["origin"]).astype(np.int)
-            pos[identifier2] = np.array(row["end"]).astype(np.int)
+            pos[identifier1] = np.array(row["origin"]).astype(np.int32)
+            pos[identifier2] = np.array(row["end"]).astype(np.int32)
         info = {"weight": len(row["pixel_list"]), "pixel_list": row["pixel_list"]}
         G.add_edges_from([(identifier1, identifier2, info)])
     return (G, pos)
