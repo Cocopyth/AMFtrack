@@ -2,6 +2,8 @@ import os
 import imageio
 import matplotlib.pyplot as plt
 import cv2
+from scipy import ndimage as ndi
+
 
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_sparse_to_graph,
@@ -301,6 +303,112 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 120, 30)):
     nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
     return (segmented > thresh, nx_graph_pruned, pos)
 
+
+def get_kymo_new(
+        edge,
+        pos,
+        images_adress,
+        nx_graph_pruned,
+        resolution=1,
+        offset=4,
+        step=15,
+        target_length=10,
+        bound1=0,
+        bound2=1,
+        order=1
+    ):
+    pixel_list = orient(nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
+    offset = max(
+        offset, step
+    )  # avoiding index out of range at start and end of pixel_list
+    pixel_indexes = generate_pivot_indexes(
+        len(pixel_list), resolution=resolution, offset=offset
+    )
+    list_of_segments = compute_section_coordinates(
+        pixel_list, pixel_indexes, step=step, target_length=target_length + 1)
+    perp_lines = []
+    l = []
+    kymo=[]
+    for i, sect in enumerate(list_of_segments):
+        point1 = np.array([sect[0][0], sect[0][1]])
+        point2 = np.array([sect[1][0], sect[1][1]])
+        perp_lines.append(extract_perp_lines(point1, point2))
+
+    for image_adress in images_adress:
+        im = imageio.imread(image_adress)
+        order = validate_interpolation_order(im.dtype, order)
+        pixels = ndi.map_coordinates(im, perp_lines, prefilter=order > 1,
+                                     order=order, mode='reflect', cval=0.0)
+        pixels = np.flip(pixels, axis=1)
+        pixels = pixels[int(bound1 * target_length) : int(bound2 * target_length)]
+        profile = pixels.reshape((1, len(profile)))
+        # TODO(FK): Add thickness of the profile here
+        l.append(profile)
+
+    slices = np.concatenate(l, axis=0)
+    kymo_line = np.mean(slices, axis=1)
+    kymo.append(kymo_line)
+    return np.array(kymo)
+
+def extract_perp_lines(src, dst, linewidth=1):
+    src_row, src_col = src = np.asarray(src, dtype=float)
+    dst_row, dst_col = dst = np.asarray(dst, dtype=float)
+    d_row, d_col = dst - src
+    theta = np.arctan2(d_row, d_col)
+
+    length = int(np.ceil(np.hypot(d_row, d_col) + 1))
+    # we add one above because we include the last point in the profile
+    # (in contrast to standard numpy indexing)
+    line_col = np.linspace(src_col, dst_col, length)
+    line_row = np.linspace(src_row, dst_row, length)
+
+    # we subtract 1 from linewidth to change from pixel-counting
+    # (make this line 3 pixels wide) to point distances (the
+    # distance between pixel centers)
+    col_width = (linewidth - 1) * np.sin(-theta) / 2
+    row_width = (linewidth - 1) * np.cos(theta) / 2
+    perp_rows = np.stack([np.linspace(row_i - row_width, row_i + row_width,
+                                      linewidth) for row_i in line_row])
+    perp_cols = np.stack([np.linspace(col_i - col_width, col_i + col_width,
+                                      linewidth) for col_i in line_col])
+    return np.stack([perp_rows, perp_cols])
+
+
+def validate_interpolation_order(image_dtype, order):
+    """Validate and return spline interpolation's order.
+
+    Parameters
+    ----------
+    image_dtype : dtype
+        Image dtype.
+    order : int, optional
+        The order of the spline interpolation. The order has to be in
+        the range 0-5. See `skimage.transform.warp` for detail.
+
+    Returns
+    -------
+    order : int
+        if input order is None, returns 0 if image_dtype is bool and 1
+        otherwise. Otherwise, image_dtype is checked and input order
+        is validated accordingly (order > 0 is not supported for bool
+        image dtype)
+
+    """
+
+    if order is None:
+        return 0 if image_dtype == bool else 1
+
+    if order < 0 or order > 5:
+        raise ValueError("Spline interpolation order has to be in the "
+                         "range 0-5.")
+
+    if image_dtype == bool and order != 0:
+        raise ValueError(
+            "Input image dtype is bool. Interpolation is not defined "
+            "with bool data type. Please set order to 0 or explicitely "
+            "cast input image to another data type.")
+
+    return order
 
 def segment_fluo(image, thresh=0.5e-7, k_size=5):
     kernel = np.ones((k_size, k_size), np.uint8)
