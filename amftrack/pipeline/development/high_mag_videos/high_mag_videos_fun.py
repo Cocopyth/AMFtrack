@@ -349,7 +349,6 @@ def get_kymo_new(
         slices = np.concatenate(l, axis=0)
         kymo_line = np.mean(slices, axis=1)
         kymo.append(kymo_line)
-    print('We gottem boys')
     return np.array(kymo)
 
 def extract_perp_lines(src, dst, linewidth=1):

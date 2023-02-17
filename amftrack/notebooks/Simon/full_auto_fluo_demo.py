@@ -119,7 +119,6 @@ for edge in edges:
 save_path_temp = os.path.join(kymos_path, f"extraction.png")
 plt.savefig(save_path_temp)
 
-print('Hold on to your butts')
 t = time.time()
 kymos = {edge:get_kymo_new(edge,pos,selection_file,nx_graph_pruned, resolution=1,
                        offset=offset,
