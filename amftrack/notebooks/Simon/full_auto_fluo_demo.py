@@ -10,6 +10,7 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
     clean_degree_4,
 )
 import scipy
+import time
 from amftrack.pipeline.functions.image_processing.node_id import remove_spurs
 from amftrack.pipeline.functions.image_processing.extract_skel import remove_component, remove_holes
 import numpy as np
@@ -57,8 +58,21 @@ image = imageio.imread(selection_file[end])
 image2 = imageio.imread(selection_file[begin])
 selection_file = selection_file[begin:end]
 
+fig, ax = plt.subplots()
+ax.imshow(image,cmap="gray")
+ax.imshow(image2,alpha = 0.5)
+
 
 segmented,nx_graph_pruned,pos = segment_fluo(image,thresh = 5e-07)
+fig, ax = plt.subplots()
+ax.imshow(segmented,cmap="gray")
+
+fig, ax = plt.subplots()
+ax.imshow(image)
+weight = 0.05
+for edge in list(nx_graph_pruned.edges):
+    ax.text(*np.flip((1-weight) * pos[edge[0]]+weight*pos[edge[1]]),str(edge[0]),color="white")
+    ax.text(*np.flip((1-weight) * pos[edge[1]]+weight*pos[edge[0]]),str(edge[1]),color="white")
 
 edges = list(nx_graph_pruned.edges)
 edge_oriented = []
@@ -73,14 +87,15 @@ edge_oriented
 
 np.linalg.norm(pos[edge[0]]-pos[edge[1]])
 
+fig, ax = plt.subplots()
+ax.imshow(image)
+
+
 bound1 = 0
 bound2 = 1
 step=30
 target_length=130
 resolution = 1
-
-fig, ax = plt.subplots()
-weight = 0.05
 for edge in edges:
     offset=int(np.linalg.norm(pos[edge[0]]-pos[edge[1]]))//4
     slices, segments = extract_section_profiles_for_edge(
@@ -104,6 +119,8 @@ for edge in edges:
 save_path_temp = os.path.join(kymos_path, f"extraction.png")
 plt.savefig(save_path_temp)
 
+print('Hold on to your butts')
+t = time.time()
 kymos = {edge:get_kymo_new(edge,pos,selection_file,nx_graph_pruned, resolution=1,
                        offset=offset,
                        step=step,
@@ -111,6 +128,8 @@ kymos = {edge:get_kymo_new(edge,pos,selection_file,nx_graph_pruned, resolution=1
                        bound1=bound1,
                        bound2=bound2) for edge in edges}
 filtered_kymos = {edge: filter_kymo(kymos[edge]) for edge in edges}
+
+print(time.time() - t)
 speeds = {}
 for edge in kymos.keys():
     kymo = kymos[edge]
@@ -159,7 +178,7 @@ for j,edge in enumerate(edges):
         label =edge if i==0 else None
         times = np.array(range(len(np.mean(speed,axis=1))))*time_pixel_size
         speeds = np.nanmean(speed,axis=1)
-        edges_list = [edge for k in range(len(speeds))]
+        edges_list = [str(edge) for k in range(len(speeds))]
         direction = ["root" if i==0 else 'tip' for k in range(len(speeds))]
         data = pd.DataFrame(np.transpose((times,speeds,edges_list,direction)),
                             columns = ['time (s)','speed (um.s-1)','edge','direction'])
