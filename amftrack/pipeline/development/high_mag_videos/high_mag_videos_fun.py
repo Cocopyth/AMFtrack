@@ -3,6 +3,7 @@ import imageio
 import matplotlib.pyplot as plt
 import cv2
 from scipy import ndimage as ndi
+from tqdm import tqdm
 
 
 from amftrack.pipeline.functions.image_processing.extract_graph import (
@@ -334,7 +335,7 @@ def get_kymo_new(
         point2 = np.array([sect[1][0], sect[1][1]])
         perp_lines.append(extract_perp_lines(point1, point2))
 
-    for image_adress in images_adress:
+    for image_adress in tqdm(images_adress):
         im = imageio.imread(image_adress)
         order = validate_interpolation_order(im.dtype, order)
         l = []
