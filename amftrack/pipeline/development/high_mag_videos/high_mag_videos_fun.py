@@ -94,8 +94,7 @@ def extract_section_profiles_for_edge(
         offset=4,
         step=15,
         target_length=120,
-        bound1=0,
-        bound2=1,
+        bounds=(0,1),
 ) -> np.array:
     """
     Main function to extract section profiles of an edge.
@@ -127,7 +126,7 @@ def extract_section_profiles_for_edge(
         point1 = np.array([sect[0][0], sect[0][1]])
         point2 = np.array([sect[1][0], sect[1][1]])
         profile = profile_line(im, point1, point2, mode="constant")[
-                  int(bound1 * target_length): int(bound2 * target_length)
+                  int(bounds[0] * target_length): int(bounds[1] * target_length)
                   ]
         profile = profile.reshape((1, len(profile)))
         # TODO(FK): Add thickness of the profile here
@@ -135,10 +134,10 @@ def extract_section_profiles_for_edge(
     return np.concatenate(l, axis=0), list_of_segments
 
 
-def plot_segments_on_image(segments, ax, color="red", bound1=0, bound2=1, alpha=1):
+def plot_segments_on_image(segments, ax, color="red", bounds=(0,1), alpha=1):
     for (point1_pivot, point2_pivot) in segments:
-        point1 = (1 - bound1) * point1_pivot + bound1 * point2_pivot
-        point2 = (1 - bound2) * point1_pivot + bound2 * point2_pivot
+        point1 = (1 - bounds[0]) * point1_pivot + bounds[0] * point2_pivot
+        point2 = (1 - bounds[1]) * point1_pivot + bounds[1] * point2_pivot
         ax.plot(
             [point1[1], point2[1]],  # x1, x2
             [point1[0], point2[0]],  # y1, y2
@@ -314,8 +313,7 @@ def get_kymo_new(
         offset=4,
         step=15,
         target_length=10,
-        bound1=0,
-        bound2=1,
+        bounds=(0,1),
         order=None
     ):
     pixel_list = orient(nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
@@ -328,7 +326,6 @@ def get_kymo_new(
     list_of_segments = compute_section_coordinates(
         pixel_list, pixel_indexes, step=step, target_length=target_length + 1)
     perp_lines = []
-
     kymo=[]
     for i, sect in enumerate(list_of_segments):
         point1 = np.array([sect[0][0], sect[0][1]])
@@ -342,7 +339,7 @@ def get_kymo_new(
         for perp_line in perp_lines:
             pixels = ndi.map_coordinates(im, perp_line, prefilter=order > 1, order=order, mode='reflect', cval=0.0)
             pixels = np.flip(pixels, axis=1)
-            pixels = pixels[int(bound1 * target_length) : int(bound2 * target_length)]
+            pixels = pixels[int(bounds[0] * target_length) : int(bounds[1] * target_length)]
             pixels = pixels.reshape((1, len(pixels)))
         # TODO(FK): Add thickness of the profile here
             l.append(pixels)
