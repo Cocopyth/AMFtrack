@@ -100,7 +100,6 @@ class Kymo_video_analysis(object):
         self.edge_objects = [self.createEdge(edge) for edge in self.edges]
         self.edge_objects = self.filter_edges(filter_step)
 
-
     def filter_edges(self, step):
         filt_edge_objects = []
         for edge in self.edge_objects:
@@ -118,7 +117,8 @@ class Kymo_video_analysis(object):
         plt.show()
         return None
 
-    def plot_extraction_img(self, weight=0.05, bounds=(0.0, 1.0), step=30, target_length=130, resolution=1, save_img=True, logging=False):
+    def plot_extraction_img(self, weight=0.05, bounds=(0.0, 1.0), step=30, target_length=130, resolution=1,
+                            save_img=True, logging=False):
         fig, ax = plt.subplots()
         image = imageio.imread(self.selection_file[self.im_range[0]])
         ax.imshow(image)
@@ -133,7 +133,8 @@ class Kymo_video_analysis(object):
                     segments, ax, bounds=bounds, color="white", alpha=0.1
                 )
                 ax.plot(
-                    [self.pos[edge.edge_name[0]][1], self.pos[edge.edge_name[1]][1]], [self.pos[edge.edge_name[0]][0], self.pos[edge.edge_name[1]][0]]
+                    [self.pos[edge.edge_name[0]][1], self.pos[edge.edge_name[1]][1]],
+                    [self.pos[edge.edge_name[0]][0], self.pos[edge.edge_name[1]][0]]
                 )
                 ax.text(
                     *np.flip((1 - weight) * self.pos[edge.edge_name[0]] + weight * self.pos[edge.edge_name[1]]),
@@ -153,51 +154,53 @@ class Kymo_video_analysis(object):
         return None
 
     def createEdge(self, edge):
-        return Kymo_video_analysis.Kymo_edge_analysis(self, edge)
+        return Kymo_edge_analysis(self, edge)
 
-    class Kymo_edge_analysis(object):
-        def __init__(self, video_analysis, edge_name):
-            self.video_analysis = video_analysis
-            self.edge_name = edge_name
-            self.slices = []
-            self.segments = []
-            self.kymograph = []
-            self.offset = int(np.linalg.norm(self.video_analysis.pos[self.edge_name[0]] - self.video_analysis.pos[self.edge_name[1]])) // 4
-            self.bounds = (0,1)
 
-        def create_segments(self, pos, image, nx_graph_pruned, resolution, offset, step, target_length, bounds):
-            self.slices, self.segments = extract_section_profiles_for_edge(
-                self.edge_name,
-                pos,
-                image,
-                nx_graph_pruned,
-                resolution=resolution,
-                offset=offset,
-                step=step,
-                target_length=target_length,
-                bounds=bounds
-            )
-            return self.segments
+class Kymo_edge_analysis(object):
+    def __init__(self, video_analysis, edge_name):
+        self.video_analysis = video_analysis
+        self.edge_name = edge_name
+        self.slices = []
+        self.segments = []
+        self.kymograph = []
+        self.offset = int(np.linalg.norm(
+            self.video_analysis.pos[self.edge_name[0]] - self.video_analysis.pos[self.edge_name[1]])) // 4
+        self.bounds = (0, 1)
 
-        def extract_kymo(self, resolution=1, step=30, target_length=130, save_array=True, save_im=True):
-            self.kymograph = get_kymo_new(self.edge_name,
-                                          self.video_analysis.pos,
-                                          self.video_analysis.selection_file,
-                                          self.video_analysis.nx_graph_pruned,
-                                          resolution,
-                                          self.offset,
-                                          step,
-                                          target_length,
-                                          self.bounds)
-            if save_array:
-                save_path_temp = os.path.join(self.video_analysis.kymos_path, f"{self.edge_name}kymo.npy")
-                np.save(save_path_temp, self.kymograph)
-                if self.video_analysis.logging:
-                    print('Saved the array')
-            if save_im:
-                im = Image.fromarray(self.kymograph.astype(np.uint8))
-                save_path_temp = os.path.join(self.video_analysis.kymos_path, f"{self.edge_name}kymo.png")
-                im.save(save_path_temp)
-                if self.video_analysis.logging:
-                    print('Saved the image')
-            return self.kymograph
+    def create_segments(self, pos, image, nx_graph_pruned, resolution, offset, step, target_length, bounds):
+        self.slices, self.segments = extract_section_profiles_for_edge(
+            self.edge_name,
+            pos,
+            image,
+            nx_graph_pruned,
+            resolution=resolution,
+            offset=offset,
+            step=step,
+            target_length=target_length,
+            bounds=bounds
+        )
+        return self.segments
+
+    def extract_kymo(self, resolution=1, step=30, target_length=130, save_array=True, save_im=True, bounds=(0, 1)):
+        self.kymograph = get_kymo_new(self.edge_name,
+                                      self.video_analysis.pos,
+                                      self.video_analysis.selection_file,
+                                      self.video_analysis.nx_graph_pruned,
+                                      resolution,
+                                      self.offset,
+                                      step,
+                                      target_length,
+                                      bounds)
+        if save_array:
+            save_path_temp = os.path.join(self.video_analysis.kymos_path, f"{self.edge_name}kymo.npy")
+            np.save(save_path_temp, self.kymograph)
+            if self.video_analysis.logging:
+                print('Saved the array')
+        if save_im:
+            im = Image.fromarray(self.kymograph.astype(np.uint8))
+            save_path_temp = os.path.join(self.video_analysis.kymos_path, f"{self.edge_name}kymo.png")
+            im.save(save_path_temp)
+            if self.video_analysis.logging:
+                print('Saved the image')
+        return self.kymograph
