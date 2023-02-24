@@ -251,6 +251,7 @@ def update_plate_info(
     with tqdm(total=len(listdir), desc="analysed") as pbar:
         for folder in listdir:
             path_snap = os.path.join(directory, folder)
+            print(os.path.join(path_snap, "Img"))
             if os.path.exists(os.path.join(path_snap, "Img")):
                 sub_list_files = os.listdir(os.path.join(path_snap, "Img"))
                 is_real_folder = os.path.isfile(os.path.join(path_snap, "param.m"))
@@ -264,8 +265,8 @@ def update_plate_info(
                     )
                 if is_real_folder:
                     params = get_param(folder, directory)
-                    ss = folder.split("_")[0]
-                    ff = folder.split("_")[1]
+                    ss = folder.split("_")[1]
+                    ff = folder.split("_")[2]
                     date = datetime(
                         year=int(ss[:4]),
                         month=int(ss[4:6]),
