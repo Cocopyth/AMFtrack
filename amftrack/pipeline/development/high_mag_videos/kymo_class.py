@@ -83,7 +83,7 @@ class Kymo_video_analysis(object):
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
                 imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh)
         else:
-            print("I don't have a valid video type!!! Using fluo thresholding.")
+            print("I don't have a valid flow_processing type!!! Using fluo thresholding.")
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
                 imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh)
         self.edges = list(self.nx_graph_pruned.edges)

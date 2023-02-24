@@ -25,7 +25,7 @@ from amftrack.pipeline.functions.post_processing.extract_study_zone import (
 )
 from amftrack.util.dbx import get_dropbox_folders, get_dropbox_folders
 
-video_path = os.path.join(test_path, "video")
+video_path = os.path.join(test_path, "flow_processing")
 from amftrack.pipeline.launching.run import run_transfer
 
 
@@ -38,10 +38,10 @@ def is_equal_seq(list_of_list_1, list_of_list_2):
 
 def has_video():
     """
-    Check if there is a video present to run tests on videos.
-    The video should be several images of the same size in directory `video`.
+    Check if there is a flow_processing present to run tests on videos.
+    The flow_processing should be several images of the same size in directory `flow_processing`.
     """
-    video_path = os.path.join(test_path, "video")
+    video_path = os.path.join(test_path, "flow_processing")
     if os.path.isdir(video_path):
         return True
     return False
@@ -49,9 +49,9 @@ def has_video():
 
 def make_video() -> None:
     """
-    Makes a fake video and a video directory used to test video utils
+    Makes a fake flow_processing and a flow_processing directory used to test flow_processing utils
     """
-    video_path = os.path.join(test_path, "video")
+    video_path = os.path.join(test_path, "flow_processing")
     if not os.path.isdir(video_path):
         os.mkdir(video_path)
 
