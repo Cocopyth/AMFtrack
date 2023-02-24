@@ -54,14 +54,13 @@ def run_parallel(
     op_id = time_ns()
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     length = len(folders)
-    begin_skel = 0
-    end_skel = length // num_parallel + 1
+    num_jobs = length // num_parallel + 1
     args_str = [str(arg) for arg in args]
     arg_str = " ".join(args_str)
     arg_str_out = "_".join([str(arg) for arg in args if type(arg) != str])
-    for j in range(begin_skel, end_skel):
+    for j in range(num_jobs):
         start = num_parallel * j
-        if j == end_skel - 1:
+        if j == num_jobs - 1:
             stop = length
         else:
             stop = num_parallel * j + num_parallel - 1
@@ -73,7 +72,7 @@ def run_parallel(
         my_file.write(
             f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
+        # my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
