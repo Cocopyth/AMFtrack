@@ -1,4 +1,4 @@
-# Get images from Loreto transport data. Only select some images from each video
+# Get images from Loreto transport data. Only select some images from each flow_processing
 
 import os
 import re

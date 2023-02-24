@@ -104,7 +104,7 @@ def make_video_tile(
     color=(0, 255, 255),
 ):
     """
-    This function makes a video out of a list of list of paths.
+    This function makes a flow_processing out of a list of list of paths.
     paths_list is of the form [['path1','path2','path3','path4'],['path5','path6','path7','path8']...]
     where 'path1','path2','path3','path4' correspond to the path of images
     of a single timesteps that one want to tile together.
@@ -169,7 +169,7 @@ def make_video_tile(
 #     """
 #     This function makes images centered on the initial position of some random nodes,
 #     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
-#     it returns the paths_list of those plotted image in the format for tile video making
+#     it returns the paths_list of those plotted image in the format for tile flow_processing making
 #     :param exp:
 #     :param num_tiles: number of such images to tile together
 #     """
@@ -221,7 +221,7 @@ def make_images_track(exp, is_circle=False):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
-    it returns the paths_list of those plotted image in the format for tile video making
+    it returns the paths_list of those plotted image in the format for tile flow_processing making
     :param exp:
     :param num_tiles: number of such images to tile together
     """
@@ -267,7 +267,7 @@ def make_images_spores(exp, num_tiles=4):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
-    it returns the paths_list of those plotted image in the format for tile video making
+    it returns the paths_list of those plotted image in the format for tile flow_processing making
     :param exp:
     :param num_tiles: number of such images to tile together
     """
@@ -305,7 +305,7 @@ def make_images_track2(exp):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
-    it returns the paths_list of those plotted image in the format for tile video making
+    it returns the paths_list of those plotted image in the format for tile flow_processing making
     :param exp:
     :param num_tiles: number of such images to tile together
     """
@@ -343,7 +343,7 @@ def make_images_track3(exp):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
-    it returns the paths_list of those plotted image in the format for tile video making
+    it returns the paths_list of those plotted image in the format for tile flow_processing making
     :param exp:
     :param num_tiles: number of such images to tile together
     """
@@ -389,7 +389,7 @@ def make_images_anas(exp):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
-    it returns the paths_list of those plotted image in the format for tile video making
+    it returns the paths_list of those plotted image in the format for tile flow_processing making
     :param exp:
     :param num_tiles: number of such images to tile together
     """
@@ -424,7 +424,7 @@ def make_images_width(exp):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
-    it returns the paths_list of those plotted image in the format for tile video making
+    it returns the paths_list of those plotted image in the format for tile flow_processing making
     :param exp:
     :param num_tiles: number of such images to tile together
     """
@@ -453,7 +453,7 @@ def make_images_track_hypha(exp, hypha):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
-    it returns the paths_list of those plotted image in the format for tile video making
+    it returns the paths_list of those plotted image in the format for tile flow_processing making
     :param exp:
     :param num_tiles: number of such images to tile together
     """
