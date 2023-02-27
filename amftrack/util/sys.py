@@ -251,7 +251,6 @@ def update_plate_info(
     with tqdm(total=len(listdir), desc="analysed") as pbar:
         for folder in listdir:
             path_snap = os.path.join(directory, folder)
-            print(os.path.join(path_snap, "Img"))
             if os.path.exists(os.path.join(path_snap, "Img")):
                 sub_list_files = os.listdir(os.path.join(path_snap, "Img"))
                 is_real_folder = os.path.isfile(os.path.join(path_snap, "param.m"))
@@ -305,6 +304,70 @@ def get_data_info(local=False, suffix_data_info=""):
             data_info["date"], format="%d.%m.%Y, %H:%M:"
         )
     return data_info
+
+
+
+def get_video_info(directory : str, local=True, suffix_data_info="")-> None:
+    """
+    Create a video_data.json for each video in each plate. json file contains plate info from param files, as well as imaging
+    parameters of videos from param_video files.
+    """
+    listdir = os.listdir(directory)
+    source = f"data_info.json"
+    target = os.path.join(temp_path, f"data_info{suffix_data_info}.json")
+    if local:
+        video_info = {}
+        video_params={}
+    else:
+        download(source, target, end="")
+        video_info = json.load(open(target, "r"))
+    with tqdm(total=len(listdir), desc="analysed") as pbar:
+        params = get_param(directory, "")
+        excel_address = glob(directory + '/*.xlsx')
+        vid_params = pd.read_excel(excel_address[0], engine='openpyxl')
+        #         vid_params.dropna(inplace = True)
+        video_info[directory] = params
+        name_key = vid_params.columns[0]
+        for folder in listdir:
+            path_snap = os.path.join(directory, folder)
+            #             is_real_folder = os.path.isfile(os.path.join(path_snap, 'video_param.txt'))
+            is_real_folder = len(glob(path_snap + '/*.tiff')) > 0
+            if is_real_folder:
+                video_params = {}
+                a = vid_params[(vid_params.values==folder)].to_dict()
+                for key in a:
+                    print([a[key][i] for i in a[key]])
+                    video_params[key] = [a[key][i] for i in a[key]][0]
+                vid_name_examp = glob(path_snap + "/*.tiff")[0].split("/")[-1]
+                #                 print(vid_name_examp)
+                #                 print(folder)
+                ss = folder.split("_")[0]
+                ff = vid_name_examp.split("__")[-1][9:13]
+                #                 print(ff)
+                date = datetime(
+                    year=int(ss[:4]),
+                    month=int(ss[4:6]),
+                    day=int(ss[6:8]),
+                    hour=int(ff[0:2]),
+                    minute=int(ff[2:4])
+                )
+                #                 vid_param_read = open(os.path.join(path_snap, 'video_param.txt'), 'r')
+                #                 Lines = vid_param_read.readlines()
+                #                 for line in Lines:
+                #                     relation = line.split("=")
+                #                     if len(relation) == 2:
+                #                         video_params[relation[0].strip()] = relation[1].strip()
+                video_params["date"] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
+                video_params["folder"] = path_snap
+                video_params["type"] = folder.split("_")[1]
+
+                video_info[folder] = video_params.copy()
+        pbar.update(1)
+        with open(target, "w") as jsonf:
+            json.dump(video_info, jsonf, indent=4)
+    return None
+
+
 
 
 def get_current_folders_local(directory: str) -> pd.DataFrame:
