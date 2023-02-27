@@ -41,10 +41,10 @@ class Kymo_video_analysis(object):
                  fps=20,
                  binning=2,
                  magnification=50,
-                 im_range=(0, -1),
+                 im_range=[0, -1],
                  thresh=5e-07,
                  filter_step=30,
-                 vid_type='FLUO'
+                 vid_type='BRIGHT'
                  ):
         self.imgs_address = imgs_address
         self.fps = fps
@@ -69,6 +69,7 @@ class Kymo_video_analysis(object):
         self.selection_file = self.images_total_path
         self.selection_file.sort()
         self.selection_file = self.selection_file[self.im_range[0]:self.im_range[1]]
+        print(self.selection_file[0])
         if self.logging:
             print('Using image selection {} to {}'.format(self.im_range[0], self.im_range[1]))
         self.pos = []
@@ -79,7 +80,7 @@ class Kymo_video_analysis(object):
         if self.vid_type == 'BRIGHT':
             self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
                 imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh)
-        if self.vid_type == 'FLUO':
+        elif self.vid_type == 'FLUO':
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
                 imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh)
         else:
