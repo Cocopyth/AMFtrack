@@ -4,11 +4,13 @@ from amftrack.util.sys import (
     get_current_folders,
 )
 from amftrack.pipeline.launching.run_super import run_parallel, run_launcher
+from amftrack.pipeline.development.high_mag_videos.kymo_class import *
 
-from amftrack.pipeline.functions.image_processing.extract_width_fun import (
-    get_width_info,
-    get_width_info_new,
-)
+
+# from amftrack.pipeline.functions.image_processing.extract_width_fun import (
+#     get_width_info,
+#     get_width_info_new,
+# )
 
 
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
@@ -37,5 +39,22 @@ name_job = str(sys.argv[2])
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
-run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
+run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"folder": str}).iloc[i]
 print(run_info)
+
+imgs_address = directory
+img_address = run_info.loc["total_path"]
+print(img_address)
+test_video = Kymo_video_analysis(img_address, logging=True, vid_type='FLUO')
+edge_list = test_video.edges
+
+# print('\n To work with individual edges, here is a list of their indices:')
+# for i, edge in enumerate(edge_list):
+#     print('edge {}, {}'.format(i, edge))
+    
+# test_video.plot_extraction_img(save_img=True)
+edge_objs = test_video.edge_objects
+
+bin_nr = 2
+bins = np.linspace(0, 1, bin_nr+1)
+kymo = [edge_obj.extract_kymo(bounds=(0, 1)) for edge_obj in edge_objs]

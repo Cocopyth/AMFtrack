@@ -7,6 +7,7 @@ from datetime import datetime
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     sparse_to_doc,
 )
+from glob import glob
 import cv2
 import json
 import pandas as pd
@@ -295,7 +296,7 @@ def get_data_info(local=False, suffix_data_info=""):
         data_info.index.name = "total_path"
         data_info.reset_index(inplace=True)
         data_info["unique_id"] = (
-            data_info["Plate"].astype(str).astype(int).astype(str)
+            data_info["Plate"].astype(str)
             + "_"
             + data_info["CrossDate"].str.replace("'", "").astype(str)
         )
@@ -322,11 +323,13 @@ def get_video_info(directory : str, local=True, suffix_data_info="")-> None:
         download(source, target, end="")
         video_info = json.load(open(target, "r"))
     with tqdm(total=len(listdir), desc="analysed") as pbar:
-        params = get_param(directory, "")
+#         params = get_param(directory, "")
         excel_address = glob(directory + '/*.xlsx')
         vid_params = pd.read_excel(excel_address[0], engine='openpyxl')
         #         vid_params.dropna(inplace = True)
-        video_info[directory] = params
+#         video_info[directory] = params
+#         print(directory.split("/")[-2])
+        plate, cross_date = directory.split("/")[-2].split("_")
         name_key = vid_params.columns[0]
         for folder in listdir:
             path_snap = os.path.join(directory, folder)
@@ -358,10 +361,12 @@ def get_video_info(directory : str, local=True, suffix_data_info="")-> None:
                 #                     if len(relation) == 2:
                 #                         video_params[relation[0].strip()] = relation[1].strip()
                 video_params["date"] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
-                video_params["folder"] = path_snap
+                video_params["folder"] = path_snap.split("/")[-1]
                 video_params["type"] = folder.split("_")[1]
+                video_params["Plate"] = plate
+                video_params["CrossDate"] = cross_date
 
-                video_info[folder] = video_params.copy()
+                video_info[directory + folder] = video_params.copy()
         pbar.update(1)
         with open(target, "w") as jsonf:
             json.dump(video_info, jsonf, indent=4)
@@ -402,7 +407,11 @@ def get_current_folders(
     """
     # TODO(FK): solve the / problem
     plate_info = get_data_info(local, suffix_data_info)
+#     print(len(plate_info))
     listdir = os.listdir(directory)
+#     print(listdir)
+    print(plate_info["total_path"][0])
+    print(directory + plate_info["folder"][0])
     if len(plate_info) > 0:
         return plate_info.loc[
             np.isin(plate_info["folder"], listdir)
