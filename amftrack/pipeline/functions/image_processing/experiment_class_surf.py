@@ -873,6 +873,34 @@ class Edge:
             ],
             self.begin.pos(t),
         )
+    def current_flow_betweeness(self, t: int) -> List[coord_int]:
+        """
+        Return the current flow betweenness, will only work if it has been previously computed
+        """
+        return (self.experiment.nx_graph[t].get_edge_data(self.begin.label, self.end.label)[
+                "current_flow_betweenness"
+            ])
+
+    def betweeness(self, t: int) -> List[coord_int]:
+        """
+        Return the betweenness, will only work if it has been previously computed
+
+        """
+        return (self.experiment.nx_graph[t].get_edge_data(self.begin.label, self.end.label)[
+            "betweenness"
+        ])
+    def length_um(self,t):
+        pixel_conversion_factor = 1.725
+        length_edge = 0
+        pixels = self.pixel_list(t)
+        for i in range(len(pixels) // 10 + 1):
+            if i * 10 <= len(pixels) - 1:
+                length_edge += np.linalg.norm(
+                    np.array(pixels[i * 10])
+                    - np.array(pixels[min((i + 1) * 10, len(pixels) - 1)])
+                )
+        #             length_edge+=np.linalg.norm(np.array(pixels[len(pixels)//10-1*10-1])-np.array(pixels[-1]))
+        return length_edge * pixel_conversion_factor
 
     def width(self, t):
         # TODO(FK): keep as a function?
