@@ -224,7 +224,7 @@ def run_parallel_stitch(
 
     for folder in folder_list:
         path_im_copy = f"{directory}/{folder}/Img/Img_r03_c05.tif"
-        if os.path.isfile(path_im_copy):
+        if os.path.isfile(path_im_copy) and os.path.getsize(path_im_copy) >= 1e6:
             # im = imageio.imread(path_im_copy)
             for x in range(1, size_x):
                 for y in range(1, size_y):
