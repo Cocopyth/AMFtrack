@@ -18,11 +18,12 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_hulls_skelet,
     plot_full,
     reconstruct_image_from_general,
-    plot_edge_width
+    plot_edge_color_value
 )
 from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
     get_anastomosing_hyphae,
 )
+from matplotlib import cm
 
 from amftrack.pipeline.functions.post_processing.area_hulls import is_in_study_zone
 from amftrack.pipeline.functions.post_processing.extract_study_zone import (
@@ -436,17 +437,73 @@ def make_images_width(exp):
         path = path + ".png"
         paths.append([path])
         exp.load_tile_information(t)
-        plot_edge_width(
+        plot_edge_color_value(
             exp, t,
             lambda edge: edge.width(t),
             plot_cmap=True,
             dilation=4,
 
-            max_width=13,
+            v_max=13,
             save_path=path,
             dpi=400,
 
         )
+    return paths
+
+def make_images_betweenness(exp):
+    """
+    This function makes images centered on the initial position of some random nodes,
+    plots the skeleton on top of the raw image, the label of the nodes at different timesteps
+    it returns the paths_list of those plotted image in the format for tile video making
+    :param exp:
+    :param num_tiles: number of such images to tile together
+    """
+    paths = []
+
+    for t in range(exp.ts):
+        path = f"plot_betweenness_{time_ns()}"
+        path = os.path.join(temp_path, path)
+        path = path + ".png"
+        paths.append([path])
+        exp.load_tile_information(t)
+        vmax = -2.5
+        vmin = -4.5
+        plot_edge_color_value(exp, t,
+                              lambda edge: np.log10(edge.current_flow_betweeness(t)), cmap=cm.get_cmap("Reds", 100),
+                              v_min=vmin, v_max=vmax,
+                              plot_cmap=True, show_background=False, dilation=10,
+                              label_colorbar="log random walk edge betweenness centrality",
+                              save_path=path,
+                              dpi=400,
+                              )
+    return paths
+
+def make_images_betweenness_random(exp):
+    """
+    This function makes images centered on the initial position of some random nodes,
+    plots the skeleton on top of the raw image, the label of the nodes at different timesteps
+    it returns the paths_list of those plotted image in the format for tile video making
+    :param exp:
+    :param num_tiles: number of such images to tile together
+    """
+    paths = []
+
+    for t in range(exp.ts):
+        path = f"plot_width_{time_ns()}"
+        path = os.path.join(temp_path, path)
+        path = path + ".png"
+        paths.append([path])
+        exp.load_tile_information(t)
+        vmax = -2.5
+        vmin = -4.5
+        plot_edge_color_value(exp, t,
+                              lambda edge: np.log10(edge.betweeness(t)), cmap=cm.get_cmap("Reds", 100),
+                              v_min=vmin, v_max=vmax,
+                              plot_cmap=True, show_background=False, dilation=10,
+                              label_colorbar="log random walk edge betweenness centrality",
+                              save_path=path,
+                              dpi=400,
+                              )
     return paths
 
 def make_images_track_hypha(exp, hypha):

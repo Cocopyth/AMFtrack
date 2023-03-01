@@ -20,4 +20,4 @@ folder_list = list(run_info["folder"])
 folder_list.sort()
 directory_name = folder_list[i]
 line = run_info.loc[run_info["folder"] == directory_name]
-upload_folders(line, dir_drop=dir_drop, delete=delete, catch_exception=True)
+upload_folders(line, dir_drop=dir_drop, delete=delete, catch_exception=False)
