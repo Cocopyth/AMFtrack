@@ -450,7 +450,7 @@ def make_images_width(exp):
         )
     return paths
 
-def make_images_betweenness(exp):
+def make_images_betweenness_random(exp):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
@@ -478,7 +478,7 @@ def make_images_betweenness(exp):
                               )
     return paths
 
-def make_images_betweenness_random(exp):
+def make_images_betweenness(exp):
     """
     This function makes images centered on the initial position of some random nodes,
     plots the skeleton on top of the raw image, the label of the nodes at different timesteps
