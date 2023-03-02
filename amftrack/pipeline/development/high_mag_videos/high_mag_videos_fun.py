@@ -349,6 +349,44 @@ def get_kymo_new(
     return np.array(kymo)
 
 
+def get_edge_image(edge, pos, images_address,
+                   nx_graph_pruned,
+                   resolution=1,
+                   offset=4,
+                   step=15,
+                   target_length=10,
+                   img_frame=0,
+                   bounds=(0, 1),
+                   order=None):
+    pixel_list = orient(nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
+    offset = max(
+        offset, step
+    )  # avoiding index out of range at start and end of pixel_list
+    pixel_indexes = generate_pivot_indexes(
+        len(pixel_list), resolution=resolution, offset=offset
+    )
+    list_of_segments = compute_section_coordinates(
+        pixel_list, pixel_indexes, step=step, target_length=target_length + 1)
+    perp_lines = []
+    for i, sect in enumerate(list_of_segments):
+        point1 = np.array([sect[0][0], sect[0][1]])
+        point2 = np.array([sect[1][0], sect[1][1]])
+        perp_lines.append(extract_perp_lines(point1, point2))
+
+    im = imageio.imread(images_address[img_frame])
+    order = validate_interpolation_order(im.dtype, order)
+    l = []
+    for perp_line in perp_lines:
+        pixels = ndi.map_coordinates(im, perp_line, prefilter=order > 1, order=order, mode='reflect', cval=0.0)
+        pixels = np.flip(pixels, axis=1)
+        pixels = pixels[int(bounds[0] * target_length): int(bounds[1] * target_length)]
+        pixels = pixels.reshape((1, len(pixels)))
+        # TODO(FK): Add thickness of the profile here
+        l.append(pixels)
+    slices = np.concatenate(l, axis=0)
+    return slices
+
+
 def extract_perp_lines(src, dst, linewidth=1):
     src_row, src_col = src = np.asarray(src, dtype=float)
     dst_row, dst_col = dst = np.asarray(dst, dtype=float)

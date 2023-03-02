@@ -41,12 +41,12 @@ class Kymo_video_analysis(object):
                  fps=20,
                  binning=2,
                  magnification=50,
-                 im_range=[0, -1],
+                 im_range=(0, -1),
                  thresh=5e-07,
                  filter_step=30,
                  vid_type='BRIGHT'
                  ):
-        self.imgs_address = imgs_address
+        self.imgs_address = os.path.join(imgs_address, 'Img')
         self.fps = fps
         self.vid_type = vid_type
         self.logging = logging
@@ -57,10 +57,10 @@ class Kymo_video_analysis(object):
         self.magnification = magnification
         self.video_name = imgs_address.split("/")[-1]
         self.kymos_path = "/".join(
-            imgs_address.split("/")[:-1] + ["_".join((self.video_name, "kymos"))]
+            imgs_address.split("/")[:-1] + ["".join((self.video_name, "Analysis"))]
         )
         if not os.path.exists(self.kymos_path):
-            os.mkdir(self.kymos_path)
+            os.makedirs(self.kymos_path)
         if self.logging:
             print('Kymos file created, address is at {}'.format(self.kymos_path))
         self.files = os.listdir(self.imgs_address)
@@ -69,7 +69,7 @@ class Kymo_video_analysis(object):
         self.selection_file = self.images_total_path
         self.selection_file.sort()
         self.selection_file = self.selection_file[self.im_range[0]:self.im_range[1]]
-        print(self.selection_file[0])
+        # print(self.selection_file[0])
         if self.logging:
             print('Using image selection {} to {}'.format(self.im_range[0], self.im_range[1]))
         self.pos = []
@@ -149,7 +149,7 @@ class Kymo_video_analysis(object):
                 )
         plt.show()
         if save_img:
-            save_path_temp = os.path.join(self.kymos_path, f"extraction.png")
+            save_path_temp = os.path.join(self.kymos_path, f"Detected edges.png")
             plt.savefig(save_path_temp)
             print("Just saved an image, sir!")
         return None
@@ -169,6 +169,35 @@ class Kymo_edge_analysis(object):
         self.offset = int(np.linalg.norm(
             self.video_analysis.pos[self.edge_name[0]] - self.video_analysis.pos[self.edge_name[1]])) // 4
         self.bounds = (0, 1)
+        self.edge_array = []
+
+    def view_edge(self,
+                  resolution=1,
+                  step=30,
+                  target_length=130,
+                  save_im=True,
+                  bounds=(0, 1),
+                  img_frame=0):
+        self.edge_array = get_edge_image(self.edge_name,
+                                    self.video_analysis.pos,
+                                    self.video_analysis.selection_file,
+                                    self.video_analysis.nx_graph_pruned,
+                                    resolution,
+                                    self.offset,
+                                    step,
+                                    target_length,
+                                    img_frame,
+                                    bounds)
+        # fig, ax = plt.subplots()
+        # ax.imshow(self.edge_array)
+        if save_im:
+            im = Image.fromarray(self.edge_array.astype(np.uint8))
+            save_path_temp = os.path.join(self.video_analysis.kymos_path, f"{self.edge_name} edge.png")
+            im.save(save_path_temp)
+            if self.video_analysis.logging:
+                print('Saved the image')
+        return self.edge_array
+
 
     def create_segments(self, pos, image, nx_graph_pruned, resolution, offset, step, target_length, bounds):
         self.slices, self.segments = extract_section_profiles_for_edge(
@@ -199,7 +228,8 @@ class Kymo_edge_analysis(object):
                                         step=step,
                                         target_length=target_length,
                                         save_array=save_array,
-                                        save_im=save_im)
+                                        save_im=save_im,
+                                        img_suffix=str(i))
                       for i in range(bin_nr)]
         return self.kymos
 
@@ -209,7 +239,8 @@ class Kymo_edge_analysis(object):
                      target_length=130,
                      save_array=True,
                      save_im=True,
-                     bounds=(0, 1)):
+                     bounds=(0, 1),
+                     img_suffix=""):
         self.kymo = get_kymo_new(self.edge_name,
                                  self.video_analysis.pos,
                                  self.video_analysis.selection_file,
@@ -220,13 +251,13 @@ class Kymo_edge_analysis(object):
                                  target_length,
                                  bounds)
         if save_array:
-            save_path_temp = os.path.join(self.video_analysis.kymos_path, f"{self.edge_name}kymo.npy")
+            save_path_temp = os.path.join(self.video_analysis.kymos_path, f"{self.edge_name} {img_suffix} kymo.npy")
             np.save(save_path_temp, self.kymo)
             if self.video_analysis.logging:
                 print('Saved the array')
         if save_im:
             im = Image.fromarray(self.kymo.astype(np.uint8))
-            save_path_temp = os.path.join(self.video_analysis.kymos_path, f"{self.edge_name}kymo.png")
+            save_path_temp = os.path.join(self.video_analysis.kymos_path, f"{self.edge_name} {img_suffix} kymo.png")
             im.save(save_path_temp)
             if self.video_analysis.logging:
                 print('Saved the image')
