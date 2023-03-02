@@ -5,7 +5,6 @@ import cv2
 from scipy import ndimage as ndi
 from tqdm import tqdm
 
-
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_sparse_to_graph,
     generate_nx_graph,
@@ -94,7 +93,7 @@ def extract_section_profiles_for_edge(
         offset=4,
         step=15,
         target_length=120,
-        bounds=(0,1),
+        bounds=(0, 1),
 ) -> np.array:
     """
     Main function to extract section profiles of an edge.
@@ -134,7 +133,7 @@ def extract_section_profiles_for_edge(
     return np.concatenate(l, axis=0), list_of_segments
 
 
-def plot_segments_on_image(segments, ax, color="red", bounds=(0,1), alpha=1):
+def plot_segments_on_image(segments, ax, color="red", bounds=(0, 1), alpha=1):
     for (point1_pivot, point2_pivot) in segments:
         point1 = (1 - bounds[0]) * point1_pivot + bounds[0] * point2_pivot
         point2 = (1 - bounds[1]) * point1_pivot + bounds[1] * point2_pivot
@@ -313,9 +312,9 @@ def get_kymo_new(
         offset=4,
         step=15,
         target_length=10,
-        bounds=(0,1),
+        bounds=(0, 1),
         order=None
-    ):
+):
     pixel_list = orient(nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
     offset = max(
         offset, step
@@ -326,7 +325,7 @@ def get_kymo_new(
     list_of_segments = compute_section_coordinates(
         pixel_list, pixel_indexes, step=step, target_length=target_length + 1)
     perp_lines = []
-    kymo=[]
+    kymo = []
     for i, sect in enumerate(list_of_segments):
         point1 = np.array([sect[0][0], sect[0][1]])
         point2 = np.array([sect[1][0], sect[1][1]])
@@ -339,15 +338,16 @@ def get_kymo_new(
         for perp_line in perp_lines:
             pixels = ndi.map_coordinates(im, perp_line, prefilter=order > 1, order=order, mode='reflect', cval=0.0)
             pixels = np.flip(pixels, axis=1)
-            pixels = pixels[int(bounds[0] * target_length) : int(bounds[1] * target_length)]
+            pixels = pixels[int(bounds[0] * target_length): int(bounds[1] * target_length)]
             pixels = pixels.reshape((1, len(pixels)))
-        # TODO(FK): Add thickness of the profile here
+            # TODO(FK): Add thickness of the profile here
             l.append(pixels)
 
         slices = np.concatenate(l, axis=0)
         kymo_line = np.mean(slices, axis=1)
         kymo.append(kymo_line)
     return np.array(kymo)
+
 
 def extract_perp_lines(src, dst, linewidth=1):
     src_row, src_col = src = np.asarray(src, dtype=float)
@@ -408,6 +408,7 @@ def validate_interpolation_order(image_dtype, order):
             "cast input image to another data type.")
 
     return order
+
 
 def segment_fluo(image, thresh=0.5e-7, k_size=5):
     kernel = np.ones((k_size, k_size), np.uint8)

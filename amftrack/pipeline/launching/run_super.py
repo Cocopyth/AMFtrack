@@ -15,8 +15,11 @@ directory_project = "/projects/0/einf914/data/"
 directory_archive = "/archive/cbisot/"
 directory_sun = "/run/user/357100554/gvfs/smb-share:server=sun.amolf.nl,share=shimizu-data,user=bisot/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE/"
 
-
-path_bash = os.getenv("HOME") + "/bash/"
+if os.getenv("HOME") is not None:
+    path_bash = os.getenv("HOME") + "/bash/"
+else:
+    print("This is not a linux system, I am lost")
+    path_bash = "dfdfsfd"
 path_stitch = f"{temp_path}/stitching_loops/"
 if not os.path.isdir(path_stitch):
     os.mkdir(path_stitch)
