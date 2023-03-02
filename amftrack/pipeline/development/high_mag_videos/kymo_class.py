@@ -164,7 +164,8 @@ class Kymo_edge_analysis(object):
         self.edge_name = edge_name
         self.slices = []
         self.segments = []
-        self.kymograph = []
+        self.kymo = []
+        self.kymos = []
         self.offset = int(np.linalg.norm(
             self.video_analysis.pos[self.edge_name[0]] - self.video_analysis.pos[self.edge_name[1]])) // 4
         self.bounds = (0, 1)
@@ -183,25 +184,50 @@ class Kymo_edge_analysis(object):
         )
         return self.segments
 
-    def extract_kymo(self, resolution=1, step=30, target_length=130, save_array=True, save_im=True, bounds=(0, 1)):
-        self.kymograph = get_kymo_new(self.edge_name,
-                                      self.video_analysis.pos,
-                                      self.video_analysis.selection_file,
-                                      self.video_analysis.nx_graph_pruned,
-                                      resolution,
-                                      self.offset,
-                                      step,
-                                      target_length,
-                                      bounds)
+    def extract_multi_kymo(self,
+                           bin_nr,
+                           resolution=1,
+                           step=30,
+                           target_length=130,
+                           save_array=True,
+                           save_im=True,
+                           bounds=(0, 1)):
+        bin_edges = np.linspace(bounds[0], bounds[1], bin_nr + 1)
+        self.kymos = [self.extract_kymo(bounds=(bin_edges[i],
+                                                bin_edges[i + 1]),
+                                        resolution=resolution,
+                                        step=step,
+                                        target_length=target_length,
+                                        save_array=save_array,
+                                        save_im=save_im)
+                      for i in range(bin_nr)]
+        return self.kymos
+
+    def extract_kymo(self,
+                     resolution=1,
+                     step=30,
+                     target_length=130,
+                     save_array=True,
+                     save_im=True,
+                     bounds=(0, 1)):
+        self.kymo = get_kymo_new(self.edge_name,
+                                 self.video_analysis.pos,
+                                 self.video_analysis.selection_file,
+                                 self.video_analysis.nx_graph_pruned,
+                                 resolution,
+                                 self.offset,
+                                 step,
+                                 target_length,
+                                 bounds)
         if save_array:
             save_path_temp = os.path.join(self.video_analysis.kymos_path, f"{self.edge_name}kymo.npy")
-            np.save(save_path_temp, self.kymograph)
+            np.save(save_path_temp, self.kymo)
             if self.video_analysis.logging:
                 print('Saved the array')
         if save_im:
-            im = Image.fromarray(self.kymograph.astype(np.uint8))
+            im = Image.fromarray(self.kymo.astype(np.uint8))
             save_path_temp = os.path.join(self.video_analysis.kymos_path, f"{self.edge_name}kymo.png")
             im.save(save_path_temp)
             if self.video_analysis.logging:
                 print('Saved the image')
-        return self.kymograph
+        return self.kymo
