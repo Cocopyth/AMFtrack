@@ -61,7 +61,7 @@ t = time()
 xs = [c[0] for c in tileconfig[2]]
 ys = [c[1] for c in tileconfig[2]]
 name = tileconfig[0][0]
-imname = "/Img3/" + name.split("/")[-1]
+imname = "/Img/" + name.split("/")[-1]
 im = imageio.imread(directory + directory_name + imname)
 dim = (
     int(np.max(ys) - np.min(ys)) + max(im.shape),
@@ -87,9 +87,9 @@ print("number to reduce : ", np.sum(skel > 0), np.sum(skel <= 0))
 skeletonized = cv2.ximgproc.thinning(np.array(255 * (skel > 0), dtype=np.uint8))
 skel_sparse = sparse.lil_matrix(skel)
 sio.savemat(
-    path_snap + "/Analysis/skeleton2.mat",
+    path_snap + "/Analysis/skeleton.mat",
     {"skeleton": scipy.sparse.csc_matrix(skeletonized)},
 )
 compressed = cv2.resize(skeletonized, (dim[1] // 5, dim[0] // 5))
-sio.savemat(path_snap + "/Analysis/skeleton_compressed2.mat", {"skeleton": compressed})
+sio.savemat(path_snap + "/Analysis/skeleton_compressed.mat", {"skeleton": compressed})
 print("time=", time() - t)

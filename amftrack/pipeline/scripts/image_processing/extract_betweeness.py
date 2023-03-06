@@ -62,18 +62,27 @@ nodes_sink = [node for node in nodes if is_in_study_zone(node,t,1000,150)[1] and
 G = exp.nx_graph[t]
 S = [G.subgraph(c).copy() for c in nx.connected_components(G)]
 len_connected=[len(nx_graph.nodes) for nx_graph in S]
-G_connected = S[np.argmax(len_connected)]
-source = [node.label for node in nodes_source if node.label in G_connected]
-sink = [node.label for node in nodes_sink if node.label in G_connected]
-current_flow_betweeness = nx.edge_current_flow_betweenness_centrality_subset(G_connected,source,sink,weight = "length")
-betweeness = nx.edge_betweenness_centrality_subset(G_connected,source,sink,weight = "length",normalized=True)
+final_current_flow_betweeness = {}
+final_betweeness = {}
+for g in S:
+    source = [node.label for node in nodes_source if node.label in g]
+    sink = [node.label for node in nodes_sink if node.label in g]
+    current_flow_betweeness = nx.edge_current_flow_betweenness_centrality_subset(g, source, sink, weight="length")
+    betweeness = nx.edge_betweenness_centrality_subset(g, source, sink, normalized=True, weight="length")
+    for edge in current_flow_betweeness.keys():
+        final_current_flow_betweeness[edge] = current_flow_betweeness[edge]
+    for edge in betweeness.keys():
+        final_betweeness[edge] = betweeness[edge]
+
 for edge in exp.nx_graph[t].edges:
-    if edge not in current_flow_betweeness.keys() and (edge[1],edge[0]) not in current_flow_betweeness.keys():
-        current_flow_betweeness[edge] = 0
-        betweeness[edge] = 0
-nx.set_edge_attributes(exp.nx_graph[t] , current_flow_betweeness, "current_flow_betweenness")
-nx.set_edge_attributes(exp.nx_graph[t] , betweeness, "betweenness")
-(G, pos) = exp.nx_graph[0], exp.positions[0]
+    if edge not in final_current_flow_betweeness.keys() and (
+    edge[1], edge[0]) not in final_current_flow_betweeness.keys():
+        final_current_flow_betweeness[edge] = 0
+    if edge not in final_betweeness.keys() and (edge[1], edge[0]) not in final_betweeness.keys():
+        final_betweeness[edge] = 0
+nx.set_edge_attributes(exp.nx_graph[t], final_current_flow_betweeness, "current_flow_betweenness")
+nx.set_edge_attributes(exp.nx_graph[t], final_betweeness, "betweenness")
+(G, pos) = exp.nx_graph[t], exp.positions[t]
 path_snap = directory + directory_name
 
 pickle.dump((G, pos), open(f"{path_snap}/Analysis/nx_graph_pruned_labeled.p", "wb"))
