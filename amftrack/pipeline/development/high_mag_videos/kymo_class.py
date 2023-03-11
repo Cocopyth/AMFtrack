@@ -331,12 +331,12 @@ class Kymo_edge_analysis(object):
                             speeds[i],
                             label=self.edge_name if i == 0 else None,
                         )
-                ax.set_ylabel("speed($\mu m.s^{-1}$)")
-                ax.set_xlabel("time ($s$)")
+                    ax.set_ylabel("speed($\mu m.s^{-1}$)")
+                    ax.set_xlabel("time ($s$)")
             # np.concatenate((speeds_tot, speeds))
             speeds_tot.append(speeds)
-
-        ax.legend()
-        fig.tight_layout()
+        if speedplot:
+            ax.legend()
+            fig.tight_layout()
 
         return np.array(speeds_tot), times
