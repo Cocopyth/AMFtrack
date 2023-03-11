@@ -159,15 +159,20 @@ class Kymo_video_analysis(object):
 
 
 class Kymo_edge_analysis(object):
-    def __init__(self, video_analysis, edge_name):
-        self.video_analysis = video_analysis
-        self.edge_name = edge_name
+    def __init__(self, video_analysis, edge_name, kymo=None):
+        if kymo is None:
+            self.video_analysis = video_analysis
+            self.edge_name = edge_name
+            self.offset = int(np.linalg.norm(
+                self.video_analysis.pos[self.edge_name[0]] - self.video_analysis.pos[self.edge_name[1]])) // 4
+
+            self.kymo = []
+            self.kymos = []
+        else:
+            self.kymo = kymo
+            self.kymos = [kymo]
         self.slices = []
         self.segments = []
-        self.kymo = []
-        self.kymos = []
-        self.offset = int(np.linalg.norm(
-            self.video_analysis.pos[self.edge_name[0]] - self.video_analysis.pos[self.edge_name[1]])) // 4
         self.bounds = (0, 1)
         self.edge_array = []
 
