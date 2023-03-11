@@ -159,7 +159,7 @@ class Kymo_video_analysis(object):
 
 
 class Kymo_edge_analysis(object):
-    def __init__(self, video_analysis, edge_name, kymo=None):
+    def __init__(self, video_analysis=None, edge_name=None, kymo=None):
         if kymo is None:
             self.video_analysis = video_analysis
             self.edge_name = edge_name
@@ -169,8 +169,12 @@ class Kymo_edge_analysis(object):
             self.kymo = []
             self.kymos = []
         else:
-            self.kymo = kymo
+            if len(kymo.shape) == 2:
+                self.kymo = kymo
             self.kymos = [kymo]
+            self.edge_name = (-1, -1)
+        self.filtered_left = []
+        self.filtered_right = []
         self.slices = []
         self.segments = []
         self.bounds = (0, 1)
@@ -184,15 +188,15 @@ class Kymo_edge_analysis(object):
                   bounds=(0, 1),
                   img_frame=0):
         self.edge_array = get_edge_image(self.edge_name,
-                                    self.video_analysis.pos,
-                                    self.video_analysis.selection_file,
-                                    self.video_analysis.nx_graph_pruned,
-                                    resolution,
-                                    self.offset,
-                                    step,
-                                    target_length,
-                                    img_frame,
-                                    bounds)
+                                         self.video_analysis.pos,
+                                         self.video_analysis.selection_file,
+                                         self.video_analysis.nx_graph_pruned,
+                                         resolution,
+                                         self.offset,
+                                         step,
+                                         target_length,
+                                         img_frame,
+                                         bounds)
         # fig, ax = plt.subplots()
         # ax.imshow(self.edge_array)
         if save_im:
@@ -202,7 +206,6 @@ class Kymo_edge_analysis(object):
             if self.video_analysis.logging:
                 print('Saved the image')
         return self.edge_array
-
 
     def create_segments(self, pos, image, nx_graph_pruned, resolution, offset, step, target_length, bounds):
         self.slices, self.segments = extract_section_profiles_for_edge(
@@ -267,3 +270,73 @@ class Kymo_edge_analysis(object):
             if self.video_analysis.logging:
                 print('Saved the image')
         return self.kymo
+
+    def fourier_kymo(self):
+        if len(self.kymos) > 0:
+            self.filtered_left = [filter_kymo_left(kymo) for kymo in self.kymos]
+            self.filtered_right = [np.flip(filter_kymo_left(np.flip(kymo, axis=1)), axis=1) for kymo in self.kymos]
+        return self.filtered_left, self.filtered_right
+
+    def extract_speeds(self, speed_thresh=20, plots=False, speedplot=False, w=3, c_thr=0.95, klen=25,
+                       magnification=2 * 1.725, binning=1, fps=1):
+        speeds_tot = []
+        times = []
+        kernel = np.ones((klen, klen)) / klen ** 2
+        space_pixel_size = 2 * 1.725 / (magnification) * binning  # um.pixel
+        time_pixel_size = 1 / fps  # s.pixel
+
+        speed_dataframe = pd.DataFrame()
+
+        if speedplot:
+            fig, ax = plt.subplots(len(self.kymos))
+
+        for j, kymo in enumerate(self.kymos):
+            nans = np.empty(kymo.shape)
+            nans.fill(np.nan)
+            speeds = [[], []]
+            for i in [0, 1]:
+                kymo_interest = [self.filtered_left[j], self.filtered_right[j]][i]
+                imgCoherency, imgOrientation = calcGST(kymo, w)
+                real_movement = np.where(imgCoherency > c_thr, imgOrientation, nans)
+                speed = (
+                        np.tan((real_movement - 90) / 180 * np.pi)
+                        * space_pixel_size
+                        / time_pixel_size
+                )
+                speed = np.where(speed < 20, speed, nans)
+                speed = np.where(speed > -20, speed, nans)
+                z1 = scipy.signal.convolve2d(imgCoherency, kernel, mode="same")
+                speed = np.where(z1 > 0.8, speed, nans)
+                if i == 0:
+                    times.append(np.array(range(kymo.shape[0])) * time_pixel_size)
+
+                label = self.edge_name if i == 0 else None
+                speeds[i] = speed
+                direction = np.array(["root" if i == 0 else "tip" for k in range(speed.shape[0])])
+                edges_list = np.array([str(self.edge_name) for k in range(speed.shape[0])])
+
+                data = pd.DataFrame(
+                    np.transpose((times[j], np.nanmean(speeds[i], axis=1), edges_list, direction)),
+                    columns=["time (s)", "speed (um.s-1)", "edge", "direction"],
+                )
+                speed_dataframe = pd.concat((speed_dataframe, data))
+                if speedplot:
+                    if len(self.kymos) == 1:
+                        p = ax.imshow(
+                            speeds[i],
+                            label=self.edge_name if i == 0 else None,
+                        )
+                    elif len(self.kymos) > 1:
+                        p = ax[j].imshow(
+                            speeds[i],
+                            label=self.edge_name if i == 0 else None,
+                        )
+                ax.set_ylabel("speed($\mu m.s^{-1}$)")
+                ax.set_xlabel("time ($s$)")
+            # np.concatenate((speeds_tot, speeds))
+            speeds_tot.append(speeds)
+
+        ax.legend()
+        fig.tight_layout()
+
+        return np.array(speeds_tot), times
