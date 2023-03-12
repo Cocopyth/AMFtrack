@@ -930,18 +930,10 @@ def plot_edge_color_value(
     color_list = (
         [(np.array(color) * 255).astype(int) for color in colors] if plot_cmap else None
     )
-    skel_im, _ = reconstruct_skeletton_from_edges(
-        exp,
-        t,
-        edges=edges,
-        region=region,
-        color_seeds=colors,
-        color_list=color_list,
-        downsizing=downsizing,
-        dilation=dilation,
-        timestep=False
-
-    )
+    from_edges = reconstruct_skeletton_from_edges(exp, t, edges=edges, region=region, color_seeds=colors,
+                                                  color_list=color_list, downsizing=downsizing, dilation=dilation,
+                                                  timestep=False)
+    skel_im, _ = from_edges
     new_region = [
         f_int(region[0]),
         f_int(region[1]),
