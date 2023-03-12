@@ -84,7 +84,7 @@ def get_length_in_ring(hull1, hull2, t, exp):
     nodes = get_nodes_in_ring(hull1, hull2, t, exp)
     edges = {edge for node in nodes for edge in node.edges(t)}
     tot_length = np.sum(
-        [np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725 for edge in edges]
+        [np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725/2 for edge in edges]
     )
     return tot_length
 

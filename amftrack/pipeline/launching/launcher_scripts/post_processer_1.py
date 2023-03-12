@@ -62,6 +62,7 @@ list_f = [
     get_area_study_zone,
     get_num_tips_study_zone,
     get_num_nodes_study_zone,
+    get_num_edges,
     get_length_tot,
     get_length_study_zone,
     get_is_out_study,

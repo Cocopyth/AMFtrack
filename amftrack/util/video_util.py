@@ -471,7 +471,7 @@ def make_images_betweenness_random(exp):
         vmax = -2.5
         vmin = -4.5
         plot_edge_color_value(exp, t,
-                              lambda edge: np.log10(edge.current_flow_betweeness(t)), cmap=cm.get_cmap("Reds", 100),
+                              lambda edge: np.log10(edge.current_flow_betweeness(t)), cmap=cm.get_cmap("viridis", 100),
                               v_min=vmin, v_max=vmax,
                               plot_cmap=True, show_background=False, dilation=10,
                               label_colorbar="log random walk edge betweenness centrality",
