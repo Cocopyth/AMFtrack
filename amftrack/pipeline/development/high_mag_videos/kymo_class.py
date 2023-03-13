@@ -296,15 +296,15 @@ class Kymo_edge_analysis(object):
             speeds = [[], []]
             for i in [0, 1]:
                 kymo_interest = [self.filtered_left[j], self.filtered_right[j]][i]
-                imgCoherency, imgOrientation = calcGST(kymo, w)
+                imgCoherency, imgOrientation = calcGST(kymo_interest, w)
                 real_movement = np.where(imgCoherency > c_thr, imgOrientation, nans)
                 speed = (
                         np.tan((real_movement - 90) / 180 * np.pi)
                         * space_pixel_size
                         / time_pixel_size
                 )
-                speed = np.where(speed < 20, speed, nans)
-                speed = np.where(speed > -20, speed, nans)
+                speed = np.where(speed < speed_thresh, speed, nans)
+                speed = np.where(speed > -1*speed_thresh, speed, nans)
                 z1 = scipy.signal.convolve2d(imgCoherency, kernel, mode="same")
                 speed = np.where(z1 > 0.8, speed, nans)
                 if i == 0:
@@ -320,19 +320,21 @@ class Kymo_edge_analysis(object):
                     columns=["time (s)", "speed (um.s-1)", "edge", "direction"],
                 )
                 speed_dataframe = pd.concat((speed_dataframe, data))
-                if speedplot:
-                    if len(self.kymos) == 1:
-                        p = ax.imshow(
-                            speeds[i],
-                            label=self.edge_name if i == 0 else None,
-                        )
-                    elif len(self.kymos) > 1:
-                        p = ax[j].imshow(
-                            speeds[i],
-                            label=self.edge_name if i == 0 else None,
-                        )
-                    ax.set_ylabel("speed($\mu m.s^{-1}$)")
-                    ax.set_xlabel("time ($s$)")
+            if speedplot:
+                if len(self.kymos) == 1:
+                    p = ax.imshow(
+                        np.nansum([speeds[0], speeds[1]], 0),
+                        label=self.edge_name if i == 0 else None,
+                        cmap='bwr'
+                    )
+                elif len(self.kymos) > 1:
+                    p = ax[j].imshow(
+                        speeds[i],
+                        label=self.edge_name if i == 0 else None,
+                        cmap='bwr'
+                    )
+                ax.set_ylabel("speed($\mu m.s^{-1}$)")
+                ax.set_xlabel("time ($s$)")
             # np.concatenate((speeds_tot, speeds))
             speeds_tot.append(speeds)
         if speedplot:
@@ -340,3 +342,5 @@ class Kymo_edge_analysis(object):
             fig.tight_layout()
 
         return np.array(speeds_tot), times
+
+
