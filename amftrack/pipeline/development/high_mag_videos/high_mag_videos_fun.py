@@ -45,8 +45,8 @@ def get_length_um_edge(edge, nx_graph, space_pixel_size):
 
 def calcGST(inputIMG, w):
     img = inputIMG.astype(np.float32)
-    imgDiffX = cv2.Sobel(img, cv2.CV_32F, 1, 0, 3)
-    imgDiffY = cv2.Sobel(img, cv2.CV_32F, 0, 1, 3)
+    imgDiffX = cv2.Sobel(img, cv2.CV_32F, 1, 0, -1)
+    imgDiffY = cv2.Sobel(img, cv2.CV_32F, 0, 1, -1)
     imgDiffXY = cv2.multiply(imgDiffX, imgDiffY)
 
     imgDiffXX = cv2.multiply(imgDiffX, imgDiffX)
