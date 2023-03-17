@@ -2,6 +2,7 @@ import os
 import imageio
 import matplotlib.pyplot as plt
 import cv2
+import collections.abc
 from scipy import ndimage as ndi
 from tqdm import tqdm
 
@@ -292,10 +293,20 @@ def get_width(slices, avearing_window=50, num_std=4):
     return np.median(widths)
 
 
-def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 120, 30)):
+
+def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 160, 30)):
     smooth_im = cv2.blur(-image, (11, 11))
     segmented = frangi(-smooth_im, frangi_range)
     skeletonized = skeletonize(segmented > thresh)
+
+    # fig, ax = plt.subplots(3, figsize=(4,10))
+    # ax[0].imshow(smooth_im)
+    # ax[0].set_title("Smooth Image")
+    # ax[1].imshow(segmented)
+    # ax[1].set_title("Segmented")
+    # ax[2].imshow(skeletonized)
+    # ax[2].set_title("Skeletonized")
+    # fig.tight_layout()
 
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
@@ -357,7 +368,9 @@ def get_edge_image(edge, pos, images_address,
                    target_length=10,
                    img_frame=0,
                    bounds=(0, 1),
-                   order=None):
+                   order=None,
+                   logging=False):
+    slices_list = []
     pixel_list = orient(nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
     offset = max(
         offset, step
@@ -368,23 +381,39 @@ def get_edge_image(edge, pos, images_address,
     list_of_segments = compute_section_coordinates(
         pixel_list, pixel_indexes, step=step, target_length=target_length + 1)
     perp_lines = []
+
     for i, sect in enumerate(list_of_segments):
         point1 = np.array([sect[0][0], sect[0][1]])
         point2 = np.array([sect[1][0], sect[1][1]])
         perp_lines.append(extract_perp_lines(point1, point2))
 
-    im = imageio.imread(images_address[img_frame])
-    order = validate_interpolation_order(im.dtype, order)
-    l = []
-    for perp_line in perp_lines:
-        pixels = ndi.map_coordinates(im, perp_line, prefilter=order > 1, order=order, mode='reflect', cval=0.0)
-        pixels = np.flip(pixels, axis=1)
-        pixels = pixels[int(bounds[0] * target_length): int(bounds[1] * target_length)]
-        pixels = pixels.reshape((1, len(pixels)))
-        # TODO(FK): Add thickness of the profile here
-        l.append(pixels)
-    slices = np.concatenate(l, axis=0)
-    return slices
+    if np.ndim(img_frame) == 0:
+        im_list = [imageio.imread(images_address[img_frame])]
+        order = validate_interpolation_order(im_list[0].dtype, order)
+    else:
+        if logging:
+            print("Loading images...")
+        im_list = [imageio.imread(images_address[frame]) for frame in tqdm(img_frame, disable=not logging)]
+        order = validate_interpolation_order(im_list[0].dtype, order)
+
+    if logging:
+        print("Extracting edge images...")
+    for im in tqdm(im_list, disable=not logging):
+        l = []
+        for perp_line in perp_lines:
+            pixels = ndi.map_coordinates(im, perp_line, prefilter=order > 1, order=order, mode='reflect', cval=0.0)
+            pixels = np.flip(pixels, axis=1)
+            pixels = pixels[int(bounds[0] * target_length): int(bounds[1] * target_length)]
+            pixels = pixels.reshape((1, len(pixels)))
+            # TODO(FK): Add thickness of the profile here
+            l.append(pixels)
+        slices = np.concatenate(l, axis=0)
+        slices_list.append(slices)
+
+    if np.ndim(img_frame) == 0:
+        return slices_list[0]
+    else:
+        return np.array(slices_list)
 
 
 def extract_perp_lines(src, dst, linewidth=1):
@@ -451,10 +480,21 @@ def validate_interpolation_order(image_dtype, order):
 def segment_fluo(image, thresh=0.5e-7, k_size=5):
     kernel = np.ones((k_size, k_size), np.uint8)
     smooth_im = cv2.GaussianBlur(image, (11, 11), 0)
-    smooth_im = cv2.morphologyEx(smooth_im, cv2.MORPH_OPEN, kernel)
-    smooth_im = cv2.morphologyEx(smooth_im, cv2.MORPH_CLOSE, kernel)
-    _, segmented = cv2.threshold(smooth_im, 10, 255, cv2.THRESH_BINARY)
+    smooth_im_close = cv2.morphologyEx(smooth_im, cv2.MORPH_CLOSE, kernel)
+    smooth_im_open = cv2.morphologyEx(smooth_im_close, cv2.MORPH_OPEN, kernel)
+    _, segmented = cv2.threshold(smooth_im_close, 10, 255, cv2.THRESH_BINARY)
     skeletonized = skeletonize(segmented > thresh)
+
+    # fig, ax = plt.subplots(5, figsize=(7, 15))
+    # ax[0].imshow(smooth_im)
+    # ax[0].set_title("Smooth")
+    # ax[1].imshow(smooth_im_open)
+    # ax[1].set_title("open")
+    # ax[2].imshow(smooth_im_close)
+    # ax[2].set_title("closed")
+    # ax[3].imshow(segmented)
+    # ax[3].set_title("segmented")
+    # ax[4].imshow(skeletonized)
 
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
