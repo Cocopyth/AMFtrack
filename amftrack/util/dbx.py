@@ -6,6 +6,7 @@ import dropbox
 from zipfile import ZipFile, ZIP_DEFLATED
 import os
 import requests
+import re
 
 # create a ZipFile object
 from subprocess import call
@@ -306,10 +307,70 @@ def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     )
     return df
 
+def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
+    print("go")
+    dbx = load_dbx()
+    response = dbx.files_list_folder(dir_drop, recursive=True)
+    files_list = []
+    excel_list = []
+    image_list = []
+    folders_interest = ('.csv', '.xlsx', 'xlsb')
+    re_video = re.compile(r'\/\d*\/Img$')
+    re_excel = re.compile(r'(.*\.(csv))|(xls[xb])$')
+    re_rachael_video = re.compile(r'^.*\/DATA\/\d{8}_Plate\d{1,6}_\d{1,4}(\/|)$')
+    re_seq = [re_video, re_excel, re_rachael_video]
+    
+    for x in response.entries:
+        # print(x.path_display)
+        for regex in re_seq:
+            test = regex.search(x.path_display)
+            if test:
+                files_list.append(x.path_display)
 
-def save_dropbox_state(dir_drop: str, skip_size: bool = True):
-    df = get_dropbox_folders(dir_drop, skip_size)
-    source = os.path.join(f'{os.getenv("TEMP")}', f"dropbox_info.json")
+    while response.has_more:
+        # print(x.path_display)
+        response = dbx.files_list_folder_continue(response.cursor)
+        for x in response.entries:
+            for regex in re_seq:
+                test = regex.search(x.path_display)
+                if test:
+                    files_list.append(x.path_display)
+
+    for i, xc_file in enumerate(files_list):
+        suffix = xc_file.split('/')[-1].split('.')[-1]
+        if suffix.endswith(('xlsx', 'xlsb')):
+            print("Hello!")
+            excel_list.append(files_list[i])
+        else:
+            image_list.append(files_list[i])
+
+    names = [file.split("/")[-1] for file in image_list]
+    path_drop = [os.path.join(*file.split('/')) for file in image_list]
+    plate_nr = [path.split(os.path.sep)[-3].split('_')[1][5:] for path in path_drop ]
+    date_img = [path.split(os.path.sep)[-3].split('_')[0] for path in path_drop]
+    video = [name.split('_')[-1] for name in names]
+    # id_uniques = [idi for idi in id_uniques if len(idi.split("_")) >= 2]
+    df = pd.DataFrame(
+        (names, plate_nr, date_img, path_drop, video)
+    ).transpose()
+    df = df.rename(
+        columns={
+            0: "folder",
+            1: "Plate number",
+            2: "Date Imaged",
+            3: "tot_path_drop",
+            4: "video",
+        }
+    )
+    return df, excel_list
+
+
+def save_dropbox_state(dir_drop: str, skip_size: bool = True, is_video: bool=False):
+    if is_video:
+        df = get_dropbox_video_folders(dir_drop, skip_size)
+    else:
+        df = get_dropbox_folders(dir_drop, skip_size)
+    source = os.path.join(f'{temp_path}', f"dropbox_info.json")
     df.to_json(source)
     target = f"{dir_drop}/folder_info.json"
     upload(
@@ -318,8 +379,8 @@ def save_dropbox_state(dir_drop: str, skip_size: bool = True):
         chunk_size=256 * 1024 * 1024,
     )
 
-def read_saved_dropbox_state(dir_drop: str, skip_size: bool = True):
-    target = os.path.join(f'{os.getenv("TEMP")}', f"dropbox_info.json")
+def read_saved_dropbox_state(dir_drop: str, skip_size: bool = True, is_video: bool=False):
+    target = os.path.join(f'{temp_path}', f"dropbox_info.json")
     source = f"{dir_drop}/folder_info.json"
     download(
         source,
