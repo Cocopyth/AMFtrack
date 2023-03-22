@@ -14,7 +14,7 @@ from amftrack.util.video_util import (
     make_images_spores,
     make_images_width,
     make_images_betweenness_random,
-    make_images_betweenness
+    make_images_betweenness,
 )
 import networkx as nx
 
@@ -236,6 +236,7 @@ def plot_anastomosis(exp, args=None):
         upload(path, upload_path_im)
     delete_files(paths_list)
 
+
 def plot_width(exp, args=None):
     paths_list = make_images_width(exp)
     dir_drop = "DATA/PRINCE"
@@ -262,6 +263,7 @@ def plot_width(exp, args=None):
         upload_path_im = os.path.join(upload_path, f"frame_{i}.png")
         upload(path, upload_path_im)
     delete_files(paths_list)
+
 
 def plot_betweenness(exp, args=None):
     paths_list = make_images_betweenness(exp)
@@ -290,12 +292,15 @@ def plot_betweenness(exp, args=None):
         upload(path, upload_path_im)
     delete_files(paths_list)
 
+
 def plot_betweenness_random(exp, args=None):
     paths_list = make_images_betweenness_random(exp)
     dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
     folder_analysis = exp.save_location.split("/")[-1]
-    upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/betweenness_random/"
+    upload_path = (
+        f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/betweenness_random/"
+    )
     texts = [(folder) for folder in list(exp.folders["folder"])]
     fontScale = 3
     color = (0, 255, 255)
@@ -316,6 +321,8 @@ def plot_betweenness_random(exp, args=None):
         upload_path_im = os.path.join(upload_path, f"frame_{i}.png")
         upload(path, upload_path_im)
     delete_files(paths_list)
+
+
 # API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))
 # dir_drop = "prince_data"
 

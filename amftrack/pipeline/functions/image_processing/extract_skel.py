@@ -189,9 +189,9 @@ def extract_skel_tip_ext(im, low, high, dist):
     #         im_blurred =cv2.GaussianBlur(im_cropped, (201, 201),50)
     im_blurred = cv2.blur(im_cropped, (200, 200))
     im_back_rem = (
-            (im_cropped)
-            / ((im_blurred == 0) * np.ones(im_blurred.shape) + im_blurred)
-            * 120
+        (im_cropped)
+        / ((im_blurred == 0) * np.ones(im_blurred.shape) + im_blurred)
+        * 120
     )
     im_back_rem[im_back_rem >= 130] = 130
     # im_back_rem = im_cropped*1.0
@@ -248,24 +248,24 @@ def extract_skel_tip_ext(im, low, high, dist):
         window = 20
         x, y = pos[tip][0], pos[tip][1]
         if (
-                x - window >= 0
-                and x + window < dilated.shape[0]
-                and y - window >= 0
-                and y + window < dilated.shape[1]
+            x - window >= 0
+            and x + window < dilated.shape[0]
+            and y - window >= 0
+            and y + window < dilated.shape[1]
         ):
-            shape_tip = dilated[x - window: x + window, y - window: y + window]
+            shape_tip = dilated[x - window : x + window, y - window : y + window]
             #             dist = 20
             for i in range(dist):
                 pixel = (pos[tip] + orientation * i).astype(int)
                 xp, yp = pixel[0], pixel[1]
                 if (
-                        xp - window >= 0
-                        and xp + window < dilated.shape[0]
-                        and yp - window >= 0
-                        and yp + window < dilated.shape[1]
+                    xp - window >= 0
+                    and xp + window < dilated.shape[0]
+                    and yp - window >= 0
+                    and yp + window < dilated.shape[1]
                 ):
                     dilated_bis[
-                    xp - window: xp + window, yp - window: yp + window
+                        xp - window : xp + window, yp - window : yp + window
                     ] += shape_tip
     dilation = cv2.dilate(dilated_bis.astype(np.uint8) * 255, kernel, iterations=1)
     for i in range(3):
