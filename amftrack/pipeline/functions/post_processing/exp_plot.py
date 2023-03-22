@@ -289,7 +289,7 @@ def plot_betweenness(exp, args=None):
         upload_path_im = os.path.join(upload_path, f"frame_{i}.png")
         upload(path, upload_path_im)
     delete_files(paths_list)
-
+    
 def plot_betweenness_random(exp, args=None):
     paths_list = make_images_betweenness_random(exp)
     dir_drop = "DATA/PRINCE"

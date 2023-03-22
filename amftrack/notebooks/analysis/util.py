@@ -17,7 +17,8 @@ from scipy import sparse
 from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
     get_pixel_growth_and_new_children,
 )
-
+from shapely.geometry import LineString, MultiPolygon, Polygon
+from shapely.ops import split
 
 def get_time(exp, t, tp1):
     seconds = (exp.dates[tp1] - exp.dates[t]).total_seconds()
@@ -382,3 +383,18 @@ def estimate_angle(inst, criter, path):
 
 def get_rh_from_label(label, exp):
     return [hyph for hyph in exp.hyphaes if hyph.end.label == label][0]
+
+
+def splitPolygon(polygon, dx, dy):
+    minx, miny, maxx, maxy = polygon.bounds
+    nx = int((maxx - minx) / dx) + 1
+    ny = int((maxy - miny) / dy) + 1
+    horizontal_splitters = [LineString([(minx, miny + i * dy), (maxx, miny + i * dy)]) for i in range(ny)]
+    vertical_splitters = [LineString([(minx + i * dx, miny), (minx + i * dx, maxy)]) for i in range(nx)]
+    splitters = horizontal_splitters + vertical_splitters
+    result = polygon
+
+    for splitter in splitters:
+        result = MultiPolygon(split(result, splitter))
+
+    return result
