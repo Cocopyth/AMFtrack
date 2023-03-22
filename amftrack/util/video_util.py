@@ -36,9 +36,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     load_skel,
     Node,
 )
-from amftrack.pipeline.functions.post_processing.area_hulls import (
-    get_regular_hulls_area_fixed,
-)
+from amftrack.pipeline.functions.post_processing.area_hulls_util import get_regular_hulls_area_fixed
 from amftrack.util.geometry import (
     distance_point_pixel_line,
     get_closest_line_opt,
