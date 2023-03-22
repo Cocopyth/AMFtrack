@@ -60,7 +60,7 @@ class TestExperiment(unittest.TestCase):
                 skeletons.append(skeleton)
         self.exp.multipoints = [gpd.GeoSeries([Point(pixel) for pixel in skeleton.keys()]) for skeleton in skeletons]
 
-        fs = [area_hulls.get_biovolume_density_in_ring,area_hulls.get_density_in_ring_new,area_hulls.get_density_in_ring_new_bootstrap]
+        fs = [area_hulls.get_std_density_in_ring_new_bootstrap,area_hulls.get_density_in_ring_new,area_hulls.get_density_in_ring_new_bootstrap]
         args = {"incr": 10, "i": 0}
         for f in fs:
             print(f, f(self.exp, t, args))
