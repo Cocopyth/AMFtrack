@@ -242,7 +242,6 @@ def sync_fold(origin, target):
     call(cmd, shell=True)
 
 
-
 def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     dbx = load_dbx()
     response = dbx.files_list_folder(dir_drop, recursive=True)
@@ -261,9 +260,7 @@ def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     #        (((file.path_lower.split(".")[0]) + "_info.json") not in listjson)])
     listfiles.reverse()
     names = [file.path_display.split("/")[-2] for file in listfiles]
-    path_drop = [
-        os.path.join(*file.path_lower.split('/')[:-1]) for file in listfiles
-    ]
+    path_drop = [os.path.join(*file.path_lower.split("/")[:-1]) for file in listfiles]
     print(path_drop)
     id_uniques = [path.split(os.path.sep)[-2] for path in path_drop]
 
@@ -317,6 +314,7 @@ def save_dropbox_state(dir_drop: str, skip_size: bool = True):
         chunk_size=256 * 1024 * 1024,
     )
 
+
 def read_saved_dropbox_state(dir_drop: str):
     target = os.path.join(f'{os.getenv("TEMP")}', f"dropbox_info.json")
     source = f"{dir_drop}/folder_info.json"
@@ -325,7 +323,7 @@ def read_saved_dropbox_state(dir_drop: str):
         target,
     )
     df = pd.read_json(target)
-    return(df)
+    return df
 
 
 def upload_folders(
