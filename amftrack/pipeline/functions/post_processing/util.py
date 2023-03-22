@@ -42,16 +42,14 @@ def get_length_um_node_list(node_list, exp, t):
         total_length += measure_length_um_edge(edge_obj, t)
     return total_length
 
-
-def is_in_study_zone(node, t, radius, dist, is_circle=False):
-    exp = node.experiment
+def is_in_study_zone_pos(pos, exp, t, radius, dist, is_circle=False):
     compress = 25
     if is_circle:
         center = np.array([4700 * 5, 4400 * 5])
         radius = 3900 * 5
-        return is_in_circle(node.pos(t), center, radius)
+        return is_in_circle(pos, center, radius)
     else:
-        y, x = node.pos(t)
+        y, x = pos[0],pos[1]
         center = np.array(exp.center)
         x0, y0 = exp.center
         direction = exp.orthog
@@ -61,8 +59,14 @@ def is_in_study_zone(node, t, radius, dist, is_circle=False):
         x_orth, y_orth = orth_direct[0], orth_direct[1]
         a = y_orth / x_orth
         b = y_line - a * x_line
-        dist_center = np.linalg.norm(np.flip(node.pos(t)) - center)
+        dist_center = np.linalg.norm(np.flip(pos) - center)
     return (dist_center < radius * compress, a * x + b > y)
+
+def is_in_study_zone(node, t, radius, dist, is_circle=False):
+    exp = node.experiment
+    pos = node.pos(t)
+    return(is_in_study_zone_pos(pos,exp, t, radius, dist, is_circle))
+
 
 
 def is_in_circle(pos, center, radius):
