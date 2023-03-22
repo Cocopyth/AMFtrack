@@ -169,10 +169,10 @@ def plot_single_plate(
 
         start = np.min(
             table.loc[table[column] >= 400]["time_since_begin"]
-        ) / pd.Timedelta(hours=1)
+        )
         if not np.isnan(start):
             table[f"time_since_begin_{index}"] = (
-                table["time_since_begin"] / pd.Timedelta(hours=1) - start
+                table["time_since_begin"] - start
             )
 
             area = np.sqrt(table["area_sep_comp"][0] + 100 * index)
@@ -295,10 +295,10 @@ def plot_single_plate_biovolume(
 
         start = np.min(
             table.loc[table[column] >= 5000]["time_since_begin"]
-        ) / pd.Timedelta(hours=1)
+        )
         if not np.isnan(start):
             table[f"time_since_begin_{index}"] = (
-                table["time_since_begin"] / pd.Timedelta(hours=1) - start
+                table["time_since_begin"] - start
             )
 
             area = np.sqrt(table["area_sep_comp"][0] + 100 * index)

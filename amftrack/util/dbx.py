@@ -244,7 +244,6 @@ def sync_fold(origin, target):
 
 
 def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
-    print("go")
     dbx = load_dbx()
     response = dbx.files_list_folder(dir_drop, recursive=True)
     # for fil in response.entries:
@@ -318,7 +317,7 @@ def save_dropbox_state(dir_drop: str, skip_size: bool = True):
         chunk_size=256 * 1024 * 1024,
     )
 
-def read_saved_dropbox_state(dir_drop: str, skip_size: bool = True):
+def read_saved_dropbox_state(dir_drop: str):
     target = os.path.join(f'{os.getenv("TEMP")}', f"dropbox_info.json")
     source = f"{dir_drop}/folder_info.json"
     download(
