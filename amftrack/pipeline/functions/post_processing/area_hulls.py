@@ -127,7 +127,10 @@ def get_density_in_ring_new_bootstrap(exp, t, args):
     if i + 2 <= len(regular_hulls):
         hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
         res = get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples = 100)
-        return (f"ring_density_incr-{incr}_index-{i}-boot", np.median(res.bootstrap_distribution))
+        if res is None:
+            return (f"ring_density_incr-{incr}_index-{i}-boot", None)
+        else:
+            return (f"ring_density_incr-{incr}_index-{i}-boot", res.standard_error)
     else:
         return (f"ring_density_incr-{incr}_index-{i}_boot", None)
 
@@ -138,7 +141,10 @@ def get_std_density_in_ring_new_bootstrap(exp, t, args):
     if i + 2 <= len(regular_hulls):
         hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
         res = get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples = 100)
-        return (f"ring_density_incr-{incr}_index-{i}-bootstd", res.standard_error)
+        if res is None:
+            return (f"ring_density_incr-{incr}_index-{i}-bootstd", None)
+        else:
+            return (f"ring_density_incr-{incr}_index-{i}-bootstd", res.standard_error)
     else:
         return (f"ring_density_incr-{incr}_index-{i}-bootstd", None)
 

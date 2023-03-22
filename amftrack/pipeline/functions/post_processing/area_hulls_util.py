@@ -100,14 +100,19 @@ def get_length_in_ring_new(hull1, hull2, t, exp):
 
 def get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples = 100):
     shape = hull2.difference(hull1)
-    geoms = splitPolygon(shape, 100, 100).geoms
+    geoms = splitPolygon(shape, 100, 100).geoms if shape.area>0 else []
     densities = [get_length_shape(exp,geom,t)/(geom.area* 1.725**2 / (1000**2)) for geom in geoms]
-    res = scipy.stats.bootstrap((np.array(densities),), np.mean,
+    if len(densities)>0:
+        res = scipy.stats.bootstrap((np.array(densities),), np.mean,
                                 vectorized=True,
                                 method="basic",
                                 n_resamples=n_resamples)
+        return res
 
-    return res
+    else:
+        return None
+
+
 
 
 def get_biovolume_in_ring(hull1, hull2, t, exp):
