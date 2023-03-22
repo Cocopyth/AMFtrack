@@ -842,7 +842,8 @@ def plot_edge_color_value(
     color_seed=12,
     dpi = None,
     show_background = True,
-    label_colorbar = "Width ($\mu m)$"
+    label_colorbar = "Width ($\mu m)$",
+    figsize = (36, 24)
 ) -> None:
     """
     Plot the width for all the edges at a given timestep.
@@ -871,7 +872,7 @@ def plot_edge_color_value(
     edges = get_all_edges(exp, t)
 
     fig = plt.figure(
-        figsize=(36, 24)
+        figsize=figsize
     )  # width: 30 cm height: 20 cm # TODO(FK): change dpi
     ax = fig.add_subplot(111)
 

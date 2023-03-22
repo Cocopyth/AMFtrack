@@ -460,7 +460,9 @@ def make_images_betweenness_random(exp):
     """
     paths = []
 
-    for t in range(exp.ts):
+    # for t in range(exp.ts):
+    for t in range(80):
+
         path = f"plot_betweenness_{time_ns()}"
         path = os.path.join(temp_path, path)
         path = path + ".png"
@@ -488,7 +490,9 @@ def make_images_betweenness(exp):
     """
     paths = []
 
-    for t in range(exp.ts):
+    # for t in range(exp.ts-50):
+    for t in range(50):
+
         path = f"plot_width_{time_ns()}"
         path = os.path.join(temp_path, path)
         path = path + ".png"
