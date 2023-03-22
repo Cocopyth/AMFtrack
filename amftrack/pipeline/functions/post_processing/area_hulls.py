@@ -120,6 +120,18 @@ def get_density_in_ring_new(exp, t, args):
     else:
         return (f"ring_density_incr-{incr}_index-{i}-new", None)
 
+def get_density_in_ring_new_fixed(exp, t, args):
+    incr = args["incr"]
+    i = args["i"]
+    regular_hulls, indexes = get_regular_hulls(exp, range(exp.ts), incr)
+    if i + 2 <= len(regular_hulls):
+        hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
+        length = get_length_in_ring_new(hull1, hull2, t, exp)
+        area = ring_area(hull1, hull2)
+        return (f"ring_density_incr_fixex-{incr}_index-{i}", length / area)
+    else:
+        return (f"ring_density_incr_fixex-{incr}_index-{i}-new", None)
+
 def get_density_in_ring_new_bootstrap(exp, t, args):
     incr = args["incr"]
     i = args["i"]
@@ -130,7 +142,7 @@ def get_density_in_ring_new_bootstrap(exp, t, args):
         if res is None:
             return (f"ring_density_incr-{incr}_index-{i}-boot", None)
         else:
-            return (f"ring_density_incr-{incr}_index-{i}-boot", res.standard_error)
+            return (f"ring_density_incr-{incr}_index-{i}-boot", np.median(res.bootstrap_distribution))
     else:
         return (f"ring_density_incr-{incr}_index-{i}_boot", None)
 
@@ -237,6 +249,19 @@ def get_density_active_tips_in_ring(exp, t, args):
     i = args["i"]
     rh_only = args["rh_only"]
     regular_hulls, indexes = get_regular_hulls_area_fixed(exp, range(exp.ts), incr)
+    if i + 2 <= len(regular_hulls) and t <= exp.ts - 2:
+        hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
+        rate = get_num_active_tips_in_ring(hull1, hull2, t, exp, rh_only)
+        area = ring_area(hull1, hull2)
+        return (f"ring_active_tips_density_incr-{incr}_index-{i}", rate / area)
+    else:
+        return (f"ring_active_tips_density_incr-{incr}_index-{i}", None)
+
+def get_density_active_tips_in_ring_fixed(exp, t, args):
+    incr = args["incr"]
+    i = args["i"]
+    rh_only = args["rh_only"]
+    regular_hulls, indexes = get_regular_hulls(exp, range(exp.ts), incr)
     if i + 2 <= len(regular_hulls) and t <= exp.ts - 2:
         hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
         rate = get_num_active_tips_in_ring(hull1, hull2, t, exp, rh_only)

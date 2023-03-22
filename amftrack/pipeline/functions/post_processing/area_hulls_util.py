@@ -191,21 +191,19 @@ def get_num_active_tips_in_ring(hull1, hull2, t, exp, rh_only):
     return len(growing_tips)
 
 
-def get_regular_hulls(num, exp, ts):
+def get_regular_hulls(exp, ts, incrL):
     hulls = get_hulls(exp, ts)
     areas = [hull.area * 1.725**2 / (1000**2) for hull in hulls]
     area_incr = areas[-1] - areas[0]
     length_incr = np.sqrt(area_incr)
-    incr = length_incr / num
     regular_hulls = [hulls[0]]
     init_area = areas[0]
     indexes = [0]
-    current_length = incr
-    for i in range(num - 1):
-        current_area = init_area + current_length**2
+    current_area = init_area
+    while current_area<=areas[-1]:
         index = min([i for i in range(len(areas)) if areas[i] >= current_area])
         indexes.append(index)
-        current_length += incr
+        current_area = (np.sqrt(current_area) + incrL)**2
         regular_hulls.append(hulls[index])
     return (regular_hulls, indexes)
 
