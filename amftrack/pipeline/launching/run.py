@@ -102,6 +102,7 @@ def run(
             process = subprocess.run(command, stdout=subprocess.DEVNULL)
             pbar.update(1)
 
+
 def run_post_process(
     code: str,
     list_f,
@@ -133,6 +134,7 @@ def run_post_process(
             print(" ".join(command))
             process = subprocess.run(command, stdout=subprocess.DEVNULL)
             pbar.update(1)
+
 
 def run_all_time(
     code: str,

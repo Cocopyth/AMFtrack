@@ -20,6 +20,7 @@ from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
 from shapely.geometry import LineString, MultiPolygon, Polygon
 from shapely.ops import split
 
+
 def get_time(exp, t, tp1):
     seconds = (exp.dates[tp1] - exp.dates[t]).total_seconds()
     return seconds / 3600
@@ -389,8 +390,12 @@ def splitPolygon(polygon, dx, dy):
     minx, miny, maxx, maxy = polygon.bounds
     nx = int((maxx - minx) / dx) + 1
     ny = int((maxy - miny) / dy) + 1
-    horizontal_splitters = [LineString([(minx, miny + i * dy), (maxx, miny + i * dy)]) for i in range(ny)]
-    vertical_splitters = [LineString([(minx + i * dx, miny), (minx + i * dx, maxy)]) for i in range(nx)]
+    horizontal_splitters = [
+        LineString([(minx, miny + i * dy), (maxx, miny + i * dy)]) for i in range(ny)
+    ]
+    vertical_splitters = [
+        LineString([(minx + i * dx, miny), (minx + i * dx, maxy)]) for i in range(nx)
+    ]
     splitters = horizontal_splitters + vertical_splitters
     result = polygon
 

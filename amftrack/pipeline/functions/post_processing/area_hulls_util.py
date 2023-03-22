@@ -12,11 +12,12 @@ from amftrack.pipeline.functions.post_processing.util import is_in_study_zone
 from amftrack.util.sys import temp_path
 import os
 
-def get_length_shape(exp,shape,t):
+
+def get_length_shape(exp, shape, t):
     skeleton = exp.skeletons[t]
     intersect = exp.multipoints[t].loc[exp.multipoints[t].within(shape)]
-    tot_length = len(intersect)*1.725
-    return(tot_length)
+    tot_length = len(intersect) * 1.725
+    return tot_length
 
 
 def get_hulls(exp, ts):
@@ -86,33 +87,40 @@ def get_length_in_ring(hull1, hull2, t, exp):
     nodes = get_nodes_in_ring(hull1, hull2, t, exp)
     edges = {edge for node in nodes for edge in node.edges(t)}
     tot_length = np.sum(
-        [np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725/2 for edge in edges]
+        [
+            np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725 / 2
+            for edge in edges
+        ]
     )
     return tot_length
 
 
 def get_length_in_ring_new(hull1, hull2, t, exp):
     shape = hull2.difference(hull1)
-    tot_length = get_length_shape(exp,shape,t)
+    tot_length = get_length_shape(exp, shape, t)
     print(tot_length)
     return tot_length
 
 
-def get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples = 100):
+def get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples=100):
     shape = hull2.difference(hull1)
-    geoms = splitPolygon(shape, 100, 100).geoms if shape.area>0 else []
-    densities = [get_length_shape(exp,geom,t)/(geom.area* 1.725**2 / (1000**2)) for geom in geoms]
-    if len(densities)>0:
-        res = scipy.stats.bootstrap((np.array(densities),), np.mean,
-                                vectorized=True,
-                                method="basic",
-                                n_resamples=n_resamples)
+    geoms = splitPolygon(shape, 100, 100).geoms if shape.area > 0 else []
+    densities = [
+        get_length_shape(exp, geom, t) / (geom.area * 1.725**2 / (1000**2))
+        for geom in geoms
+    ]
+    if len(densities) > 0:
+        res = scipy.stats.bootstrap(
+            (np.array(densities),),
+            np.mean,
+            vectorized=True,
+            method="basic",
+            n_resamples=n_resamples,
+        )
         return res
 
     else:
         return None
-
-
 
 
 def get_biovolume_in_ring(hull1, hull2, t, exp):
@@ -200,10 +208,10 @@ def get_regular_hulls(exp, ts, incrL):
     init_area = areas[0]
     indexes = [0]
     current_area = init_area
-    while current_area<=areas[-1]:
+    while current_area <= areas[-1]:
         index = min([i for i in range(len(areas)) if areas[i] >= current_area])
         indexes.append(index)
-        current_area = (np.sqrt(current_area) + incrL)**2
+        current_area = (np.sqrt(current_area) + incrL) ** 2
         regular_hulls.append(hulls[index])
     return (regular_hulls, indexes)
 

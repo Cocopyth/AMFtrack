@@ -18,7 +18,8 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Node,
 )
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
-    load_graphs,load_skel
+    load_graphs,
+    load_skel,
 )
 import numpy as np
 
@@ -49,7 +50,7 @@ class TestExperiment(unittest.TestCase):
             print(f, getattr(time_plate, f)(self.exp, 0))
 
     def test_area_hulls_f(self):
-        t=2
+        t = 2
         load_skel(self.exp, [t])
 
         skeletons = []
@@ -58,9 +59,16 @@ class TestExperiment(unittest.TestCase):
                 skeletons.append({})
             else:
                 skeletons.append(skeleton)
-        self.exp.multipoints = [gpd.GeoSeries([Point(pixel) for pixel in skeleton.keys()]) for skeleton in skeletons]
+        self.exp.multipoints = [
+            gpd.GeoSeries([Point(pixel) for pixel in skeleton.keys()])
+            for skeleton in skeletons
+        ]
 
-        fs = [area_hulls.get_std_density_in_ring_new_bootstrap,area_hulls.get_density_in_ring_new,area_hulls.get_density_in_ring_new_bootstrap]
+        fs = [
+            area_hulls.get_std_density_in_ring_new_bootstrap,
+            area_hulls.get_density_in_ring_new,
+            area_hulls.get_density_in_ring_new_bootstrap,
+        ]
         args = {"incr": 10, "i": 0}
         for f in fs:
             print(f, f(self.exp, t, args))

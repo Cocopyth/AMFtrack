@@ -7,7 +7,7 @@ from amftrack.pipeline.functions.post_processing.area_hulls_util import *
 from amftrack.pipeline.functions.post_processing.util import (
     is_in_study_zone,
 )
-from amftrack.notebooks.analysis.util import get_time,splitPolygon
+from amftrack.notebooks.analysis.util import get_time, splitPolygon
 from amftrack.util.sys import temp_path
 import numpy as np
 import pandas as pd
@@ -108,6 +108,7 @@ def get_density_in_ring(exp, t, args):
     else:
         return (f"ring_density_incr-{incr}_index-{i}", None)
 
+
 def get_density_in_ring_new(exp, t, args):
     incr = args["incr"]
     i = args["i"]
@@ -119,6 +120,7 @@ def get_density_in_ring_new(exp, t, args):
         return (f"ring_density_incr-{incr}_index-{i}-new", length / area)
     else:
         return (f"ring_density_incr-{incr}_index-{i}-new", None)
+
 
 def get_density_in_ring_new_fixed(exp, t, args):
     incr = args["incr"]
@@ -132,19 +134,24 @@ def get_density_in_ring_new_fixed(exp, t, args):
     else:
         return (f"ring_density_incr_fixex-{incr}_index-{i}-new", None)
 
+
 def get_density_in_ring_new_bootstrap(exp, t, args):
     incr = args["incr"]
     i = args["i"]
     regular_hulls, indexes = get_regular_hulls_area_fixed(exp, range(exp.ts), incr)
     if i + 2 <= len(regular_hulls):
         hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
-        res = get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples = 100)
+        res = get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples=100)
         if res is None:
             return (f"ring_density_incr-{incr}_index-{i}-boot", None)
         else:
-            return (f"ring_density_incr-{incr}_index-{i}-boot", np.median(res.bootstrap_distribution))
+            return (
+                f"ring_density_incr-{incr}_index-{i}-boot",
+                np.median(res.bootstrap_distribution),
+            )
     else:
         return (f"ring_density_incr-{incr}_index-{i}_boot", None)
+
 
 def get_std_density_in_ring_new_bootstrap(exp, t, args):
     incr = args["incr"]
@@ -152,13 +159,14 @@ def get_std_density_in_ring_new_bootstrap(exp, t, args):
     regular_hulls, indexes = get_regular_hulls_area_fixed(exp, range(exp.ts), incr)
     if i + 2 <= len(regular_hulls):
         hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
-        res = get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples = 100)
+        res = get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples=100)
         if res is None:
             return (f"ring_density_incr-{incr}_index-{i}-bootstd", None)
         else:
             return (f"ring_density_incr-{incr}_index-{i}-bootstd", res.standard_error)
     else:
         return (f"ring_density_incr-{incr}_index-{i}-bootstd", None)
+
 
 def get_biovolume_density_in_ring(exp, t, args):
     incr = args["incr"]
@@ -256,6 +264,7 @@ def get_density_active_tips_in_ring(exp, t, args):
         return (f"ring_active_tips_density_incr-{incr}_index-{i}", rate / area)
     else:
         return (f"ring_active_tips_density_incr-{incr}_index-{i}", None)
+
 
 def get_density_active_tips_in_ring_fixed(exp, t, args):
     incr = args["incr"]
