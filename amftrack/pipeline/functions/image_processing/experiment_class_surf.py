@@ -873,23 +873,25 @@ class Edge:
             ],
             self.begin.pos(t),
         )
+
     def current_flow_betweeness(self, t: int) -> List[coord_int]:
         """
         Return the current flow betweenness, will only work if it has been previously computed
         """
-        return (self.experiment.nx_graph[t].get_edge_data(self.begin.label, self.end.label)[
-                "current_flow_betweenness"
-            ])
+        return self.experiment.nx_graph[t].get_edge_data(
+            self.begin.label, self.end.label
+        )["current_flow_betweenness"]
 
     def betweeness(self, t: int) -> List[coord_int]:
         """
         Return the betweenness, will only work if it has been previously computed
 
         """
-        return (self.experiment.nx_graph[t].get_edge_data(self.begin.label, self.end.label)[
-            "betweenness"
-        ])
-    def length_um(self,t):
+        return self.experiment.nx_graph[t].get_edge_data(
+            self.begin.label, self.end.label
+        )["betweenness"]
+
+    def length_um(self, t):
         pixel_conversion_factor = 1.725
         length_edge = 0
         pixels = self.pixel_list(t)

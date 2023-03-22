@@ -167,13 +167,9 @@ def plot_single_plate(
         column = f"ring_density_incr-100_index-{index}"
         column2 = f"ring_active_tips_density_incr-100_index-{index}"
 
-        start = np.min(
-            table.loc[table[column] >= 400]["time_since_begin"]
-        )
+        start = np.min(table.loc[table[column] >= 400]["time_since_begin"])
         if not np.isnan(start):
-            table[f"time_since_begin_{index}"] = (
-                table["time_since_begin"] - start
-            )
+            table[f"time_since_begin_{index}"] = table["time_since_begin"] - start
 
             area = np.sqrt(table["area_sep_comp"][0] + 100 * index)
 
@@ -293,13 +289,9 @@ def plot_single_plate_biovolume(
         column = f"ring_biovolume_density_incr-100_index-{index}"
         column2 = f"ring_active_tips_density_incr-100_index-{index}"
 
-        start = np.min(
-            table.loc[table[column] >= 5000]["time_since_begin"]
-        )
+        start = np.min(table.loc[table[column] >= 5000]["time_since_begin"])
         if not np.isnan(start):
-            table[f"time_since_begin_{index}"] = (
-                table["time_since_begin"] - start
-            )
+            table[f"time_since_begin_{index}"] = table["time_since_begin"] - start
 
             area = np.sqrt(table["area_sep_comp"][0] + 100 * index)
 

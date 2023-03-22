@@ -4,7 +4,6 @@ from amftrack.pipeline.launching.run_super import run_parallel_transfer, run_lau
 from amftrack.util.sys import (
     update_plate_info,
     get_current_folders,
-
 )
 from time import sleep
 

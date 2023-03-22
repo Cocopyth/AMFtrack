@@ -18,7 +18,7 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_hulls_skelet,
     plot_full,
     reconstruct_image_from_general,
-    plot_edge_color_value
+    plot_edge_color_value,
 )
 from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
     get_anastomosing_hyphae,
@@ -36,7 +36,9 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     load_skel,
     Node,
 )
-from amftrack.pipeline.functions.post_processing.area_hulls_util import get_regular_hulls_area_fixed
+from amftrack.pipeline.functions.post_processing.area_hulls import (
+    get_regular_hulls_area_fixed,
+)
 from amftrack.util.geometry import (
     distance_point_pixel_line,
     get_closest_line_opt,
@@ -419,6 +421,7 @@ def make_images_anas(exp):
         )
     return paths
 
+
 def make_images_width(exp):
     """
     This function makes images centered on the initial position of some random nodes,
@@ -436,17 +439,17 @@ def make_images_width(exp):
         paths.append([path])
         exp.load_tile_information(t)
         plot_edge_color_value(
-            exp, t,
+            exp,
+            t,
             lambda edge: edge.width(t),
             plot_cmap=True,
             dilation=4,
-
             v_max=13,
             save_path=path,
             dpi=400,
-
         )
     return paths
+
 
 def make_images_betweenness_random(exp):
     """
@@ -468,15 +471,22 @@ def make_images_betweenness_random(exp):
         exp.load_tile_information(t)
         vmax = -2.5
         vmin = -4.5
-        plot_edge_color_value(exp, t,
-                              lambda edge: np.log10(edge.current_flow_betweeness(t)), cmap=cm.get_cmap("viridis", 100),
-                              v_min=vmin, v_max=vmax,
-                              plot_cmap=True, show_background=False, dilation=10,
-                              label_colorbar="log random walk edge betweenness centrality",
-                              save_path=path,
-                              dpi=400,
-                              )
+        plot_edge_color_value(
+            exp,
+            t,
+            lambda edge: np.log10(edge.current_flow_betweeness(t)),
+            cmap=cm.get_cmap("Reds", 100),
+            v_min=vmin,
+            v_max=vmax,
+            plot_cmap=True,
+            show_background=False,
+            dilation=10,
+            label_colorbar="log random walk edge betweenness centrality",
+            save_path=path,
+            dpi=400,
+        )
     return paths
+
 
 def make_images_betweenness(exp):
     """
@@ -498,15 +508,22 @@ def make_images_betweenness(exp):
         exp.load_tile_information(t)
         vmax = -2.5
         vmin = -4.5
-        plot_edge_color_value(exp, t,
-                              lambda edge: np.log10(edge.betweeness(t)), cmap=cm.get_cmap("Reds", 100),
-                              v_min=vmin, v_max=vmax,
-                              plot_cmap=True, show_background=False, dilation=10,
-                              label_colorbar="log random walk edge betweenness centrality",
-                              save_path=path,
-                              dpi=400,
-                              )
+        plot_edge_color_value(
+            exp,
+            t,
+            lambda edge: np.log10(edge.betweeness(t)),
+            cmap=cm.get_cmap("Reds", 100),
+            v_min=vmin,
+            v_max=vmax,
+            plot_cmap=True,
+            show_background=False,
+            dilation=10,
+            label_colorbar="log random walk edge betweenness centrality",
+            save_path=path,
+            dpi=400,
+        )
     return paths
+
 
 def make_images_track_hypha(exp, hypha):
     """
