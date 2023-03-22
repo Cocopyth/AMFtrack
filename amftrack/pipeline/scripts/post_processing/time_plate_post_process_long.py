@@ -3,7 +3,8 @@ import sys
 
 sys.path.insert(0, path_code_dir)
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
-    load_graphs,load_skel
+    load_graphs,
+    load_skel,
 )
 from amftrack.util.sys import temp_path
 import pickle
@@ -49,18 +50,22 @@ except AttributeError:
 load_study_zone(exp)
 if load_graphs_bool:
     load_graphs(exp, directory, indexes=[t], post_process=True)
-load_skel(exp,[t])
+load_skel(exp, [t])
 # print('size after loading',get_size(exp)/10**6)
 
 folder_analysis = row["folder_analysis"]
-path_edge_info_t = f"{directory}{folder_analysis}/time_plate_info_long/plate_info_{t}.json"
+path_edge_info_t = (
+    f"{directory}{folder_analysis}/time_plate_info_long/plate_info_{t}.json"
+)
 skeletons = []
 for skeleton in exp.skeletons:
     if skeleton is None:
         skeletons.append({})
     else:
         skeletons.append(skeleton)
-exp.multipoints = [gpd.GeoSeries([Point(pixel) for pixel in skeleton.keys()]) for skeleton in skeletons]
+exp.multipoints = [
+    gpd.GeoSeries([Point(pixel) for pixel in skeleton.keys()]) for skeleton in skeletons
+]
 
 if not os.path.isfile(path_edge_info_t) or overwrite:
     time_plate_info_t = {}

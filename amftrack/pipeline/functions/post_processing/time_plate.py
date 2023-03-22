@@ -177,6 +177,7 @@ def get_num_nodes_study_zone(exp, t, args=None):
         ),
     )
 
+
 def get_num_edges(exp, t, args=None):
     return (
         "num_edges_study",
@@ -188,8 +189,10 @@ def get_num_edges(exp, t, args=None):
                 and node.degree(t) > 0
                 and np.all(is_in_study_zone(node, t, 1000, 150, is_circle))
             ]
-        )/2,
+        )
+        / 2,
     )
+
 
 def get_length(exp, t, args=None):
     length = 0

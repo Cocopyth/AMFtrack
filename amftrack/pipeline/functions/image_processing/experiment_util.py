@@ -355,7 +355,7 @@ def plot_full_image_with_features(
         plt.savefig(save_path)
     else:
         plt.show()
-    return(ax)
+    return ax
 
 
 font_path = os.path.join(mpl.get_data_path(), "fonts/ttf/lucidasansdemibold.ttf")
@@ -793,7 +793,7 @@ def reconstruct_skeletton_from_edges(
     color_list: List[Tuple[int, int, int, int]] = None,
     downsizing=5,
     dilation=2,
-    timestep=True
+    timestep=True,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
     """
     This is a wrapper function around reconstruct_skeletton, to apply it
@@ -834,16 +834,16 @@ def plot_edge_color_value(
     cmap=cm.get_cmap("Reds", 100),
     plot_cmap=False,
     v_max=10,
-    v_min = 0,
+    v_min=0,
     nodes: List[Node] = [],
     downsizing=5,
     dilation=5,
     save_path="",
     color_seed=12,
-    dpi = None,
-    show_background = True,
-    label_colorbar = "Width ($\mu m)$",
-    figsize = (36, 24)
+    dpi=None,
+    show_background=True,
+    label_colorbar="Width ($\mu m)$",
+    figsize=(36, 24),
 ) -> None:
     """
     Plot the width for all the edges at a given timestep.
@@ -890,7 +890,7 @@ def plot_edge_color_value(
                     color = i + color_seed
             colors.append(color)
     if plot_cmap:
-        colors = [cmap((width -v_min)/(v_max-v_min)) for width in widths]
+        colors = [cmap((width - v_min) / (v_max - v_min)) for width in widths]
     # 0/ Make color legend
     def convert(c):
         c_ = c / 255
@@ -930,9 +930,17 @@ def plot_edge_color_value(
     color_list = (
         [(np.array(color) * 255).astype(int) for color in colors] if plot_cmap else None
     )
-    from_edges = reconstruct_skeletton_from_edges(exp, t, edges=edges, region=region, color_seeds=colors,
-                                                  color_list=color_list, downsizing=downsizing, dilation=dilation,
-                                                  timestep=False)
+    from_edges = reconstruct_skeletton_from_edges(
+        exp,
+        t,
+        edges=edges,
+        region=region,
+        color_seeds=colors,
+        color_list=color_list,
+        downsizing=downsizing,
+        dilation=dilation,
+        timestep=False,
+    )
     skel_im, _ = from_edges
     new_region = [
         f_int(region[0]),
@@ -962,10 +970,10 @@ def plot_edge_color_value(
             )
 
     if save_path:
-        plt.savefig(save_path,dpi=dpi)
+        plt.savefig(save_path, dpi=dpi)
     else:
         plt.show()
-    return(ax)
+    return ax
 
 
 def reconstruct_image_from_general(
