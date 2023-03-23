@@ -3,8 +3,7 @@ import pickle
 import networkx as nx
 import numpy as np
 import pandas as pd
-import scipy
-from scipy import spatial
+from scipy import spatial,stats
 from shapely.geometry import Polygon, Point
 
 from amftrack.notebooks.analysis.util import splitPolygon, get_time
@@ -110,7 +109,7 @@ def get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples=100):
         for geom in geoms
     ]
     if len(densities) > 0:
-        res = scipy.stats.bootstrap(
+        res = stats.bootstrap(
             (np.array(densities),),
             np.mean,
             vectorized=True,
@@ -200,19 +199,28 @@ def get_num_active_tips_in_ring(hull1, hull2, t, exp, rh_only):
 
 
 def get_regular_hulls(exp, ts, incrL):
-    hulls = get_hulls(exp, ts)
-    areas = [hull.area * 1.725**2 / (1000**2) for hull in hulls]
-    area_incr = areas[-1] - areas[0]
-    length_incr = np.sqrt(area_incr)
-    regular_hulls = [hulls[0]]
-    init_area = areas[0]
-    indexes = [0]
-    current_area = init_area
-    while current_area <= areas[-1]:
-        index = min([i for i in range(len(areas)) if areas[i] >= current_area])
-        indexes.append(index)
-        current_area = (np.sqrt(current_area) + incrL) ** 2
-        regular_hulls.append(hulls[index])
+    path = os.path.join(
+        temp_path,
+        f"hullsreg_{exp.unique_id}_{incrL}_"
+        f"{np.sum(pd.util.hash_pandas_object(exp.folders.iloc[ts]))}.pick",
+    )
+    if os.path.isfile(path):
+        (regular_hulls, indexes) = pickle.load(open(path, "rb"))
+    else:
+        hulls = get_hulls(exp, ts)
+        areas = [hull.area * 1.725**2 / (1000**2) for hull in hulls]
+        area_incr = areas[-1] - areas[0]
+        regular_hulls = [hulls[0]]
+        init_area = areas[0]
+        indexes = [0]
+        current_area = init_area
+        while current_area <= areas[-1]:
+            index = min([i for i in range(len(areas)) if areas[i] >= current_area])
+            indexes.append(index)
+            current_area = (np.sqrt(current_area) + incrL) ** 2
+            regular_hulls.append(hulls[index])
+        pickle.dump((regular_hulls, indexes), open(path, "wb"))
+
     return (regular_hulls, indexes)
 
 
