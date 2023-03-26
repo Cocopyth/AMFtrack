@@ -256,6 +256,8 @@ class Kymo_edge_analysis(object):
         self.times = []
         self.imshow_extent = []
 
+
+
     # def extract_photobleach(self):
     #     edge_vid_intensity = [np.sum(imageio.imread(img).flatten()) for img in self.video_analysis.selection_file]
     #     bleach_trend = np.polyfit(np.arange(len(self.video_analysis.selection_file)), np.log(edge_vid_intensity), 1)
@@ -494,20 +496,37 @@ class Kymo_edge_analysis(object):
             return None
 
     def test_GST(self, w_size, C_thresh = 0.90, blur_size = 7, C_thresh_falloff = 0.02, speed_thresh=10, preblur=True):
-        space_pixel_size = self.video_analysis.space_pixel_size  # um.pixel
-        time_pixel_size = self.video_analysis.time_pixel_size  # s.pixel
+        times=[]
+        speeds_tot = []
+
+        if self.space_pixel_size is None:
+            space_pixel_size = self.video_analysis.space_pixel_size  # um.pixel
+            time_pixel_size = self.video_analysis.time_pixel_size  # s.pixel
+            self.imshow_extent = [0, self.video_analysis.space_pixel_size * self.kymos[0].shape[1],
+                                  self.video_analysis.time_pixel_size * self.kymos[0].shape[0], 0]
+        else:
+            space_pixel_size = self.space_pixel_size
+            time_pixel_size = self.time_pixel_size
+            self.imshow_extent = [0, self.space_pixel_size * self.kymos[0].shape[1],
+                                  self.time_pixel_size * self.kymos[0].shape[0], 0]
+
         discrete_bounds = np.linspace(0, w_size, w_size+1)
         if len(self.filtered_left) == 0:
             self.fourier_kymo(return_self=False)
         for j, kymo in enumerate(self.kymos):
-            fig, ax = plt.subplots(1, 2, figsize=(10,10))
-            fig_sp, ax_sp = plt.subplots(w_size, 2, figsize=(9, 7*w_size))
+            fig, ax = plt.subplots(5, 2, figsize=(10,30))
+            # fig_sp, ax_sp = plt.subplots(w_size, 2, figsize=(9, 7*w_size))
+            spds_both = [[],[]]
             for i in [0, 1]:
+                if i == 0:
+                    times.append(np.array(range(kymo.shape[0])) * time_pixel_size)
+                spd_stack = []
                 kymo_interest = [self.filtered_left[j], self.filtered_right[j]][i]
                 if preblur:
                     kymo_interest=cv2.GaussianBlur(kymo_interest, (blur_size,blur_size), 0)
                 imgCoherency = np.array([calcGST(kymo_interest, w) for w in range(3, w_size*2 + 3, 2)])
                 imgCoherencySum = 1* np.greater(imgCoherency[0][0], C_thresh)
+                imgGSTMax = np.where(imgCoherency[0][0] > C_thresh, imgCoherency[0][0], np.nan)
                 for w in range(w_size):
                     C_thresh_current = C_thresh - C_thresh_falloff * w
                     if w > 0:
@@ -527,18 +546,44 @@ class Kymo_edge_analysis(object):
                     speed = np.where(speed_unthr < speed_thresh, speed_unthr, np.nan)
                     speed = np.where(speed > -1 * speed_thresh, speed, np.nan)
                     spd_interest = np.where([speed < 0, speed > 0][i], speed, np.nan)
+                    spd_stack.append(spd_interest)
 
-                    sp_plt = ax_sp[w][i].imshow(spd_interest, vmin=-speed_thresh, vmax=speed_thresh, cmap='bwr')
-                    fig_sp.colorbar(sp_plt, fraction=0.046, spacing='proportional', pad=0.04,)
+                    imgGSTMax = np.where(imgCoherencySum == w+1, spd_interest, imgGSTMax)
 
-                lay_plot = ax[i].imshow(np.where(imgCoherencySum >= 1, imgCoherencySum, np.nan), vmin=0, vmax=w+1)
-                ax[i].set_title(f"{100* np.nansum(imgCoherencySum.flatten() > C_thresh)/ np.shape(imgCoherencySum.flatten())[0] :.4}$\%$ coverage")
-                ax[i].set_xlabel("space ($\mu m $)")
-                ax[i].set_ylabel("time ($s$)")
-                cbar = fig.colorbar(lay_plot, ax=ax[i],fraction=0.046, spacing='proportional', pad=0.04, ticks=discrete_bounds, boundaries=discrete_bounds, format='%1i')
+                    # sp_plt = ax_sp[w][i].imshow(spd_interest, vmin=-speed_thresh, vmax=speed_thresh, cmap='bwr')
+                    # fig_sp.colorbar(sp_plt, fraction=0.046, spacing='proportional', pad=0.04,)
+                spds_both[i] = imgGSTMax
+
+                spd_std = np.nanstd(spd_stack, axis=0)
+                spd_std_plot = ax[1][i].imshow(spd_std, vmin=0, vmax=5)
+                ax[1][i].set_title(f"Speed std {['back','forw'][i]}")
+
+                histbins = np.linspace(0, 5, 50)
+                ax[2][i].hist(spd_std[~np.isnan(spd_std)], bins=histbins, log=True)
+                ax[2][i].set_title(f"Log histogram std speeds {['back','forw'][i]}")
+                ax[2][i].set_ylabel("log frequency")
+                ax[2][i].set_xlabel("std ($\sigma$)")
+
+                ax[3][i].imshow(np.nanmean(spd_stack, axis=0), vmin = -speed_thresh, vmax = speed_thresh, cmap='bwr')
+                ax[3][i].set_title(f"Mean speeds {['back','forw'][i]}")
+                ax[3][i].set_xlabel("space ($\mu m $)")
+                ax[3][i].set_ylabel("time ($s$)")
+
+                imgCoherencySum = np.array(imgCoherencySum, dtype=np.uint8)
+
+                ax[4][i].imshow(imgGSTMax, vmin = -speed_thresh, vmax = speed_thresh, cmap='bwr')
+
+                lay_plot = ax[0][i].imshow(np.where(imgCoherencySum >= 1, imgCoherencySum, np.nan), vmin=0, vmax=w+1)
+                ax[0][i].set_title(f"{100* np.nansum(imgCoherencySum.flatten() > C_thresh)/ np.shape(imgCoherencySum.flatten())[0] :.4}$\%$ coverage")
+                ax[0][i].set_xlabel("space ($\mu m $)")
+                ax[0][i].set_ylabel("time ($s$)")
+                cbar = fig.colorbar(lay_plot, ax=ax[0][i],fraction=0.046, spacing='proportional', pad=0.04, ticks=discrete_bounds, boundaries=discrete_bounds, format='%1i')
                 cbar.set_label("layers of coverage")
+                cbar_std = fig.colorbar(spd_std_plot, ax=ax[1][i],fraction=0.046, spacing='proportional', pad=0.04)
             fig.tight_layout()
-            fig_sp.tight_layout()
+            # fig_sp.tight_layout()
+            speeds_tot.append(spds_both)
+        return np.array(speeds_tot), times
 
     def extract_speeds(self,
                        speed_thresh=20.0,
