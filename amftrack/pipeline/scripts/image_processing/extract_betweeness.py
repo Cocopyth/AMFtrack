@@ -59,8 +59,10 @@ nx.set_edge_attributes(exp.nx_graph[t], weights, "length")
 nodes_source = [
     node
     for node in nodes
-    if not is_in_study_zone(node, t, 1000, 150)[1]
+    if not is_in_study_zone(node, t, 1000, 200)[1]
     and is_in_study_zone(node, t, 1000, 150)[0]
+    and is_in_study_zone(node, t, 1000, 150)[0]
+    and node.degree(t) == 1
 ]
 nodes_sink = [
     node
