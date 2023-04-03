@@ -13,7 +13,6 @@ import os
 
 
 def get_length_shape(exp, shape, t):
-    skeleton = exp.skeletons[t]
     intersect = exp.multipoints[t].loc[exp.multipoints[t].within(shape)]
     tot_length = len(intersect) * 1.725
     return tot_length
@@ -120,6 +119,7 @@ def get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples=100):
 
     else:
         return None
+
 
 
 def get_biovolume_in_ring(hull1, hull2, t, exp):
