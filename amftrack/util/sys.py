@@ -414,10 +414,10 @@ def get_analysis_info(directory, suffix_analysis_info=""):
     return analysis_info
 
 
-def get_analysis_folders():
+def get_analysis_folders(path =dropbox_path):
     analysis_folders = pd.DataFrame()
-    for dire in os.walk(dropbox_path):
-        name_analysis = dire[0].split("\\")[-1].split("_")
+    for dire in os.walk(path):
+        name_analysis = dire[0].split(os.sep)[-1].split("_")
         if name_analysis[0] == "Analysis":
             analysis_dir = dire[0]
             path_save = os.path.join(analysis_dir, "folder_info.json")

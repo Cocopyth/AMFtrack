@@ -308,14 +308,8 @@ def get_hyphae(experiment, lim_considered=1):
         # if i % 200 == 0:
         # print(i / len(tips))
         #         tip = choice(tips)
-        hyphae = Hyphae(tip)
-        roots = []
-        for t in tip.ts():
-            #             print(t,tip)
-            if tip.degree(t) == 1:
-                root, edges, nodes = hyphae.get_edges(t, 200)
-                roots.append(root)
-        occurence_count = Counter(roots)
+        hypha = Hyphae(tip)
+        occurence_count,roots = get_occurence_count(hypha)
         if (
             len(occurence_count.values()) >= 2
             and occurence_count.most_common(2)[0][0] != roots[0]
@@ -325,11 +319,21 @@ def get_hyphae(experiment, lim_considered=1):
         ):
             problems.append(tip)
         else:
-            hyphae.root = occurence_count.most_common(2)[0][0]
-            hyphae.ts = hyphae.end.ts()
-            hyphaes.append(hyphae)
+            hypha.root = occurence_count.most_common(2)[0][0]
+            hypha.ts = hypha.end.ts()
+            hyphaes.append(hypha)
     # print(
     #     f"Detected problems during hyphae detection, {len(problems)} hyphaes have inconsistent root over time"
     # )
     experiment.inconsistent_root = problems
     return (hyphaes, problems)
+
+def get_occurence_count(tip):
+    hypha = Hyphae(tip)
+    roots = []
+    for t in tip.ts():
+        if tip.degree(t) == 1:
+            root, edges, nodes = hypha.get_edges(t, 200)
+            roots.append(root)
+    occurence_count = Counter(roots)
+    return occurence_count, roots
