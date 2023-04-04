@@ -10,11 +10,11 @@ from amftrack.util.dbx import upload
 def detect_blobs(im):
     im2 = 255 - im
     im2_bw = im2 >= 200
-    kernel_size = (10, 10)
     params = cv2.SimpleBlobDetector_Params()
     params.minDistBetweenBlobs = 5
     params.filterByArea = True
     params.minArea = 500
+    params.maxArea = 50000
 
     params.filterByCircularity = True
     params.minCircularity = 0.4
