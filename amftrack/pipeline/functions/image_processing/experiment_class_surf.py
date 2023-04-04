@@ -1181,7 +1181,6 @@ class Hyphae:
 #             )
 #     plt.show()
 
-
 if __name__ == "__main__":
     # exp = Experiment(4, "directory")
     # print(exp)

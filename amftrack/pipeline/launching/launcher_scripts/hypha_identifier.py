@@ -29,7 +29,7 @@ time = "24:00:00"
 limit = 200
 version = 1
 suffix = "_labeled"
-lim_considered = 10
+lim_considered = 5
 args = [directory_targ, limit, version, suffix, lim_considered]
 run_parallel_all_time(
     "hyphae_extraction.py",

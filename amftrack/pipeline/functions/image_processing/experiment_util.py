@@ -824,6 +824,9 @@ def reconstruct_skeletton_from_edges(
     )
     return im, f
 
+def get_timedelta_second(exp,t,tp1):
+    seconds = (exp.dates[tp1] - exp.dates[t]).total_seconds()
+    return seconds / 3600
 
 def plot_edge_color_value(
     exp: Experiment,
@@ -1068,7 +1071,6 @@ if __name__ == "__main__":
     exp.load_tile_information(0)
 
     im, f = reconstruct_skeletton_from_edges(exp, 0, dilation=10)
-
 
 def plot_hulls_skelet(exp, t, hulls, save_path="", close=True):
     if close:
