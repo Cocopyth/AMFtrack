@@ -228,15 +228,15 @@ def get_density_branch_rate_in_ring(exp, t, args):
     incr = args["incr"]
     i = args["i"]
     rh_only = args["rh_only"]
+    max_t = args["max_t"] if "max_t" in args.keys() else np.inf
     regular_hulls, indexes = get_regular_hulls_area_fixed(exp, range(exp.ts), incr)
     if i + 2 <= len(regular_hulls) and t <= exp.ts - 2:
         hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
-        rate = get_rate_branch_in_ring(hull1, hull2, t, exp, rh_only)
+        rate = get_rate_branch_in_ring(hull1, hull2, t, exp, rh_only,max_t)
         area = ring_area(hull1, hull2)
         return (f"ring_branch_density_incr-{incr}_index-{i}", rate / area)
     else:
         return (f"ring_branch_density_incr-{incr}_index-{i}", None)
-
 
 def get_density_stop_rate_in_ring(exp, t, args):
     incr = args["incr"]
