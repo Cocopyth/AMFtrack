@@ -144,11 +144,12 @@ def get_growing_tips(hull1, hull2, t, exp, rh_only,max_t=np.inf):
         if node.degree(t) == 1 and node.is_in(t + 1) and len(node.ts()) > 2
     ]
     tips = [tip for tip in tips if np.all(is_in_study_zone(tip, t, 1000, 150, False))]
-    growing_tips = [
-        node
-        for node in tips
-        if np.linalg.norm(node.pos(t) - node.pos(min(node.ts()[-1],max_t))) >= 40
-    ]
+    growing_tips = []
+    for tip in tips:
+        timesteps = [tim for tim in tip.ts() if tim<=max_t]
+        tim = timesteps[0] if len(timesteps)>0 else tip.ts[-1]
+        if np.linalg.norm(tip.pos(tim) - tip.pos(t)) >= 40:
+            growing_tips.append(tip)
     if rh_only:
         growing_rhs = [
             node
