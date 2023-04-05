@@ -147,7 +147,7 @@ def get_growing_tips(hull1, hull2, t, exp, rh_only,max_t=np.inf):
     growing_tips = []
     for tip in tips:
         timesteps = [tim for tim in tip.ts() if tim<=max_t]
-        tim = timesteps[0] if len(timesteps)>0 else tip.ts[-1]
+        tim = timesteps[0] if len(timesteps)>0 else tip.ts()[-1]
         if np.linalg.norm(tip.pos(tim) - tip.pos(t)) >= 40:
             growing_tips.append(tip)
     if rh_only:
@@ -174,8 +174,8 @@ def get_rate_anas_in_ring(hull1, hull2, t, exp, rh_only):
     return len(anas_tips) / timedelta
 
 
-def get_rate_branch_in_ring(hull1, hull2, t, exp, rh_only,max_t=np.inf):
-    growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only,max_t)
+def get_rate_branch_in_ring(hull1, hull2, t, exp, rh_only, max_t=np.inf):
+    growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only, max_t)
     new_tips = [tip for tip in growing_tips if tip.ts()[0] == t]
     timedelta = get_time(exp, t, t + 1)
     return len(new_tips) / timedelta
