@@ -13,7 +13,7 @@ import networkx as nx
 import scipy.io as sio
 import os
 from amftrack.pipeline.functions.image_processing.experiment_util import get_all_edges
-is_circle = True
+is_circle = False
 
 
 def get_is_out_study(exp, t, args=None):
