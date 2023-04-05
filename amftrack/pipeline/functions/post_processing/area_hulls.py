@@ -2,7 +2,11 @@ import os.path
 
 from shapely.geometry import Polygon, Point
 from scipy import spatial
-
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
+    Experiment,
+    Node,
+    Edge,
+)
 from amftrack.pipeline.functions.post_processing.area_hulls_util import *
 from amftrack.pipeline.functions.post_processing.util import (
     is_in_study_zone,
@@ -210,7 +214,7 @@ def get_biovolume_density_in_ring(exp, t, args):
 #         return (f"mean_speed_incr-{incr}_index-{i}", None)
 
 
-def get_density_anastomose_in_ring(exp, t, args):
+def get_density_anastomose_in_ring(exp: Experiment, t, args):
     incr = args["incr"]
     i = args["i"]
     rh_only = args["rh_only"]
@@ -225,6 +229,11 @@ def get_density_anastomose_in_ring(exp, t, args):
 
 
 def get_density_branch_rate_in_ring(exp, t, args):
+    """A function to get the density of branch rate in a ring.
+    :param exp: an experiment object
+    :param t: the time point
+    :param args: a dictionary of arguments
+    """
     incr = args["incr"]
     i = args["i"]
     rh_only = args["rh_only"]
@@ -232,7 +241,7 @@ def get_density_branch_rate_in_ring(exp, t, args):
     regular_hulls, indexes = get_regular_hulls_area_fixed(exp, range(exp.ts), incr)
     if i + 2 <= len(regular_hulls) and t <= exp.ts - 2:
         hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
-        rate = get_rate_branch_in_ring(hull1, hull2, t, exp, rh_only,max_t)
+        rate = get_rate_branch_in_ring(hull1, hull2, t, exp, rh_only, max_t)
         area = ring_area(hull1, hull2)
         return (f"ring_branch_density_incr-{incr}_index-{i}", rate / area)
     else:

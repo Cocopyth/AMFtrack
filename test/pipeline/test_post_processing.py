@@ -72,6 +72,26 @@ class TestExperiment(unittest.TestCase):
         args = {"incr": 10, "i": 0}
         for f in fs:
             print(f, f(self.exp, t, args))
+    def test_branching_hulls(self):
+        """Tests the function get_density_branch_rate_in_ring"""
+        t = 2
+        load_skel(self.exp, [t])
+        skeletons = []
+        for skeleton in self.exp.skeletons:
+            if skeleton is None:
+                skeletons.append({})
+            else:
+                skeletons.append(skeleton)
+        self.exp.multipoints = [
+            gpd.GeoSeries([Point(pixel) for pixel in skeleton.keys()])
+            for skeleton in skeletons
+        ]
+        fs = [
+            area_hulls.get_density_branch_rate_in_ring,
+        ]
+        args = {"incr": 10, "i": 0, "rh_only": False,"max_t" : 99}
+        for f in fs:
+            print(f, f(self.exp, t, args))
 
     def test_time_hypha_f(self):
         fs = dir(time_hypha)
