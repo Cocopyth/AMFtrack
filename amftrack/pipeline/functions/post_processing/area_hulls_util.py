@@ -136,18 +136,18 @@ def get_biovolume_in_ring(hull1, hull2, t, exp):
     )
     return tot_biovolume
 
-
-def get_growing_tips(hull1, hull2, t, exp, rh_only):
+def get_growing_tips(hull1, hull2, t, exp, rh_only,max_t=np.inf):
     nodes = get_nodes_in_ring(hull1, hull2, t, exp)
     tips = [
         node
         for node in nodes
         if node.degree(t) == 1 and node.is_in(t + 1) and len(node.ts()) > 2
     ]
+    tips = [tip for tip in tips if np.all(is_in_study_zone(tip, t, 1000, 150, False))]
     growing_tips = [
         node
         for node in tips
-        if np.linalg.norm(node.pos(t) - node.pos(node.ts()[-1])) >= 40
+        if np.linalg.norm(node.pos(t) - node.pos(min(node.ts()[-1],max_t))) >= 40
     ]
     if rh_only:
         growing_rhs = [
@@ -173,8 +173,8 @@ def get_rate_anas_in_ring(hull1, hull2, t, exp, rh_only):
     return len(anas_tips) / timedelta
 
 
-def get_rate_branch_in_ring(hull1, hull2, t, exp, rh_only):
-    growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only)
+def get_rate_branch_in_ring(hull1, hull2, t, exp, rh_only,max_t=np.inf):
+    growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only,max_t)
     new_tips = [tip for tip in growing_tips if tip.ts()[0] == t]
     timedelta = get_time(exp, t, t + 1)
     return len(new_tips) / timedelta
