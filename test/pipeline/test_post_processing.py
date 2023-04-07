@@ -72,6 +72,7 @@ class TestExperiment(unittest.TestCase):
         args = {"incr": 10, "i": 0}
         for f in fs:
             print(f, f(self.exp, t, args))
+
     def test_branching_hulls(self):
         """Tests the function get_density_branch_rate_in_ring"""
         t = 2
@@ -89,7 +90,7 @@ class TestExperiment(unittest.TestCase):
         fs = [
             area_hulls.get_density_branch_rate_in_ring,
         ]
-        args = {"incr": 10, "i": 0, "rh_only": False,"max_t" : 99}
+        args = {"incr": 10, "i": 0, "rh_only": False, "max_t": 99}
         for f in fs:
             print(f, f(self.exp, t, args))
 
