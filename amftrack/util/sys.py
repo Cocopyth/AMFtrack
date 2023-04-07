@@ -414,10 +414,10 @@ def get_analysis_info(directory, suffix_analysis_info=""):
     return analysis_info
 
 
-def get_analysis_folders():
+def get_analysis_folders(path =dropbox_path):
     analysis_folders = pd.DataFrame()
-    for dire in os.walk(dropbox_path):
-        name_analysis = dire[0].split("\\")[-1].split("_")
+    for dire in os.walk(path):
+        name_analysis = dire[0].split(os.sep)[-1].split("_")
         if name_analysis[0] == "Analysis":
             analysis_dir = dire[0]
             path_save = os.path.join(analysis_dir, "folder_info.json")
@@ -645,6 +645,61 @@ def get_time_edge_info_from_analysis(analysis_folders, use_saved=True):
     folders.to_json(path_save_folders)
     return (folders, time_edge_info)
 
+def get_time_plate_info_long_from_analysis(analysis_folders, use_saved=True):
+    plates_in = analysis_folders["unique_id"].unique()
+    plates_in.sort()
+    ide = hashlib.sha256(np.sum(plates_in).encode("utf-8")).hexdigest()
+    path_save_info = os.path.join(temp_path, f"time_plate_info_long_{ide}")
+    path_save_folders = os.path.join(temp_path, f"folders_{ide}")
+
+    if os.path.exists(path_save_info) and use_saved:
+        time_plate_infos = pd.read_json(path_save_info)
+        folders = pd.read_json(path_save_folders)
+        return (folders, time_plate_infos)
+    analysis_dirs = analysis_folders["total_path"]
+    folders = pd.DataFrame()
+    time_plate_infos = []
+    for analysis_dir in analysis_dirs:
+        path_time_plate = os.path.join(analysis_dir, "time_plate_info_long")
+        if os.path.exists(path_time_plate):
+            path_save = os.path.join(analysis_dir, "folder_info.json")
+            folders_plate = pd.read_json(path_save)
+            folders_plate = folders_plate.reset_index()
+            folders_plate = folders_plate.sort_values("datetime")
+            json_paths = os.listdir(path_time_plate)
+            tables = []
+            for path in json_paths:
+                index = int(path.split("_")[-1].split(".")[0])
+                line = folders_plate.iloc[index]
+                try:
+                    table = pd.read_json(os.path.join(path_time_plate, path), orient='index')
+                except:
+                    print(os.path.join(path_time_plate, path))
+                    continue
+                table = table.transpose()
+                table = table.fillna(-1)
+                table["time_since_begin_h"] = (
+                    line["datetime"] - folders_plate["datetime"].iloc[0]
+                )
+                table["folder"] = line["folder"]
+                table["Plate"] = line["Plate"]
+                table["unique_id"] = line["unique_id"]
+                table["datetime"] = line["datetime"]
+                for column in ["PrincePos", "root", "strain", "medium"]:
+                    try:
+                        table[column] = line[column]
+                    except KeyError:
+                        continue
+
+                tables.append(table)
+            time_plate_info_plate = pd.concat(tables, axis=0, ignore_index=True)
+            time_plate_info_plate.reset_index(inplace=True, drop=True)
+            time_plate_infos.append(time_plate_info_plate)
+            folders = pd.concat([folders, folders_plate], axis=0, ignore_index=True)
+    time_plate_info = pd.concat(time_plate_infos, axis=0, ignore_index=True)
+    time_plate_info.to_json(path_save_info)
+    folders.to_json(path_save_folders)
+    return (folders, time_plate_info)
 
 def get_data_tables(op_id=time_ns(), redownload=True):
     API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))

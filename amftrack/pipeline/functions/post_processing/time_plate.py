@@ -12,8 +12,8 @@ from shapely.geometry import Polygon, shape
 import networkx as nx
 import scipy.io as sio
 import os
-
-is_circle = True
+from amftrack.pipeline.functions.image_processing.experiment_util import get_all_edges
+is_circle = False
 
 
 def get_is_out_study(exp, t, args=None):
@@ -158,6 +158,16 @@ def get_num_tips_study_zone(exp, t, args=None):
         ),
     )
 
+def get_num_BAS_tips(exp,t,args = None):
+    def h(edge,t):
+        boolean = (edge.end.degree(t)==1 or edge.begin.degree(t)==1) and edge.length_um(t)<1000
+        # boolean +=((edge.width(t)*edge.length_um(t))<3000)*edge.width(t)<7
+        return(boolean)
+    edges = get_all_edges(exp, t)
+    edges = [edge for edge in edges if np.all(is_in_study_zone(edge.begin, t, 1000, 150, is_circle))]
+    edges = [edge for edge in edges if np.all(is_in_study_zone(edge.end, t, 1000, 150, is_circle))]
+    edge_tip = [edge for edge in edges if h(edge,t)]
+    return("num_tips_BAS_study",len(edge_tip))
 
 def get_num_nodes(exp, t, args=None):
     return ("num_nodes", len([node for node in exp.nodes if node.is_in(t)]))
