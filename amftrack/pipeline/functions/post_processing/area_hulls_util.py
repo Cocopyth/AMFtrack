@@ -3,7 +3,7 @@ import pickle
 import networkx as nx
 import numpy as np
 import pandas as pd
-from scipy import spatial,stats
+from scipy import spatial, stats
 from shapely.geometry import Polygon, Point
 
 from amftrack.notebooks.analysis.util import splitPolygon, get_time
@@ -56,6 +56,7 @@ def get_hulls(exp, ts):
 def ring_area(hull1, hull2):
     return np.sum(hull2.difference(hull1).area) * 1.725**2 / (1000**2)
 
+
 def get_nodes_in_shape(shape, t, exp):
     nodes = [
         node
@@ -65,6 +66,7 @@ def get_nodes_in_shape(shape, t, exp):
         and np.all(is_in_study_zone(node, t, 1000, 200))
     ]
     return nodes
+
 
 def get_nodes_in_ring(hull1, hull2, t, exp):
     nodes = [
@@ -129,6 +131,7 @@ def get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples=100):
     else:
         return None
 
+
 def get_tip_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples=100):
     """Returns the bootsrap of the mean density of hyphae in the ring"""
     shape = hull2.difference(hull1)
@@ -166,10 +169,15 @@ def get_biovolume_in_ring(hull1, hull2, t, exp):
     )
     return tot_biovolume
 
-def get_growing_tips_shape(shape,t,exp,rh_only,max_t = np.inf):
-    nodes = get_nodes_in_shape(shape,t,exp)
-    tips = [node for node in nodes if node.degree(t)==1 and node.is_in(t+1) and len(node.ts())>2]
-    tips = [tip for tip in tips if np.all(is_in_study_zone(tip,t,1000,150,False))]
+
+def get_growing_tips_shape(shape, t, exp, rh_only, max_t=np.inf):
+    nodes = get_nodes_in_shape(shape, t, exp)
+    tips = [
+        node
+        for node in nodes
+        if node.degree(t) == 1 and node.is_in(t + 1) and len(node.ts()) > 2
+    ]
+    tips = [tip for tip in tips if np.all(is_in_study_zone(tip, t, 1000, 150, False))]
     growing_tips = []
     if rh_only:
         growing_rhs = [
@@ -181,7 +189,8 @@ def get_growing_tips_shape(shape,t,exp,rh_only,max_t = np.inf):
     else:
         return growing_tips
 
-def get_growing_tips(hull1, hull2, t, exp, rh_only,max_t=np.inf):
+
+def get_growing_tips(hull1, hull2, t, exp, rh_only, max_t=np.inf):
     nodes = get_nodes_in_ring(hull1, hull2, t, exp)
     tips = [
         node
@@ -191,8 +200,8 @@ def get_growing_tips(hull1, hull2, t, exp, rh_only,max_t=np.inf):
     tips = [tip for tip in tips if np.all(is_in_study_zone(tip, t, 1000, 150, False))]
     growing_tips = []
     for tip in tips:
-        timesteps = [tim for tim in tip.ts() if tim<=max_t]
-        tim = timesteps[-1] if len(timesteps)>0 else tip.ts()[-1]
+        timesteps = [tim for tim in tip.ts() if tim <= max_t]
+        tim = timesteps[-1] if len(timesteps) > 0 else tip.ts()[-1]
         if np.linalg.norm(tip.pos(tim) - tip.pos(t)) >= 40:
             growing_tips.append(tip)
     if rh_only:
@@ -227,7 +236,7 @@ def get_rate_branch_in_ring(hull1, hull2, t, exp, rh_only, max_t=np.inf):
 
 
 def get_rate_stop_in_ring(hull1, hull2, t, exp, rh_only, max_t=np.inf):
-    growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only,max_t)
+    growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only, max_t)
     stop_tips = [
         tip
         for tip in growing_tips

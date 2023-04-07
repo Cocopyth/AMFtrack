@@ -1,5 +1,8 @@
 import networkx as nx
-from amftrack.pipeline.functions.image_processing.experiment_class_surf import (Edge,Node)
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
+    Edge,
+    Node,
+)
 import numpy as np
 from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_random_edge,
@@ -18,12 +21,13 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_edge_color_value,
     reconstruct_image_from_general,
     plot_full,
-    find_nearest_edge
+    find_nearest_edge,
 )
 
-def find_edges(kymo_id,dictionary,exp,t):
+
+def find_edges(kymo_id, dictionary, exp, t):
     if int(kymo_id) in dictionary.keys():
-        nodes_limit = dictionary[int(kymo_id)].split(',')
+        nodes_limit = dictionary[int(kymo_id)].split(",")
         nodes = nx.shortest_path(
             exp.nx_graph[t],
             source=int(nodes_limit[0]),
@@ -38,25 +42,26 @@ def find_edges(kymo_id,dictionary,exp,t):
             )
             for i in range(len(nodes) - 1)
         ]
-        return (edges)
+        return edges
     else:
         print(kymo_id)
-        return ([])
+        return []
 
 
-def find_tip(kymo_id,dictionary,exp):
+def find_tip(kymo_id, dictionary, exp):
     if int(kymo_id) in dictionary.keys():
-        tip = dictionary[int(kymo_id)].split(',')[0]
-        return (Node(tip, exp))
+        tip = dictionary[int(kymo_id)].split(",")[0]
+        return Node(tip, exp)
     else:
-        return (None)
+        return None
 
 
-def is_anastomosed(kymo_id,anastomosed_dict):
+def is_anastomosed(kymo_id, anastomosed_dict):
     if int(kymo_id) in anastomosed_dict.keys():
-        return (anastomosed_dict[int(kymo_id)])
+        return anastomosed_dict[int(kymo_id)]
     else:
-        return (False)
+        return False
+
 
 def get_random_betweenness(exp, pos, t, edges):
     edge = find_nearest_edge(pos, exp, t, edges)
@@ -75,19 +80,26 @@ def get_betweenness(exp, pos, t, edges):
         result = None
     return result
 
-def find_closest_end(tip,edge,t):
+
+def find_closest_end(tip, edge, t):
     """finds which end of the edge is closer to the tip"""
     dist1 = nx.shortest_path_length(
-        edge.exp.nx_graph[t], source=tip.label, target=edge.begin.label, weight="weight",
-
+        edge.exp.nx_graph[t],
+        source=tip.label,
+        target=edge.begin.label,
+        weight="weight",
     )
     dist2 = nx.shortest_path_length(
-        edge.exp.nx_graph[t], source=tip.label, target=edge.end.label, weight="weight",
+        edge.exp.nx_graph[t],
+        source=tip.label,
+        target=edge.end.label,
+        weight="weight",
     )
     if dist1 < dist2:
         return edge.begin
     else:
         return edge.end
+
 
 def get_dist_tip_loc(exp, pos, t, edges_list, tip):
     """Find the distance between the closest edge of the position
@@ -99,11 +111,15 @@ def get_dist_tip_loc(exp, pos, t, edges_list, tip):
         dist = np.linalg.norm(pos - node.pos(t))
         if tip is not None:
             dist += nx.shortest_path_length(
-                exp.nx_graph[t], source=tip.label, target=node.label, weight="weight",
+                exp.nx_graph[t],
+                source=tip.label,
+                target=node.label,
+                weight="weight",
             )
         return dist
     else:
         return None
+
 
 def get_num_nodes_tip_loc(exp, pos, t, edges_list, tip):
     """Find the number of nodes between the closest edge of the position
@@ -114,11 +130,15 @@ def get_num_nodes_tip_loc(exp, pos, t, edges_list, tip):
     if edge is not None:
         if tip is not None:
             nodes = nx.shortest_path(
-                exp.nx_graph[t], source=tip.label, target=node.label, weight="weight",
+                exp.nx_graph[t],
+                source=tip.label,
+                target=node.label,
+                weight="weight",
             )
         return len(nodes)
     else:
         return None
+
 
 def get_poss_edges_lists(table, exp, t):
     poss = [
@@ -131,21 +151,28 @@ def get_poss_edges_lists(table, exp, t):
 
 def get_tip_lists(table, exp, t):
     tip_lists = [find_tip(row["kymo_id"]) for index, row in table.iterrows()]
-    return (tip_lists)
+    return tip_lists
 
 
 def get_betweenness_loc(table, exp, t=0):
     poss, edges_lists = get_poss_edges_lists(table, exp, t)
-    table[f"betweenness"] = [get_betweenness(exp, pos, t, edges_lists[i]) if len(edges_lists[i]) > 0 else np.nan for
-                             i, pos in enumerate(poss)]
+    table[f"betweenness"] = [
+        get_betweenness(exp, pos, t, edges_lists[i])
+        if len(edges_lists[i]) > 0
+        else np.nan
+        for i, pos in enumerate(poss)
+    ]
     return table
 
 
 def get_random_betweenness_loc(table, exp, t):
     poss, edges_lists = get_poss_edges_lists(table, exp, t)
     table[f"random_betweenness"] = [
-        get_random_betweenness(exp, pos, t, edges_lists[i]) if len(edges_lists[i]) > 0 else np.nan for i, pos in
-        enumerate(poss)]
+        get_random_betweenness(exp, pos, t, edges_lists[i])
+        if len(edges_lists[i]) > 0
+        else np.nan
+        for i, pos in enumerate(poss)
+    ]
     return table
 
 
@@ -153,16 +180,23 @@ def get_dist_tip(table, exp, t):
     poss, edges_lists = get_poss_edges_lists(table, exp, t)
     tip_lists = get_tip_lists(table, exp, t)
     table[f"dist_tip"] = [
-        get_dist_tip_loc(exp, pos, t, edges_lists[i], tip_lists[i]) if len(edges_lists[i]) > 0 else np.nan for i, pos in
-        enumerate(poss)]
+        get_dist_tip_loc(exp, pos, t, edges_lists[i], tip_lists[i])
+        if len(edges_lists[i]) > 0
+        else np.nan
+        for i, pos in enumerate(poss)
+    ]
     return table
+
 
 def get_num_nodes_tip(table, exp, t):
     poss, edges_lists = get_poss_edges_lists(table, exp, t)
     tip_lists = get_tip_lists(table, exp, t)
     table[f"num_nodes_tip"] = [
-        get_num_nodes_tip_loc(exp, pos, t, edges_lists[i], tip_lists[i]) if len(edges_lists[i]) > 0 else np.nan for i, pos in
-        enumerate(poss)]
+        get_num_nodes_tip_loc(exp, pos, t, edges_lists[i], tip_lists[i])
+        if len(edges_lists[i]) > 0
+        else np.nan
+        for i, pos in enumerate(poss)
+    ]
     return table
 
 

@@ -414,7 +414,7 @@ def get_analysis_info(directory, suffix_analysis_info=""):
     return analysis_info
 
 
-def get_analysis_folders(path =dropbox_path):
+def get_analysis_folders(path=dropbox_path):
     analysis_folders = pd.DataFrame()
     for dire in os.walk(path):
         name_analysis = dire[0].split(os.sep)[-1].split("_")
@@ -645,6 +645,7 @@ def get_time_edge_info_from_analysis(analysis_folders, use_saved=True):
     folders.to_json(path_save_folders)
     return (folders, time_edge_info)
 
+
 def get_time_plate_info_long_from_analysis(analysis_folders, use_saved=True):
     plates_in = analysis_folders["unique_id"].unique()
     plates_in.sort()
@@ -672,7 +673,9 @@ def get_time_plate_info_long_from_analysis(analysis_folders, use_saved=True):
                 index = int(path.split("_")[-1].split(".")[0])
                 line = folders_plate.iloc[index]
                 try:
-                    table = pd.read_json(os.path.join(path_time_plate, path), orient='index')
+                    table = pd.read_json(
+                        os.path.join(path_time_plate, path), orient="index"
+                    )
                 except:
                     print(os.path.join(path_time_plate, path))
                     continue
@@ -700,6 +703,7 @@ def get_time_plate_info_long_from_analysis(analysis_folders, use_saved=True):
     time_plate_info.to_json(path_save_info)
     folders.to_json(path_save_folders)
     return (folders, time_plate_info)
+
 
 def get_data_tables(op_id=time_ns(), redownload=True):
     API = str(np.load(os.getenv("HOME") + "/pycode/API_drop.npy"))

@@ -309,7 +309,7 @@ def get_hyphae(experiment, lim_considered=1):
         # print(i / len(tips))
         #         tip = choice(tips)
         hypha = Hyphae(tip)
-        occurence_count,roots = get_occurence_count(hypha)
+        occurence_count, roots = get_occurence_count(hypha)
         if (
             len(occurence_count.values()) >= 2
             and occurence_count.most_common(2)[0][0] != roots[0]
@@ -327,6 +327,7 @@ def get_hyphae(experiment, lim_considered=1):
     # )
     experiment.inconsistent_root = problems
     return (hyphaes, problems)
+
 
 def get_occurence_count(tip):
     hypha = Hyphae(tip)

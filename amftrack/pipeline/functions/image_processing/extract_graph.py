@@ -270,6 +270,7 @@ def generate_nx_graph(graph_tab, labeled=False):
         G.add_edges_from([(identifier1, identifier2, info)])
     return (G, pos)
 
+
 def clean_degree_4(nx_graph, pos, thresh=30):
     nx_graph_clean = nx.Graph.copy(nx_graph)
     remaining_to_fuse = True
