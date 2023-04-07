@@ -56,6 +56,15 @@ def get_hulls(exp, ts):
 def ring_area(hull1, hull2):
     return np.sum(hull2.difference(hull1).area) * 1.725**2 / (1000**2)
 
+def get_nodes_in_shape(shape, t, exp):
+    nodes = [
+        node
+        for node in exp.nodes
+        if node.is_in(t)
+        and shape.contains(Point(node.pos(t)))
+        and np.all(is_in_study_zone(node, t, 1000, 200))
+    ]
+    return nodes
 
 def get_nodes_in_ring(hull1, hull2, t, exp):
     nodes = [
@@ -120,9 +129,30 @@ def get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples=100):
     else:
         return None
 
+def get_tip_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples=100):
+    """Returns the bootsrap of the mean density of hyphae in the ring"""
+    shape = hull2.difference(hull1)
+    geoms = splitPolygon(shape, 100, 100).geoms if shape.area > 0 else []
+    densities = [
+        get_length_shape(exp, geom, t) / (geom.area * 1.725**2 / (1000**2))
+        for geom in geoms
+    ]
+    if len(densities) > 0:
+        res = stats.bootstrap(
+            (np.array(densities),),
+            np.mean,
+            vectorized=True,
+            method="basic",
+            n_resamples=n_resamples,
+        )
+        return res
+
+    else:
+        return None
 
 
 def get_biovolume_in_ring(hull1, hull2, t, exp):
+    """Returns the total biovolume of hyphae in the ring"""
     nodes = get_nodes_in_ring(hull1, hull2, t, exp)
     edges = {edge for node in nodes for edge in node.edges(t)}
     tot_biovolume = np.sum(
@@ -135,6 +165,21 @@ def get_biovolume_in_ring(hull1, hull2, t, exp):
         ]
     )
     return tot_biovolume
+
+def get_growing_tips_shape(shape,t,exp,rh_only,max_t = np.inf):
+    nodes = get_nodes_in_shape(shape,t,exp)
+    tips = [node for node in nodes if node.degree(t)==1 and node.is_in(t+1) and len(node.ts())>2]
+    tips = [tip for tip in tips if np.all(is_in_study_zone(tip,t,1000,150,False))]
+    growing_tips = []
+    if rh_only:
+        growing_rhs = [
+            node
+            for node in growing_tips
+            if np.linalg.norm(node.pos(node.ts()[0]) - node.pos(node.ts()[-1])) >= 1500
+        ]
+        return growing_rhs
+    else:
+        return growing_tips
 
 def get_growing_tips(hull1, hull2, t, exp, rh_only,max_t=np.inf):
     nodes = get_nodes_in_ring(hull1, hull2, t, exp)
@@ -181,8 +226,8 @@ def get_rate_branch_in_ring(hull1, hull2, t, exp, rh_only, max_t=np.inf):
     return len(new_tips) / timedelta
 
 
-def get_rate_stop_in_ring(hull1, hull2, t, exp, rh_only):
-    growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only)
+def get_rate_stop_in_ring(hull1, hull2, t, exp, rh_only, max_t=np.inf):
+    growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only,max_t)
     stop_tips = [
         tip
         for tip in growing_tips
