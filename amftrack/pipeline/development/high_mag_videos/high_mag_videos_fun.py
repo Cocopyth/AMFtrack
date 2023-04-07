@@ -215,7 +215,7 @@ def tile_image(img):
     tiling_for_fourrier = cv2.vconcat(tiles)
     return tiling_for_fourrier
 
-def filter_kymo_left(kymo, nr_tiles = 1, plots=False):
+def filter_kymo_left(kymo, nr_tiles = 1, static_offset=1, static_angle=1000, plots=False):
     """
     This is a complicated function, with a lot of considerations.
     We start with kymo, which is a kymograph.
@@ -255,7 +255,7 @@ def filter_kymo_left(kymo, nr_tiles = 1, plots=False):
     h_axis = np.arange(0, shape_h) - (shape_h//2)
     v_array = np.array([v_axis for i in range(shape_h)]).transpose()
     h_array = np.array([h_axis for i in range(shape_v)])
-    stat_array = 1*(abs(v_array) <= (1+abs(h_array)/1000))
+    stat_array = 1*(abs(v_array) <= (static_offset+abs(h_array)/static_angle))
     
     filtered_fourrier[LT_quadrant] = 0
     filtered_fourrier[RB_quadrant] = 0
@@ -269,7 +269,7 @@ def filter_kymo_left(kymo, nr_tiles = 1, plots=False):
 
     shape_v, shape_h = shape_v // 3, shape_h // 3
     middle_slice = np.s_[shape_v: 2 * shape_v, shape_h: 2 * shape_h]
-    middle_square = np.s_[coordinates_middle[0]-10:coordinates_middle[0]+10, coordinates_middle[1]-10:coordinates_middle[1]+10]
+    middle_square = np.s_[coordinates_middle[0]-10:coordinates_middle[0]+50, coordinates_middle[1]-50:coordinates_middle[1]+10]
     middle = filtered[middle_slice]
     filtered_left = kymo - middle.real
 
@@ -576,12 +576,12 @@ def validate_interpolation_order(image_dtype, order):
     return order
 
 
-def segment_fluo(image, thresh=0.5e-7, k_size=5, segment_plots=False):
+def segment_fluo(image, thresh=0.5e-7, seg_thresh = 20, k_size=5, segment_plots=False):
     kernel = np.ones((k_size, k_size), np.uint8)
     smooth_im = cv2.GaussianBlur(image, (11, 11), 0)
     smooth_im_close = cv2.morphologyEx(smooth_im, cv2.MORPH_CLOSE, kernel)
     smooth_im_open = cv2.morphologyEx(smooth_im_close, cv2.MORPH_OPEN, kernel)
-    _, segmented = cv2.threshold(smooth_im_close, 20, 255, cv2.THRESH_BINARY)
+    _, segmented = cv2.threshold(smooth_im_close, seg_thresh, 255, cv2.THRESH_BINARY)
     skeletonized = skeletonize(segmented > thresh)
 
     if segment_plots:
