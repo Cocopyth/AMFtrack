@@ -79,13 +79,14 @@ def get_all_nodes(exp, t) -> List[Node]:
     return [Node(i, exp) for i in exp.nx_graph[t].nodes]
 
 
-def find_nearest_edge(point: coord, exp: Experiment, t: int) -> Edge:
+def find_nearest_edge(point: coord, exp: Experiment, t: int,edge_list=None) -> Edge:
     """
     Find the nearest edge to `point` in `exp` at timestep `t`.
     The coordonates are given in the GENERAL ref.
+    If edge list is given, will only look in that list
     :return: Edge object
     """
-    edges = get_all_edges(exp, t)
+    edges = get_all_edges(exp, t) if edge_list is None else edge_list
     l = [edge.pixel_list(t) for edge in edges]
     return edges[get_closest_line_opt(point, l)[0]]
 
