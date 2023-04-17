@@ -88,7 +88,9 @@ class TestExperiment(unittest.TestCase):
             for skeleton in skeletons
         ]
         fs = [
-            area_hulls.get_density_branch_rate_in_ring,
+            # area_hulls.get_density_branch_rate_in_ring,
+            area_hulls.get_std_tip_in_ring_new_bootstrap
+
         ]
         args = {"incr": 10, "i": 0, "rh_only": False, "max_t": 99}
         for f in fs:

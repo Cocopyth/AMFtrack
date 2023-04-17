@@ -22,6 +22,12 @@ def get_is_out_study(exp, t, args=None):
 
 
 def get_length_study_zone(exp, t, args=None):
+    """Return the length of the edges in the study zone.
+    Parameters:
+    ----------
+    exp: Experiment
+    t: int
+    """
     length = 0
     for edge in exp.nx_graph[t].edges:
         edge_obj = Edge(Node(edge[0], exp), Node(edge[1], exp), exp)
