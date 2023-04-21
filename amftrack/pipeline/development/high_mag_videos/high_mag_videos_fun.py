@@ -393,19 +393,20 @@ def get_width(slices, avearing_window=50, num_std=4):
 
 
 
-def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 160, 30)):
+def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 160, 30), segment_plots=False):
     smooth_im = cv2.blur(-image, (11, 11))
     segmented = frangi(-smooth_im, frangi_range)
     skeletonized = skeletonize(segmented > thresh)
 
-    # fig, ax = plt.subplots(3, figsize=(4,10))
-    # ax[0].imshow(smooth_im)
-    # ax[0].set_title("Smooth Image")
-    # ax[1].imshow(segmented)
-    # ax[1].set_title("Segmented")
-    # ax[2].imshow(skeletonized)
-    # ax[2].set_title("Skeletonized")
-    # fig.tight_layout()
+    if segment_plots:
+        fig, ax = plt.subplots(3, figsize=(4,10))
+        ax[0].imshow(smooth_im)
+        ax[0].set_title("Smooth Image")
+        ax[1].imshow(segmented)
+        ax[1].set_title("Segmented")
+        ax[2].imshow(skeletonized)
+        ax[2].set_title("Skeletonized")
+        fig.tight_layout()
 
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
@@ -423,8 +424,9 @@ def get_kymo_new(
         step=15,
         target_length=10,
         bounds=(0, 1),
+        x_len=10,
         order=None
-):
+        ):
     pixel_list = orient(nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
     offset = max(
         offset, step
@@ -441,7 +443,7 @@ def get_kymo_new(
         point2 = np.array([sect[1][0], sect[1][1]])
         perp_lines.append(extract_perp_lines(point1, point2))
 
-    for image_adress in tqdm(images_adress):
+    for image_adress in images_adress:
         im = imageio.imread(image_adress)
         order = validate_interpolation_order(im.dtype, order)
         l = []
@@ -454,7 +456,7 @@ def get_kymo_new(
             l.append(pixels)
 
         slices = np.concatenate(l, axis=0)
-        kymo_line = np.mean(slices, axis=1)
+        kymo_line = np.sum(slices, axis=1) / (x_len*slices.shape[1])
         kymo.append(kymo_line)
     return np.array(kymo)
 
@@ -490,14 +492,9 @@ def get_edge_image(edge, pos, images_address,
         im_list = [imageio.imread(images_address[img_frame])]
         order = validate_interpolation_order(im_list[0].dtype, order)
     else:
-        if logging:
-            print("Loading images...")
-        im_list = [imageio.imread(images_address[frame]) for frame in tqdm(img_frame, disable=not logging)]
+        im_list = [imageio.imread(images_address[frame]) for frame in img_frame]
         order = validate_interpolation_order(im_list[0].dtype, order)
-
-    if logging:
-        print("Extracting edge images...")
-    for im in tqdm(im_list, disable=not logging):
+    for im in im_list:
         l = []
         for perp_line in perp_lines:
             pixels = ndi.map_coordinates(im, perp_line, prefilter=order > 1, order=order, mode='reflect', cval=0.0)
@@ -576,12 +573,18 @@ def validate_interpolation_order(image_dtype, order):
     return order
 
 
-def segment_fluo(image, thresh=0.5e-7, seg_thresh = 20, k_size=5, segment_plots=False):
+def segment_fluo(image, thresh=0.5e-7, seg_thresh = 4.5, k_size=5, segment_plots=False):
     kernel = np.ones((k_size, k_size), np.uint8)
     smooth_im = cv2.GaussianBlur(image, (11, 11), 0)
     smooth_im_close = cv2.morphologyEx(smooth_im, cv2.MORPH_CLOSE, kernel)
     smooth_im_open = cv2.morphologyEx(smooth_im_close, cv2.MORPH_OPEN, kernel)
-    _, segmented = cv2.threshold(smooth_im_close, seg_thresh, 255, cv2.THRESH_BINARY)
+    for i in range(1,100):
+        _, segmented = cv2.threshold(smooth_im_close, i, 255, cv2.THRESH_BINARY)
+        seg_shape = segmented.shape
+        coverage = 100 * np.sum(1*segmented.flatten()) / (255*seg_shape[0]*seg_shape[1])
+        if coverage < seg_thresh:
+            break
+
     skeletonized = skeletonize(segmented > thresh)
 
     if segment_plots:
