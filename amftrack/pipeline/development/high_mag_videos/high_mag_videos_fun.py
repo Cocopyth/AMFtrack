@@ -45,11 +45,20 @@ def get_length_um_edge(edge, nx_graph, space_pixel_size):
 
 
 def calcGST(inputIMG, w):
+    """
+    Calculates the Image orientation and the image coherency. Image orientation is merely a guess, and image coherency gives an idea how sure that guess is.
+    inputIMG:   The input image
+    w:          The window size of the various filters to use. Large boxes catch higher order structures.
+    """
+
+    # The idea here is to perceive any patch of the image as a transformation matrix.
+    # Such a matrix will have some eigenvalues, which describe the direction of uniform transformation.
+    # If the largest eigenvalue is much bigger than the smallest eigenvalue, that indicates a strong orientation.
+
     img = inputIMG.astype(np.float32)
     imgDiffX = cv2.Sobel(img, cv2.CV_32F, 1, 0, -1)
     imgDiffY = cv2.Sobel(img, cv2.CV_32F, 0, 1, -1)
     imgDiffXY = cv2.multiply(imgDiffX, imgDiffY)
-
     imgDiffXX = cv2.multiply(imgDiffX, imgDiffX)
     imgDiffYY = cv2.multiply(imgDiffY, imgDiffY)
     J11 = cv2.boxFilter(imgDiffXX, cv2.CV_32F, (w, w))
@@ -101,11 +110,11 @@ def extract_section_profiles_for_edge(
     Given an Edge of Experiment at timestep t, returns a np array
     of dimension (target_length, m) where m is the number of section
     taken on the hypha.
-    :param resolution: distance between two measure points along the hypha
-    :param offset: distance at the end and the start where no point is taken
-    :param step: step in pixel to compute the tangent to the hypha
-    :target_length: length of the section extracted in pixels
-    :return: np.array of sections, list of segments in TIMESTEP referential
+    :param resolution:  distance between two measure points along the hypha
+    :param offset:      distance at the end and the start where no point is taken
+    :param step:        step in pixel to compute the tangent to the hypha
+    :target_length:     length of the section extracted in pixels
+    :return:            np.array of sections, list of segments in TIMESTEP referential
     """
     pixel_list = orient(nx_graph.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
     offset = max(
@@ -114,6 +123,9 @@ def extract_section_profiles_for_edge(
     pixel_indexes = generate_pivot_indexes(
         len(pixel_list), resolution=resolution, offset=offset
     )
+
+    # WARNING: Below function is the bottleneck if extract_section_profiles_for_edge is called multiple times for the
+    # same edge. Consider implementing this code on a higher level.
     list_of_segments = compute_section_coordinates(
         pixel_list, pixel_indexes, step=step, target_length=target_length + 1
     )  # target_length + 1 to be sure to have length all superior to target_length when cropping
@@ -147,6 +159,7 @@ def plot_segments_on_image(segments, ax, color="red", bounds=(0, 1), alpha=1):
         )
 
 
+# OLD FUNCTION. Use get_kymo_new
 def get_kymo(
         edge,
         pos,
@@ -205,6 +218,7 @@ def filter_kymo_left_old(kymo):
     filtered_left = A - np.abs(middle)
     return filtered_left
 
+
 def tile_image(img):
     A = img[:, :]
     B = np.flip(A, axis=0)
@@ -215,15 +229,20 @@ def tile_image(img):
     tiling_for_fourrier = cv2.vconcat(tiles)
     return tiling_for_fourrier
 
-def filter_kymo_left(kymo, nr_tiles = 1, static_offset=1, static_angle=1000, plots=False):
-    """
-    This is a complicated function, with a lot of considerations.
-    We start with kymo, which is a kymograph.
-    nr_tiles is a measure of the amount of tiling to do to avoid fourier ringing. Currently anything more than one is not possible
 
+def filter_kymo_left(kymo, nr_tiles=1, static_offset=1, static_angle=1000, plots=False):
+    """
+    This is a complicated function, with a lot of considerations. The idea is to make a fourier transform of a
+    kymograph, then remove certain parts of it to end up with a spectrum where only forward or backward moving
+    particles are shown. Preferably, the DC term of the fourier transform is also removed. Intensity is recovered by
+    comparing the dimmest particles of the resulting filtered kymos and the original image.
+    kymo:           The input kymograph
+    nr_tiles:       The number of tilings that is done to avoid Fourier ringing. Currently only set to one
+    static_offset:  How many horizontal bands in the fourier spectrum are removed from the middle. These correspond to vertical lines in real-space.
+    static_angle:   The angle of the two triangles that flare from the middle of the spectrum. This to remove static particles from the kymograph that have negligible movement.
     """
     if plots:
-        fig, ax = plt.subplots(4,2, figsize=(9,18))
+        fig, ax = plt.subplots(4, 2, figsize=(9, 18))
         img_max = np.max(kymo.flatten())
 
     # Final shifting of the filtered kymo is based on the 3% of dimmest pixels. The mean of these have to match up.
@@ -239,29 +258,28 @@ def filter_kymo_left(kymo, nr_tiles = 1, static_offset=1, static_angle=1000, plo
     shape_v, shape_h = tiling_for_fourrier.shape
 
     # We use orthogonal normalization in the fourier transforms to try and get proper intensities back
-
     dark_image_grey_fourier = np.fft.fftshift(np.fft.fft2(tiling_for_fourrier, norm='ortho'))
     coordinates_middle = np.array(dark_image_grey_fourier.shape) // 2
 
-    # Within the fourier transform, we have four quadrants, where we remove two of them.
-    LT_quadrant = np.s_[: coordinates_middle[0]+0, : coordinates_middle[1]]
-    LB_quadrant = np.s_[coordinates_middle[0] -1:, : coordinates_middle[1]]
-    RB_quadrant = np.s_[coordinates_middle[0] +1:, coordinates_middle[1]+1:]
+    # Within the fourier transform, we have four quadrants, where we remove two of them. This in addition to the DC term
+    LT_quadrant = np.s_[: coordinates_middle[0] + 0, : coordinates_middle[1]]
+    LB_quadrant = np.s_[coordinates_middle[0] - 1:, : coordinates_middle[1]]
+    RB_quadrant = np.s_[coordinates_middle[0] + 1:, coordinates_middle[1] + 1:]
     RT_quadrant = np.s_[: coordinates_middle[0], coordinates_middle[1]:]
 
     filtered_fourrier = dark_image_grey_fourier.copy()
 
-    v_axis = np.arange(0,shape_v) - (shape_v // 2)
-    h_axis = np.arange(0, shape_h) - (shape_h//2)
+    # Calculation of the static part of the fourier spectrum. Looks like a horizontal band with vertically flared ends.
+    v_axis = np.arange(0, shape_v) - (shape_v // 2)
+    h_axis = np.arange(0, shape_h) - (shape_h // 2)
     v_array = np.array([v_axis for i in range(shape_h)]).transpose()
     h_array = np.array([h_axis for i in range(shape_v)])
-    stat_array = 1*(abs(v_array) <= (static_offset+abs(h_array)/static_angle))
-    
+    stat_array = 1 * (abs(v_array) <= (static_offset + abs(h_array) / static_angle))
+
     filtered_fourrier[LT_quadrant] = 0
     filtered_fourrier[RB_quadrant] = 0
-    filtered_fourrier *= (1-stat_array)
+    filtered_fourrier *= (1 - stat_array)
     # filtered_fourrier[coordinates_middle[0], coordinates_middle[1]] = 0
-    
 
     # stat_array[coordinates_middle[0], coordinates_middle[1]] = 0
     stat_filt = np.fft.ifft2(np.fft.ifftshift(dark_image_grey_fourier * stat_array), norm='ortho')
@@ -269,7 +287,8 @@ def filter_kymo_left(kymo, nr_tiles = 1, static_offset=1, static_angle=1000, plo
 
     shape_v, shape_h = shape_v // 3, shape_h // 3
     middle_slice = np.s_[shape_v: 2 * shape_v, shape_h: 2 * shape_h]
-    middle_square = np.s_[coordinates_middle[0]-10:coordinates_middle[0]+50, coordinates_middle[1]-50:coordinates_middle[1]+10]
+    middle_square = np.s_[coordinates_middle[0] - 10:coordinates_middle[0] + 50,
+                    coordinates_middle[1] - 50:coordinates_middle[1] + 10]
     middle = filtered[middle_slice]
     filtered_left = kymo - middle.real
 
@@ -283,9 +302,9 @@ def filter_kymo_left(kymo, nr_tiles = 1, static_offset=1, static_angle=1000, plo
         ax[1][0].set_title("forw + stat")
         col[3] = ax[1][1].imshow(filtered_left, vmin=0, vmax=img_max)
         ax[1][1].set_title("back")
-        col[4] = ax[2][0].imshow(filtered[middle_slice].real+ filtered_left, vmin=0, vmax=img_max)
+        col[4] = ax[2][0].imshow(filtered[middle_slice].real + filtered_left, vmin=0, vmax=img_max)
         ax[2][0].set_title("forw + back + stat")
-        col[5] = ax[2][1].imshow(abs(stat_filt[middle_slice]), vmin =  0, vmax = img_max)
+        col[5] = ax[2][1].imshow(abs(stat_filt[middle_slice]), vmin=0, vmax=img_max)
         ax[2][1].set_title("stat")
         ax[3][0].imshow(np.log(abs(dark_image_grey_fourier))[middle_square])
         ax[3][0].set_title("Full 2D Fourier transform")
@@ -294,16 +313,24 @@ def filter_kymo_left(kymo, nr_tiles = 1, static_offset=1, static_angle=1000, plo
         for i in range(6):
             plt.colorbar(col[i], fraction=0.056, pad=0.02)
         fig.tight_layout()
-    
+
     # print(np.sum(abs(stat_filt[middle_slice]).flatten()))
-    
+
     # img_out = np.abs(middle) - abs(stat_filt[middle_slice])
+
+    # Here the intensity of the image is restored by setting equal the 3 percentile dimmest particles in the image.
+    # This works best when there is a decent chunk of video where no particles are present.
     img_out = middle.real
     out_dim_pixls = img_out < np.percentile(img_out, 3)
     out_dim_value = np.mean(img_out[out_dim_pixls].flatten())
     DC_value = dim_val - out_dim_value
-    
+
     return (img_out + DC_value).real
+
+    """
+    Simple function that filters the kymograph and outputs the forward and backward filters.
+    """
+
 
 def filter_kymo(kymo):
     filtered_left = filter_kymo_left(kymo)
@@ -392,21 +419,26 @@ def get_width(slices, avearing_window=50, num_std=4):
     return np.median(widths)
 
 
-
 def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 160, 30), segment_plots=False):
+    """
+    Segmentation method for brightfield video, uses vesselness filters to get result.
+    image:          Input image
+    thresh:         Value close to zero such that the function will output a boolean array
+    frangi_range:   Range of values to use a frangi filter with. Frangi filter is very good for brightfield vessel segmentation
+
+    """
     smooth_im = cv2.blur(-image, (11, 11))
     segmented = frangi(-smooth_im, frangi_range)
     skeletonized = skeletonize(segmented > thresh)
 
-    if segment_plots:
-        fig, ax = plt.subplots(3, figsize=(4,10))
-        ax[0].imshow(smooth_im)
-        ax[0].set_title("Smooth Image")
-        ax[1].imshow(segmented)
-        ax[1].set_title("Segmented")
-        ax[2].imshow(skeletonized)
-        ax[2].set_title("Skeletonized")
-        fig.tight_layout()
+    # fig, ax = plt.subplots(3, figsize=(4,10))
+    # ax[0].imshow(smooth_im)
+    # ax[0].set_title("Smooth Image")
+    # ax[1].imshow(segmented)
+    # ax[1].set_title("Segmented")
+    # ax[2].imshow(skeletonized)
+    # ax[2].set_title("Skeletonized")
+    # fig.tight_layout()
 
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
@@ -426,16 +458,32 @@ def get_kymo_new(
         bounds=(0, 1),
         x_len=10,
         order=None
-        ):
+):
+    """
+    The new get_kymo function. The old one had some inefficiencies that lead to it being much slower than this one.
+    edge:               The edge in question. Will pull from skeleton the positional arguments
+    pos:                Array of positions of nodes that are associated with the skeleton
+    images_adress:      misspelled variable that gives the address of the image folder housing the video
+    nx_graph_pruned:    Graph array that houses the skeleton of the hypha structure in the video
+    resolution:         No idea what this does, probably important
+    offset:             Measure of the length of the hypha
+    step:               How large the step is between two points on the edge for tangent calculation.
+                        Large step means smooth kymo, but less accuracy, small step means more jittery kymo, but closer to the hypha
+    target_length:      Target width of the hypha. Adjust this to fit the edge of the hypha neatly into an edge video.
+    bounds:             tuple describing what fraction of the total hypha length to use. Range is 0.0 (start) to 1.0 (end)
+    order:              Important variable that is changed in the function as well. No idea what it does.
+    """
+
+    """
+    Following section calculates the section coordinates for the skeleton of the hypha. 
+    These coordinates are used for all images in the video. Generally we don't expect hyphae to move.
+    """
     pixel_list = orient(nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
-    offset = max(
-        offset, step
-    )  # avoiding index out of range at start and end of pixel_list
-    pixel_indexes = generate_pivot_indexes(
-        len(pixel_list), resolution=resolution, offset=offset
-    )
-    list_of_segments = compute_section_coordinates(
-        pixel_list, pixel_indexes, step=step, target_length=target_length + 1)
+    offset = max(offset, step)  # avoiding index out of range at start and end of pixel_list
+    pixel_indexes = generate_pivot_indexes(len(pixel_list), resolution=resolution, offset=offset)
+    list_of_segments = compute_section_coordinates(pixel_list, pixel_indexes, step=step,
+                                                   target_length=target_length + 1)
+
     perp_lines = []
     kymo = []
     for i, sect in enumerate(list_of_segments):
@@ -456,7 +504,7 @@ def get_kymo_new(
             l.append(pixels)
 
         slices = np.concatenate(l, axis=0)
-        kymo_line = np.sum(slices, axis=1) / (x_len*slices.shape[1])
+        kymo_line = np.sum(slices, axis=1) / (x_len * slices.shape[1])
         kymo.append(kymo_line)
     return np.array(kymo)
 
@@ -573,15 +621,15 @@ def validate_interpolation_order(image_dtype, order):
     return order
 
 
-def segment_fluo(image, thresh=0.5e-7, seg_thresh = 4.5, k_size=5, segment_plots=False):
+def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=5, segment_plots=False):
     kernel = np.ones((k_size, k_size), np.uint8)
     smooth_im = cv2.GaussianBlur(image, (11, 11), 0)
     smooth_im_close = cv2.morphologyEx(smooth_im, cv2.MORPH_CLOSE, kernel)
     smooth_im_open = cv2.morphologyEx(smooth_im_close, cv2.MORPH_OPEN, kernel)
-    for i in range(1,100):
+    for i in range(1, 100):
         _, segmented = cv2.threshold(smooth_im_close, i, 255, cv2.THRESH_BINARY)
         seg_shape = segmented.shape
-        coverage = 100 * np.sum(1*segmented.flatten()) / (255*seg_shape[0]*seg_shape[1])
+        coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
         if coverage < seg_thresh:
             break
 
