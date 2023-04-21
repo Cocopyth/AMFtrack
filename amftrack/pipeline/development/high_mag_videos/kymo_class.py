@@ -5,13 +5,13 @@ import matplotlib.pyplot as plt
 import cv2
 import re
 from glob import glob
-from tqdm import tqdm
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_sparse_to_graph,
     generate_nx_graph,
     clean_degree_4,
 )
 import scipy
+from tqdm import tqdm
 from amftrack.pipeline.functions.image_processing.node_id import remove_spurs
 from amftrack.pipeline.functions.image_processing.extract_skel import remove_component, remove_holes
 import numpy as np
@@ -49,7 +49,8 @@ class Kymo_video_analysis(object):
                  filter_step=30,
                  seg_thresh=20,
                  logging=False,
-                 segment_plots=False
+                 segment_plots=False,
+                 show_seg=False
                  ):
         """
         imgs_address:   This is the folder address containing an "Img" file and potentially an Analysis file.
@@ -130,6 +131,8 @@ class Kymo_video_analysis(object):
         self.selection_file = self.images_total_path
         self.selection_file.sort()
         self.selection_file = self.selection_file[self.im_range[0]:self.im_range[1]]
+        self.target_length=130
+        self.x_length = self.space_pixel_size * self.target_length
         # print(self.selection_file[0])
         if self.logging:
             print(
@@ -141,7 +144,7 @@ class Kymo_video_analysis(object):
                 imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh, segment_plots=self.segment_plots)
         elif self.vid_type == 'FLUO':
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
-                imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh, seg_thresh=seg_thresh)
+                imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh, segment_plots=self.segment_plots, seg_thresh=seg_thresh)
         else:
             print("I don't have a valid flow_processing type!!! Using fluo thresholding.")
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
@@ -158,6 +161,12 @@ class Kymo_video_analysis(object):
         if self.logging:
             print('Succesfully extracted the skeleton. Did you know there is a skeleton inside inside you right now?')
 
+        if show_seg:
+            fig, ax = plt.subplots()
+            ax.imshow(self.segmented)
+            seg_shape = self.segmented.shape
+            ax.set_title(f'Segmentation ({ 100* np.sum(1*self.segmented.flatten()) / (seg_shape[0]*seg_shape[1]):.4} $\%$ coverage)')
+            fig.tight_layout()
     def filter_edges(self, step):
         """
         Uses the edge name as a measure of distance, filters edges that are too short.
@@ -185,6 +194,8 @@ class Kymo_video_analysis(object):
         Sadly an essential function, that makes each edge calculate its own edges.
         Will output a chart of all edges with node points to select hypha from.
         """
+        self.target_length = target_length
+        self.x_length = self.target_length*self.space_pixel_size
         fig, ax = plt.subplots(1,2, figsize=(10,5))
         image = imageio.imread(self.selection_file[self.im_range[0]])
         ax[0].imshow(self.segmented)
@@ -220,7 +231,7 @@ class Kymo_video_analysis(object):
         if save_img:
             save_path_temp = os.path.join(self.kymos_path, f"Detected edges.png")
             plt.savefig(save_path_temp)
-            print("Just saved the extracted edges")
+            print("Saved the extracted edges")
         return None
 
     def makeVideo(self, resize_ratio = 4):
@@ -251,7 +262,7 @@ class Kymo_video_analysis(object):
         # backgr_segm = np.invert(self.segmented)
         backgr_segm = self.segmented
         video_array = [imageio.imread(img) for img in self.selection_file]
-        backgr_ints = [np.mean(img[backgr_segm].flatten()) for img in tqdm(video_array)]
+        backgr_ints = [np.mean(img[backgr_segm].flatten()) for img in video_array]
 
         """
         Fit function for photobleaching. First assumes an exponential function with offset. 
@@ -441,7 +452,13 @@ class Kymo_edge_analysis(object):
         bounds:         Fraction-based limit on edge width, probably interferes with target_length.
         """
         bin_edges = np.linspace(bounds[0], bounds[1], bin_nr + 1)
-        self.kymos = [self.extract_kymo(bounds=(bin_edges[i],
+        if self.space_pixel_size is None:
+            space_pixel_size = self.video_analysis.space_pixel_size  # um.pixel
+            time_pixel_size = self.video_analysis.time_pixel_size  # s.pixel
+        else:
+            space_pixel_size = self.space_pixel_size
+            time_pixel_size = self.time_pixel_size
+        self.kymos = np.array([self.extract_kymo(bounds=(bin_edges[i],
                                                 bin_edges[i + 1]),
                                         resolution=resolution,
                                         step=step,
@@ -449,23 +466,25 @@ class Kymo_edge_analysis(object):
                                         save_array=save_array,
                                         save_im=save_im,
                                         img_suffix=str(bin_nr) + ' ' + str(i + 1),
-                                        kymo_adjust=kymo_adj)
-                      for i in range(bin_nr)]
-
+                                        kymo_adjust=kymo_adj,
+                                        x_len= space_pixel_size)
+                      for i in tqdm(range(bin_nr))])
         if subtr_backg:
             for kymo in self.kymos:
                 dimmest_pix = kymo < np.percentile(kymo, 1)
                 dim_value = np.mean(kymo[dimmest_pix].flatten())
                 kymo -= dim_value
-
-        if self.space_pixel_size is None:
-            self.imshow_extent = [0, self.video_analysis.space_pixel_size * self.kymos[0].shape[1],
-                                  self.video_analysis.time_pixel_size * self.kymos[0].shape[0], 0]
-        else:
-            self.imshow_extent = [0, self.space_pixel_size * self.kymos[0].shape[1],
-                                  self.time_pixel_size * self.kymos[0].shape[0], 0]
-
         if plots:
+            if self.space_pixel_size is None:
+                space_pixel_size = self.video_analysis.space_pixel_size  # um.pixel
+                time_pixel_size = self.video_analysis.time_pixel_size  # s.pixel
+                self.imshow_extent = [0, self.video_analysis.space_pixel_size * self.kymos[0].shape[1],
+                                      self.video_analysis.time_pixel_size * self.kymos[0].shape[0], 0]
+            else:
+                space_pixel_size = self.space_pixel_size
+                time_pixel_size = self.time_pixel_size
+                self.imshow_extent = [0, self.space_pixel_size * self.kymos[0].shape[1],
+                                      self.time_pixel_size * self.kymos[0].shape[0], 0]
             fig, ax = plt.subplots(1, bin_nr, figsize=(8, 8), sharey='row')
             bin_space = np.linspace(0, 1, bin_nr + 1)
             for j in range(bin_nr):
@@ -486,6 +505,7 @@ class Kymo_edge_analysis(object):
                      save_im=True,
                      bounds=(0, 1),
                      img_suffix="",
+                     x_len=10,
                      kymo_adjust = False):
         self.kymo = get_kymo_new(self.edge_name,
                                  self.video_analysis.pos,
@@ -495,25 +515,21 @@ class Kymo_edge_analysis(object):
                                  self.offset,
                                  step,
                                  target_length,
-                                 bounds)
+                                 bounds,
+                                 x_len)
         if kymo_adjust:
             adj_params = self.video_analysis.back_fit
             norm_exp   = self.video_analysis.back_fit / self.video_analysis.back_fit[0]
             self.kymo -= self.video_analysis.back_offset
             self.kymo  = np.array([self.kymo[i] / norm_exp[i] for i in range(self.kymo.shape[0])])
-            print("Kymograph has been adjusted for background noise!")
 
         if save_array:
             save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {img_suffix} kymo.npy")
             np.save(save_path_temp, self.kymo)
-            if self.video_analysis.logging:
-                print('Saved the array')
         if save_im:
             im = Image.fromarray(self.kymo.astype(np.uint8))
             save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {img_suffix} kymo.png")
             im.save(save_path_temp)
-            if self.video_analysis.logging:
-                print('Saved the image')
         return self.kymo
 
     def fourier_kymo(self, bin_nr, hor_lines=1, return_self=True, plots=False, test_plots=False, save_im=True, save_array=True):
@@ -526,7 +542,6 @@ class Kymo_edge_analysis(object):
             self.filtered_left = np.array([filter_kymo_left(kymo, plots=test_plots) for kymo in self.kymos])
             self.filtered_right = np.array(
                 [np.flip(filter_kymo_left(np.flip(kymo, axis=1), plots=test_plots), axis=1) for kymo in self.kymos])
-
         if plots:
             fig, ax = plt.subplots(4, bin_nr, figsize=(8, 32), sharey='row')
 
@@ -563,8 +578,6 @@ class Kymo_edge_analysis(object):
                     save_path_temp = os.path.join(self.edge_path,
                                                   f"{self.edge_name} {bin_nr} {i + 1} kymo filtered.npy")
                     np.save(save_path_temp, self.filtered_right[i] + self.filtered_left[i])
-                    if self.video_analysis.logging:
-                        print('Saved the array')
 
                 if save_im:
                     im = Image.fromarray(
@@ -582,9 +595,6 @@ class Kymo_edge_analysis(object):
                     save_path_temp = os.path.join(self.edge_path,
                                                   f"{self.edge_name} {bin_nr} {i + 1} kymo filtered.png")
                     im.save(save_path_temp)
-                    if self.video_analysis.logging:
-                        print('Saved the image')
-
             fig.tight_layout()
 
         if return_self:
@@ -600,7 +610,7 @@ class Kymo_edge_analysis(object):
         discrete_bounds = np.linspace(w_start, w_size*2 + w_start, w_size + 1)
         w=0
         if len(self.filtered_left) == 0:
-            self.fourier_kymo(return_self=False)
+            self.fourier_kymo(1, return_self=False)
 
         """Get the real pixel space and time sizes either from the video, or set them as one if testing"""
         if self.space_pixel_size is None:
@@ -876,6 +886,16 @@ class Kymo_edge_analysis(object):
         photobleach_adjust: Boolean on whether to calculate a fluorescence falloff curve, and to adjust kymographs based on it.
         """
 
+        if self.space_pixel_size is None:
+            space_pixel_size = self.video_analysis.space_pixel_size  # um.pixel
+            time_pixel_size = self.video_analysis.time_pixel_size  # s.pixel
+            self.imshow_extent = [0, self.video_analysis.space_pixel_size * self.kymos[0].shape[1],
+                                  self.video_analysis.time_pixel_size * self.kymos[0].shape[0], 0]
+        else:
+            space_pixel_size = self.space_pixel_size
+            time_pixel_size = self.time_pixel_size
+            self.imshow_extent = [0, self.space_pixel_size * self.kymos[0].shape[1],
+                                  self.time_pixel_size * self.kymos[0].shape[0], 0]
         if self.video_analysis.vid_type == "BRIGHT":
             photobleach_adjust = False
         if len(self.filtered_left) == 0:
@@ -974,8 +994,6 @@ class Kymo_edge_analysis(object):
                 im_right.save(save_path_temp)
                 save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {k} kymo_filtered.png")
                 im_full.save(save_path_temp)
-                if self.video_analysis.logging:
-                    print('Saved the filtered kymos')
 
             if plots:
                 if histos:
@@ -1010,14 +1028,14 @@ class Kymo_edge_analysis(object):
                 ax[1][0].set_xlabel("space ($\mu m$)")
                 ax[1][0].set_ylabel("time ($s$)")
                 ax[1][0].set_title("Net transport")
-                ax[1][1].plot(np.sum(net_trans / forw_back_thresh_int[margin: -margin], axis=1) / self.imshow_extent[1],
+                ax[1][1].plot(np.sum(net_trans / forw_back_thresh_int[margin: -margin], axis=1) / (space_pixel_size * net_trans.shape[1]),
                               self.times[0][margin:-margin])
                 ax[1][1].set_title("Mean net transport")
 
                 fig.tight_layout()
 
-            if save_im:
-                fig.savefig(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {k + 1} fluxfig')
+                if save_im:
+                    fig.savefig(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {k + 1} fluxfig')
 
             if save_flux_array:
                 np.save(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {k + 1} fluxback.npy',

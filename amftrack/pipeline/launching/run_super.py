@@ -55,9 +55,10 @@ def run_parallel(
 ):
     path_job = f"{path_bash}{name_job}"
     op_id = time_ns()
+    print(f'Sending jobs with id {op_id}')
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     length = len(folders)
-    num_jobs = length // num_parallel + 1
+    num_jobs = length // num_parallel 
     args_str = [str(arg) for arg in args]
     arg_str = " ".join(args_str)
     arg_str_out = "_".join([str(arg) for arg in args if type(arg) != str])
@@ -70,7 +71,7 @@ def run_parallel(
         ide = time_ns()
         my_file = open(path_job, "w")
         my_file.write(
-            f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
+            f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask={num_jobs} \n#SBATCH --cpus-per-task=1\n#SBATCH -p {node} \n"
         )
         my_file.write(
             f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
