@@ -653,7 +653,7 @@ class Kymo_edge_analysis(object):
                 spd_stack.append(spd_interest)
 
                 if plots:
-                    ax[1][i].imshow(spds_both[i], aspect='auto', vmin=-speed_thresh, vmax=speed_thresh, cmap='bwr')
+                    ax[1][i].imshow(spds_both[i], aspect='auto', vmin=-speed_thresh, vmax=speed_thresh, cmap='coolwarm')
                     ax[1][i].set_title("Speeds")
                     ax[1][i].set_xlabel("space ($\mu m $)")
                     ax[1][i].set_ylabel("time ($s$)")
