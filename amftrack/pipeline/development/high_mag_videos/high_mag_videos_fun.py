@@ -504,7 +504,7 @@ def get_kymo_new(
             l.append(pixels)
 
         slices = np.concatenate(l, axis=0)
-        kymo_line = np.sum(slices, axis=1) / (x_len * slices.shape[1])
+        kymo_line = np.sum(slices, axis=1) * x_len
         kymo.append(kymo_line)
     return np.array(kymo)
 
