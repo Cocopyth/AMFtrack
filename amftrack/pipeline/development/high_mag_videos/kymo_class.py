@@ -867,6 +867,7 @@ class Kymo_edge_analysis(object):
             time_pixel_size = self.time_pixel_size
             self.imshow_extent = [0, self.space_pixel_size * self.kymos[0].shape[1],
                                   self.time_pixel_size * self.kymos[0].shape[0], 0]
+            
         if self.video_analysis.vid_type == "BRIGHT":
             photobleach_adjust = False
         if len(self.filtered_left) == 0:
@@ -874,7 +875,7 @@ class Kymo_edge_analysis(object):
             self.fourier_kymo(return_self=False)
         if self.speeds_tot is None:
             print("Collecting speeds")
-            self.extract_speeds(speed_thresh=speed_thresh, c_thr=c_thresh, plots=plots, w=GST_window, preblur=True)
+            self.test_GST(speed_thresh=speed_thresh, c_thr=c_thresh, plots=plots, w=GST_window, preblur=True)
 
         kernel = np.ones((5, 5), np.uint8) / 5 ** 2
         spd_max = np.nanmax(abs(self.speeds_tot.flatten()))
