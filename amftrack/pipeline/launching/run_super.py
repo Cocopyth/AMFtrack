@@ -22,7 +22,7 @@ else:
     path_bash = "dfdfsfd"
 path_stitch = f"{temp_path}/stitching_loops/"
 if not os.path.isdir(path_stitch):
-    os.mkdir(path_stitch)
+    os.makedirs(path_stitch)
 
 
 def get_queue_size():

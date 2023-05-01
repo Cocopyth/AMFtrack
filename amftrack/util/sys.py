@@ -37,10 +37,12 @@ test_path = os.path.join(
 pastis_path = env_config.get("PASTIS_PATH")
 temp_path = env_config.get("TEMP_PATH")
 
+print(temp_path)
+
 slurm_path = env_config.get("SLURM_PATH")
 ml_path = os.path.join(storage_path, "models")
 if not os.path.isdir(ml_path):
-    os.mkdir(ml_path)
+    os.makedirs(ml_path)
 slurm_path = env_config.get("SLURM_PATH")
 slurm_path_transfer = env_config.get("SLURM_PATH_transfer")
 dropbox_path = env_config.get("DROPBOX_PATH")
