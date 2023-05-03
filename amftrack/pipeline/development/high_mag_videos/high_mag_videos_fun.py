@@ -1,15 +1,11 @@
-import os
 import imageio
 import matplotlib.pyplot as plt
 import cv2
-import collections.abc
 from scipy import ndimage as ndi
-from tqdm import tqdm
 
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_sparse_to_graph,
     generate_nx_graph,
-    clean_degree_4,
 )
 import scipy
 from amftrack.pipeline.functions.image_processing.node_id import remove_spurs
@@ -26,8 +22,6 @@ from skimage.measure import profile_line
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
 from skimage.filters import frangi
 from skimage.morphology import skeletonize
-
-from scipy.interpolate import griddata
 
 
 def get_length_um_edge(edge, nx_graph, space_pixel_size):
@@ -230,7 +224,7 @@ def tile_image(img):
     return tiling_for_fourrier
 
 
-def filter_kymo_left(kymo, nr_tiles=1, static_offset=1, static_angle=1000, plots=False):
+def filter_kymo_left(kymo, nr_tiles=1, static_offset=1, static_angle=1000, plots=False, perc_dim=6):
     """
     This is a complicated function, with a lot of considerations. The idea is to make a fourier transform of a
     kymograph, then remove certain parts of it to end up with a spectrum where only forward or backward moving
@@ -246,7 +240,7 @@ def filter_kymo_left(kymo, nr_tiles=1, static_offset=1, static_angle=1000, plots
         img_max = np.max(kymo.flatten())
 
     # Final shifting of the filtered kymo is based on the 3% of dimmest pixels. The mean of these have to match up.
-    dim_pixls = kymo < np.percentile(kymo, 3)
+    dim_pixls = kymo < np.percentile(kymo, perc_dim)
     dim_val = np.mean(kymo[dim_pixls].flatten())
 
     # The kymograph is tiled to prevent ringing. This creates a 3x3 tile
@@ -321,7 +315,7 @@ def filter_kymo_left(kymo, nr_tiles=1, static_offset=1, static_angle=1000, plots
     # Here the intensity of the image is restored by setting equal the 3 percentile dimmest particles in the image.
     # This works best when there is a decent chunk of video where no particles are present.
     img_out = middle.real
-    out_dim_pixls = img_out < np.percentile(img_out, 3)
+    out_dim_pixls = img_out < np.percentile(img_out, perc_dim)
     out_dim_value = np.mean(img_out[out_dim_pixls].flatten())
     DC_value = dim_val - out_dim_value
 
@@ -504,7 +498,7 @@ def get_kymo_new(
             l.append(pixels)
 
         slices = np.concatenate(l, axis=0)
-        kymo_line = np.sum(slices, axis=1) * x_len
+        kymo_line = np.sum(slices, axis=1) / (target_length)
         kymo.append(kymo_line)
     return np.array(kymo)
 
