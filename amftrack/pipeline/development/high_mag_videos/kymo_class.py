@@ -163,7 +163,7 @@ class Kymo_video_analysis(object):
     #     plt.show()
     #     return None
 
-    def plot_extraction_img(self, weight=0.05, bounds=(0.0, 1.0), target_length=130, resolution=1,
+    def plot_extraction_img(self, weight=0.05, bounds=(0.0, 1.0), target_length=130, resolution=1, step=30,
                             save_img=True, logging=False):
         """
         Sadly an essential function, that makes each edge calculate its own edges.
@@ -182,7 +182,7 @@ class Kymo_video_analysis(object):
                 print('Working on edge {}, sir!'.format(edge.edge_name))
             offset = int(np.linalg.norm(self.pos[edge.edge_name[0]] - self.pos[edge.edge_name[1]])) // 4
             segments = edge.create_segments(self.pos, image, self.nx_graph_pruned, resolution, offset,
-                                            target_length, bounds)
+                                            target_length, bounds, step=step)
             plot_segments_on_image(
                 segments, ax[1], bounds=bounds, color="white", alpha=0.1
             )
@@ -387,7 +387,7 @@ class Kymo_edge_analysis(object):
                 print("Input image sequence has a weird amount of dimensions. This will probably crash")
         return self.edge_array
 
-    def create_segments(self, pos, image, nx_graph_pruned, resolution, offset, target_length, bounds):
+    def create_segments(self, pos, image, nx_graph_pruned, resolution, offset, target_length, bounds, step=30):
         """
         Internal function which generates coordinates for kymograph and edge videos
         """
@@ -399,7 +399,8 @@ class Kymo_edge_analysis(object):
             resolution=resolution,
             offset=offset,
             target_length=target_length,
-            bounds=bounds
+            bounds=bounds,
+            step=step
         )
 
         return self.segments
