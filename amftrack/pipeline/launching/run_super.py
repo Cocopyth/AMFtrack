@@ -54,11 +54,16 @@ def run_parallel(
     name_job="job.sh",
 ):
     path_job = f"{path_bash}{name_job}"
+    print(f"{path_job}")
     op_id = time_ns()
     print(f'Sending jobs with id {op_id}')
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     length = len(folders)
-    num_jobs = length // num_parallel 
+    if length >= num_parallel:
+      num_jobs = length // num_parallel 
+    else:
+      num_jobs = length
+    print(length)
     args_str = [str(arg) for arg in args]
     arg_str = " ".join(args_str)
     arg_str_out = "_".join([str(arg) for arg in args if type(arg) != str])
