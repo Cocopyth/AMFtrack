@@ -53,10 +53,17 @@ class Kymo_video_analysis(object):
         self.segment_plots = segment_plots
         self.back_fit = [0, 0, 0]
         self.back_offset = 0
+        
+        # print(self.video_nr)
 
         ### Extracts the video parameters from the nearby csv.
         self.csv_path = next(Path(parent_files).glob("*.csv"), None)
-        self.xlsx_path = next(Path(parent_files).glob("*.xlsx"), None)
+        self.xlsx_path = [a for a in Path(parent_files).glob(f'*{str(self.imgs_address).split("/")[-2].split("_")[-3]}*{str(self.imgs_address).split("/")[-2].split("_")[-2][2:]}*.xlsx')]
+        if len(self.xlsx_path) != 1:
+          print('ERROR in finding a single xlsx sheet!')
+        else:
+          self.xlsx_path = self.xlsx_path[0]
+        # print(self.xlsx_path)
         if self.csv_path is not None or self.xlsx_path is not None:
             if self.csv_path is not None and self.xlsx_path is not None:
                 print("Found both a csv and xlsx file, will use csv data.")
@@ -64,8 +71,6 @@ class Kymo_video_analysis(object):
                 if logging:
                     print("Found a csv file, using that data")
                 videos_data = pd.read_csv(self.csv_path)
-
-                print(videos_data)
 
                 self.video_data = videos_data.loc[videos_data['video'] == self.video_nr]
                 # print(self.video_data["Illumination"][0])
@@ -77,10 +82,15 @@ class Kymo_video_analysis(object):
                 if logging:
                     print("Found an xlsx file, using that data")
                 videos_data = pd.read_excel(self.xlsx_path)
-                self.video_data = videos_data.loc[videos_data.iloc[:, 0] == imgs_address[:-1].split('/')[-1]]
+                # print(str(self.imgs_address).split('/')[-2])
+                self.video_data = videos_data.loc[videos_data['Unnamed: 0'].str.contains(str(self.imgs_address).split('/')[-2], case=False, na=False)]
+                print(self.video_data)
                 self.vid_type = ["FLUO", "BRIGHT"][self.video_data.iloc[0, 9] == "BF"]
                 self.fps = float(self.video_data["FPS"].iloc[0])
-                self.binning = [1, 2][self.video_data["Binned (Y/N)"].iloc[0] == "Y"]
+                if "Binned (Y/N)" in self.video_data:
+                  self.binning = [1, 2][self.video_data["Binned (Y/N)"].iloc[0] == "Y"]
+                else:
+                  self.binning = 2
                 self.magnification = self.video_data["Magnification"].iloc[0]
 
             if logging:
@@ -90,14 +100,15 @@ class Kymo_video_analysis(object):
         self.space_pixel_size = 2 * 1.725 / (self.magnification) * self.binning  # um.pixel
         self.pos = []
         self.kymos_path = "/".join(
-            imgs_address.split("/")[:-1] + ["".join((imgs_address.split("/")[-1], "Analysis"))]
+            imgs_address.split("/")[:-1] + ["".join((imgs_address.split("/")[-1], "/Analysis"))]
         )
         if not os.path.exists(self.kymos_path):
             os.makedirs(self.kymos_path)
             if self.logging:
                 print('Kymos file created, address is at {}'.format(self.kymos_path))
-        self.files = os.listdir(self.imgs_address)
-        self.images_total_path = [os.path.join(self.imgs_address, file) for file in self.files]
+        self.images_total_path = [str(adr) for adr in self.imgs_address.glob('*.ti*')]
+        # print(self.images_total_path)
+        # self.images_total_path = [os.path.join(self.imgs_address, file_im) for file_im in self.files]
         self.images_total_path.sort()
         self.selection_file = self.images_total_path
         self.selection_file.sort()
@@ -171,7 +182,7 @@ class Kymo_video_analysis(object):
         """
         self.target_length = target_length
         self.x_length = self.target_length * self.space_pixel_size
-        fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+        fig, ax = plt.subplots(1,2 ,figsize=(10, 5))
         image = imageio.imread(self.selection_file[self.im_range[0]])
         ax[0].imshow(self.segmented)
 
