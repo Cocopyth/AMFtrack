@@ -180,7 +180,9 @@ def get_std_tip_in_ring_new_bootstrap(exp, t, args):
     regular_hulls, indexes = get_regular_hulls_area_fixed(exp, range(exp.ts), incr)
     if i + 2 <= len(regular_hulls):
         hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
-        res = get_tip_in_ring_bootstrap(hull1, hull2, t,exp,rh_only,max_t, n_resamples=100)
+        res = get_tip_in_ring_bootstrap(
+            hull1, hull2, t, exp, rh_only, max_t, n_resamples=100
+        )
         if res is None:
             return (f"ring_active_tips_density_incr-{incr}_index-{i}-bootstd", None)
         else:
@@ -291,7 +293,7 @@ def get_density_active_tips_in_ring(exp, t, args):
     regular_hulls, indexes = get_regular_hulls_area_fixed(exp, range(exp.ts), incr)
     if i + 2 <= len(regular_hulls) and t <= exp.ts - 2:
         hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
-        rate = get_num_active_tips_in_ring(hull1, hull2, t, exp, rh_only,max_t)
+        rate = get_num_active_tips_in_ring(hull1, hull2, t, exp, rh_only, max_t)
         area = ring_area(hull1, hull2)
         return (f"ring_active_tips_density_incr-{incr}_index-{i}", rate / area)
     else:

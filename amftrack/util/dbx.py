@@ -388,10 +388,15 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
                 directory_target, folder, path_drop.split("/")[-1]
             )
             print(path_drop, path_local)
-            if (
-                file.name in ["experiment.pick","time_plate_info.json","global_hypha_info.json",
-                              "folder_info.json","Analysis.zip","Img.zip","param.m"] #to fix!
-            ):
+            if file.name in [
+                "experiment.pick",
+                "time_plate_info.json",
+                "global_hypha_info.json",
+                "folder_info.json",
+                "Analysis.zip",
+                "Img.zip",
+                "param.m",
+            ]:  # to fix!
                 download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
 
 

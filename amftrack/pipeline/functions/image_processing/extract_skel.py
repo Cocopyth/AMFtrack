@@ -92,7 +92,7 @@ def bowler_hat(im, no, si):
     return imda
 
 
-def extract_skel_new_prince(im, params, perc_low, perc_high,minlow = 20):
+def extract_skel_new_prince(im, params, perc_low, perc_high, minlow=20):
     bowled = bowler_hat(-im.astype(np.uint8), 32, params)
     filename = time_ns()
     place_save = temp_path
