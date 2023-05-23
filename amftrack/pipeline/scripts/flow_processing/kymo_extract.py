@@ -58,3 +58,5 @@ edge_objs = test_video.edge_objects
 bin_nr = 2
 bins = np.linspace(0, 1, bin_nr+1)
 kymo = [edge_obj.extract_kymo(bounds=(0, 1)) for edge_obj in edge_objs]
+
+
