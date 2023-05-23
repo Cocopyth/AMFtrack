@@ -21,9 +21,9 @@ folders = folders.loc[folders["/Img/TileConfiguration.txt.registered"] == True]
 num_parallel = 100
 time = "6:00:00"
 hyph_width = 30
-perc_low = 93
+perc_low = 85
 perc_high = 99.5
-minlow = 20
+minlow = 10
 args = [hyph_width, perc_low, perc_high, minlow, directory_targ]
 run_parallel(
     "extract_skel_2.py",
