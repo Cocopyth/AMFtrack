@@ -29,6 +29,20 @@ def gridplot(
     subh: float = 4.0,
     **kwargs,
 ):
+    """This function creates a grid of subplots for displaying multiple plots in a single figure. The function takes in the number of plots to be displayed and optionally, the number of columns to use in the grid, and the width and height of each subplot. The function returns the figure object and an iterator over the subplots.
+
+        Parameters:
+
+            n (int): The number of plots to be displayed.
+            ncols (int): The number of columns to use in the grid. Defaults to None, which sets the number of columns to be equal to n.
+            subw (float): The width of each subplot in inches. Defaults to 4.0.
+            subh (float): The height of each subplot in inches. Defaults to 4.0.
+            **kwargs: Additional keyword arguments that are passed to the plt.subplots function.
+
+        Returns:
+
+            fig (matplotlib.figure.Figure): The figure object that contains the subplots.
+            axs (iterator): An iterator over the subplots that can be used to plot data."""
     if ncols is None:
         ncols = n
     nrows = math.ceil(n / ncols)

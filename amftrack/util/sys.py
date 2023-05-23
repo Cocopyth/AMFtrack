@@ -371,34 +371,36 @@ def update_analysis_info(directory, suffix_analysis_info=""):
     analysis_dir = [fold for fold in listdir if fold.split("_")[0] == "Analysis"]
     infos_analysed = {}
     for folder in analysis_dir:
-        # print(folder)
         metadata = {}
         version = folder.split("_")[-1]
         op_id = int(folder.split("_")[-2])
         dt = datetime.fromtimestamp(op_id // 1000000000)
         path = f"{directory}{folder}/folder_info.json"
-        infos = pd.read_json(path, dtype={"unique_id": str})
-        if len(infos) > 0:
-            column_interest = [column for column in infos.columns if column[0] != "/"]
-            metadata["version"] = version
-            for column in column_interest:
-                if column != "folder":
-                    info = str(infos[column].iloc[0])
-                    metadata[column] = info
-            metadata["date_begin"] = datetime.strftime(
-                infos["datetime"].iloc[0], "%d.%m.%Y, %H:%M:"
-            )
-            metadata["date_end"] = datetime.strftime(
-                infos["datetime"].iloc[-1], "%d.%m.%Y, %H:%M:"
-            )
-            metadata["number_timepoints"] = len(infos)
-            metadata["path_exp"] = f"{folder}/experiment.pick"
-            metadata["path_global_hypha_info"] = f"{folder}/global_hypha_info.json"
-            metadata["path_time_hypha_info"] = f"{folder}/time_hypha_info"
-            metadata["path_time_plate_info"] = f"{folder}/time_plate_info.json"
-            metadata["path_global_plate_info"] = f"{folder}/global_plate_info.json"
-            metadata["date_run_analysis"] = datetime.strftime(dt, "%d.%m.%Y, %H:%M:")
-            infos_analysed[folder] = metadata
+        if os.path.exists(path):
+            infos = pd.read_json(path, dtype={"unique_id": str})
+            if len(infos) > 0:
+                column_interest = [column for column in infos.columns if column[0] != "/"]
+                metadata["version"] = version
+                for column in column_interest:
+                    if column != "folder":
+                        info = str(infos[column].iloc[0])
+                        metadata[column] = info
+                metadata["date_begin"] = datetime.strftime(
+                    infos["datetime"].iloc[0], "%d.%m.%Y, %H:%M:"
+                )
+                metadata["date_end"] = datetime.strftime(
+                    infos["datetime"].iloc[-1], "%d.%m.%Y, %H:%M:"
+                )
+                metadata["number_timepoints"] = len(infos)
+                metadata["path_exp"] = f"{folder}/experiment.pick"
+                metadata["path_global_hypha_info"] = f"{folder}/global_hypha_info.json"
+                metadata["path_time_hypha_info"] = f"{folder}/time_hypha_info"
+                metadata["path_time_plate_info"] = f"{folder}/time_plate_info.json"
+                metadata["path_global_plate_info"] = f"{folder}/global_plate_info.json"
+                metadata["date_run_analysis"] = datetime.strftime(dt, "%d.%m.%Y, %H:%M:")
+                infos_analysed[folder] = metadata
+        else:
+            print(folder)
     target = os.path.join(temp_path, f"analysis_info{suffix_analysis_info}.json")
 
     with open(target, "w") as jsonf:
@@ -696,7 +698,10 @@ def get_time_plate_info_long_from_analysis(analysis_folders, use_saved=True):
 
                 tables.append(table)
             time_plate_info_plate = pd.concat(tables, axis=0, ignore_index=True)
+            time_plate_info_plate = time_plate_info_plate.sort_values("datetime")
             time_plate_info_plate.reset_index(inplace=True, drop=True)
+            time_plate_info_plate['timestep'] = time_plate_info_plate.index
+
             time_plate_infos.append(time_plate_info_plate)
             folders = pd.concat([folders, folders_plate], axis=0, ignore_index=True)
     time_plate_info = pd.concat(time_plate_infos, axis=0, ignore_index=True)
