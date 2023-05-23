@@ -848,7 +848,8 @@ def plot_edge_color_value(
     show_background=True,
     label_colorbar="Width ($\mu m)$",
     figsize=(36, 24),
-    figax = None
+    figax = None,
+    alpha = 0.5,
 ) -> None:
     """
     Plot the width for all the edges at a given timestep.
@@ -957,7 +958,7 @@ def plot_edge_color_value(
     # 3/ Fusing layers
     if show_background:
         ax.imshow(im, cmap="gray", interpolation="none")
-    ax.imshow(skel_im, alpha=0.5, interpolation="none")
+    ax.imshow(skel_im, alpha=alpha, interpolation="none")
 
     # 3/ Plotting the Nodes
     size = 5

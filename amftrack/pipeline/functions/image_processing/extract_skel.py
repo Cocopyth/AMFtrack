@@ -92,7 +92,7 @@ def bowler_hat(im, no, si):
     return imda
 
 
-def extract_skel_new_prince(im, params, perc_low, perc_high):
+def extract_skel_new_prince(im, params, perc_low, perc_high,minlow = 20):
     bowled = bowler_hat(-im.astype(np.uint8), 32, params)
     filename = time_ns()
     place_save = temp_path
@@ -117,7 +117,7 @@ def extract_skel_new_prince(im, params, perc_low, perc_high):
         im2 = to_smooth.astype(np.uint8)
     print("image_reading")
     shutil.rmtree(os.path.join(place_save, foldname))
-    low = max(20, np.percentile(im2, perc_low))
+    low = max(minlow, np.percentile(im2, perc_low))
     high = max(90, np.percentile(im2, perc_high))
     transformed = im2
     hyst = filters.apply_hysteresis_threshold(transformed, low, high)
