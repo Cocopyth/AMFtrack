@@ -78,6 +78,7 @@ def get_all_nodes(exp, t) -> List[Node]:
     """
     return [Node(i, exp) for i in exp.nx_graph[t].nodes]
 
+
 def find_nearest_edge(point: coord, exp: Experiment, t: int, edge_list=None) -> Edge:
     """
     Find the nearest edge to `point` in `exp` at timestep `t`.
@@ -105,6 +106,7 @@ def find_neighboring_edges(
     indexes = get_closest_lines(point, l, step=50, n_nearest=10)[0]
     kept_edges = [edges[i] for i in indexes]
     return kept_edges
+
 
 def get_edge_from_node_labels(
     exp: Experiment, t: int, start_node: int, end_node: int
@@ -848,8 +850,8 @@ def plot_edge_color_value(
     show_background=True,
     label_colorbar="Width ($\mu m)$",
     figsize=(36, 24),
-    figax = None,
-    alpha = 0.5,
+    figax=None,
+    alpha=0.5,
 ) -> None:
     """
     Plot the width for all the edges at a given timestep.

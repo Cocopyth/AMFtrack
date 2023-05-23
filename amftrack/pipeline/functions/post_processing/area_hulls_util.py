@@ -111,7 +111,6 @@ def get_length_in_ring_new(hull1, hull2, t, exp):
     return tot_length
 
 
-
 def get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples=100):
     shape = hull2.difference(hull1)
     geoms = splitPolygon(shape, 100, 100).geoms if shape.area > 0 else []
@@ -133,12 +132,13 @@ def get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples=100):
         return None
 
 
-def get_tip_in_ring_bootstrap(hull1, hull2, t, exp,rh_only,max_t, n_resamples=100):
+def get_tip_in_ring_bootstrap(hull1, hull2, t, exp, rh_only, max_t, n_resamples=100):
     """Returns the bootsrap of the mean density of hyphae in the ring"""
     shape = hull2.difference(hull1)
     geoms = splitPolygon(shape, 100, 100).geoms if shape.area > 0 else []
     densities = [
-        len(get_growing_tips_shape(geom, t,exp,rh_only,max_t)) / (geom.area * 1.725**2 / (1000**2))
+        len(get_growing_tips_shape(geom, t, exp, rh_only, max_t))
+        / (geom.area * 1.725**2 / (1000**2))
         for geom in geoms
     ]
     if len(densities) > 0:
@@ -244,23 +244,20 @@ def get_rate_branch_in_ring(hull1, hull2, t, exp, rh_only, max_t=np.inf):
 def get_rate_stop_in_ring(hull1, hull2, t, exp, rh_only, max_t=np.inf):
     growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only, max_t)
     interest_tips = [
-        tip
-        for tip in growing_tips
-        if tip.ts()[-1] != t + 1
-        and tip.degree(t + 1) == 1
+        tip for tip in growing_tips if tip.ts()[-1] != t + 1 and tip.degree(t + 1) == 1
     ]
     stop_tips = []
     for tip in interest_tips:
         timesteps = [tim for tim in tip.ts() if tim <= max_t]
         tim = timesteps[-1] if len(timesteps) > 0 else tip.ts()[-1]
-        if np.linalg.norm(tip.pos(tim) - tip.pos(t+1)) <= 40:
+        if np.linalg.norm(tip.pos(tim) - tip.pos(t + 1)) <= 40:
             stop_tips.append(tip)
     timedelta = get_time(exp, t, t + 1)
     return len(stop_tips) / timedelta
 
 
-def get_num_active_tips_in_ring(hull1, hull2, t, exp, rh_only,max_t=np.inf):
-    growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only,max_t)
+def get_num_active_tips_in_ring(hull1, hull2, t, exp, rh_only, max_t=np.inf):
+    growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only, max_t)
     return len(growing_tips)
 
 
