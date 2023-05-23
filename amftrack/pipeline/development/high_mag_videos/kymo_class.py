@@ -41,7 +41,7 @@ class Kymo_video_analysis(object):
         # First we're assigning values, and extracting data about the video if there is a .csv (or .xlsx) available.
         # self.imgs_address = os.path.join(imgs_address, 'Img')
         self.imgs_address = Path(imgs_address) / "Img"
-        self.video_nr = int(imgs_address[:-1].split("_")[-1])
+        self.video_nr = int(imgs_address.split('/')[-1].split("_")[-1])
         parent_files = self.imgs_address.parents[1]
         self.binning = binning
         self.magnification = magnification
@@ -54,7 +54,7 @@ class Kymo_video_analysis(object):
         self.back_fit = [0, 0, 0]
         self.back_offset = 0
         
-        # print(self.video_nr)
+        print(self.video_nr)
 
         ### Extracts the video parameters from the nearby csv.
         self.csv_path = next(Path(parent_files).glob("*.csv"), None)
@@ -423,7 +423,7 @@ class Kymo_edge_analysis(object):
                            target_length=130,
                            kymo_adj=False,
                            save_array=True,
-                           save_im=True,
+                           save_im=False,
                            bounds=(0, 1)):
         """
         Creates kymograph for the edge. Uses bin_nr to divide the width into evenly distributed strips.
@@ -826,7 +826,9 @@ class Kymo_edge_analysis(object):
             iters = 1
 
             spds_tot = np.nansum(np.dstack((spds_back, spds_forw)), 2)
+            flux_non_nan = ~(np.isnan(spds_back) * np.isnan(spds_forw))
             flux_tot = np.nansum((np.prod((spds_forw, forw_thresh), 0), np.prod((spds_back, back_thresh), 0)), 0)
+            flux_tot = np.where(flux_non_nan, flux_tot, np.nan)
             flux_max = np.max(abs(flux_tot.flatten()))
 
             forw_back_thresh_int = np.sum(forw_back_thresh, axis=0)
