@@ -56,7 +56,7 @@ edges = get_all_edges(exp, t)
 nodes = get_all_nodes(exp, t)
 weights = {(edge.begin.label, edge.end.label): edge.length_um(t) for edge in edges}
 nx.set_edge_attributes(exp.nx_graph[t], weights, "length")
-weights = {(edge.begin.label, edge.end.label): 1/edge.length_um(t) for edge in edges}
+weights = {(edge.begin.label, edge.end.label): 1 / edge.length_um(t) for edge in edges}
 nx.set_edge_attributes(exp.nx_graph[t], weights, "1/length")
 nodes_source = [
     node

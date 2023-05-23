@@ -23,23 +23,23 @@ def wave(xt, c, lamb, K, x0):
 
 def dwave(xt, c, lamb, K, x0):
     """This function represents a mathematical model that describes the
-    amplitude of a traveling wave along a one-dimensional medium.
-     The function takes in the input variables: xt, c, lamb, K, and x0,
-     and returns the amplitude of the wave.
+        amplitude of a traveling wave along a one-dimensional medium.
+         The function takes in the input variables: xt, c, lamb, K, and x0,
+         and returns the amplitude of the wave.
 
-Parameters:
+    Parameters:
 
-    xt (ndarray): A 2xN numpy array representing the spatiotemporal
-     coordinates of the wave. The first row contains the spatial
-     coordinates x, and the second row contains the temporal coordinates t.
-    c (float): The speed of the wave.
-    lamb (float): The wave attenuation coefficient.
-    K (float): The maximum amplitude of the wave.
-    x0 (float): The initial position of the wave.
+        xt (ndarray): A 2xN numpy array representing the spatiotemporal
+         coordinates of the wave. The first row contains the spatial
+         coordinates x, and the second row contains the temporal coordinates t.
+        c (float): The speed of the wave.
+        lamb (float): The wave attenuation coefficient.
+        K (float): The maximum amplitude of the wave.
+        x0 (float): The initial position of the wave.
 
-Returns:
+    Returns:
 
-    ndarray: A 1D numpy array of the same length as xt[0] representing the amplitude of the wave at each spatiotemporal coordinate in xt."""
+        ndarray: A 1D numpy array of the same length as xt[0] representing the amplitude of the wave at each spatiotemporal coordinate in xt."""
     x = xt[0, :]
     t = xt[1, :]
     return K * (
