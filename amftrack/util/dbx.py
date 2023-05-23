@@ -389,10 +389,8 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
             )
             print(path_drop, path_local)
             if (
-                file.name != "time_hypha_info"
-                and not "validation" in file.name
-                and not "time_hull_info" in file.name
-                and not "time_edge_info" in file.name
+                file.name in ["experiment.pick","time_plate_info.json","global_hypha_info.json",
+                              "folder_info.json","Analysis.zip","Img.zip","param.m"] #to fix!
             ):
                 download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
 

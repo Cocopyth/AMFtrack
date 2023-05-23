@@ -31,7 +31,7 @@ while len(folders_drop3) > 0:
         [directory_targ],
         folders_drop2,
         50,
-        "24:00:00",
+        "4:00:00",
         "staging",
         cpus=1,
         node="staging",
