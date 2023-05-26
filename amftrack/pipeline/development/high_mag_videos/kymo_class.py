@@ -70,8 +70,18 @@ class Kymo_video_analysis(object):
             if self.csv_path is not None:
                 if logging:
                     print("Found a csv file, using that data")
-                videos_data = pd.read_csv(self.csv_path)
-
+                df_comma = pd.read_csv(self.csv_path, nrows=1,sep=",")
+                df_semi = pd.read_csv(self.csv_path, nrows=1, sep=";")
+                if df_comma.shape[1]>df_semi.shape[1]:
+                    videos_data = pd.read_csv(self.csv_path, sep=",")
+                else:
+                    videos_data = pd.read_csv(self.csv_path, sep=";")
+                    
+                if videos_data.isnull().values.any():
+                    print("Found NaNs in the excel files! Blame the experimentalists.")
+                    videos_data = videos_data.interpolate(method='pad', limit_direction='forward')
+#                 if videos_data.isnull().values.any():
+#                     raise("This excel sheet is unworkable, please ask the responisble person")
                 self.video_data = videos_data.loc[videos_data['video'] == self.video_nr]
                 # print(self.video_data["Illumination"][0])
                 self.vid_type = ["FLUO", "BRIGHT"][self.video_data["Illumination"].iloc[0] == "BF"]
@@ -422,7 +432,7 @@ class Kymo_edge_analysis(object):
                            step=30,
                            target_length=130,
                            kymo_adj=False,
-                           save_array=True,
+                           save_array=False,
                            save_im=False,
                            bounds=(0, 1)):
         """
@@ -492,8 +502,8 @@ class Kymo_edge_analysis(object):
             im.save(save_path_temp)
         return self.kymo
 
-    def fourier_kymo(self, bin_nr, hor_lines=1, return_self=True, test_plots=False, save_im=True,
-                     save_array=True):
+    def fourier_kymo(self, bin_nr, hor_lines=1, return_self=True, test_plots=False, save_im=False,
+                     save_array=False):
         """
         Internal function which takes a kymograph and produces a forward and backward filtered kymograph.
         These are stored in the object.
@@ -774,10 +784,10 @@ class Kymo_edge_analysis(object):
                           margin=25,
                           plots=False,
                           histos=False,
-                          save_filters=True,
-                          save_speeds=True,
-                          save_im=True,
-                          save_flux_array=True):
+                          save_filters=False,
+                          save_speeds=False,
+                          save_im=False,
+                          save_flux_array=False):
         """
         Function that extracts the net transport of internal kymographs.
 

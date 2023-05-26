@@ -38,11 +38,11 @@ test_video = Kymo_video_analysis(img_address, logging=True, vid_type=None,
                                  fps=None, binning=None, filter_step=80,
                                  seg_thresh=10, show_seg=False)
 edge_list = test_video.edge_objects
-target_length = int(2.5 * test_video.magnification)
+target_length = int(2.1 * test_video.magnification)
 
 test_video.plot_extraction_img(target_length=target_length, save_img=True)
 edge_objs = test_video.edge_objects
-# test_video.makeVideo()
+test_video.makeVideo()
 print('\n To work with individual edges, here is a list of their indices:')
 for i, edge in enumerate(edge_list):
     print('edge {}, {}'.format(i, edge.edge_name))
@@ -50,6 +50,17 @@ for i, edge in enumerate(edge_list):
 bin_nr = 1
 img_seq = np.arange(len(edge_objs[0].video_analysis.selection_file))
 kymos = []
+edge_table = {
+                'edge_name': [],
+                'edge_length': [],
+                'straight_length': [],
+                'speed_max': [],
+                'speed_min': [],
+                'flux_avg': [],
+                'flux_min': [],
+                'flux_max': [],                
+             }
+data_edge = pd.DataFrame(data=edge_table)
 
 for edge in edge_objs:
     edge_pic = edge.view_edge(img_frame=40, save_im=True, target_length=target_length)
@@ -63,8 +74,11 @@ for edge in edge_objs:
     kymos_lefts, kymos_rights = edge.fourier_kymo(bin_nr, save_im=True, save_array=False)
     speeds, times = edge.test_GST(int(GST_params[0]), w_start=3, C_thresh=float(GST_params[1]), C_thresh_falloff=float(GST_params[2]), blur_size=5, preblur=True,
                                   speed_thresh=int(GST_params[3]), plots=False)
-    net_trans = edge.extract_transport(noise_thresh=0.15, plots=False, save_im=True, save_flux_array=True, margin=5)
+    net_trans = edge.extract_transport(noise_thresh=0.15, plots=False, save_im=False, save_flux_array=False, margin=5)
 
+    speed_max = np.nanpercentile(speeds.flatten(), 1)
+    flux_max  = np.nanpercentile(net_trans.flatten(), 5)
+    
     data_table = {'times': times[0],
                   'speed_right_mean': np.nanmean(speeds[0][1], axis=1),
                   "speed_left_mean": np.nanmean(speeds[0][0], axis=1),
@@ -79,24 +93,41 @@ for edge in edge_objs:
     data_out = pd.DataFrame(data=data_table)
     data_out.to_csv(f"{edge.edge_path}/{edge.edge_name}_data.csv")
     
+    straight_len = np.linalg.norm((edge.segments[0][0] + edge.segments[0][1])/2 - (edge.segments[-1][0] + edge.segments[-1][1])/2)*space_res
+    new_row = pd.DataFrame([{'edge_name':f'{edge.edge_name}', 
+                             'edge_length': space_res *edge.kymos[0].shape[1],
+                             'straight_length' : straight_len,
+                             'speed_max' : np.nanpercentile(speeds[0][1], 97),
+                             'speed_min' : np.nanpercentile(speeds[0][0], 3),
+                             'flux_avg'  : np.nanmean(net_trans),
+                             'flux_min'  : np.nanpercentile(net_trans, 3),
+                             'flux_max'  : np.nanpercentile(net_trans, 97)
+                            }])
+    data_edge = pd.concat([data_edge, new_row])
     
     fig, ax = plt.subplots(3, figsize=(7, 7 * 3))
+    
+    fig.suptitle(f"Edge {edge.edge_name} Summary")
     imshow_extent = [0, space_res * video_kymos[0].shape[1],
                      time_res * video_kymos[0].shape[0], 0]
-
     ax[0].imshow(video_kymos[0], extent=imshow_extent, aspect='auto')
-    ax[0].set_title("Full kymo")
+#     ax[0].set_title(f"Full kymo (length = {space_res * len(video_kymos[0]):.5} $ \mu m$)")
+    ax[0].set_ylabel("time (s)")
+    ax[0].set_xlabel("space ($\mu m$)")
     ax[1].errorbar(times[0], np.nanmean(speeds[0][0], axis=1), np.nanstd(speeds[0][0], axis=1), c='tab:blue',
                    label='Full kymo backward', errorevery=10)
     ax[1].errorbar(times[0], np.nanmean(speeds[0][1], axis=1), np.nanstd(speeds[0][1], axis=1), c='tab:orange',
                    label='Full kymo forward', errorevery=10)
+    ax[1].axhline()
+    ax[1].set_ylim([speed_max,-speed_max])
     ax[1].set_title(f"Full mean speed")
     ax[1].set_xlabel("time (s)")
     ax[1].set_ylabel("speed ($\mu m/s$)")
     ax[1].legend()
     ax[1].grid(True)
-    ax[2].errorbar(times[0], np.nanmean(net_trans, axis=1), np.nanstd(net_trans, axis=1), label='Full kymo',
-                   errorevery=10)
+    ax[2].plot(times[0], np.nanmean(net_trans, axis=1), label='Full kymo')
+    ax[2].axhline()
+    ax[2].set_ylim([flux_max,-flux_max])
     ax[2].set_title(f"Full mean flux")
     ax[2].set_xlabel("time (s)")
     ax[2].set_ylabel("flux ($q \mu m / s$)")
@@ -170,9 +201,9 @@ for edge in edge_objs:
     ], dtype=float)
     imwrite(f"{edge.edge_path}/{edge.edge_name}_speeds_flux_array.tiff", spds_tiff, photometric='minisblack')
 
+data_edge.to_csv(f"{img_address}/Analysis/edges_data.csv")
 
-
-db_address = upl_targ + str(test_video.video_nr) + '/'
+db_address = f"{upl_targ}{test_video.video_nr:02}/"
 
 print(f"Iteration {i}: {db_address}")
 print(f"Iteration {i}: {img_address}/Analysis/")

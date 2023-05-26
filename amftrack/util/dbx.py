@@ -316,8 +316,9 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
     image_list = []
     folders_interest = ('.csv', '.xlsx', 'xlsb')
     re_video = re.compile(r'\/\d*\/Img$')
-    re_excel = re.compile(r'(.*\.(csv))|(xls[xb])$')
-    re_rachael_video = re.compile(r'^.*\/DATA\/\d{8}_Plate\d{1,6}_\d{1,4}(\/|)$', re.IGNORECASE)
+    re_excel = re.compile(r'(\d{8}.*\.(csv))|(xls[xb])$')
+    re_rachael_video = re.compile(r'^.*\/DATA\/\d{8}_Plate\d{1,6}_\d{1,4}(\/|)$', re.IGNORECASE)            
+    is_rachael_video = True
     re_seq = [re_video, re_excel, re_rachael_video]
     
     for x in response.entries:
@@ -339,12 +340,22 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
     for i, xc_file in enumerate(files_list):
         suffix = xc_file.split('/')[-1].split('.')[-1]
         if suffix.endswith(('xlsx', 'xlsb')):
-            print("Hello!")
+            print("I found an excel sheet to use!")
             excel_list.append(files_list[i])
+            is_rachael_video = True
+        elif suffix.endswith(('csv')):
+            print("I found a csv sheet to use!")
+            excel_list.append(files_list[i])
+            is_rachael_video = False
         else:
             image_list.append(files_list[i])
+    
+    print(files_list)
 
-    names = [file.split("/")[-1] for file in image_list]
+    if is_rachael_video:
+        names = [file.split("/")[-1] for file in image_list]
+    else:
+        names = [f'{file.split("/")[-3]}_{file.split("/")[-2]}/Img/' for file in image_list]
     path_drop = [os.path.join(*file.split('/')) for file in image_list]
     plate_nr = [path.split(os.path.sep)[-3].split('_')[1][5:] for path in path_drop ]
     date_img = [path.split(os.path.sep)[-3].split('_')[0] for path in path_drop]
@@ -445,7 +456,7 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
         folder = row["folder"]
         path_folder = os.path.join(directory_target, folder)
         if not os.path.exists(path_folder):
-            os.mkdir(path_folder)
+            os.makedirs(path_folder)
         for file in listfiles:
             path_drop = file.path_display
             path_local = os.path.join(
