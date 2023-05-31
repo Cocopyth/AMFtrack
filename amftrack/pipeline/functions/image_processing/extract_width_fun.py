@@ -454,8 +454,6 @@ def get_width_info(experiment, t, resolution=50, skip=False):
 
 
 def get_width_info_new(experiment, t, resolution=50, skip=False) -> Dict:
-    "Felix version"
-    print(not skip)
     edge_width = {}
     graph = experiment.nx_graph[t]
     for edge in graph.edges:
