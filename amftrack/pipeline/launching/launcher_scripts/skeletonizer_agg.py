@@ -24,7 +24,9 @@ hyph_width = 30
 perc_low = 85
 perc_high = 99.5
 minlow = 10
-args = [hyph_width, perc_low, perc_high, minlow, directory_targ]
+minhigh = 70
+
+args = [hyph_width, perc_low, perc_high, minlow, minhigh,directory_targ]
 run_parallel(
     "extract_skel_2.py",
     args,

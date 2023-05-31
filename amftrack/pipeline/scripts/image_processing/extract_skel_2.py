@@ -27,8 +27,9 @@ hyph_width = int(sys.argv[1])
 perc_low = float(sys.argv[2])
 perc_high = float(sys.argv[3])
 minlow = float(sys.argv[4])
+minhigh = float(sys.argv[5])
 
-directory = str(sys.argv[4])
+directory = str(sys.argv[6])
 
 
 run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
@@ -89,7 +90,7 @@ for index, name in enumerate(tileconfig[0]):
     im[bowled2 <= 0.09] = np.maximum(im[bowled2 <= 0.09], 250)
     shape = im.shape
     print("segmenting")
-    segmented = extract_skel_new_prince(im, [hyph_width], perc_low, perc_high, minlow)
+    segmented = extract_skel_new_prince(im, [hyph_width], perc_low, perc_high, minlow,minhigh)
     # low = np.percentile(-im+255, perc_low)
     # high = np.percentile(-im+255, perc_high)
     # segmented = filters.apply_hysteresis_threshold(-im+255, low, high)
