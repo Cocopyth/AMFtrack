@@ -36,7 +36,7 @@ skel_doc = sparse_to_doc(skel)
 skel_docs.append(skel_doc)
 Rs = [np.array([[1, 0], [0, 1]])]
 ts = [np.array([0, 0])]
-for i, directory_name in enumerate(folder_list[1:]):
+for i, directory_name in enumerate(folder_list[1:j+1]):
     path_snap = directory + directory_name
     skel_info = read_mat(path_snap + "/Analysis/skeleton_pruned.mat")
     skel = skel_info["skeleton"]

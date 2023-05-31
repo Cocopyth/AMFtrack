@@ -27,7 +27,7 @@ num_parallel = 128
 
 for unique_id in plates:
     select = folders.loc[folders["unique_id"] == unique_id]
-    time = "2:00:00"
+    time = "12:00:00"
     run_parallel(
         "track_nodes.py",
         args,

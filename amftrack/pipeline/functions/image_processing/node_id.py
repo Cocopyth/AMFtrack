@@ -9,6 +9,11 @@ import json
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
 from amftrack.util.sys import get_dirname
 import os
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
+    Experiment,
+    save_graphs,
+    load_graphs,
+)
 
 
 def first_identification(nx_graph_tm1, nx_graph_t, pos_tm1, pos_t, tolerance):
@@ -327,6 +332,7 @@ def create_corresp(exp):
 
 
 def create_labeled_graph(exp):
+    print("create labeled graph")
     corresp_list = []
     for t in range(exp.ts - 1):
         print(t, "ae")
@@ -338,9 +344,9 @@ def create_labeled_graph(exp):
         corresp_list.append({int(corresp[key]): int(key) for key in corresp.keys()})
     new_graph_list = []
     new_poss_list = []
-    mappings = []
+    # mappings = []
     for t in range(exp.ts):
-
+        print("relabel1 ", t)
         def mapping(node, t=t):
             return recursive_mapping(corresp_list, t, node)
 
@@ -348,20 +354,23 @@ def create_labeled_graph(exp):
         new_poss = relabel_pos(exp.positions[t], mapping)
         new_graph_list.append(new_graph)
         new_poss_list.append(new_poss)
-        mappings.append(mapping)
+        # mappings.append(mapping)
     exp.positions = new_poss_list
     exp.nx_graph = new_graph_list
     #     return(corresp_list,new_poss_list,mappings)
 
     all_nodes = set()
-    for graph in new_graph_list:
+    for k,graph in enumerate(new_graph_list):
+        print(k)
         all_nodes = all_nodes.union(set(graph.nodes))
     all_node_labels = sorted(all_nodes)
-    dico = {node: all_node_labels.index(node) for node in all_node_labels}
+    dico = {node: j for j,node in enumerate(all_node_labels)}
     reduced_label_graph_list = []
     mapping_final = lambda node: dico[node] if node in dico.keys() else -1
     reduced_poss_list = []
     for t in range(exp.ts):
+        print("relabel2 ", t)
+
         reduced_label_graph = nx.relabel_nodes(new_graph_list[t], mapping_final)
         reduced_label_graph_list.append(reduced_label_graph)
         reduced_poss = relabel_pos(new_poss_list[t], mapping_final)
@@ -371,6 +380,46 @@ def create_labeled_graph(exp):
     exp.labeled = True
     return (reduced_label_graph_list, reduced_poss_list)
 
+def create_labeled_graph_local(exp):
+    all_nodes = set()
+
+    print("create labeled graph")
+    corresp_list = []
+    for t in range(exp.ts - 1):
+        print(t, "ae")
+        tp1 = t + 1
+        corresp_path = get_corresp_path(exp, t, tp1)
+        assert os.path.exists(corresp_path), "Not all corresp exist"
+        with open(corresp_path) as json_file:
+            corresp = json.load(json_file)
+        corresp_list.append({int(corresp[key]): int(key) for key in corresp.keys()})
+    for t in range(exp.ts):
+        exp2 = Experiment(exp.directory)
+
+        exp2.load(exp.folders.iloc[t:t + 1], suffix="_width")
+        def mapping(node, t=t):
+            return recursive_mapping(corresp_list, t, node)
+
+        new_graph = nx.relabel_nodes(exp2.nx_graph[0], mapping, copy=True)
+        new_poss = relabel_pos(exp2.positions[0], mapping)
+        exp2.positions[0] = new_poss
+        exp2.nx_graph[0] = new_graph
+        exp2.save_graphs(suffix="_labeled")
+
+        all_nodes = all_nodes.union(set(new_graph.nodes))
+    all_node_labels = sorted(all_nodes)
+    dico = {node: j for j,node in enumerate(all_node_labels)}
+    mapping_final = lambda node: dico[node] if node in dico.keys() else -1
+    for t in range(exp.ts):
+        exp2 = Experiment(exp.directory)
+
+        exp2.load(exp.folders.iloc[t:t + 1], suffix="_labeled")
+        new_graph = nx.relabel_nodes(exp2.nx_graph[0], mapping_final, copy=True)
+        new_poss = relabel_pos(exp2.positions[0], mapping)
+        exp2.positions[0] = new_poss
+        exp2.nx_graph[0] = new_graph
+        exp2.save_graphs(suffix="_labeled")
+    exp.labeled = True
 
 def recursive_mapping(corresp_list, t, node):
     if t == 0:
