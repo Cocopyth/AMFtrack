@@ -19,7 +19,7 @@ all_folders = get_current_folders(
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Analysis/skeleton_realigned_compressed.mat"] == True]
 num_parallel = 128
-time = "5:00:00"
+time = "24:00:00"
 args = [directory_targ]
 run_parallel(
     "extract_nx_graph.py",
