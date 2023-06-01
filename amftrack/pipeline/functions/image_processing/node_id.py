@@ -415,7 +415,7 @@ def create_labeled_graph_local(exp):
 
         exp2.load(exp.folders.iloc[t:t + 1], suffix="_labeled")
         new_graph = nx.relabel_nodes(exp2.nx_graph[0], mapping_final, copy=True)
-        new_poss = relabel_pos(exp2.positions[0], mapping)
+        new_poss = relabel_pos(exp2.positions[0], mapping_final)
         exp2.positions[0] = new_poss
         exp2.nx_graph[0] = new_graph
         exp2.save_graphs(suffix="_labeled")
