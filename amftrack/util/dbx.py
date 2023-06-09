@@ -313,13 +313,16 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
     response = dbx.files_list_folder(dir_drop, recursive=True)
     files_list = []
     excel_list = []
+    txt_list   = []
     image_list = []
     folders_interest = ('.csv', '.xlsx', 'xlsb')
     re_video = re.compile(r'\/\d*\/Img$')
     re_excel = re.compile(r'(\d{8}.*\.(csv))|(xls[xb])$')
-    re_rachael_video = re.compile(r'^.*\/DATA\/\d{8}_Plate\d{1,6}_\d{1,4}(\/|)$', re.IGNORECASE)            
+    re_rachael_video = re.compile(r'^.*\/DATA\/\d{8}_Plate\d{1,6}_\d{1,4}(\/|)$', re.IGNORECASE)
+    re_video_info = re.compile(r'\/\d{8}_Plate\d{1,6}\/.*\/videoInfo\.txt$', re.IGNORECASE)
     is_rachael_video = True
-    re_seq = [re_video, re_excel, re_rachael_video]
+    is_morrison_video = False
+    re_seq = [re_video, re_excel, re_rachael_video, re_video_info]
     
     for x in response.entries:
         # print(x.path_display)
@@ -347,6 +350,10 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
             print("I found a csv sheet to use!")
             excel_list.append(files_list[i])
             is_rachael_video = False
+        elif suffix.endswith(('txt')):
+            print("I found many txts!")
+            is_morrison_video = True
+            txt_list.append(files_list[i])
         else:
             image_list.append(files_list[i])
     
@@ -355,7 +362,7 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
     if is_rachael_video:
         names = [file.split("/")[-1] for file in image_list]
     else:
-        names = [f'{file.split("/")[-3]}_{file.split("/")[-2]}/Img/' for file in image_list]
+        names = [f'{file.split(os.sep)[-3]}_{file.split(os.sep)[-2]}/Img/' for file in image_list]
     path_drop = [os.path.join(*file.split('/')) for file in image_list]
     plate_nr = [path.split(os.path.sep)[-3].split('_')[1][5:] for path in path_drop ]
     date_img = [path.split(os.path.sep)[-3].split('_')[0] for path in path_drop]
@@ -373,7 +380,7 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
             4: "video",
         }
     )
-    return df, excel_list
+    return df, excel_list, txt_list
 
 
 def save_dropbox_state(dir_drop: str, skip_size: bool = True, is_video: bool=False):
