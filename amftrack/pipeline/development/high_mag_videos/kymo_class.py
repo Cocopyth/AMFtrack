@@ -6,6 +6,7 @@ import pandas as pd
 from PIL import Image
 import os
 from tqdm import tqdm
+import re
 
 
 class Kymo_video_analysis(object):
@@ -41,7 +42,7 @@ class Kymo_video_analysis(object):
         # First we're assigning values, and extracting data about the video if there is a .csv (or .xlsx) available.
         # self.imgs_address = os.path.join(imgs_address, 'Img')
         self.imgs_address = Path(imgs_address) / "Img"
-        self.video_nr = int(imgs_address.split('/')[-1].split("_")[-1])
+        self.video_nr = int(re.split('/|_', imgs_address[:-1])[-1])
         parent_files = self.imgs_address.parents[1]
         self.binning = binning
         self.magnification = magnification
@@ -58,7 +59,10 @@ class Kymo_video_analysis(object):
 
         ### Extracts the video parameters from the nearby csv.
         self.csv_path = next(Path(parent_files).glob("*.csv"), None)
-        self.xlsx_path = [a for a in Path(parent_files).glob(f'*{str(self.imgs_address).split("/")[-2].split("_")[-3]}*{str(self.imgs_address).split("/")[-2].split("_")[-2][2:]}*.xlsx')]
+        if self.csv_path is None:
+            self.xlsx_path = [a for a in Path(parent_files).glob(f'*{str(self.imgs_address).split("/")[-2].split("_")[-3]}*{str(self.imgs_address).split("/")[-2].split("_")[-2][2:]}*.xlsx')]
+        else:
+            self.xlsx_path = []
         if len(self.xlsx_path) != 1:
           print('ERROR in finding a single xlsx sheet!')
         else:
@@ -110,8 +114,9 @@ class Kymo_video_analysis(object):
         self.space_pixel_size = 2 * 1.725 / (self.magnification) * self.binning  # um.pixel
         self.pos = []
         self.kymos_path = "/".join(
-            imgs_address.split("/")[:-1] + ["".join((imgs_address.split("/")[-1], "/Analysis"))]
+            imgs_address.split("/")[:-1] + ["".join((imgs_address[:-1].split("/")[-1], "/Analysis"))]
         )
+        self.kymos_path = f"{imgs_address}Analysis/"
         if not os.path.exists(self.kymos_path):
             os.makedirs(self.kymos_path)
             if self.logging:
@@ -133,7 +138,8 @@ class Kymo_video_analysis(object):
         ###Skeleton creation, we segment the image using either brightfield or fluo segmentation methods.
         if self.vid_type == 'BRIGHT':
             self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
-                imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh, segment_plots=self.segment_plots)
+                imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh, segment_plots=self.segment_plots,
+                seg_thresh=seg_thresh)
         elif self.vid_type == 'FLUO':
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
                 imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh, segment_plots=self.segment_plots,
@@ -160,7 +166,7 @@ class Kymo_video_analysis(object):
             ax.imshow(self.segmented)
             seg_shape = self.segmented.shape
             ax.set_title(
-                f'Segmentation ({100 * np.sum(1 * self.segmented.flatten()) / (seg_shape[0] * seg_shape[1]):.4} $\%$ coverage)')
+                f'Segmentation ({np.sum(1 * self.segmented.flatten()) / (seg_shape[0] * seg_shape[1]):.4} $\%$ coverage)')
             fig.tight_layout()
 
     def filter_edges(self, step):
@@ -336,6 +342,7 @@ class Kymo_edge_analysis(object):
         self.bounds = (0, 1)
         self.edge_array = []
         self.speeds_tot = []
+        self.flux_tot = []
         self.times = []
         self.imshow_extent = []
 
@@ -407,6 +414,26 @@ class Kymo_edge_analysis(object):
             else:
                 print("Input image sequence has a weird amount of dimensions. This will probably crash")
         return self.edge_array
+    
+    def get_widths(self,
+                  resolution=1,
+                  step=30,
+                  target_length=130,
+                  save_im=True,
+                  bounds=(0, 1),
+                  img_frame=0,
+                  quality=6):
+        self.widths = get_edge_widths(self.edge_name,
+                                         self.video_analysis.pos,
+                                         self.video_analysis.segmented,
+                                         self.video_analysis.nx_graph_pruned,
+                                         resolution,
+                                         self.offset,
+                                         step,
+                                         target_length,
+                                         bounds,
+                                         logging=self.video_analysis.logging)
+        return self.widths * self.video_analysis.space_pixel_size
 
     def create_segments(self, pos, image, nx_graph_pruned, resolution, offset, target_length, bounds, step=30):
         """
@@ -839,6 +866,7 @@ class Kymo_edge_analysis(object):
             flux_non_nan = ~(np.isnan(spds_back) * np.isnan(spds_forw))
             flux_tot = np.nansum((np.prod((spds_forw, forw_thresh), 0), np.prod((spds_back, back_thresh), 0)), 0)
             flux_tot = np.where(flux_non_nan, flux_tot, np.nan)
+            self.flux_tot = flux_tot
             flux_max = np.max(abs(flux_tot.flatten()))
 
             forw_back_thresh_int = np.sum(forw_back_thresh, axis=0)

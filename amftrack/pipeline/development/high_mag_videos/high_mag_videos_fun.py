@@ -22,6 +22,7 @@ from skimage.measure import profile_line
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
 from skimage.filters import frangi
 from skimage.morphology import skeletonize
+import itertools,operator
 
 
 def get_length_um_edge(edge, nx_graph, space_pixel_size):
@@ -413,7 +414,7 @@ def get_width(slices, avearing_window=50, num_std=4):
     return np.median(widths)
 
 
-def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 160, 30), segment_plots=False):
+def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(30, 160, 30), segment_plots=False, seg_thresh = 11):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
     image:          Input image
@@ -421,9 +422,16 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 160, 30), s
     frangi_range:   Range of values to use a frangi filter with. Frangi filter is very good for brightfield vessel segmentation
 
     """
-    smooth_im = cv2.blur(-image, (11, 11))
-    segmented = frangi(-smooth_im, frangi_range)
-    skeletonized = skeletonize(segmented > thresh)
+    smooth_im_blur = cv2.blur(-image, (11, 11))
+    smooth_im = frangi(-smooth_im_blur, frangi_range)
+    smooth_im *= (255/np.max(smooth_im))
+    seg_shape = smooth_im.shape
+
+    for i in range(1, 100):
+        _, segmented = cv2.threshold(smooth_im, i, 255, cv2.THRESH_BINARY)
+        coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
+        if coverage < seg_thresh:
+            break
 
     # fig, ax = plt.subplots(3, figsize=(4,10))
     # ax[0].imshow(smooth_im)
@@ -433,11 +441,12 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(60, 160, 30), s
     # ax[2].imshow(skeletonized)
     # ax[2].set_title("Skeletonized")
     # fig.tight_layout()
-
+    
+    skeletonized = skeletonize(segmented > seg_thresh)
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
     nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
-    return (segmented > thresh, nx_graph_pruned, pos)
+    return (segmented, nx_graph_pruned, pos)
 
 
 def get_kymo_new(
@@ -552,6 +561,50 @@ def get_edge_image(edge, pos, images_address,
         return slices_list[0]
     else:
         return np.array(slices_list)
+    
+def get_edge_widths(edge, pos, segmented,
+                   nx_graph_pruned,
+                   resolution=1,
+                   offset=4,
+                   step=30,
+                   target_length=10,
+                   bounds=(0, 1),
+                   order=None,
+                   logging=False):
+    target_length = target_length*2
+    slices_list = []
+    pixel_list = orient(nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
+    offset = max(
+        offset, step
+    )  # avoiding index out of range at start and end of pixel_list
+    pixel_indexes = generate_pivot_indexes(
+        len(pixel_list), resolution=resolution, offset=offset
+    )
+    list_of_segments = compute_section_coordinates(
+        pixel_list, pixel_indexes, step=step, target_length=target_length + 1)
+    perp_lines = []
+
+    for i, sect in enumerate(list_of_segments):
+        point1 = np.array([sect[0][0], sect[0][1]])
+        point2 = np.array([sect[1][0], sect[1][1]])
+        perp_lines.append(extract_perp_lines(point1, point2))
+    
+    order = validate_interpolation_order(segmented.dtype, order)
+    im = segmented
+    l = []
+    for perp_line in perp_lines:
+        pixels = ndi.map_coordinates(im, perp_line, prefilter=order > 1, order=order, mode='reflect', cval=0.0)
+        pixels = np.flip(pixels, axis=1)
+        pixels = pixels[int(bounds[0] * target_length): int(bounds[1] * target_length)]
+        pixels = pixels.reshape((1, len(pixels)))
+        l.append(pixels)
+    slices = np.concatenate(l, axis=0)
+    slices_list = [max((sum(1 for _ in group) for value, group in itertools.groupby(pixel_row) if value == 0), default=0) for pixel_row in slices]
+        # TODO(FK): Add thickness of the profile here
+#         slices_list.append(max(len(list(y)) for (c,y) in itertools.groupby(np.array(pixels)) if c==1))
+    
+    return np.array(slices_list)
+    
 
 
 def extract_perp_lines(src, dst, linewidth=1):
