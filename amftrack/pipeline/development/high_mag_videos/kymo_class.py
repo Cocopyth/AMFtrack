@@ -7,6 +7,7 @@ from PIL import Image
 import os
 from tqdm import tqdm
 import re
+import tensorflow as tf
 
 
 class Kymo_video_analysis(object):
@@ -60,7 +61,7 @@ class Kymo_video_analysis(object):
         ### Extracts the video parameters from the nearby csv.
         self.csv_path = next(Path(parent_files).glob("*.csv"), None)
         if self.csv_path is None:
-            self.xlsx_path = [a for a in Path(parent_files).glob(f'*{str(self.imgs_address).split("/")[-2].split("_")[-3]}*{str(self.imgs_address).split("/")[-2].split("_")[-2][2:]}*.xlsx')]
+            self.xlsx_path = [a for a in Path(parent_files).glob(f'*{str(self.imgs_address).split(os.sep)[-2].split("_")[-3]}*{str(self.imgs_address).split(os.sep)[-2].split("_")[-2][2:]}*.xlsx')]
         else:
             self.xlsx_path = []
         if len(self.xlsx_path) != 1:
@@ -97,7 +98,7 @@ class Kymo_video_analysis(object):
                     print("Found an xlsx file, using that data")
                 videos_data = pd.read_excel(self.xlsx_path)
                 # print(str(self.imgs_address).split('/')[-2])
-                self.video_data = videos_data.loc[videos_data['Unnamed: 0'].str.contains(str(self.imgs_address).split('/')[-2], case=False, na=False)]
+                self.video_data = videos_data.loc[videos_data['Unnamed: 0'].str.contains(str(self.imgs_address).split(os.sep)[-2], case=False, na=False)]
                 print(self.video_data)
                 self.vid_type = ["FLUO", "BRIGHT"][self.video_data.iloc[0, 9] == "BF"]
                 self.fps = float(self.video_data["FPS"].iloc[0])
@@ -113,8 +114,8 @@ class Kymo_video_analysis(object):
         self.time_pixel_size = 1 / self.fps
         self.space_pixel_size = 2 * 1.725 / (self.magnification) * self.binning  # um.pixel
         self.pos = []
-        self.kymos_path = "/".join(
-            imgs_address.split("/")[:-1] + ["".join((imgs_address[:-1].split("/")[-1], "/Analysis"))]
+        self.kymos_path = os.sep.join(
+            imgs_address.split(os.sep)[:-1] + ["".join((imgs_address[:-1].split(os.sep)[-1], "/Analysis"))]
         )
         self.kymos_path = f"{imgs_address}Analysis/"
         if not os.path.exists(self.kymos_path):
@@ -415,25 +416,26 @@ class Kymo_edge_analysis(object):
                 print("Input image sequence has a weird amount of dimensions. This will probably crash")
         return self.edge_array
     
-    def get_widths(self,
-                  resolution=1,
-                  step=30,
-                  target_length=130,
-                  save_im=True,
-                  bounds=(0, 1),
-                  img_frame=0,
-                  quality=6):
-        self.widths = get_edge_widths(self.edge_name,
-                                         self.video_analysis.pos,
-                                         self.video_analysis.segmented,
-                                         self.video_analysis.nx_graph_pruned,
-                                         resolution,
-                                         self.offset,
-                                         step,
-                                         target_length,
-                                         bounds,
-                                         logging=self.video_analysis.logging)
-        return self.widths * self.video_analysis.space_pixel_size
+    # def get_widths(self,
+    #               resolution=1,
+    #               step=30,
+    #               target_length=130,
+    #               save_im=True,
+    #               bounds=(0, 1),
+    #               img_frame=0,
+    #               quality=6):
+    #     self.widths = get_edge_widths(self.edge_name,
+    #                                      self.video_analysis.pos,
+    #                                      self.video_analysis.segmented,
+    #                                      self.video_analysis.nx_graph_pruned,
+    #                                      resolution,
+    #                                      self.offset,
+    #                                      step,
+    #                                      target_length,
+    #                                      bounds,
+    #                                      logging=self.video_analysis.logging)
+    #     return self.widths * self.video_analysis.space_pixel_size
+
 
     def create_segments(self, pos, image, nx_graph_pruned, resolution, offset, target_length, bounds, step=30):
         """
@@ -452,6 +454,25 @@ class Kymo_edge_analysis(object):
         )
 
         return self.segments
+
+    def get_widths(self,
+                  resolution=1,
+                  step=30,
+                  target_length=200,
+                  save_im=True,
+                  bounds=(0, 1),
+                  img_frame=0,
+                  quality=6,
+                  model_path = "amftrack\\ml\\models\\default_CNN_GT_model.h5"):
+        self.create_segments(self.video_analysis.pos, imageio.imread(self.video_analysis.selection_file[self.video_analysis.im_range[0]]), self.video_analysis.nx_graph_pruned, resolution, 4,target_length, bounds, step=step)
+
+        width_model = tf.keras.models.load_model(model_path)
+        # for slice in self.slices:
+            # print(slice)
+            # print(np.shape(slice))
+        self.widths = width_model.predict(self.slices, verbose=0)
+        return self.widths
+
 
     def extract_multi_kymo(self,
                            bin_nr,
