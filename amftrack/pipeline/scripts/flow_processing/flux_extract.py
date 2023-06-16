@@ -65,7 +65,7 @@ for edge in edge_objs:
     speeds, times = edge.test_GST(int(GST_params[0]), w_start=3, C_thresh=float(GST_params[1]), C_thresh_falloff=float(GST_params[2]), blur_size=5, preblur=True,
                                   speed_thresh=int(GST_params[3]), plots=False)
     net_trans = edge.extract_transport(noise_thresh=0.15, plots=False, save_im=False, save_flux_array=False, margin=5)
-    widths = edge.get_widths(img_frame=40, save_im=True, target_length=target_length)
+    widths = edge.get_widths(img_frame=40, save_im=True, target_length=200)
 
     speed_max = np.nanpercentile(speeds.flatten(), 1)
     flux_max  = np.nanpercentile(net_trans.flatten(), 5)
@@ -85,7 +85,11 @@ for edge in edge_objs:
     data_out.to_csv(f"{edge.edge_path}/{edge.edge_name}_data.csv")
     
     straight_len = np.linalg.norm((edge.segments[0][0] + edge.segments[0][1])/2 - (edge.segments[-1][0] + edge.segments[-1][1])/2)*space_res
-    new_row = pd.DataFrame([{'edge_name':f'{edge.edge_name}', 
+    new_row = pd.DataFrame([{'edge_name':f'{edge.edge_name}',
+                             'edge_xpos_1': edge.video_analysis.pos[edge.edge_name[0]][0],
+                             'edge_ypos_1': edge.video_analysis.pos[edge.edge_name[0]][1],
+                             'edge_xpos_2': edge.video_analysis.pos[edge.edge_name[1]][0],
+                             'edge_ypos_2': edge.video_analysis.pos[edge.edge_name[1]][1], 
                              'edge_length': space_res *edge.kymos[0].shape[1],
                              'edge_width': np.mean(widths),
                              'straight_length' : straight_len,
@@ -103,10 +107,10 @@ dataplot.save_raw_data(edge_objs, img_address)
     
 data_edge.to_csv(f"{img_address}/Analysis/edges_data.csv")
 
-db_address = f"{upl_targ}{img_address[:-1].split('/')[-2]}/{img_address[:-1].split('/')[-1]}/Analysis/"
+db_address = f"{upl_targ}Analysis/{dataframe['parent_folder']}/"
 print(db_address)
 
 print(f"Iteration {i}: {db_address}")
-print(f"Iteration {i}: {img_address}/Analysis/")
+print(f"Iteration {i}: {img_address}Analysis/")
 
-upload_folder(img_address + '/Analysis/', db_address)
+upload_folder(img_address + 'Analysis/', db_address)

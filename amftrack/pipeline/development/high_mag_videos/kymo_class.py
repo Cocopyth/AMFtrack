@@ -144,7 +144,7 @@ class Kymo_video_analysis(object):
         elif self.vid_type == 'FLUO':
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
                 imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh, segment_plots=self.segment_plots,
-                seg_thresh=seg_thresh)
+                seg_thresh=seg_thresh, magnif = self.magnification)
         else:
             print("I don't have a valid flow_processing type!!! Using fluo thresholding.")
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
@@ -463,14 +463,24 @@ class Kymo_edge_analysis(object):
                   bounds=(0, 1),
                   img_frame=0,
                   quality=6,
-                  model_path = "amftrack\\ml\\models\\default_CNN_GT_model.h5"):
-        self.create_segments(self.video_analysis.pos, imageio.imread(self.video_analysis.selection_file[self.video_analysis.im_range[0]]), self.video_analysis.nx_graph_pruned, resolution, 4,target_length, bounds, step=step)
+                  model_path = "/gpfs/home6/svstaalduine/AMF_project/amftrack/ml/models/default_CNN_GT_model.h5"):
+        
+        if self.video_analysis.vid_type == "BRIGHT":
+            self.create_segments(self.video_analysis.pos,
+                                 imageio.imread(self.video_analysis.selection_file[self.video_analysis.im_range[0]]), 
+                                 self.video_analysis.nx_graph_pruned, resolution, 4,target_length, bounds, step=step)
+            width_model = tf.keras.models.load_model(model_path)
+            # for slice in self.slices:
+                # print(slice)
+                # print(np.shape(slice))
+            self.widths = width_model.predict(self.slices, verbose=0)
+        else:
+            self.create_segments(self.video_analysis.pos, self.video_analysis.segmented, 
+                                 self.video_analysis.nx_graph_pruned, resolution, 4,target_length, bounds, step=step)
+            self.widths = [max((sum(1 for _ in group) for value, group in itertools.groupby(pixel_row) if value == 0), default=0) for pixel_row in self.slices]
+#             print(self.widths)
+            self.widths = np.array(self.widths) * self.video_analysis.space_pixel_size
 
-        width_model = tf.keras.models.load_model(model_path)
-        # for slice in self.slices:
-            # print(slice)
-            # print(np.shape(slice))
-        self.widths = width_model.predict(self.slices, verbose=0)
         return self.widths
 
 
