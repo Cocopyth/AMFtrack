@@ -23,6 +23,8 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import o
 from skimage.filters import frangi
 from skimage.morphology import skeletonize
 import itertools,operator
+from scipy.ndimage.filters import generic_filter
+
 
 
 def get_length_um_edge(edge, nx_graph, space_pixel_size):
@@ -668,34 +670,56 @@ def validate_interpolation_order(image_dtype, order):
     return order
 
 
-def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=5, segment_plots=False):
+def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, segment_plots=False, magnif = 50):
     kernel = np.ones((k_size, k_size), np.uint8)
-    smooth_im = cv2.GaussianBlur(image, (11, 11), 0)
+    kernel_2 = np.ones((10, 10), np.uint8)
+    smooth_im = cv2.GaussianBlur(image, (5, 5), 0)
+    im_canny = cv2.Canny(smooth_im, 0, 20)
+    im_canny_smooth = cv2.GaussianBlur(im_canny, (5, 5), 0)
     smooth_im_close = cv2.morphologyEx(smooth_im, cv2.MORPH_CLOSE, kernel)
-    smooth_im_open = cv2.morphologyEx(smooth_im_close, cv2.MORPH_OPEN, kernel)
-    for i in range(1, 100):
-        _, segmented = cv2.threshold(smooth_im_close, i, 255, cv2.THRESH_BINARY)
-        seg_shape = segmented.shape
-        coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
-        if coverage < seg_thresh:
-            break
+    std_im = generic_filter(image, np.std, size=10)
+    
+    if magnif < 30:
+        k_data = np.float32(np.array([std_im.reshape(-1), im_canny_smooth.reshape(-1)]).T)
+    else:
+        k_data = np.float32(np.array([std_im.reshape(-1), smooth_im.reshape(-1)]).T)
+
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.85)
+    retval, labels, centers = cv2.kmeans(k_data, [4, 2][magnif<30], None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+    print(labels.shape, centers.shape)
+    centers=np.uint8(centers)
+    labels=np.array(labels.T[0])
+    centers = [center[0] for center in centers]
+    print(centers)
+    print(labels)
+    segmented_data  = np.array([centers[label] for label in labels])
+    segmented_image = segmented_data.reshape((smooth_im.shape))
+    segmented_image = np.uint8(segmented_image>np.min(centers))
+    segmented = cv2.morphologyEx(segmented_image, cv2.MORPH_CLOSE, kernel_2)
+    
+#     for i in range(1, 100):
+#         _, segmented = cv2.threshold(smooth_im_close, i, 255, cv2.THRESH_BINARY)
+#         seg_shape = segmented.shape
+#         coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
+#         if coverage < seg_thresh:
+#             break
 
     skeletonized = skeletonize(segmented > thresh)
 
-    if segment_plots:
-        fig, ax = plt.subplots(7, figsize=(9, 25))
-        ax[0].imshow(smooth_im)
-        ax[0].set_title("Smooth")
-        ax[1].imshow(smooth_im_open)
-        ax[1].set_title("open")
-        ax[2].imshow(smooth_im_close)
-        ax[2].set_title("closed")
-        ax[3].imshow(segmented)
-        ax[3].set_title("segmented")
-        ax[4].imshow(skeletonized)
-        ax[5].hist(smooth_im_close.flatten(), log=True, bins=50)
-        ax[6].plot(smooth_im_close[2000])
-        fig.tight_layout()
+#     if segment_plots:
+    fig, ax = plt.subplots(7, figsize=(9, 25))
+    ax[0].imshow(im_canny)
+    ax[0].set_title("Smooth")
+    ax[1].imshow(std_im)
+    ax[1].set_title("open")
+    ax[2].imshow(smooth_im)
+    ax[2].set_title("closed")
+    ax[3].imshow(segmented)
+    ax[3].set_title("segmented")
+    ax[4].imshow(skeletonized)
+    ax[5].hist(smooth_im_close.flatten(), log=True, bins=50)
+    ax[6].plot(smooth_im_close[1000])
+    fig.tight_layout()
 
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
