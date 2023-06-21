@@ -416,7 +416,7 @@ def get_width(slices, avearing_window=50, num_std=4):
     return np.median(widths)
 
 
-def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(30, 160, 30), segment_plots=False, seg_thresh = 11):
+def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(60, 160, 30), segment_plots=False, seg_thresh = 11, binning=2):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
     image:          Input image
@@ -424,6 +424,7 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=range(30, 160, 30), s
     frangi_range:   Range of values to use a frangi filter with. Frangi filter is very good for brightfield vessel segmentation
 
     """
+    frangi_range = frangi_range * 2 / binning
     smooth_im_blur = cv2.blur(-image, (11, 11))
     smooth_im = frangi(-smooth_im_blur, frangi_range)
     smooth_im *= (255/np.max(smooth_im))
@@ -670,7 +671,7 @@ def validate_interpolation_order(image_dtype, order):
     return order
 
 
-def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, segment_plots=False, magnif = 50):
+def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, segment_plots=False, magnif = 50, binning=2):
     kernel = np.ones((k_size, k_size), np.uint8)
     kernel_2 = np.ones((10, 10), np.uint8)
     smooth_im = cv2.GaussianBlur(image, (5, 5), 0)
