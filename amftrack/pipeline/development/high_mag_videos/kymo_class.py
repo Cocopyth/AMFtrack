@@ -56,19 +56,22 @@ class Kymo_video_analysis(object):
         self.back_fit = [0, 0, 0]
         self.back_offset = 0
         
-        print(self.video_nr)
+        print(parent_files)
 
         ### Extracts the video parameters from the nearby csv.
         self.csv_path = next(Path(parent_files).glob("*.csv"), None)
         if self.csv_path is None:
-            self.xlsx_path = [a for a in Path(parent_files).glob(f'*{str(self.imgs_address).split(os.sep)[-2].split("_")[-3]}*{str(self.imgs_address).split(os.sep)[-2].split("_")[-2][2:]}*.xlsx')]
+            self.xlsx_path = next(Path(parent_files).glob("*.xlsx"), None)
+#             [a for a in Path(parent_files).glob(f'*.xlsx')]
         else:
             self.xlsx_path = []
-        if len(self.xlsx_path) != 1:
-          print('ERROR in finding a single xlsx sheet!')
-        else:
-          self.xlsx_path = self.xlsx_path[0]
-        # print(self.xlsx_path)
+            
+        print(self.xlsx_path)
+#         if len(self.xlsx_path) != 1:
+#           print('ERROR in finding a single xlsx sheet!')
+#         else:
+#           self.xlsx_path = self.xlsx_path[0]
+        print(self.xlsx_path)
         if self.csv_path is not None or self.xlsx_path is not None:
             if self.csv_path is not None and self.xlsx_path is not None:
                 print("Found both a csv and xlsx file, will use csv data.")
@@ -97,15 +100,18 @@ class Kymo_video_analysis(object):
                 if logging:
                     print("Found an xlsx file, using that data")
                 videos_data = pd.read_excel(self.xlsx_path)
-                # print(str(self.imgs_address).split('/')[-2])
-                self.video_data = videos_data.loc[videos_data['Unnamed: 0'].str.contains(str(self.imgs_address).split(os.sep)[-2], case=False, na=False)]
+                print(str(self.imgs_address))
+#                 self.video_data = videos_data.loc[videos_data['Unnamed: 0'].str.contains(str(self.imgs_address).split(os.sep)[-1], case=False, na=False)]
+                excel_addr = f"{imgs_address.split(os.sep)[-3]}_{imgs_address.split(os.sep)[-2]}"
+                print(excel_addr)
+                self.video_data = videos_data[videos_data["Unnamed: 0"].str.contains(excel_addr, case=False, na=False)]
                 print(self.video_data)
                 self.vid_type = ["FLUO", "BRIGHT"][self.video_data.iloc[0, 9] == "BF"]
                 self.fps = float(self.video_data["FPS"].iloc[0])
                 if "Binned (Y/N)" in self.video_data:
                   self.binning = [1, 2][self.video_data["Binned (Y/N)"].iloc[0] == "Y"]
                 else:
-                  self.binning = 2
+                  self.binning = 1
                 self.magnification = self.video_data["Magnification"].iloc[0]
 
             if logging:
@@ -122,8 +128,9 @@ class Kymo_video_analysis(object):
             os.makedirs(self.kymos_path)
             if self.logging:
                 print('Kymos file created, address is at {}'.format(self.kymos_path))
-        self.images_total_path = [str(adr) for adr in self.imgs_address.glob('*.ti*')]
-        # print(self.images_total_path)
+        self.images_total_path = [str(adr) for adr in self.imgs_address.glob('*Bas*.ti*')]
+        print(self.imgs_address)
+#         print(self.images_total_path)
         # self.images_total_path = [os.path.join(self.imgs_address, file_im) for file_im in self.files]
         self.images_total_path.sort()
         self.selection_file = self.images_total_path
@@ -131,6 +138,12 @@ class Kymo_video_analysis(object):
         self.selection_file = self.selection_file[self.im_range[0]:self.im_range[1]]
         self.target_length = 130
         self.x_length = self.space_pixel_size * self.target_length
+        if self.vid_type == 'FLUO':
+            self.frame_max = imageio.imread(self.selection_file[self.im_range[0]])
+            for address in self.im_range:
+                frame2 = imageio.imread(self.selection_file[address])
+                self.frame_max = np.maximum(self.frame_max, frame2)
+        
         # print(self.selection_file[0])
         if self.logging:
             print(
@@ -140,10 +153,10 @@ class Kymo_video_analysis(object):
         if self.vid_type == 'BRIGHT':
             self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
                 imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh, segment_plots=self.segment_plots,
-                seg_thresh=seg_thresh)
+                seg_thresh=seg_thresh, binning = self.binning)
         elif self.vid_type == 'FLUO':
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
-                imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh, segment_plots=self.segment_plots,
+                self.frame_max, thresh=thresh, segment_plots=self.segment_plots,
                 seg_thresh=seg_thresh, magnif = self.magnification)
         else:
             print("I don't have a valid flow_processing type!!! Using fluo thresholding.")
@@ -156,7 +169,7 @@ class Kymo_video_analysis(object):
                 self.edges[i] = edge
             else:
                 self.edges[i] = (edge[1], edge[0])
-        self.edges = self.filter_edges(filter_step)
+        self.edges = self.filter_edges(filter_step * 2 // self.binning)
         self.edge_objects = [self.createEdge(edge) for edge in self.edges]
 
         if self.logging:
@@ -197,7 +210,7 @@ class Kymo_video_analysis(object):
         Sadly an essential function, that makes each edge calculate its own edges.
         Will output a chart of all edges with node points to select hypha from.
         """
-        self.target_length = target_length
+        self.target_length = target_length * 2 // self.binning
         self.x_length = self.target_length * self.space_pixel_size
         fig, ax = plt.subplots(1,2 ,figsize=(10, 5))
         image = imageio.imread(self.selection_file[self.im_range[0]])
@@ -210,7 +223,7 @@ class Kymo_video_analysis(object):
                 print('Working on edge {}, sir!'.format(edge.edge_name))
             offset = int(np.linalg.norm(self.pos[edge.edge_name[0]] - self.pos[edge.edge_name[1]])) // 4
             segments = edge.create_segments(self.pos, image, self.nx_graph_pruned, resolution, offset,
-                                            target_length, bounds, step=step)
+                                            self.target_length, bounds, step=step)
             plot_segments_on_image(
                 segments, ax[1], bounds=bounds, color="white", alpha=0.1
             )
@@ -516,7 +529,7 @@ class Kymo_edge_analysis(object):
                                                          bin_edges[i + 1]),
                                                  resolution=resolution,
                                                  step=step,
-                                                 target_length=target_length,
+                                                 target_length=target_length * 2 // self.video_analysis.binning,
                                                  save_array=save_array,
                                                  save_im=save_im,
                                                  img_suffix=str(bin_nr) + ' ' + str(i + 1),
