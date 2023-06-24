@@ -26,7 +26,7 @@ print(upl_targ)
 
 test_video = Kymo_video_analysis(img_address, logging=True, vid_type=None,
                                  fps=None, binning=None, filter_step=80,
-                                 seg_thresh=8, show_seg=False)
+                                 seg_thresh=12, show_seg=False)
 edge_list = test_video.edge_objects
 target_length = int(2.1 * test_video.magnification)
 
@@ -70,42 +70,42 @@ for edge in edge_objs:
     speed_max = np.nanpercentile(speeds.flatten(), 1)
     flux_max  = np.nanpercentile(net_trans.flatten(), 5)
     
-    data_table = {'times': times[0],
-                  'speed_right_mean': np.nanmean(speeds[0][1], axis=1),
-                  "speed_left_mean": np.nanmean(speeds[0][0], axis=1),
-                  'speed_right_std': np.nanstd(speeds[0][0], axis=1),
-                  'speed_left_std': np.nanstd(speeds[0][1], axis=1),
-                  'flux_mean': np.nanmean(net_trans, axis=1),
-                  'flux_std': np.nanstd(net_trans, axis=1),
-                  'flux_coverage': 1- np.count_nonzero(np.isnan(net_trans), axis=1) / len(net_trans[0]),
-                  'speed_left_coverage': 1 - np.count_nonzero(np.isnan(speeds[0][0]), axis=1) / len(net_trans[0]),
-                  'speed_right_coverage': 1 - np.count_nonzero(np.isnan(speeds[0][1]), axis=1) / len(net_trans[0])
-                  }
-    data_out = pd.DataFrame(data=data_table)
-    data_out.to_csv(f"{edge.edge_path}/{edge.edge_name}_data.csv")
+#     data_table = {'times': times[0],
+#                   'speed_right_mean': np.nanmean(speeds[0][1], axis=1),
+#                   "speed_left_mean": np.nanmean(speeds[0][0], axis=1),
+#                   'speed_right_std': np.nanstd(speeds[0][0], axis=1),
+#                   'speed_left_std': np.nanstd(speeds[0][1], axis=1),
+#                   'flux_mean': np.nanmean(net_trans, axis=1),
+#                   'flux_std': np.nanstd(net_trans, axis=1),
+#                   'flux_coverage': 1- np.count_nonzero(np.isnan(net_trans), axis=1) / len(net_trans[0]),
+#                   'speed_left_coverage': 1 - np.count_nonzero(np.isnan(speeds[0][0]), axis=1) / len(net_trans[0]),
+#                   'speed_right_coverage': 1 - np.count_nonzero(np.isnan(speeds[0][1]), axis=1) / len(net_trans[0])
+#                   }
+#     data_out = pd.DataFrame(data=data_table)
+#     data_out.to_csv(f"{edge.edge_path}/{edge.edge_name}_data.csv")
     
-    straight_len = np.linalg.norm((edge.segments[0][0] + edge.segments[0][1])/2 - (edge.segments[-1][0] + edge.segments[-1][1])/2)*space_res
-    new_row = pd.DataFrame([{'edge_name':f'{edge.edge_name}',
-                             'edge_xpos_1': edge.video_analysis.pos[edge.edge_name[0]][0],
-                             'edge_ypos_1': edge.video_analysis.pos[edge.edge_name[0]][1],
-                             'edge_xpos_2': edge.video_analysis.pos[edge.edge_name[1]][0],
-                             'edge_ypos_2': edge.video_analysis.pos[edge.edge_name[1]][1], 
-                             'edge_length': space_res *edge.kymos[0].shape[1],
-                             'edge_width': np.mean(widths),
-                             'straight_length' : straight_len,
-                             'speed_max' : np.nanpercentile(speeds[0][1], 97),
-                             'speed_min' : np.nanpercentile(speeds[0][0], 3),
-                             'flux_avg'  : np.nanmean(net_trans),
-                             'flux_min'  : np.nanpercentile(net_trans, 3),
-                             'flux_max'  : np.nanpercentile(net_trans, 97)
-                            }])
-    data_edge = pd.concat([data_edge, new_row])
+#     straight_len = np.linalg.norm((edge.segments[0][0] + edge.segments[0][1])/2 - (edge.segments[-1][0] + edge.segments[-1][1])/2)*space_res
+#     new_row = pd.DataFrame([{'edge_name':f'{edge.edge_name}',
+#                              'edge_xpos_1': edge.video_analysis.pos[edge.edge_name[0]][0],
+#                              'edge_ypos_1': edge.video_analysis.pos[edge.edge_name[0]][1],
+#                              'edge_xpos_2': edge.video_analysis.pos[edge.edge_name[1]][0],
+#                              'edge_ypos_2': edge.video_analysis.pos[edge.edge_name[1]][1], 
+#                              'edge_length': space_res *edge.kymos[0].shape[1],
+#                              'edge_width': np.mean(widths),
+#                              'straight_length' : straight_len,
+#                              'speed_max' : np.nanpercentile(speeds[0][1], 97),
+#                              'speed_min' : np.nanpercentile(speeds[0][0], 3),
+#                              'flux_avg'  : np.nanmean(net_trans),
+#                              'flux_min'  : np.nanpercentile(net_trans, 3),
+#                              'flux_max'  : np.nanpercentile(net_trans, 97)
+#                             }])
+#     data_edge = pd.concat([data_edge, new_row])
     
 
 dataplot.plot_summary(edge_objs)
 dataplot.save_raw_data(edge_objs, img_address)
     
-data_edge.to_csv(f"{img_address}/Analysis/edges_data.csv")
+# data_edge.to_csv(f"{img_address}/Analysis/edges_data.csv")
 
 db_address = f"{upl_targ}Analysis/{dataframe['parent_folder']}/"
 print(db_address)

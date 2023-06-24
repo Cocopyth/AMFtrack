@@ -12,6 +12,19 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile = 99.9):
     if not os.path.exists(f"{img_address}/Analysis/"):
         os.makedirs(f"{img_address}/Analysis/")
     
+    edge_table = {
+            'edge_name': [],
+            'edge_length': [],
+            'straight_length': [],
+            'speed_max': [],
+            'speed_min': [],
+            'speed_mean': [],
+            'flux_avg': [],
+            'flux_min': [],
+            'flux_max': [],                
+         }
+    data_edge = pd.DataFrame(data=edge_table)
+    
     for edge in edge_objs:
         
         space_res = edge.video_analysis.space_pixel_size
@@ -36,20 +49,8 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile = 99.9):
         vel_adj = np.where(np.isinf(np.divide(spd_tiff[2] , kymo_tiff[1])), np.nan, np.divide(spd_tiff[2] , kymo_tiff[1]))
         vel_adj = np.where(abs(vel_adj) > 2*speedmax, np.nan, vel_adj)
         vel_adj_mean = np.nanmean(vel_adj, axis=1)
-        
+        widths = edge.get_widths(img_frame=40, save_im=True, target_length=200)
 
-        edge_table = {
-                'edge_name': [],
-                'edge_length': [],
-                'straight_length': [],
-                'speed_max': [],
-                'speed_min': [],
-                'speed_mean': [],
-                'flux_avg': [],
-                'flux_min': [],
-                'flux_max': [],                
-             }
-        data_edge = pd.DataFrame(data=edge_table)
         
         data_table = {'times': edge.times[0],
                       'speed_right_mean': np.nanmean(edge.speeds_tot[0][1], axis=1),
@@ -70,18 +71,30 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile = 99.9):
         new_row = pd.DataFrame([{'edge_name':f'{edge.edge_name}', 
                                  'edge_length': space_res *edge.kymos[0].shape[1],
                                  'straight_length' : straight_len,
+                                 'edge_width': np.mean(widths),
                                  'speed_max' : np.nanpercentile(edge.speeds_tot[0][1], 97),
                                  'speed_min' : np.nanpercentile(edge.speeds_tot[0][0], 3),
+                                 'speed_left': np.nanmean(np.nanmean(edge.speeds_tot[0][0], axis=1)),
+                                 'speed_right': np.nanmean(np.nanmean(edge.speeds_tot[0][1], axis=1)),
                                  'speed_mean': np.nanmean(vel_adj_mean),
+                                 'speed_left_std' : np.nanstd(np.nanmean(edge.speeds_tot[0][0], axis=1)),
+                                 'speed_right_std' : np.nanstd(np.nanmean(edge.speeds_tot[0][1], axis=1)),
                                  'flux_avg'  : np.nanmean(edge.flux_tot),
                                  'flux_min'  : np.nanpercentile(edge.flux_tot, 3),
-                                 'flux_max'  : np.nanpercentile(edge.flux_tot, 97)
+                                 'flux_max'  : np.nanpercentile(edge.flux_tot, 97),
+                                 'coverage_left' : np.mean(1 - np.count_nonzero(np.isnan(edge.speeds_tot[0][0]), axis=1) / len(edge.flux_tot[0])),
+                                 'coverage_right' : np.mean(1 - np.count_nonzero(np.isnan(edge.speeds_tot[0][1]), axis=1) / len(edge.flux_tot[0])),
+                                 'coverage_tot' : np.mean(1- np.count_nonzero(np.isnan(edge.flux_tot), axis=1) / len(edge.flux_tot[0])),
+                                 'edge_xpos_1': edge.video_analysis.pos[edge.edge_name[0]][0],
+                                 'edge_ypos_1': edge.video_analysis.pos[edge.edge_name[0]][1],
+                                 'edge_xpos_2': edge.video_analysis.pos[edge.edge_name[1]][0],
+                                 'edge_ypos_2': edge.video_analysis.pos[edge.edge_name[1]][1]
                                 }])
         data_edge = pd.concat([data_edge, new_row])
 
         
 
-        data_edge.to_csv(f"{img_address}/Analysis/edges_data.csv")
+    data_edge.to_csv(f"{img_address}/Analysis/edges_data.csv")
 
 
     
