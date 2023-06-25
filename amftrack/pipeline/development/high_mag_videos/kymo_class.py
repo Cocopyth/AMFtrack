@@ -65,7 +65,7 @@ class Kymo_video_analysis(object):
 #             [a for a in Path(parent_files).glob(f'*.xlsx')]
         else:
             self.xlsx_path = []
-            
+
         print(self.xlsx_path)
 #         if len(self.xlsx_path) != 1:
 #           print('ERROR in finding a single xlsx sheet!')
@@ -88,8 +88,8 @@ class Kymo_video_analysis(object):
                 if videos_data.isnull().values.any():
                     print("Found NaNs in the excel files! Blame the experimentalists.")
                     videos_data = videos_data.interpolate(method='pad', limit_direction='forward')
-#                 if videos_data.isnull().values.any():
-#                     raise("This excel sheet is unworkable, please ask the responisble person")
+                # if videos_data.isnull().values.any():
+                #     raise("This excel sheet is unworkable, please ask the responisble person")
                 self.video_data = videos_data.loc[videos_data['video'] == self.video_nr]
                 # print(self.video_data["Illumination"][0])
                 self.vid_type = ["FLUO", "BRIGHT"][self.video_data["Illumination"].iloc[0] == "BF"]
@@ -143,7 +143,7 @@ class Kymo_video_analysis(object):
             for address in self.im_range:
                 frame2 = imageio.imread(self.selection_file[address])
                 self.frame_max = np.maximum(self.frame_max, frame2)
-        
+
         # print(self.selection_file[0])
         if self.logging:
             print(
@@ -173,14 +173,14 @@ class Kymo_video_analysis(object):
         self.edge_objects = [self.createEdge(edge) for edge in self.edges]
 
         if self.logging:
-            print('Succesfully extracted the skeleton. Did you know there is a skeleton inside inside you right now?')
+            print('Successfully extracted the skeleton. Did you know there is a skeleton inside inside you right now?')
 
         if show_seg:
             fig, ax = plt.subplots()
             ax.imshow(self.segmented)
             seg_shape = self.segmented.shape
             ax.set_title(
-                f'Segmentation ({np.sum(1 * self.segmented.flatten()) / (seg_shape[0] * seg_shape[1]):.4} $\%$ coverage)')
+                f'Segmentation ({100 * np.sum(1 * self.segmented.flatten()) / (seg_shape[0] * seg_shape[1]):.4} $\%$ coverage)')
             fig.tight_layout()
 
     def filter_edges(self, step):
@@ -477,10 +477,10 @@ class Kymo_edge_analysis(object):
                   img_frame=0,
                   quality=6,
                   model_path = "/gpfs/home6/svstaalduine/AMF_project/amftrack/ml/models/default_CNN_GT_model.h5"):
-        
+
         if self.video_analysis.vid_type == "BRIGHT":
             self.create_segments(self.video_analysis.pos,
-                                 imageio.imread(self.video_analysis.selection_file[self.video_analysis.im_range[0]]), 
+                                 imageio.imread(self.video_analysis.selection_file[self.video_analysis.im_range[0]]),
                                  self.video_analysis.nx_graph_pruned, resolution, 4,target_length, bounds, step=step)
             width_model = tf.keras.models.load_model(model_path)
             # for slice in self.slices:
@@ -488,7 +488,7 @@ class Kymo_edge_analysis(object):
                 # print(np.shape(slice))
             self.widths = width_model.predict(self.slices, verbose=0)
         else:
-            self.create_segments(self.video_analysis.pos, self.video_analysis.segmented, 
+            self.create_segments(self.video_analysis.pos, self.video_analysis.segmented,
                                  self.video_analysis.nx_graph_pruned, resolution, 4,target_length, bounds, step=step)
             self.widths = [max((sum(1 for _ in group) for value, group in itertools.groupby(pixel_row) if value == 0), default=0) for pixel_row in self.slices]
 #             print(self.widths)
@@ -592,7 +592,8 @@ class Kymo_edge_analysis(object):
     def test_GST(self, w_size, w_start=3, C_thresh=0.90, blur_size=7, C_thresh_falloff=0.02, speed_thresh=10,
                  preblur=True, plots=False):
 
-        """Initialize the speed array and time array, as well as the bin values for the window size, and fourier filters. if not already done so"""
+        """Initialize the speed array and time array, as well as the bin values for the window size, and fourier
+        filters. if not already done so"""
         times = []
         speeds_tot = []
         discrete_bounds = np.linspace(w_start, w_size * 2 + w_start, w_size + 1)
@@ -688,164 +689,164 @@ class Kymo_edge_analysis(object):
                 fig.tight_layout()
         return np.array(speeds_tot), times
 
-    def extract_speeds(self,
-                       speed_thresh=20.0,
-                       plots=False,
-                       speedplot=False,
-                       save_im=True,
-                       save_array=True,
-                       preblur=True,
-                       limit_filter=False,
-                       w=3,
-                       c_thr=0.95,
-                       klen=25,
-                       magnification=2 * 1.725,
-                       binning=1,
-                       fps=1,
-                       padding=0):
-        """
-        Creates graphs of speeds from kymographs.
-
-        speed_thresh:       Maximum speed threshold in micrometers per second. Replaces higher speeds with NaNs.
-        plots:              Boolean on whether to plot speeds, image coherency and other debug plots
-        speedplot:          Boolean on whether to just plot speed
-        preblur:            Blur filter option. Needs work
-        w:                  kernel size window when calculating the Gradient Speed Tensor
-        c_thr:              Lower threshold on image coherency. Coherency values lower than this will be NaNs
-        klen:               kernel size which blurs image coherency, will create vignette in speed
-        magnification:      Magnification of imaging setup
-        binning:            Binning of imaging setup
-        fps:                Frames per second of the imaging setup
-        """
-        if len(self.filtered_left) == 0:
-            self.fourier_kymo(return_self=False)
-        speeds_tot = []
-        times = []
-        kernel = np.ones((klen, klen)) / klen ** 2
-        speed_dataframe = pd.DataFrame()
-
-        if self.space_pixel_size is None:
-            space_pixel_size = self.video_analysis.space_pixel_size  # um.pixel
-            time_pixel_size = self.video_analysis.time_pixel_size  # s.pixel
-            self.imshow_extent = [0, self.video_analysis.space_pixel_size * self.kymos[0].shape[1],
-                                  self.video_analysis.time_pixel_size * self.kymos[0].shape[0], 0]
-        else:
-            space_pixel_size = self.space_pixel_size
-            time_pixel_size = self.time_pixel_size
-            self.imshow_extent = [0, self.space_pixel_size * self.kymos[0].shape[1],
-                                  self.time_pixel_size * self.kymos[0].shape[0], 0]
-
-        for j, kymo in enumerate(self.kymos):
-            if plots:
-                fig1, ax1 = plt.subplots(5, 2, figsize=(8, 8 * 4))
-            nans = np.empty(kymo.shape)
-            nans.fill(np.nan)
-            speeds = [[], []]
-            for i in [0, 1]:
-                if i == 0:
-                    times.append(np.array(range(kymo.shape[0])) * time_pixel_size)
-                kymo_interest = [self.filtered_left[j], self.filtered_right[j]][i]
-
-                # Increases image coherency a bit, while decreasing noise
-                if preblur:
-                    kymo_interest = cv2.GaussianBlur(kymo_interest, (7, 7), 0)
-
-                # Measure how much the pixels adhere to a structure, and select high coherence
-                imgCoherency, imgOrientation = calcGST(kymo_interest, w)
-                real_movement = np.where(imgCoherency > c_thr, imgOrientation, nans)
-                speed_unthr = (
-                        np.tan((real_movement - 90) / 180 * np.pi)
-                        * space_pixel_size
-                        / time_pixel_size
-                )
-
-                # Filter based on expected speed values
-                speed = np.where(speed_unthr < speed_thresh, speed_unthr, nans)
-                speed = np.where(speed > -1 * speed_thresh, speed, nans)
-                if limit_filter:
-                    speed = np.where([speed < 0, speed > 0][i], speed, nans)
-
-                # Add vignette to speed
-                z1 = scipy.signal.convolve2d(imgCoherency, kernel, mode="same")
-                speed = np.where(z1 > 0.6, speed, nans)
-                if padding > 0:
-                    speed_interp = pd.DataFrame(speed)
-                    speed_interp = speed_interp.interpolate(limit=padding)
-                    speed = speed_interp.to_numpy()
-
-                # Create pandas dataframe with data
-                label = self.edge_name if i == 0 else None
-                speeds[i] = speed
-                direction = np.array(["root" if i == 0 else "tip" for k in range(speed.shape[0])])
-                edges_list = np.array([str(self.edge_name) for k in range(speed.shape[0])])
-                data = pd.DataFrame(
-                    np.transpose((times[j], np.nanmean(speeds[i], axis=1), edges_list, direction)),
-                    columns=["time (s)", "speed (um.s-1)", "edge", "direction"],
-                )
-                speed_dataframe = pd.concat((speed_dataframe, data))
-
-                if plots:
-                    ax1[0][i].imshow(kymo_interest, aspect='auto', extent=self.imshow_extent)
-                    ax1[0][i].set_title("Kymo{} {} {}".format(self.edge_name, str(j + 1), ["back", "forward"][i]))
-                    ax1[0][i].set_xlabel("space ($\mu m$)")
-                    ax1[0][i].set_ylabel("time ($s$)")
-
-                    ax1[1][i].imshow(imgCoherency, vmin=0.0, vmax=1.0, aspect='auto', extent=self.imshow_extent)
-                    ax1[1][i].set_title(f"Coherency {self.edge_name} {str(j + 1)}, {['back', 'forward'][i]}")
-                    ax1[1][i].set_xlabel("space ($\mu m $)")
-                    ax1[1][i].set_ylabel("time ($s$)")
-
-                    sp_unthr = ax1[2][i].imshow(speed_unthr, vmin=-1 * speed_thresh, vmax=speed_thresh, aspect='auto',
-                                                extent=[-speed_thresh / 2, speed_thresh / 2, int(times[j][-1]), 0],
-                                                cmap='bwr')
-                    ax1[2][i].plot(np.nanmean(speed_unthr, axis=1), times[j])
-                    ax1[2][i].set_title(
-                        "Speed_unthr {} {} {}".format(self.edge_name, str(j + 1), ["back", "forward"][i]))
-                    ax1[2][i].grid(True)
-                    ax1[2][i].set_xlabel("speed ($\mu m / s$)")
-                    ax1[2][i].set_ylabel("time ($s$)")
-
-                    sp_thr = ax1[3][i].imshow(speed, vmin=-speed_thresh, vmax=speed_thresh, aspect='auto',
-                                              extent=[-speed_thresh / 2, speed_thresh / 2, int(times[j][-1]), 0],
-                                              cmap='bwr')
-                    ax1[3][i].plot(np.nanmean(speed, axis=1), times[j])
-                    ax1[3][i].set_title("Speed_thr {} {} {}".format(self.edge_name, str(j + 1), ["back", "forward"][i]))
-                    ax1[3][i].grid(True)
-                    ax1[3][i].set_xlabel("speed ($\mu m / s$)")
-                    ax1[3][i].set_ylabel("time ($s$)")
-
-            if plots:
-                sp_tot = ax1[4][0].imshow(np.nansum(speeds, axis=0), vmin=-speed_thresh, vmax=speed_thresh,
-                                          aspect='auto',
-                                          extent=[-speed_thresh / 2, speed_thresh / 2, int(times[j][-1]), 0],
-                                          cmap='bwr')
-                ax1[4][0].plot(np.nanmean(np.nansum(speeds, axis=0), axis=1), times[j])
-                ax1[4][0].grid(True)
-                ax1[4][0].set_title(f"Summed speeds {self.edge_name} {(j + 1)}")
-                ax1[4][0].set_xlabel("speed ($\mu m / s$)")
-                ax1[4][0].set_ylabel("time ($s$)")
-
-                ax1[4][1].imshow(self.filtered_left[j] + self.filtered_right[j], aspect='auto',
-                                 extent=self.imshow_extent)
-                ax1[4][1].set_title(f"Added filters {self.edge_name} {(j + 1)}")
-                ax1[4][1].set_xlabel("space ($\mu m$)")
-                ax1[4][1].set_ylabel("time ($s$)")
-                plt.colorbar(sp_unthr)
-                plt.colorbar(sp_thr)
-                plt.colorbar(sp_tot)
-
-            speeds_tot.append(speeds)
-            if plots:
-                fig1.tight_layout()
-            if save_im:
-                fig1.savefig(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {j + 1} speedfig.png')
-
-        # if speedplot:
-        #     fig2.tight_layout()
-        self.speeds_tot = np.array(speeds_tot)
-        self.times = times
-
-        return np.array(speeds_tot), times
+    # def extract_speeds(self,
+    #                    speed_thresh=20.0,
+    #                    plots=False,
+    #                    speedplot=False,
+    #                    save_im=True,
+    #                    save_array=True,
+    #                    preblur=True,
+    #                    limit_filter=False,
+    #                    w=3,
+    #                    c_thr=0.95,
+    #                    klen=25,
+    #                    magnification=2 * 1.725,
+    #                    binning=1,
+    #                    fps=1,
+    #                    padding=0):
+    #     """
+    #     Creates graphs of speeds from kymographs.
+    #
+    #     speed_thresh:       Maximum speed threshold in micrometers per second. Replaces higher speeds with NaNs.
+    #     plots:              Boolean on whether to plot speeds, image coherency and other debug plots
+    #     speedplot:          Boolean on whether to just plot speed
+    #     preblur:            Blur filter option. Needs work
+    #     w:                  kernel size window when calculating the Gradient Speed Tensor
+    #     c_thr:              Lower threshold on image coherency. Coherency values lower than this will be NaNs
+    #     klen:               kernel size which blurs image coherency, will create vignette in speed
+    #     magnification:      Magnification of imaging setup
+    #     binning:            Binning of imaging setup
+    #     fps:                Frames per second of the imaging setup
+    #     """
+    #     if len(self.filtered_left) == 0:
+    #         self.fourier_kymo(return_self=False)
+    #     speeds_tot = []
+    #     times = []
+    #     kernel = np.ones((klen, klen)) / klen ** 2
+    #     speed_dataframe = pd.DataFrame()
+    #
+    #     if self.space_pixel_size is None:
+    #         space_pixel_size = self.video_analysis.space_pixel_size  # um.pixel
+    #         time_pixel_size = self.video_analysis.time_pixel_size  # s.pixel
+    #         self.imshow_extent = [0, self.video_analysis.space_pixel_size * self.kymos[0].shape[1],
+    #                               self.video_analysis.time_pixel_size * self.kymos[0].shape[0], 0]
+    #     else:
+    #         space_pixel_size = self.space_pixel_size
+    #         time_pixel_size = self.time_pixel_size
+    #         self.imshow_extent = [0, self.space_pixel_size * self.kymos[0].shape[1],
+    #                               self.time_pixel_size * self.kymos[0].shape[0], 0]
+    #
+    #     for j, kymo in enumerate(self.kymos):
+    #         if plots:
+    #             fig1, ax1 = plt.subplots(5, 2, figsize=(8, 8 * 4))
+    #         nans = np.empty(kymo.shape)
+    #         nans.fill(np.nan)
+    #         speeds = [[], []]
+    #         for i in [0, 1]:
+    #             if i == 0:
+    #                 times.append(np.array(range(kymo.shape[0])) * time_pixel_size)
+    #             kymo_interest = [self.filtered_left[j], self.filtered_right[j]][i]
+    #
+    #             # Increases image coherency a bit, while decreasing noise
+    #             if preblur:
+    #                 kymo_interest = cv2.GaussianBlur(kymo_interest, (7, 7), 0)
+    #
+    #             # Measure how much the pixels adhere to a structure, and select high coherence
+    #             imgCoherency, imgOrientation = calcGST(kymo_interest, w)
+    #             real_movement = np.where(imgCoherency > c_thr, imgOrientation, nans)
+    #             speed_unthr = (
+    #                     np.tan((real_movement - 90) / 180 * np.pi)
+    #                     * space_pixel_size
+    #                     / time_pixel_size
+    #             )
+    #
+    #             # Filter based on expected speed values
+    #             speed = np.where(speed_unthr < speed_thresh, speed_unthr, nans)
+    #             speed = np.where(speed > -1 * speed_thresh, speed, nans)
+    #             if limit_filter:
+    #                 speed = np.where([speed < 0, speed > 0][i], speed, nans)
+    #
+    #             # Add vignette to speed
+    #             z1 = scipy.signal.convolve2d(imgCoherency, kernel, mode="same")
+    #             speed = np.where(z1 > 0.6, speed, nans)
+    #             if padding > 0:
+    #                 speed_interp = pd.DataFrame(speed)
+    #                 speed_interp = speed_interp.interpolate(limit=padding)
+    #                 speed = speed_interp.to_numpy()
+    #
+    #             # Create pandas dataframe with data
+    #             label = self.edge_name if i == 0 else None
+    #             speeds[i] = speed
+    #             direction = np.array(["root" if i == 0 else "tip" for k in range(speed.shape[0])])
+    #             edges_list = np.array([str(self.edge_name) for k in range(speed.shape[0])])
+    #             data = pd.DataFrame(
+    #                 np.transpose((times[j], np.nanmean(speeds[i], axis=1), edges_list, direction)),
+    #                 columns=["time (s)", "speed (um.s-1)", "edge", "direction"],
+    #             )
+    #             speed_dataframe = pd.concat((speed_dataframe, data))
+    #
+    #             if plots:
+    #                 ax1[0][i].imshow(kymo_interest, aspect='auto', extent=self.imshow_extent)
+    #                 ax1[0][i].set_title("Kymo{} {} {}".format(self.edge_name, str(j + 1), ["back", "forward"][i]))
+    #                 ax1[0][i].set_xlabel("space ($\mu m$)")
+    #                 ax1[0][i].set_ylabel("time ($s$)")
+    #
+    #                 ax1[1][i].imshow(imgCoherency, vmin=0.0, vmax=1.0, aspect='auto', extent=self.imshow_extent)
+    #                 ax1[1][i].set_title(f"Coherency {self.edge_name} {str(j + 1)}, {['back', 'forward'][i]}")
+    #                 ax1[1][i].set_xlabel("space ($\mu m $)")
+    #                 ax1[1][i].set_ylabel("time ($s$)")
+    #
+    #                 sp_unthr = ax1[2][i].imshow(speed_unthr, vmin=-1 * speed_thresh, vmax=speed_thresh, aspect='auto',
+    #                                             extent=[-speed_thresh / 2, speed_thresh / 2, int(times[j][-1]), 0],
+    #                                             cmap='bwr')
+    #                 ax1[2][i].plot(np.nanmean(speed_unthr, axis=1), times[j])
+    #                 ax1[2][i].set_title(
+    #                     "Speed_unthr {} {} {}".format(self.edge_name, str(j + 1), ["back", "forward"][i]))
+    #                 ax1[2][i].grid(True)
+    #                 ax1[2][i].set_xlabel("speed ($\mu m / s$)")
+    #                 ax1[2][i].set_ylabel("time ($s$)")
+    #
+    #                 sp_thr = ax1[3][i].imshow(speed, vmin=-speed_thresh, vmax=speed_thresh, aspect='auto',
+    #                                           extent=[-speed_thresh / 2, speed_thresh / 2, int(times[j][-1]), 0],
+    #                                           cmap='bwr')
+    #                 ax1[3][i].plot(np.nanmean(speed, axis=1), times[j])
+    #                 ax1[3][i].set_title("Speed_thr {} {} {}".format(self.edge_name, str(j + 1), ["back", "forward"][i]))
+    #                 ax1[3][i].grid(True)
+    #                 ax1[3][i].set_xlabel("speed ($\mu m / s$)")
+    #                 ax1[3][i].set_ylabel("time ($s$)")
+    #
+    #         if plots:
+    #             sp_tot = ax1[4][0].imshow(np.nansum(speeds, axis=0), vmin=-speed_thresh, vmax=speed_thresh,
+    #                                       aspect='auto',
+    #                                       extent=[-speed_thresh / 2, speed_thresh / 2, int(times[j][-1]), 0],
+    #                                       cmap='bwr')
+    #             ax1[4][0].plot(np.nanmean(np.nansum(speeds, axis=0), axis=1), times[j])
+    #             ax1[4][0].grid(True)
+    #             ax1[4][0].set_title(f"Summed speeds {self.edge_name} {(j + 1)}")
+    #             ax1[4][0].set_xlabel("speed ($\mu m / s$)")
+    #             ax1[4][0].set_ylabel("time ($s$)")
+    #
+    #             ax1[4][1].imshow(self.filtered_left[j] + self.filtered_right[j], aspect='auto',
+    #                              extent=self.imshow_extent)
+    #             ax1[4][1].set_title(f"Added filters {self.edge_name} {(j + 1)}")
+    #             ax1[4][1].set_xlabel("space ($\mu m$)")
+    #             ax1[4][1].set_ylabel("time ($s$)")
+    #             plt.colorbar(sp_unthr)
+    #             plt.colorbar(sp_thr)
+    #             plt.colorbar(sp_tot)
+    #
+    #         speeds_tot.append(speeds)
+    #         if plots:
+    #             fig1.tight_layout()
+    #         if save_im:
+    #             fig1.savefig(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {j + 1} speedfig.png')
+    #
+    #     # if speedplot:
+    #     #     fig2.tight_layout()
+    #     self.speeds_tot = np.array(speeds_tot)
+    #     self.times = times
+    #
+    #     return np.array(speeds_tot), times
 
     def extract_transport(self,
                           noise_thresh=0.01,
