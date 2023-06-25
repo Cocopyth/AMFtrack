@@ -383,13 +383,12 @@ def get_width_from_graph_im(edge, pos, image, nx_graph_pruned, slice_length=400)
         offset=offset,
         step=step,
         target_length=target_length,
-        bound1=bound1,
-        bound2=bound2,
+        bounds=(bound1, bound2)
     )
     return get_width(slices)
 
 
-def get_width(slices, avearing_window=50, num_std=4):
+def get_width(slices, avearing_window=50, num_std=2):
     widths = []
     for index in range(len(slices)):
         thresh = np.mean(
@@ -406,9 +405,9 @@ def get_width(slices, avearing_window=50, num_std=4):
             )
         )
         try:
-            deb, end = np.min(
-                np.argwhere(slices[index, :] < thresh - num_std * std)
-            ), np.max(np.argwhere(slices[index, :] < thresh - num_std * std))
+            deb = np.min(np.argwhere(slices[index, :] < thresh - num_std * std))
+            end = np.max(np.argwhere(slices[index, :] < thresh - num_std * std))
+            print(deb)
             width = end - deb
             widths.append(width)
         except ValueError:
