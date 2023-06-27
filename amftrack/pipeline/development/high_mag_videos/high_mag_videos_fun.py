@@ -143,13 +143,13 @@ def extract_section_profiles_for_edge(
     return np.concatenate(l, axis=0), list_of_segments
 
 
-def plot_segments_on_image(segments, ax, color="red", bounds=(0, 1), alpha=1):
+def plot_segments_on_image(segments, ax, color="red", bounds=(0, 1), alpha=1, adj=1):
     for (point1_pivot, point2_pivot) in segments:
         point1 = (1 - bounds[0]) * point1_pivot + bounds[0] * point2_pivot
         point2 = (1 - bounds[1]) * point1_pivot + bounds[1] * point2_pivot
         ax.plot(
-            [point1[1], point2[1]],  # x1, x2
-            [point1[0], point2[0]],  # y1, y2
+            [point1[1]*adj, point2[1]*adj],  # x1, x2
+            [point1[0]*adj, point2[0]*adj],  # y1, y2
             color=color,
             linewidth=2,
             alpha=alpha,
@@ -674,6 +674,8 @@ def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, segment_plots=
     kernel = np.ones((k_size, k_size), np.uint8)
     kernel_2 = np.ones((10, 10), np.uint8)
     smooth_im = cv2.GaussianBlur(image, (5, 5), 0)
+    if magnif < 30:
+        smooth_im = cv2.morphologyEx(smooth_im, cv2.MORPH_TOPHAT, kernel)
     im_canny = cv2.Canny(smooth_im, 0, 20)
     im_canny_smooth = cv2.GaussianBlur(im_canny, (5, 5), 0)
     smooth_im_close = cv2.morphologyEx(smooth_im, cv2.MORPH_CLOSE, kernel)
@@ -686,12 +688,12 @@ def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, segment_plots=
 
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.85)
     retval, labels, centers = cv2.kmeans(k_data, [4, 2][magnif<30], None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
-    print(labels.shape, centers.shape)
+#     print(labels.shape, centers.shape)
     centers=np.uint8(centers)
     labels=np.array(labels.T[0])
     centers = [center[0] for center in centers]
-    print(centers)
-    print(labels)
+#     print(centers)
+#     print(labels)
     segmented_data  = np.array([centers[label] for label in labels])
     segmented_image = segmented_data.reshape((smooth_im.shape))
     segmented_image = np.uint8(segmented_image>np.min(centers))
@@ -713,7 +715,7 @@ def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, segment_plots=
     ax[1].imshow(std_im)
     ax[1].set_title("open")
     ax[2].imshow(smooth_im)
-    ax[2].set_title("closed")
+    ax[2].set_title("smooth_im")
     ax[3].imshow(segmented)
     ax[3].set_title("segmented")
     ax[4].imshow(skeletonized)
