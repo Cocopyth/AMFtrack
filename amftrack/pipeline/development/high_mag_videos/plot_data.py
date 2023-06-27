@@ -7,6 +7,9 @@ from tqdm import tqdm
 import scipy
 import pandas as pd
 import numpy as np
+import matplotlib as mpl
+mpl.rcParams['figure.dpi'] = 150
+
 
 def save_raw_data(edge_objs, img_address, spd_max_percentile = 99.9):
     if not os.path.exists(f"{img_address}/Analysis/"):
@@ -99,7 +102,7 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile = 99.9):
 
     
 
-def plot_summary(edge_objs, spd_max_percentile = 99.9):
+def plot_summary(edge_objs, spd_max_percentile = 99.5):
     for edge in edge_objs:    
         space_res = edge.video_analysis.space_pixel_size
         time_res  = edge.video_analysis.time_pixel_size        
@@ -118,7 +121,7 @@ def plot_summary(edge_objs, spd_max_percentile = 99.9):
             edge.flux_tot
         ], dtype=float)
         
-        speedmax = np.nanpercentile(abs(spd_tiff[0:2].flatten()), spd_max_percentile)
+        speedmax = np.max([np.nanpercentile(abs(spd_tiff[0:2].flatten()), spd_max_percentile), 15])
         
         back_thresh, forw_thresh = (edge.filtered_right[0], edge.filtered_left[0])
         speed_weight_left = np.nansum(np.prod((edge.speeds_tot[0][0], back_thresh), 0), 1) / np.nansum(back_thresh, axis=1)
@@ -132,6 +135,13 @@ def plot_summary(edge_objs, spd_max_percentile = 99.9):
         vel_adj = np.where(abs(vel_adj) > 2*speedmax, np.nan, vel_adj)
         vel_adj_mean = np.nanmean(vel_adj, axis=1)
         
+        speed_bins = np.linspace(-speedmax, speedmax, 256)
+        speed_histo_left = np.array([np.histogram(row, speed_bins)[0] for row in edge.speeds_tot[0][0]])
+        speed_histo_right = np.array([np.histogram(row, speed_bins)[0] for row in edge.speeds_tot[0][1]])
+        speed_histo = (speed_histo_left + speed_histo_right)/(2*len(edge.speeds_tot[0][0][0]))
+        print(np.max(speed_histo), np.min(speed_histo), np.sum(speed_histo))
+#         print(speed_histo_left)
+        
         fig, ax = plt.subplots(2,2, figsize=(9,9), layout='constrained')
 
         fig.suptitle(f"Edge {edge.edge_name} Summary")
@@ -142,23 +152,22 @@ def plot_summary(edge_objs, spd_max_percentile = 99.9):
         ax[0][0].set_ylabel("time (s)")
         ax[0][0].set_xlabel("space ($\mu m$)")
         ax[0][0].set_title("Kymograph")
-        ax[1][1].plot(edge.times[0], np.nanmean(edge.speeds_tot[0][0], axis=1), c='tab:blue', label='Rightward')
-        ax[1][1].fill_between(edge.times[0], 
+        ax[1][0].plot(edge.times[0],np.nanmean(edge.speeds_tot[0][0], axis=1), c='tab:blue', label='To root')
+        ax[1][0].fill_between(edge.times[0], 
                               np.nanmean(edge.speeds_tot[0][0], axis=1) + np.nanstd(edge.speeds_tot[0][0], axis=1), 
                               np.nanmean(edge.speeds_tot[0][0], axis=1) - np.nanstd(edge.speeds_tot[0][0], axis=1), 
                               alpha=0.5, facecolor='tab:blue')
-        ax[1][1].plot(edge.times[0], np.nanmean(edge.speeds_tot[0][1], axis=1), c='tab:orange', label='Leftward')
-        ax[1][1].fill_between(edge.times[0], 
+        ax[1][0].plot(edge.times[0],np.nanmean(edge.speeds_tot[0][1], axis=1),  c='tab:orange', label='To tip')
+        ax[1][0].fill_between(edge.times[0], 
                               np.nanmean(edge.speeds_tot[0][1], axis=1) + np.nanstd(edge.speeds_tot[0][1], axis=1), 
                               np.nanmean(edge.speeds_tot[0][1], axis=1) - np.nanstd(edge.speeds_tot[0][1], axis=1), 
                               alpha=0.5, facecolor='tab:orange')
-        ax[1][1].axhline()
-        ax[1][1].set_ylim([-speedmax,speedmax])
-        ax[1][1].set_title(f"Split speeds")
+        
+        ax[1][1].imshow(speed_histo.T, extent=[ 0, len(speed_histo)*time_res, speedmax, -speedmax], aspect='auto')
+        ax[1][1].axhline(c='w', linestyle='--')
+        ax[1][1].set_title(f"Velocity histogram")
         ax[1][1].set_xlabel("time (s)")
         ax[1][1].set_ylabel("speed ($\mu m/s$)")
-        ax[1][1].legend()
-        ax[1][1].grid(True)
         spd_colors = ax[0][1].imshow(vel_adj, aspect='auto', vmin = -speedmax, vmax = speedmax, extent = imshow_extent, cmap = 'coolwarm')
         ax[0][1].set_ylabel("time (s)")
         ax[0][1].set_xlabel("space ($\mu m$)")
@@ -168,12 +177,14 @@ def plot_summary(edge_objs, spd_max_percentile = 99.9):
 
         
 
-        ax[1][0].plot(edge.times[0], vel_adj_mean, c='tab:blue')
-        ax[1][0].set_title("Weighted mean speed")
+        ax[1][0].plot(edge.times[0], vel_adj_mean, c='black', alpha=0.5, label='effMean')
+        ax[1][0].set_title("Speed plots")
         ax[1][0].set_xlabel("time (s)")
         ax[1][0].set_ylabel("speed ($\mu m/s$)")
         ax[1][0].grid(True)
         ax[1][0].set_ylim([-speedmax, speedmax])
+#         ax[1][0].set_xlim(ax[1][0].get_ylim()[::-1])
+        ax[1][0].legend()
 
 #         fig.tight_layout()
         fig.savefig(f"{edge.edge_path}/{edge.edge_name}_summary.png")

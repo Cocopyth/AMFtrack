@@ -21,11 +21,12 @@ dataframe = pd.read_json(f"{temp_path}/{op_id}.json")
 dataframe = dataframe.iloc[i]
 
 img_address = dataframe["address_total"]
+magnif = dataframe['magnification']
 
 print(upl_targ)
 
 test_video = Kymo_video_analysis(img_address, logging=True, vid_type=None,
-                                 fps=None, binning=None, filter_step=80,
+                                 fps=None, binning=None, filter_step=[20, 70][magnif > 10],
                                  seg_thresh=12, show_seg=False)
 edge_list = test_video.edge_objects
 target_length = int(2.1 * test_video.magnification)
