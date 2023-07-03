@@ -8,6 +8,7 @@ import scipy
 import pandas as pd
 import numpy as np
 import matplotlib as mpl
+import datetime
 mpl.rcParams['figure.dpi'] = 150
 
 
@@ -135,56 +136,55 @@ def plot_summary(edge_objs, spd_max_percentile = 99.5):
         vel_adj = np.where(abs(vel_adj) > 2*speedmax, np.nan, vel_adj)
         vel_adj_mean = np.nanmean(vel_adj, axis=1)
         
-        speed_bins = np.linspace(-speedmax, speedmax, 256)
+        speed_bins = np.linspace(-50, 50, 512)
         speed_histo_left = np.array([np.histogram(row, speed_bins)[0] for row in edge.speeds_tot[0][0]])
         speed_histo_right = np.array([np.histogram(row, speed_bins)[0] for row in edge.speeds_tot[0][1]])
         speed_histo = (speed_histo_left + speed_histo_right)/(2*len(edge.speeds_tot[0][0][0]))
         print(np.max(speed_histo), np.min(speed_histo), np.sum(speed_histo))
 #         print(speed_histo_left)
         
-        fig, ax = plt.subplots(2,2, figsize=(9,9), layout='constrained')
+        fig, ax = plt.subplot_mosaic([['kymo', 'speed_field', 'speed_hist'],
+                                      ['speed_plot', 'flux_plot', 'speed_hist']], figsize=(12,8), layout='constrained')
 
         fig.suptitle(f"Edge {edge.edge_name} Summary")
         imshow_extent = [0, space_res * edge.kymos[0].shape[1],
                          time_res * edge.kymos[0].shape[0], 0]
-        ax[0][0].imshow(edge.kymos[0], extent=imshow_extent, aspect='auto')
+        ax['kymo'].imshow(edge.kymos[0], extent=imshow_extent, aspect='auto')
     #     ax[0].set_title(f"Full kymo (length = {space_res * len(edge.kymos[0]):.5} $ \mu m$)")
-        ax[0][0].set_ylabel("time (s)")
-        ax[0][0].set_xlabel("space ($\mu m$)")
-        ax[0][0].set_title("Kymograph")
-        ax[1][0].plot(edge.times[0],np.nanmean(edge.speeds_tot[0][0], axis=1), c='tab:blue', label='To root')
-        ax[1][0].fill_between(edge.times[0], 
+        ax['kymo'].set_ylabel("time (s)")
+        ax['kymo'].set_xlabel("space ($\mu m$)")
+        ax['kymo'].set_title("Kymograph")
+        ax['speed_plot'].plot(edge.times[0],np.nanmean(edge.speeds_tot[0][0], axis=1), c='tab:blue', label='To root')
+        ax['speed_plot'].fill_between(edge.times[0], 
                               np.nanmean(edge.speeds_tot[0][0], axis=1) + np.nanstd(edge.speeds_tot[0][0], axis=1), 
                               np.nanmean(edge.speeds_tot[0][0], axis=1) - np.nanstd(edge.speeds_tot[0][0], axis=1), 
                               alpha=0.5, facecolor='tab:blue')
-        ax[1][0].plot(edge.times[0],np.nanmean(edge.speeds_tot[0][1], axis=1),  c='tab:orange', label='To tip')
-        ax[1][0].fill_between(edge.times[0], 
+        ax['speed_plot'].plot(edge.times[0],np.nanmean(edge.speeds_tot[0][1], axis=1),  c='tab:orange', label='To tip')
+        ax['speed_plot'].fill_between(edge.times[0], 
                               np.nanmean(edge.speeds_tot[0][1], axis=1) + np.nanstd(edge.speeds_tot[0][1], axis=1), 
                               np.nanmean(edge.speeds_tot[0][1], axis=1) - np.nanstd(edge.speeds_tot[0][1], axis=1), 
                               alpha=0.5, facecolor='tab:orange')
+        ax['speed_plot'].plot(edge.times[0], vel_adj_mean, c='black', alpha=0.5, label='effMean')
+        ax['speed_plot'].set_title("Speed plots")
+        ax['speed_plot'].set_xlabel("time (s)")
+        ax['speed_plot'].set_ylabel("speed ($\mu m/s$)")
+        ax['speed_plot'].grid(True)
+        ax['speed_plot'].set_ylim([-speedmax, speedmax])
+#         ax[1][0].set_xlim(ax[1][0].get_ylim()[::-1])
+        ax['speed_plot'].legend()
         
-        ax[1][1].imshow(speed_histo.T, extent=[ 0, len(speed_histo)*time_res, speedmax, -speedmax], aspect='auto')
-        ax[1][1].axhline(c='w', linestyle='--')
-        ax[1][1].set_title(f"Velocity histogram")
-        ax[1][1].set_xlabel("time (s)")
-        ax[1][1].set_ylabel("speed ($\mu m/s$)")
-        spd_colors = ax[0][1].imshow(vel_adj, aspect='auto', vmin = -speedmax, vmax = speedmax, extent = imshow_extent, cmap = 'coolwarm')
-        ax[0][1].set_ylabel("time (s)")
-        ax[0][1].set_xlabel("space ($\mu m$)")
-        ax[0][1].set_title("Speed Field")
+        ax['speed_hist'].imshow(speed_histo.T, extent=[ 0, len(speed_histo)*time_res, -50, 50], origin='lower', aspect='auto')
+        ax['speed_hist'].axhline(c='w', linestyle='--')
+        ax['speed_hist'].set_title(f"Velocity histogram")
+        ax['speed_hist'].set_xlabel("time (s)")
+        ax['speed_hist'].set_ylabel("speed ($\mu m/s$)")
+        spd_colors = ax['speed_field'].imshow(vel_adj, aspect='auto', vmin = -speedmax, vmax = speedmax, extent = imshow_extent, cmap = 'coolwarm')
+        ax['speed_field'].set_ylabel("time (s)")
+        ax['speed_field'].set_xlabel("space ($\mu m$)")
+        ax['speed_field'].set_title("Speed Field")
         cbar = fig.colorbar(spd_colors, location='right')
         cbar.ax.set_ylabel('speed ($\mu m / s$)', rotation=270)
 
-        
-
-        ax[1][0].plot(edge.times[0], vel_adj_mean, c='black', alpha=0.5, label='effMean')
-        ax[1][0].set_title("Speed plots")
-        ax[1][0].set_xlabel("time (s)")
-        ax[1][0].set_ylabel("speed ($\mu m/s$)")
-        ax[1][0].grid(True)
-        ax[1][0].set_ylim([-speedmax, speedmax])
-#         ax[1][0].set_xlim(ax[1][0].get_ylim()[::-1])
-        ax[1][0].legend()
 
 #         fig.tight_layout()
         fig.savefig(f"{edge.edge_path}/{edge.edge_name}_summary.png")
@@ -209,3 +209,205 @@ def plot_summary(edge_objs, spd_max_percentile = 99.5):
         ax[1][1].set_ylabel("time (s)")
         fig.tight_layout()
         fig.savefig(f"{edge.edge_path}/{edge.edge_name}_kymos.png")
+        
+        
+def month_to_num(x):
+    months = {
+         'jan': '01',
+         'feb': '02',
+         'mar': '03',
+         'apr': '04',
+         'may':'05',
+         'jun':'06',
+         'jul':'07',
+         'aug':'08',
+         'sep':'09',
+         'oct':'10',
+         'nov':'11',
+         'dec':'12'
+        }
+    a = x.strip()[:3].lower()
+    try:
+        ez = months[a]
+        return ez
+    except:
+        raise ValueError('Not a month')
+        
+def read_video_data(address_array, folders_frame):
+    folders_frame['plate_id_csv'] = [f"{row['Date Imaged']}_Plate{row['Plate number']}" for index, row in folders_frame.iterrows()]
+    folders_frame['unique_id_csv'] = [f"{row['plate_id_csv']}_{row['video'].split(os.sep)[0]}" for index, row in folders_frame.iterrows()]
+    folders_frame['plate_id_xl'] = [f"{row['Date Imaged']}_Plate{row['Plate number']}" for index, row in folders_frame.iterrows()]
+    folders_frame['unique_id_xl'] = [f"{row['plate_id_xl']}_{row['tot_path_drop'].split(os.sep)[-1].split('_')[-1]}" for index, row in folders_frame.iterrows()]
+#     print(folders_frame['plate_id_csv'][0],
+#           folders_frame['unique_id_csv'][0],
+#           folders_frame['plate_id_xl'][0],
+#           folders_frame['unique_id_xl'][0])
+    excel_frame = pd.DataFrame()
+    csv_frame = pd.DataFrame()
+    txt_frame = pd.DataFrame()
+    for address in address_array:
+        suffix = address.split('.')[-1]
+        if suffix == 'xlsx':
+            raw_data = pd.read_excel(address)
+            raw_data = raw_data[raw_data['Treatment'] == raw_data['Treatment']].reset_index()
+            raw_data['plate_id_xl'] = [f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}" for entry in raw_data['Unnamed: 0']]
+            folders_plate_frame = folders_frame[folders_frame['plate_id_xl'].str.lower().isin(raw_data['plate_id_xl'].str.lower())]
+#             print(folders_frame['plate_id_xl'])
+#             print(raw_data['plate_id_xl'])
+            raw_data = raw_data.set_index('Unnamed: 0').join(folders_plate_frame.set_index('unique_id_xl'), lsuffix='', rsuffix='_folder')
+            raw_data = raw_data.reset_index()
+#             print(raw_data.iloc[0])
+            excel_frame = pd.concat([excel_frame, raw_data])
+
+        elif suffix == 'csv':
+            df_comma = pd.read_csv(address, nrows=1,sep=",")
+            df_semi = pd.read_csv(address, nrows=1, sep=";")
+            if df_comma.shape[1]>df_semi.shape[1]:
+                raw_data = pd.read_csv(address, sep=",")
+            else:
+                raw_data = pd.read_csv(address, sep=";")
+            raw_data['file_name'] = [address.split(os.sep)[-1].split('.')[-2]] * len(raw_data)
+#             print(address.split(os.sep)[-1].split('.')[-2])
+            
+            folders_plate_frame = folders_frame[folders_frame['plate_id_csv'].str.lower().isin(raw_data['file_name'].str.lower())].reset_index()
+#             print(folders_plate_frame)
+            raw_data['unique_id'] = folders_plate_frame['unique_id_csv']
+#             print(raw_data['unique_id'])
+            raw_data = raw_data.set_index('unique_id').join(folders_plate_frame.set_index('unique_id_csv'), lsuffix='', rsuffix='_folder')
+            raw_data = raw_data[raw_data['tot_path_drop'] == raw_data['tot_path_drop']]
+            raw_data['tot_path'] = [entry[5:] + os.sep for entry in raw_data['tot_path_drop']]
+            raw_data = raw_data.reset_index()
+            csv_frame = pd.concat([csv_frame, raw_data], axis=0, ignore_index=True)
+            
+        elif suffix == 'txt':
+            raw_data = pd.read_csv(address, sep=": ", engine='python')
+            raw_data.loc['unique_id'] = f"{address.split(os.sep)[-3]}_{address.split(os.sep)[-2]}"
+            raw_data.loc['tot_path'] = address[34:-13] + 'Img/'
+            raw_data.loc['tot_path_drop'] = 'DATA/' + raw_data.loc['tot_path']
+            txt_frame = pd.concat([txt_frame, raw_data], axis=1, ignore_index=True)
+    
+    if len(excel_frame) >0:
+        excel_frame['Binned (Y/N)'] = [np.where(entry == 'Y', 2, 1) for entry in excel_frame['Binned (Y/N)']]
+        excel_frame['Time after crossing'] = [int(entry.split(' ')[-2]) for entry in excel_frame['Time after crossing']]
+        excel_frame = excel_frame.rename(columns={
+                'Unnamed: 0' : 'unique_id',
+                'Treatment' : 'treatment',
+                'Strain' : 'strain',
+                'Time after crossing': 'days_after_crossing',
+                'Growing temperature' : 'grow_temp',
+                'Position mm' : 'xpos',
+                'Unnamed: 6' : 'ypos',
+                'dcenter mm' : 'dcenter',
+                'droot mm' : 'droot',
+                'Bright-field (BF)\nor\nFluorescence (F)' : 'mode',
+                'Binned (Y/N)' : 'binning',
+                'Magnification' : 'magnification',
+                'FPS' : 'fps',
+                'Video Length (s)' : 'time_(s)',
+                'Comments' : 'comments',
+        })
+    if len(txt_frame) > 0:
+        txt_frame = txt_frame.T.reset_index()
+        txt_frame = txt_frame.dropna(axis=1, how='all')
+        txt_frame = txt_frame.drop(['index', 'Computer', 'User', 'DataRate', 'DataSize', 'Frames Recorded', 'Fluorescence', 'Four Led Bar', 'Model', 'FrameSize'], axis=1)
+        txt_frame['record_time'] = [entry.split(',')[-1] for entry in txt_frame['DateTime']]
+        txt_frame['DateTime'] = [f"{entry.split(', ')[1].split(' ')[-1]}{month_to_num(entry.split(', ')[-2].split(' ')[-2])}{entry.split(', ')[1].split(' ')[-3]}" for entry in txt_frame['DateTime']]
+        txt_frame['CrossDate'] = [str(int(entry)) for entry in txt_frame['CrossDate']]
+        txt_frame['days_after_crossing'] = [(datetime.date(int(row['DateTime'][:4]), int(row['DateTime'][4:6]), int(row['DateTime'][6:])) - datetime.date(int(row['CrossDate'][:4]), int(row['CrossDate'][4:6]), int(row['CrossDate'][6:]))).days for index, row in txt_frame.iterrows()]
+        txt_frame['X'] = [float(entry.split(' ')[-2]) for entry in txt_frame['X']]
+        txt_frame['Y'] = [float(entry.split(' ')[-2]) for entry in txt_frame['Y']]
+#         txt_frame['Z'] = [float(entry.split(' ')[-2]) for entry in txt_frame['Z']]
+        txt_frame['Binning'] = [int(entry[-1]) for entry in txt_frame['Binning']]
+        txt_frame['FrameRate'] = [float(entry.split(' ')[-3]) for entry in txt_frame['FrameRate']]
+        txt_frame['magnification'] = [float(entry.split(' ')[-2][:-1]) for entry in txt_frame['Operation']]
+        txt_frame['Operation'] = [str(np.where(entry.split(' ')[-1] == 'Brightfield', 'BF', 'F')) for entry in txt_frame['Operation']]
+        txt_frame['Time'] = [float(entry.split(' ')[-2]) for entry in txt_frame['Time']]
+        txt_frame['ExposureTime'] = [float(entry.split(' ')[-2]) for entry in txt_frame['ExposureTime']]
+        txt_frame['Run'] = [int(entry) for entry in txt_frame['Run']]
+        txt_frame['Gain'] = [float(entry) for entry in txt_frame['Gain']]
+        txt_frame['Gamma'] = [float(entry) for entry in txt_frame['Gamma']]
+        txt_frame['Root'] = [entry.split(' ')[-1] for entry in txt_frame['Root']]
+        txt_frame['Strain'] = [entry.split(' ')[-1] for entry in txt_frame['Strain']]
+        txt_frame['StoragePath'] = [entry.split(' ')[-1] for entry in txt_frame['StoragePath']]
+        txt_frame['Treatment'] = [entry.split(' ')[-1] for entry in txt_frame['Treatment']]
+        txt_frame = txt_frame.rename(columns={
+            'DateTime': 'imaging_day',
+            'StoragePath' : 'storage_path',
+            'Plate' : 'plate_id',
+            'Root' : 'root',
+            'Strain' : 'strain',
+            'Treatment' : 'treatment',
+            'CrossDate' : 'crossing_day',
+            'Run' : 'video_int',
+            'Time' : 'time_(s)',
+            'Operation' : 'mode',
+            'ExposureTime' : 'exposure_time_(us)',
+            'FrameRate' : 'fps',
+            'Binning' : 'binning',
+            'Gain' : 'gain',
+            'Gamma' : 'gamma',
+            'X' : 'xpos',
+            'Y' : 'ypos',
+            'Z' : 'zpos',
+        })
+
+    if len(csv_frame) > 0:
+#         print(csv_frame['unique_id'])
+        csv_frame['video_id'] = [entry.split('_')[-1] for entry in csv_frame['unique_id']]
+        csv_frame['plate_nr'] = [int(entry.split('_')[-2][5:]) for entry in csv_frame['unique_id']]
+        csv_frame = csv_frame.rename(columns={
+            'video' : 'video_int',
+            'Treatment' : 'treatment',
+            'Strain' : 'strain',
+            'tGermination' : 'days_after_crossing',
+            'Illumination' : 'mode',
+            'Binned' : 'binning',
+            'Lens' : 'magnification',
+        })
+    if len(csv_frame)>0 and len(txt_frame)>0:
+#         print(txt_frame['unique_id'])
+        merge_frame = pd.merge(txt_frame, csv_frame, how='outer', on='unique_id', suffixes=("", "_csv"))
+        
+        merge_frame = merge_frame.drop(columns=['unique_id_xl', 'plate_id', 'video_folder', 'Plate number', 'folder', 'file_name'],axis=1)
+        merge_frame = merge_frame.rename(columns={'plate_id_xl' : 'plate_id'})
+        merge_frame['imaging_day'] = merge_frame['imaging_day'].fillna(merge_frame['Date Imaged'])
+        merge_frame['strain'] = merge_frame['strain'].fillna(merge_frame['strain_csv'])
+        merge_frame['treatment'] = merge_frame['treatment'].fillna(merge_frame['treatment_csv'])
+        merge_frame['video_int'] = merge_frame['video_int'].fillna(merge_frame['video_int_csv'])
+        merge_frame['time_(s)'] = merge_frame['time_(s)'].fillna(merge_frame['time'])
+        merge_frame['mode'] = merge_frame['mode'].fillna(merge_frame['mode_csv'])
+        merge_frame['fps'] = merge_frame['fps'].fillna(merge_frame['fps_csv'])
+        merge_frame['binning'] = merge_frame['binning'].fillna(merge_frame['binning_csv'])
+        merge_frame['xpos'] = merge_frame['xpos'].fillna(merge_frame['xpos_csv'])
+        merge_frame['ypos'] = merge_frame['ypos'].fillna(merge_frame['ypos_csv'])
+        merge_frame['magnification'] = merge_frame['magnification'].fillna(merge_frame['magnification_csv'])
+        merge_frame['tot_path'] = merge_frame['tot_path'].fillna(merge_frame['tot_path_csv'])
+        merge_frame['days_after_crossing'] = merge_frame['days_after_crossing'].fillna(merge_frame['days_after_crossing_csv'])
+        merge_frame = merge_frame.drop(columns=['root', 'video_int_csv', 'treatment_csv', 'strain_csv', 'days_after_crossing_csv', 'xpos_csv', 'ypos_csv', 'mode_csv', 'binning_csv', 'magnification_csv', 'fps_csv', 'plate_id_csv', 'Date Imaged', 'tot_path_csv', 'index'],axis=1)
+
+    elif len(excel_frame) > 0 and len(txt_frame) > 0:
+        merge_frame = pd.merge(excel_frame, csv_frame, how='left', on='unique_id', suffixes=("", "_csv"))
+    elif len(txt_frame) > 0:
+        merge_frame = txt_frame
+        merge_frame['plate_id'] = [f"{row['imaging_day']}_Plate{int(row['plate_id'])}" for index, row in merge_frame.iterrows()]
+    elif len(excel_frame) > 0:
+        merge_frame = excel_frame
+        merge_frame = merge_frame[merge_frame['tot_path_drop'] == merge_frame['tot_path_drop']]
+        merge_frame['tot_path'] = [entry[5:] + '/Img/' for entry in merge_frame['tot_path_drop']]
+        merge_frame = merge_frame.rename(columns={
+            'plate_id_xl' : 'plate_id',
+            'Plate number' : 'plate_nr',
+            'Date Imaged' : 'imaging_day',
+        })
+        merge_frame = merge_frame.drop(columns=['plate_id_xl_folder', 'video', 'folder'], axis=1)
+    elif len(csv_frame) > 0:
+        csv_frame = csv_frame.rename(columns={'Date Imaged' : 'imaging_day', 'place_id_csv' : 'plate_id'})
+        csv_frame = csv_frame.drop(columns=['plate_id_csv', 'unique_id_xl', 'folder'],axis=1)
+        merge_frame = csv_frame
+    else:
+        raise("Could not find enough data!")
+    return merge_frame
+    
+    
+    
+    
