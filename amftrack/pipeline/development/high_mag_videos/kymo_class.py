@@ -15,7 +15,7 @@ mpl.rcParams['figure.dpi'] = 300
 
 class Kymo_video_analysis(object):
     def __init__(self,
-                 imgs_address,
+                 imgs_address=None,
                  format='tiff',
                  fps=None,
                  binning=2,
@@ -27,7 +27,8 @@ class Kymo_video_analysis(object):
                  seg_thresh=20,
                  logging=False,
                  segment_plots=False,
-                 show_seg=False
+                 show_seg=False,
+                 input_frame=None
                  ):
         """
         imgs_address:   This is the folder address containing an "Img" file and potentially an Analysis file.
@@ -45,84 +46,94 @@ class Kymo_video_analysis(object):
 
         # First we're assigning values, and extracting data about the video if there is a .csv (or .xlsx) available.
         # self.imgs_address = os.path.join(imgs_address, 'Img')
-        self.imgs_address = Path(imgs_address) / "Img"
-        self.video_nr = int(re.split('/|_', imgs_address[:-1])[-1])
-        parent_files = self.imgs_address.parents[1]
-        self.binning = binning
-        self.magnification = magnification
-        self.vid_type = vid_type
-        self.fps = fps
-        self.logging = logging
-        self.imformat = format
         self.im_range = im_range
-        self.segment_plots = segment_plots
-        self.back_fit = [0, 0, 0]
-        self.back_offset = 0
-        
-#         print(parent_files)
+        self.logging = logging
 
-        ### Extracts the video parameters from the nearby csv.
-        self.csv_path = next(Path(parent_files).glob("*.csv"), None)
-        if self.csv_path is None:
-            self.xlsx_path = next(Path(parent_files).glob("*.xlsx"), None)
-#             [a for a in Path(parent_files).glob(f'*.xlsx')]
-        else:
-            self.xlsx_path = []
-        if logging:
-            print(f"Using the datasheet at: {self.xlsx_path}")
+        if input_frame is None:
+            self.imgs_address = Path(imgs_address) / "Img"
+            self.kymos_path = f"{imgs_address}Analysis/"
+            self.video_nr = int(re.split('/|_', imgs_address[:-1])[-1])
+            parent_files = self.imgs_address.parents[1]
+            self.binning = binning
+            self.magnification = magnification
+            self.vid_type = vid_type
+            self.fps = fps
+    #         self.imformat = format
+            self.im_range = im_range
+            self.back_fit = [0, 0, 0]
+            self.back_offset = 0
 
-        if self.csv_path is not None or self.xlsx_path is not None:
-            if self.csv_path is not None and self.xlsx_path is not None:
-                print("Found both a csv and xlsx file, will use csv data.")
-            if self.csv_path is not None:
-                if logging:
-                    print("Found a csv file, using that data")
-                df_comma = pd.read_csv(self.csv_path, nrows=1,sep=",")
-                df_semi = pd.read_csv(self.csv_path, nrows=1, sep=";")
-                if df_comma.shape[1]>df_semi.shape[1]:
-                    videos_data = pd.read_csv(self.csv_path, sep=",")
-                else:
-                    videos_data = pd.read_csv(self.csv_path, sep=";")
-                    
-                if videos_data.isnull().values.any():
-                    print("Found NaNs in the excel files! Blame the experimentalists.")
-                    videos_data = videos_data.interpolate(method='pad', limit_direction='forward')
-                # if videos_data.isnull().values.any():
-                #     raise("This excel sheet is unworkable, please ask the responisble person")
-                self.video_data = videos_data.loc[videos_data['video'] == self.video_nr]
-                # print(self.video_data["Illumination"][0])
-                self.vid_type = ["FLUO", "BRIGHT"][self.video_data["Illumination"].iloc[0] == "BF"]
-                self.fps = float(self.video_data["fps"].iloc[0])
-                self.binning = (self.video_data["Binned"].iloc[0] * 2) + 1
-                self.magnification = self.video_data["Lens"].iloc[0]
-            elif self.xlsx_path is not None:
-                if logging:
-                    print("Found an xlsx file, using that data")
-                videos_data = pd.read_excel(self.xlsx_path)
-                print(str(self.imgs_address))
-#                 self.video_data = videos_data.loc[videos_data['Unnamed: 0'].str.contains(str(self.imgs_address).split(os.sep)[-1], case=False, na=False)]
-                excel_addr = f"{imgs_address.split(os.sep)[-3]}_{imgs_address.split(os.sep)[-2]}"
-#                 print(excel_addr)
-                self.video_data = videos_data[videos_data["Unnamed: 0"].str.contains(excel_addr, case=False, na=False)]
-                print(self.video_data.to_string())
-                self.vid_type = ["FLUO", "BRIGHT"][self.video_data.iloc[0, 9] == "BF"]
-                self.fps = float(self.video_data["FPS"].iloc[0])
-                if "Binned (Y/N)" in self.video_data:
-                  self.binning = [1, 2][self.video_data["Binned (Y/N)"].iloc[0] == "Y"]
-                else:
-                  self.binning = 1
-                self.magnification = self.video_data["Magnification"].iloc[0]
+    #         print(parent_files)
 
+            ### Extracts the video parameters from the nearby csv.
+            self.csv_path = next(Path(parent_files).glob("*.csv"), None)
+            if self.csv_path is None:
+                self.xlsx_path = next(Path(parent_files).glob("*.xlsx"), None)
+    #             [a for a in Path(parent_files).glob(f'*.xlsx')]
+            else:
+                self.xlsx_path = []
             if logging:
-                print(f"Analysing {self.vid_type} video of {self.magnification}X zoom, with {self.fps} fps")
+                print(f"Using the datasheet at: {self.xlsx_path}")
+
+            if self.csv_path is not None or self.xlsx_path is not None:
+                if self.csv_path is not None and self.xlsx_path is not None:
+                    print("Found both a csv and xlsx file, will use csv data.")
+                if self.csv_path is not None:
+                    if logging:
+                        print("Found a csv file, using that data")
+                    df_comma = pd.read_csv(self.csv_path, nrows=1,sep=",")
+                    df_semi = pd.read_csv(self.csv_path, nrows=1, sep=";")
+                    if df_comma.shape[1]>df_semi.shape[1]:
+                        videos_data = pd.read_csv(self.csv_path, sep=",")
+                    else:
+                        videos_data = pd.read_csv(self.csv_path, sep=";")
+
+                    if videos_data.isnull().values.any():
+                        print("Found NaNs in the excel files! Blame the experimentalists.")
+                        videos_data = videos_data.interpolate(method='pad', limit_direction='forward')
+                    # if videos_data.isnull().values.any():
+                    #     raise("This excel sheet is unworkable, please ask the responisble person")
+                    self.video_data = videos_data.loc[videos_data['video'] == self.video_nr]
+                    # print(self.video_data["Illumination"][0])
+                    self.vid_type = ["FLUO", "BRIGHT"][self.video_data["Illumination"].iloc[0] == "BF"]
+                    self.fps = float(self.video_data["fps"].iloc[0])
+                    self.binning = (self.video_data["Binned"].iloc[0] * 2) + 1
+                    self.magnification = self.video_data["Lens"].iloc[0]
+                elif self.xlsx_path is not None:
+                    if logging:
+                        print("Found an xlsx file, using that data")
+                    videos_data = pd.read_excel(self.xlsx_path)
+                    print(str(self.imgs_address))
+    #                 self.video_data = videos_data.loc[videos_data['Unnamed: 0'].str.contains(str(self.imgs_address).split(os.sep)[-1], case=False, na=False)]
+                    excel_addr = f"{imgs_address.split(os.sep)[-3]}_{imgs_address.split(os.sep)[-2]}"
+    #                 print(excel_addr)
+                    self.video_data = videos_data[videos_data["Unnamed: 0"].str.contains(excel_addr, case=False, na=False)]
+                    print(self.video_data.to_string())
+                    self.vid_type = ["FLUO", "BRIGHT"][self.video_data.iloc[0, 9] == "BF"]
+                    self.fps = float(self.video_data["FPS"].iloc[0])
+                    if "Binned (Y/N)" in self.video_data:
+                      self.binning = [1, 2][self.video_data["Binned (Y/N)"].iloc[0] == "Y"]
+                    else:
+                      self.binning = 1
+                    self.magnification = self.video_data["Magnification"].iloc[0]
+
+                if logging:
+                    print(f"Analysing {self.vid_type} video of {self.magnification}X zoom, with {self.fps} fps")
+        else:
+            self.fps=input_frame['fps']
+            self.magnification = input_frame['magnification']
+            self.binning = input_frame['binning']
+            self.kymos_path = input_frame['analysis_folder']
+            self.imgs_address = Path(input_frame['videos_folder'])
+            vid_dic = {'F' : 'FLUO',
+                       'BF' : 'BRIGHT'}
+            self.vid_type = vid_dic[input_frame['mode']]
+            self.id = input_frame['unique_id']
+            
 
         self.time_pixel_size = 1 / self.fps
         self.space_pixel_size = 2 * 1.725 / (self.magnification) * self.binning  # um.pixel
         self.pos = []
-        self.kymos_path = os.sep.join(
-            imgs_address.split(os.sep)[:-1] + ["".join((imgs_address[:-1].split(os.sep)[-1], "/Analysis"))]
-        )
-        self.kymos_path = f"{imgs_address}Analysis/"
         if not os.path.exists(self.kymos_path):
             os.makedirs(self.kymos_path)
             if self.logging:
@@ -135,8 +146,6 @@ class Kymo_video_analysis(object):
         self.selection_file = self.images_total_path
         self.selection_file.sort()
         self.selection_file = self.selection_file[self.im_range[0]:self.im_range[1]]
-        self.target_length = 130
-        self.x_length = self.space_pixel_size * self.target_length
         if self.vid_type == 'FLUO':
             self.frame_max = imageio.imread(self.selection_file[self.im_range[0]])
             for address in self.im_range:
@@ -151,17 +160,16 @@ class Kymo_video_analysis(object):
         ###Skeleton creation, we segment the image using either brightfield or fluo segmentation methods.
         if self.vid_type == 'BRIGHT':
             self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
-                imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh, segment_plots=self.segment_plots,
+                imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh,
                 seg_thresh=seg_thresh, binning = self.binning)
         elif self.vid_type == 'FLUO':
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
-                self.frame_max, thresh=thresh, segment_plots=self.segment_plots,
+                self.frame_max, thresh=thresh, 
                 seg_thresh=seg_thresh, magnif = self.magnification)
         else:
             print("I don't have a valid flow_processing type!!! Using fluo thresholding.")
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
-                imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh, seg_thresh=seg_thresh,
-                segment_plots=self.segment_plots)
+                imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh, seg_thresh=seg_thresh)
         self.edges = list(self.nx_graph_pruned.edges)
         for i, edge in enumerate(self.edges):
             if self.pos[edge[0]][0] > self.pos[edge[1]][0]:
@@ -211,13 +219,18 @@ class Kymo_video_analysis(object):
         """
         self.target_length = target_length * 2 // self.binning
         self.x_length = self.target_length * self.space_pixel_size
-        fig1, ax1 = plt.subplots(figsize=(8, 8))
-        fig2, ax2 = plt.subplots(figsize=(8,8))
         image = imageio.imread(self.selection_file[self.im_range[0]])
+        fig2, ax2 = plt.subplots(figsize=(8,8))
         ax2.imshow(self.segmented, extent=[0, self.space_pixel_size * image.shape[1], 
                                   self.space_pixel_size * image.shape[0],0])
 
-        ax2.set_title("Segmentation and skeleton")
+        ax2.set_title("Segmentation and skeleton")        
+        fig2.tight_layout()
+        if save_img:
+            save_path_seg = os.path.join(self.kymos_path, f"Video segmentation.png")
+            fig2.savefig(save_path_seg)
+        plt.close(fig2)
+        fig1, ax1 = plt.subplots(figsize=(8, 8))
         ax1.imshow(image,  extent=[0, self.space_pixel_size * image.shape[1], 
                                   self.space_pixel_size * image.shape[0],0])
         for edge in self.edge_objects:
@@ -244,15 +257,15 @@ class Kymo_video_analysis(object):
                 color="white",
             )
             ax1.set_title("Extracted Edges")
+        print(f"To work with individual edges of {self.id}, here is a list of their indices:")
+        for i, edge in enumerate(self.edge_objects):
+            print('edge {}, {}'.format(i, edge.edge_name))
         ax1.set_aspect('equal')
         fig1.tight_layout()
-        fig2.tight_layout()
         plt.show()
         if save_img:
             save_path_temp = os.path.join(self.kymos_path, f"Detected edges.png")
-            save_path_seg = os.path.join(self.kymos_path, f"Video segmentation.png")
             fig1.savefig(save_path_temp)
-            fig2.savefig(save_path_seg)
             print("Saved the extracted edges")
         return None
 

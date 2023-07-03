@@ -415,7 +415,7 @@ def get_width(slices, avearing_window=50, num_std=2):
     return np.median(widths)
 
 
-def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(60, 160, 30), segment_plots=False, seg_thresh = 11, binning=2):
+def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(60, 160, 30), seg_thresh = 11, binning=2):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
     image:          Input image
@@ -670,7 +670,7 @@ def validate_interpolation_order(image_dtype, order):
     return order
 
 
-def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, segment_plots=False, magnif = 50, binning=2):
+def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, magnif = 50, binning=2):
     kernel = np.ones((k_size, k_size), np.uint8)
     kernel_2 = np.ones((10, 10), np.uint8)
     smooth_im = cv2.GaussianBlur(image, (5, 5), 0)
@@ -708,7 +708,6 @@ def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, segment_plots=
 
     skeletonized = skeletonize(segmented > thresh)
 
-#     if segment_plots:
     fig, ax = plt.subplots(7, figsize=(9, 25))
     ax[0].imshow(im_canny)
     ax[0].set_title("Smooth")
