@@ -65,7 +65,6 @@ def compute_edge_width_profile(
     )
 
     predicted_widths = MODEL.predict(profile, verbose=0)
-
     return predicted_widths
 
 

@@ -97,7 +97,7 @@ incr = 100
 fs = [
     get_biovolume_density_in_ring,
     get_density_in_ring,
-    get_density_anastomose_in_ring,
+    # get_density_anastomose_in_ring,
     # get_density_branch_rate_in_ring,
     # get_density_stop_rate_in_ring,
     get_density_active_tips_in_ring,
