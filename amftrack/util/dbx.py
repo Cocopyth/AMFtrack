@@ -261,7 +261,6 @@ def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     listfiles.reverse()
     names = [file.path_display.split("/")[-2] for file in listfiles]
     path_drop = [os.path.join(*file.path_lower.split("/")[:-1]) for file in listfiles]
-    print(path_drop)
     id_uniques = [path.split(os.path.sep)[-2] for path in path_drop]
 
     path_drop = [
