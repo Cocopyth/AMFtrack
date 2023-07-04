@@ -99,7 +99,7 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile = 99.9):
 
         
 
-    data_edge.to_csv(f"{img_address}/Analysis/edges_data.csv")
+    data_edge.to_csv(f"{img_address}/edges_data.csv")
 
 
     
@@ -175,13 +175,13 @@ def plot_summary(edge_objs, spd_max_percentile = 99.5):
 #         ax[1][0].set_xlim(ax[1][0].get_ylim()[::-1])
         ax['speed_plot'].legend()
         
-        ax['speed_hist'].imshow(speed_histo.T, extent=[ 0, len(speed_histo)*time_res, -50, 50], origin='lower', aspect='auto')
+        ax['speed_hist'].imshow(speed_histo.T, extent=[ 0, len(speed_histo)*time_res, -50, 50], origin='lower', aspect='auto', cmap='magma')
         ax['speed_hist'].axhline(c='w', linestyle='--')
         ax['speed_hist'].set_title(f"Velocity histogram")
         ax['speed_hist'].set_xlabel("time (s)")
         ax['speed_hist'].set_ylabel("speed ($\mu m/s$)")
         
-        ax['speed_hist_zoom'].imshow(speed_histo.T[215*2:286*2 - 1], extent=[ 0, len(speed_histo)*time_res, -7, 7], origin='lower', aspect='auto')
+        ax['speed_hist_zoom'].imshow(speed_histo.T[215*2:286*2 - 1], extent=[ 0, len(speed_histo)*time_res, -7, 7], origin='lower', aspect='auto', cmap='magma')
         ax['speed_hist_zoom'].axhline(c='w', linestyle='--')
         ax['speed_hist_zoom'].set_title(f"Velocity histogram")
         ax['speed_hist_zoom'].set_xlabel("time (s)")
@@ -247,14 +247,17 @@ def month_to_num(x):
         raise ValueError('Not a month')
         
 def read_video_data(address_array, folders_frame):
+#     print(folders_frame['video'].to_string())
     folders_frame['plate_id_csv'] = [f"{row['Date Imaged']}_Plate{row['Plate number']}" for index, row in folders_frame.iterrows()]
-    folders_frame['unique_id_csv'] = [f"{row['plate_id_csv']}_{row['video'].split(os.sep)[0]}" for index, row in folders_frame.iterrows()]
+    folders_frame['unique_id_csv'] = [f"{row['plate_id_csv']}_{str(row['video']).split(os.sep)[0]}" for index, row in folders_frame.iterrows()]
     folders_frame['plate_id_xl'] = [f"{row['Date Imaged']}_Plate{row['Plate number']}" for index, row in folders_frame.iterrows()]
     folders_frame['unique_id_xl'] = [f"{row['plate_id_xl']}_{row['tot_path_drop'].split(os.sep)[-1].split('_')[-1]}" for index, row in folders_frame.iterrows()]
+    folders_frame['unique_id_xl'] = [entry.lower() for entry in folders_frame['unique_id_xl']]
 #     print(folders_frame['plate_id_csv'][0],
 #           folders_frame['unique_id_csv'][0],
 #           folders_frame['plate_id_xl'][0],
 #           folders_frame['unique_id_xl'][0])
+#     print(folders_frame['unique_id_xl'])
     excel_frame = pd.DataFrame()
     csv_frame = pd.DataFrame()
     txt_frame = pd.DataFrame()
@@ -263,12 +266,17 @@ def read_video_data(address_array, folders_frame):
         suffix = address.split('.')[-1]
         if suffix == 'xlsx':
             raw_data = pd.read_excel(address)
-            raw_data = raw_data[raw_data['Treatment'] == raw_data['Treatment']].reset_index()
+            if 'Binned (Y/N)' not in raw_data:
+                raw_data['Binned (Y/N)'] = ['N' for entry in raw_data['Unnamed: 0']]
+            raw_data["Binned (Y/N)"] = raw_data["Binned (Y/N)"].astype(str)
+            raw_data = raw_data[raw_data['Treatment'] == raw_data['Treatment']].reset_index(drop=True)
+            raw_data['Unnamed: 0'] = [entry.lower() for entry in raw_data['Unnamed: 0']]
             raw_data['plate_id_xl'] = [f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}" for entry in raw_data['Unnamed: 0']]
             folders_plate_frame = folders_frame[folders_frame['plate_id_xl'].str.lower().isin(raw_data['plate_id_xl'].str.lower())]
-#             print(folders_frame['plate_id_xl'])
-#             print(raw_data['plate_id_xl'])
-            raw_data = raw_data.set_index('Unnamed: 0').join(folders_plate_frame.set_index('unique_id_xl'), lsuffix='', rsuffix='_folder')
+#             print(folders_plate_frame)
+#             print(raw_data.set_index('Unnamed: 0'))
+            raw_data = raw_data.join(folders_plate_frame.set_index('unique_id_xl'), lsuffix='', rsuffix='_folder', on='Unnamed: 0')
+#             print(raw_data)
             raw_data = raw_data.reset_index()
 #             print(raw_data.iloc[0])
             excel_frame = pd.concat([excel_frame, raw_data])
@@ -315,6 +323,7 @@ def read_video_data(address_array, folders_frame):
     
     if len(excel_frame) >0:
         excel_frame['Binned (Y/N)'] = [np.where(entry == 'Y', 2, 1) for entry in excel_frame['Binned (Y/N)']]
+        excel_frame["Binned (Y/N)"] = excel_frame["Binned (Y/N)"].astype(int)
         excel_frame['Time after crossing'] = [int(entry.split(' ')[-2]) for entry in excel_frame['Time after crossing']]
         excel_frame = excel_frame.rename(columns={
                 'Unnamed: 0' : 'unique_id',
@@ -333,6 +342,7 @@ def read_video_data(address_array, folders_frame):
                 'Video Length (s)' : 'time_(s)',
                 'Comments' : 'comments',
         })
+#         print(excel_frame)
     if len(txt_frame) > 0:
 #         print(txt_frame)
         txt_frame = txt_frame.dropna(axis=1, how='all')
@@ -428,8 +438,10 @@ def read_video_data(address_array, folders_frame):
         merge_frame = txt_frame
         merge_frame['plate_id'] = [f"{row['imaging_day']}_Plate{int(row['plate_id'])}" for index, row in merge_frame.iterrows()]
     elif len(excel_frame) > 0:
-        merge_frame = excel_frame
+        merge_frame = excel_frame.reset_index(drop=True)
+#         print(merge_frame)
         merge_frame = merge_frame[merge_frame['tot_path_drop'] == merge_frame['tot_path_drop']]
+#         print(merge_frame['tot_path_drop'].shape)
         merge_frame['tot_path'] = [entry[5:] + '/Img/' for entry in merge_frame['tot_path_drop']]
         merge_frame = merge_frame.rename(columns={
             'plate_id_xl' : 'plate_id',
