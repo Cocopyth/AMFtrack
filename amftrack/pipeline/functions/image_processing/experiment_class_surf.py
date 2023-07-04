@@ -527,7 +527,7 @@ def save_graphs(exp, suf=2, ts=None):
                 pickle.dump((g, pos), open(path_save, "wb"))
 
 
-def load_graphs(exp, directory, indexes=None, reload=True, post_process=False):
+def load_graphs(exp, directory, indexes=None, reload=True, post_process=False,suffix=""):
     # TODO : add as a class method
     exp.directory = directory
     nx_graph_poss = []
@@ -541,7 +541,7 @@ def load_graphs(exp, directory, indexes=None, reload=True, post_process=False):
         if labeled:
             suffix = "/Analysis/nx_graph_pruned_labeled.p"
         else:
-            suffix = "/Analysis/nx_graph_pruned.p"
+            suffix = f"/Analysis/nx_graph_pruned{suffix}.p"
         if post_process:
             suffix = "/Analysis/nx_graph_pruned_labeled2.p"
         path_save = path_snap + suffix
