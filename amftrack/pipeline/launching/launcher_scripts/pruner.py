@@ -21,7 +21,7 @@ folders = folders.loc[folders["/Analysis/skeleton_masked_compressed.mat"] == Tru
 num_parallel = 128
 time = "1:00:00"
 threshold = 0.1
-skip = True
+skip = False
 args = [threshold, skip, directory_targ]
 run_parallel(
     "prune_skel.py",
