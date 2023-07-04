@@ -23,7 +23,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 from amftrack.pipeline.functions.post_processing.extract_study_zone import (
     load_study_zone,
 )
-from amftrack.util.dbx import get_dropbox_folders, get_dropbox_folders
+from amftrack.util.dbx import get_dropbox_folders
 
 video_path = os.path.join(test_path, "video")
 from amftrack.pipeline.launching.run import run_transfer
