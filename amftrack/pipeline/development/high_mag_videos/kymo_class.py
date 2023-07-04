@@ -23,7 +23,7 @@ class Kymo_video_analysis(object):
                  vid_type='BRIGHT',
                  im_range=(0, -1),
                  thresh=5e-07,
-                 filter_step=30,
+                 filter_step=70,
                  seg_thresh=20,
                  logging=False,
                  segment_plots=False,
@@ -99,6 +99,7 @@ class Kymo_video_analysis(object):
                     self.fps = float(self.video_data["fps"].iloc[0])
                     self.binning = (self.video_data["Binned"].iloc[0] * 2) + 1
                     self.magnification = self.video_data["Lens"].iloc[0]
+#                     self.id = self.video_data["video"].iloc[0]
                 elif self.xlsx_path is not None:
                     if logging:
                         print("Found an xlsx file, using that data")
@@ -112,15 +113,15 @@ class Kymo_video_analysis(object):
                     self.vid_type = ["FLUO", "BRIGHT"][self.video_data.iloc[0, 9] == "BF"]
                     self.fps = float(self.video_data["FPS"].iloc[0])
                     if "Binned (Y/N)" in self.video_data:
-                      self.binning = [1, 2][self.video_data["Binned (Y/N)"].iloc[0] == "Y"]
+                        self.binning = [1, 2][self.video_data["Binned (Y/N)"].iloc[0] == "Y"]
                     else:
-                      self.binning = 1
+                        self.binning = 1
                     self.magnification = self.video_data["Magnification"].iloc[0]
 
                 if logging:
                     print(f"Analysing {self.vid_type} video of {self.magnification}X zoom, with {self.fps} fps")
         else:
-            self.fps=input_frame['fps']
+            self.fps=float(input_frame['fps'])
             self.magnification = input_frame['magnification']
             self.binning = input_frame['binning']
             self.kymos_path = input_frame['analysis_folder']
@@ -128,7 +129,7 @@ class Kymo_video_analysis(object):
             vid_dic = {'F' : 'FLUO',
                        'BF' : 'BRIGHT'}
             self.vid_type = vid_dic[input_frame['mode']]
-            self.id = input_frame['unique_id']
+            self.video_nr = input_frame['unique_id']
             
 
         self.time_pixel_size = 1 / self.fps
@@ -138,7 +139,7 @@ class Kymo_video_analysis(object):
             os.makedirs(self.kymos_path)
             if self.logging:
                 print('Kymos file created, address is at {}'.format(self.kymos_path))
-        self.images_total_path = [str(adr) for adr in self.imgs_address.glob('*Bas*.ti*')]
+        self.images_total_path = [str(adr) for adr in self.imgs_address.glob('*_*.ti*')]
 #         print(self.imgs_address)
 #         print(self.images_total_path)
         # self.images_total_path = [os.path.join(self.imgs_address, file_im) for file_im in self.files]
@@ -257,7 +258,7 @@ class Kymo_video_analysis(object):
                 color="white",
             )
             ax1.set_title("Extracted Edges")
-        print(f"To work with individual edges of {self.id}, here is a list of their indices:")
+        print(f"To work with individual edges of {self.video_nr}, here is a list of their indices:")
         for i, edge in enumerate(self.edge_objects):
             print('edge {}, {}'.format(i, edge.edge_name))
         ax1.set_aspect('equal')
@@ -690,10 +691,10 @@ class Kymo_edge_analysis(object):
 
     def extract_transport(self,
                           noise_thresh=0.01,
-                          GST_window=5,
+                          GST_window=15,
                           speed_thresh=20,
                           c_thresh=0.95,
-                          margin=25,
+                          margin=5,
                           plots=False,
                           histos=False,
                           save_filters=False,

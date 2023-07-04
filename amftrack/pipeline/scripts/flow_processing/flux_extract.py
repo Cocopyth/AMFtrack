@@ -16,24 +16,30 @@ i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
 print(f"This is iteration {i}, with parameters {GST_params}")
+print(upl_targ)
 
 dataframe = pd.read_json(f"{temp_path}/{op_id}.json")
 dataframe = dataframe.iloc[i]
 
-img_address = dataframe["address_total"]
-magnif = dataframe['magnification']
+if 'unique_id' in dataframe:
+    test_video = Kymo_video_analysis(input_frame = dataframe, logging=True)
+    img_address = dataframe['analysis_folder']
+    db_address = f"{upl_targ}Analysis/{dataframe['unique_id'].split('_')[-3]}_{dataframe['unique_id'].split('_')[-2]}/{dataframe['unique_id'].split('_')[-1]}"
 
-print(upl_targ)
+else:
+    img_address = dataframe["address_total"]
+    magnif = dataframe['magnification']
+    test_video = Kymo_video_analysis(img_address, logging=True, vid_type=None,
+                                     fps=None, binning=None, filter_step=[20, 70][magnif > 10],
+                                     seg_thresh=12, show_seg=False)
+    db_address = f"{upl_targ}Analysis/{dataframe['parent_folder']}/"
 
-test_video = Kymo_video_analysis(img_address, logging=True, vid_type=None,
-                                 fps=None, binning=None, filter_step=[20, 70][magnif > 10],
-                                 seg_thresh=12, show_seg=False)
 edge_list = test_video.edge_objects
 target_length = int(2.1 * test_video.magnification)
 
 test_video.plot_extraction_img(target_length=target_length, save_img=True)
 edge_objs = test_video.edge_objects
-test_video.makeVideo()
+# test_video.makeVideo()
 print('\n To work with individual edges, here is a list of their indices:')
 for i, edge in enumerate(edge_list):
     print('edge {}, {}'.format(i, edge.edge_name))
@@ -55,7 +61,7 @@ data_edge = pd.DataFrame(data=edge_table)
 
 for edge in edge_objs:
     edge_pic = edge.view_edge(img_frame=40, save_im=True, target_length=target_length)
-    edge_video = edge.view_edge(img_frame=img_seq, save_im=True, quality=6, target_length=target_length)
+#     edge_video = edge.view_edge(img_frame=img_seq, save_im=True, quality=6, target_length=target_length)
     space_res = edge.video_analysis.space_pixel_size
     time_res = edge.video_analysis.time_pixel_size
     video_kymos = edge.extract_multi_kymo(bin_nr, target_length=target_length, kymo_adj=False)
@@ -108,10 +114,9 @@ dataplot.save_raw_data(edge_objs, img_address)
     
 # data_edge.to_csv(f"{img_address}/Analysis/edges_data.csv")
 
-db_address = f"{upl_targ}Analysis/{dataframe['parent_folder']}/"
 print(db_address)
 
 print(f"Iteration {i}: {db_address}")
 print(f"Iteration {i}: {img_address}Analysis/")
 
-upload_folder(img_address + 'Analysis/', db_address)
+upload_folder(img_address, db_address)
