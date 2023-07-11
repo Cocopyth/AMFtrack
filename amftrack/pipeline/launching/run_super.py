@@ -380,3 +380,4 @@ def run_parallel_transfer_to_archive(
         my_file.write("wait\n")
         my_file.close()
         call(f"sbatch --dependency=singleton {path_job}", shell=True)
+
