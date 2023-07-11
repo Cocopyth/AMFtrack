@@ -27,7 +27,7 @@ imgs = []
 kernel = np.ones((3, 3), np.uint8)
 itera = 1
 resize = (2624, 1312)
-resize = (2624, 2624)
+# resize = (2624, 2624)
 
 texts = list(select["folder"])
 fontScale = 3

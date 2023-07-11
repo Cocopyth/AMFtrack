@@ -123,7 +123,7 @@ def get_pixel_growth_and_new_children(hyphae, t1, t2):
                     )
                 )
         # if mini > 50:
-            # print("failure in finding closest edge")
+        # print("failure in finding closest edge")
         pixels = [last_edge.pixel_list(t2)[index_nearest_pixel:]]
         nodes = [-1, last_edge.end]
         for edge in edges[index + 1 :]:
@@ -221,7 +221,7 @@ def resolve_anastomosis_crossing_by_root(exp, lim_considered=1):
         poss_root_hypha[hypha] = pos_root_hypha
     for hyph, t0, tp1 in anastomosing_hyphae:
         # if i % 200 == 0:
-            # print(i / len(anastomosing_hyphae))
+        # print(i / len(anastomosing_hyphae))
         i += 1
         corresp_hyph[hyph.end.label] = []
         pos_root_hyph = np.mean([hyph.root.pos(t) for t in hyph.root.ts()], axis=0)
@@ -306,16 +306,10 @@ def get_hyphae(experiment, lim_considered=1):
     hyphaes = []
     for i, tip in enumerate(tips):
         # if i % 200 == 0:
-            # print(i / len(tips))
+        # print(i / len(tips))
         #         tip = choice(tips)
-        hyphae = Hyphae(tip)
-        roots = []
-        for t in tip.ts():
-            #             print(t,tip)
-            if tip.degree(t) == 1:
-                root, edges, nodes = hyphae.get_edges(t, 200)
-                roots.append(root)
-        occurence_count = Counter(roots)
+        hypha = Hyphae(tip)
+        occurence_count, roots = get_occurence_count(tip)
         if (
             len(occurence_count.values()) >= 2
             and occurence_count.most_common(2)[0][0] != roots[0]
@@ -325,11 +319,22 @@ def get_hyphae(experiment, lim_considered=1):
         ):
             problems.append(tip)
         else:
-            hyphae.root = occurence_count.most_common(2)[0][0]
-            hyphae.ts = hyphae.end.ts()
-            hyphaes.append(hyphae)
+            hypha.root = occurence_count.most_common(2)[0][0]
+            hypha.ts = hypha.end.ts()
+            hyphaes.append(hypha)
     # print(
     #     f"Detected problems during hyphae detection, {len(problems)} hyphaes have inconsistent root over time"
     # )
     experiment.inconsistent_root = problems
     return (hyphaes, problems)
+
+
+def get_occurence_count(tip):
+    hypha = Hyphae(tip)
+    roots = []
+    for t in tip.ts():
+        if tip.degree(t) == 1:
+            root, edges, nodes = hypha.get_edges(t, 200)
+            roots.append(root)
+    occurence_count = Counter(roots)
+    return occurence_count, roots

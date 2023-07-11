@@ -527,7 +527,7 @@ def save_graphs(exp, suf=2, ts=None):
                 pickle.dump((g, pos), open(path_save, "wb"))
 
 
-def load_graphs(exp, directory, indexes=None, reload=True, post_process=False):
+def load_graphs(exp, directory, indexes=None, reload=True, post_process=False,suffix=""):
     # TODO : add as a class method
     exp.directory = directory
     nx_graph_poss = []
@@ -541,7 +541,7 @@ def load_graphs(exp, directory, indexes=None, reload=True, post_process=False):
         if labeled:
             suffix = "/Analysis/nx_graph_pruned_labeled.p"
         else:
-            suffix = "/Analysis/nx_graph_pruned.p"
+            suffix = f"/Analysis/nx_graph_pruned{suffix}.p"
         if post_process:
             suffix = "/Analysis/nx_graph_pruned_labeled2.p"
         path_save = path_snap + suffix
@@ -874,6 +874,36 @@ class Edge:
             self.begin.pos(t),
         )
 
+    def current_flow_betweeness(self, t: int) -> List[coord_int]:
+        """
+        Return the current flow betweenness, will only work if it has been previously computed
+        """
+        return self.experiment.nx_graph[t].get_edge_data(
+            self.begin.label, self.end.label
+        )["current_flow_betweenness"]
+
+    def betweeness(self, t: int) -> List[coord_int]:
+        """
+        Return the betweenness, will only work if it has been previously computed
+
+        """
+        return self.experiment.nx_graph[t].get_edge_data(
+            self.begin.label, self.end.label
+        )["betweenness"]
+
+    def length_um(self, t):
+        pixel_conversion_factor = 1.725
+        length_edge = 0
+        pixels = self.pixel_list(t)
+        for i in range(len(pixels) // 10 + 1):
+            if i * 10 <= len(pixels) - 1:
+                length_edge += np.linalg.norm(
+                    np.array(pixels[i * 10])
+                    - np.array(pixels[min((i + 1) * 10, len(pixels) - 1)])
+                )
+        #             length_edge+=np.linalg.norm(np.array(pixels[len(pixels)//10-1*10-1])-np.array(pixels[-1]))
+        return length_edge * pixel_conversion_factor
+
     def width(self, t):
         # TODO(FK): keep as a function?
         return self.experiment.nx_graph[t].get_edge_data(
@@ -1150,7 +1180,6 @@ class Hyphae:
 #                 bbox=bbox,
 #             )
 #     plt.show()
-
 
 if __name__ == "__main__":
     # exp = Experiment(4, "directory")
