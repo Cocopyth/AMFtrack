@@ -12,8 +12,9 @@ from shapely.geometry import Polygon, shape
 import networkx as nx
 import scipy.io as sio
 import os
+from amftrack.pipeline.functions.image_processing.experiment_util import get_all_edges
 
-is_circle = True
+is_circle = False
 
 
 def get_is_out_study(exp, t, args=None):
@@ -21,6 +22,12 @@ def get_is_out_study(exp, t, args=None):
 
 
 def get_length_study_zone(exp, t, args=None):
+    """Return the length of the edges in the study zone.
+    Parameters:
+    ----------
+    exp: Experiment
+    t: int
+    """
     length = 0
     for edge in exp.nx_graph[t].edges:
         edge_obj = Edge(Node(edge[0], exp), Node(edge[1], exp), exp)
@@ -159,6 +166,29 @@ def get_num_tips_study_zone(exp, t, args=None):
     )
 
 
+def get_num_BAS_tips(exp, t, args=None):
+    def h(edge, t):
+        boolean = (
+            edge.end.degree(t) == 1 or edge.begin.degree(t) == 1
+        ) and edge.length_um(t) < 1000
+        # boolean +=((edge.width(t)*edge.length_um(t))<3000)*edge.width(t)<7
+        return boolean
+
+    edges = get_all_edges(exp, t)
+    edges = [
+        edge
+        for edge in edges
+        if np.all(is_in_study_zone(edge.begin, t, 1000, 150, is_circle))
+    ]
+    edges = [
+        edge
+        for edge in edges
+        if np.all(is_in_study_zone(edge.end, t, 1000, 150, is_circle))
+    ]
+    edge_tip = [edge for edge in edges if h(edge, t)]
+    return ("num_tips_BAS_study", len(edge_tip))
+
+
 def get_num_nodes(exp, t, args=None):
     return ("num_nodes", len([node for node in exp.nodes if node.is_in(t)]))
 
@@ -171,9 +201,26 @@ def get_num_nodes_study_zone(exp, t, args=None):
                 node
                 for node in exp.nodes
                 if node.is_in(t)
+                and node.degree(t) > 0
                 and np.all(is_in_study_zone(node, t, 1000, 150, is_circle))
             ]
         ),
+    )
+
+
+def get_num_edges(exp, t, args=None):
+    return (
+        "num_edges_study",
+        np.sum(
+            [
+                node.degree(t)
+                for node in exp.nodes
+                if node.is_in(t)
+                and node.degree(t) > 0
+                and np.all(is_in_study_zone(node, t, 1000, 150, is_circle))
+            ]
+        )
+        / 2,
     )
 
 

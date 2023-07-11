@@ -7,7 +7,8 @@ import amftrack.pipeline.functions.post_processing.time_plate as time_plate
 import amftrack.pipeline.functions.post_processing.time_hypha as time_hypha
 import amftrack.pipeline.functions.post_processing.time_edge as time_edge
 import amftrack.pipeline.functions.post_processing.area_hulls as area_hulls
-
+import geopandas as gpd
+from shapely.geometry import Point
 from random import choice
 import matplotlib as mpl
 import json
@@ -15,6 +16,10 @@ from amftrack.util.sys import test_path
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Edge,
     Node,
+)
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
+    load_graphs,
+    load_skel,
 )
 import numpy as np
 
@@ -45,10 +50,50 @@ class TestExperiment(unittest.TestCase):
             print(f, getattr(time_plate, f)(self.exp, 0))
 
     def test_area_hulls_f(self):
-        fs = [area_hulls.get_biovolume_density_in_ring]
-        args = {"incr": 100, "i": 0}
+        t = 2
+        load_skel(self.exp, [t])
+
+        skeletons = []
+        for skeleton in self.exp.skeletons:
+            if skeleton is None:
+                skeletons.append({})
+            else:
+                skeletons.append(skeleton)
+        self.exp.multipoints = [
+            gpd.GeoSeries([Point(pixel) for pixel in skeleton.keys()])
+            for skeleton in skeletons
+        ]
+
+        fs = [
+            area_hulls.get_std_density_in_ring_new_bootstrap,
+            area_hulls.get_density_in_ring_new,
+            area_hulls.get_density_in_ring_new_bootstrap,
+        ]
+        args = {"incr": 10, "i": 0}
         for f in fs:
-            print(f, f(self.exp, 2, args))
+            print(f, f(self.exp, t, args))
+
+    def test_branching_hulls(self):
+        """Tests the function get_density_branch_rate_in_ring"""
+        t = 2
+        load_skel(self.exp, [t])
+        skeletons = []
+        for skeleton in self.exp.skeletons:
+            if skeleton is None:
+                skeletons.append({})
+            else:
+                skeletons.append(skeleton)
+        self.exp.multipoints = [
+            gpd.GeoSeries([Point(pixel) for pixel in skeleton.keys()])
+            for skeleton in skeletons
+        ]
+        fs = [
+            # area_hulls.get_density_branch_rate_in_ring,
+            area_hulls.get_std_tip_in_ring_new_bootstrap
+        ]
+        args = {"incr": 10, "i": 0, "rh_only": False, "max_t": 99}
+        for f in fs:
+            print(f, f(self.exp, t, args))
 
     def test_time_hypha_f(self):
         fs = dir(time_hypha)

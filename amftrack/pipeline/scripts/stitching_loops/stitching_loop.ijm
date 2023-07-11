@@ -51,6 +51,7 @@ for (i=0; i<=list.length-1; i=i+1){
         wait(1000);
         open(outputDirectory + File.separator + "StitchedImage.tif");
         run("Size...", "width=2620 depth=1 constrain average interpolation=Bilinear");
+        run("Enhance Contrast", "equalize");
         saveAs("Tiff", outputDirectory + File.separator + "StitchedImage.tif");
         close();
 
