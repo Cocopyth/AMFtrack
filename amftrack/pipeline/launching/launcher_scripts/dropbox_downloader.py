@@ -4,7 +4,6 @@ from amftrack.pipeline.launching.run_super import run_parallel_transfer, run_lau
 from amftrack.util.sys import (
     update_plate_info,
     get_current_folders,
-
 )
 from time import sleep
 
@@ -32,7 +31,7 @@ while len(folders_drop3) > 0:
         [directory_targ],
         folders_drop2,
         50,
-        "24:00:00",
+        "4:00:00",
         "staging",
         cpus=1,
         node="staging",

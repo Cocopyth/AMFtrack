@@ -19,9 +19,10 @@ all_folders = get_current_folders(
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Analysis/skeleton_masked_compressed.mat"] == True]
 num_parallel = 128
-time = "6:00:00"
+time = "1:00:00"
 threshold = 0.1
-args = [threshold, directory_targ]
+skip = False
+args = [threshold, skip, directory_targ]
 run_parallel(
     "prune_skel.py",
     args,
