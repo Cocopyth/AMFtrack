@@ -7,7 +7,6 @@ from datetime import datetime
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     sparse_to_doc,
 )
-from glob import glob
 import cv2
 import json
 import pandas as pd
@@ -37,12 +36,10 @@ test_path = os.path.join(
 pastis_path = env_config.get("PASTIS_PATH")
 temp_path = env_config.get("TEMP_PATH")
 
-print(temp_path)
-
 slurm_path = env_config.get("SLURM_PATH")
 ml_path = os.path.join(storage_path, "models")
 if not os.path.isdir(ml_path):
-    os.makedirs(ml_path)
+    os.mkdir(ml_path)
 slurm_path = env_config.get("SLURM_PATH")
 slurm_path_transfer = env_config.get("SLURM_PATH_transfer")
 dropbox_path = env_config.get("DROPBOX_PATH")
@@ -267,8 +264,8 @@ def update_plate_info(
                     )
                 if is_real_folder:
                     params = get_param(folder, directory)
-                    ss = folder.split("_")[1]
-                    ff = folder.split("_")[2]
+                    ss = folder.split("_")[0]
+                    ff = folder.split("_")[1]
                     date = datetime(
                         year=int(ss[:4]),
                         month=int(ss[4:6]),
@@ -298,7 +295,7 @@ def get_data_info(local=False, suffix_data_info=""):
         data_info.index.name = "total_path"
         data_info.reset_index(inplace=True)
         data_info["unique_id"] = (
-            data_info["Plate"].astype(str)
+            data_info["Plate"].astype(str).astype(int).astype(str)
             + "_"
             + data_info["CrossDate"].str.replace("'", "").astype(str)
         )
@@ -307,74 +304,6 @@ def get_data_info(local=False, suffix_data_info=""):
             data_info["date"], format="%d.%m.%Y, %H:%M:"
         )
     return data_info
-
-
-
-def get_video_info(directory : str, local=True, suffix_data_info="")-> None:
-    """
-    Create a video_data.json for each video in each plate. json file contains plate info from param files, as well as imaging
-    parameters of videos from param_video files.
-    """
-    listdir = os.listdir(directory)
-    source = f"data_info.json"
-    target = os.path.join(temp_path, f"data_info{suffix_data_info}.json")
-    if local:
-        video_info = {}
-        video_params={}
-    else:
-        download(source, target, end="")
-        video_info = json.load(open(target, "r"))
-    with tqdm(total=len(listdir), desc="analysed") as pbar:
-#         params = get_param(directory, "")
-        excel_address = glob(directory + '/*.xlsx')
-        vid_params = pd.read_excel(excel_address[0], engine='openpyxl')
-        #         vid_params.dropna(inplace = True)
-#         video_info[directory] = params
-#         print(directory.split("/")[-2])
-        plate, cross_date = directory.split("/")[-2].split("_")
-        name_key = vid_params.columns[0]
-        for folder in listdir:
-            path_snap = os.path.join(directory, folder)
-            #             is_real_folder = os.path.isfile(os.path.join(path_snap, 'video_param.txt'))
-            is_real_folder = len(glob(path_snap + '/*.tiff')) > 0
-            if is_real_folder:
-                video_params = {}
-                a = vid_params[(vid_params.values==folder)].to_dict()
-                for key in a:
-                    print([a[key][i] for i in a[key]])
-                    video_params[key] = [a[key][i] for i in a[key]][0]
-                vid_name_examp = glob(path_snap + "/*.tiff")[0].split("/")[-1]
-                #                 print(vid_name_examp)
-                #                 print(folder)
-                ss = folder.split("_")[0]
-                ff = vid_name_examp.split("__")[-1][9:13]
-                #                 print(ff)
-                date = datetime(
-                    year=int(ss[:4]),
-                    month=int(ss[4:6]),
-                    day=int(ss[6:8]),
-                    hour=int(ff[0:2]),
-                    minute=int(ff[2:4])
-                )
-                #                 vid_param_read = open(os.path.join(path_snap, 'video_param.txt'), 'r')
-                #                 Lines = vid_param_read.readlines()
-                #                 for line in Lines:
-                #                     relation = line.split("=")
-                #                     if len(relation) == 2:
-                #                         video_params[relation[0].strip()] = relation[1].strip()
-                video_params["date"] = datetime.strftime(date, "%d.%m.%Y, %H:%M:")
-                video_params["folder"] = path_snap.split("/")[-1]
-                video_params["type"] = folder.split("_")[1]
-                video_params["Plate"] = plate
-                video_params["CrossDate"] = cross_date
-
-                video_info[directory + folder] = video_params.copy()
-        pbar.update(1)
-        with open(target, "w") as jsonf:
-            json.dump(video_info, jsonf, indent=4)
-    return None
-
-
 
 
 def get_current_folders_local(directory: str) -> pd.DataFrame:
@@ -409,11 +338,7 @@ def get_current_folders(
     """
     # TODO(FK): solve the / problem
     plate_info = get_data_info(local, suffix_data_info)
-#     print(len(plate_info))
     listdir = os.listdir(directory)
-#     print(listdir)
-    print(plate_info["total_path"][0])
-    print(directory + plate_info["folder"][0])
     if len(plate_info) > 0:
         return plate_info.loc[
             np.isin(plate_info["folder"], listdir)
@@ -446,34 +371,40 @@ def update_analysis_info(directory, suffix_analysis_info=""):
     analysis_dir = [fold for fold in listdir if fold.split("_")[0] == "Analysis"]
     infos_analysed = {}
     for folder in analysis_dir:
-        # print(folder)
         metadata = {}
         version = folder.split("_")[-1]
         op_id = int(folder.split("_")[-2])
         dt = datetime.fromtimestamp(op_id // 1000000000)
         path = f"{directory}{folder}/folder_info.json"
-        infos = pd.read_json(path, dtype={"unique_id": str})
-        if len(infos) > 0:
-            column_interest = [column for column in infos.columns if column[0] != "/"]
-            metadata["version"] = version
-            for column in column_interest:
-                if column != "folder":
-                    info = str(infos[column].iloc[0])
-                    metadata[column] = info
-            metadata["date_begin"] = datetime.strftime(
-                infos["datetime"].iloc[0], "%d.%m.%Y, %H:%M:"
-            )
-            metadata["date_end"] = datetime.strftime(
-                infos["datetime"].iloc[-1], "%d.%m.%Y, %H:%M:"
-            )
-            metadata["number_timepoints"] = len(infos)
-            metadata["path_exp"] = f"{folder}/experiment.pick"
-            metadata["path_global_hypha_info"] = f"{folder}/global_hypha_info.json"
-            metadata["path_time_hypha_info"] = f"{folder}/time_hypha_info"
-            metadata["path_time_plate_info"] = f"{folder}/time_plate_info.json"
-            metadata["path_global_plate_info"] = f"{folder}/global_plate_info.json"
-            metadata["date_run_analysis"] = datetime.strftime(dt, "%d.%m.%Y, %H:%M:")
-            infos_analysed[folder] = metadata
+        if os.path.exists(path):
+            infos = pd.read_json(path, dtype={"unique_id": str})
+            if len(infos) > 0:
+                column_interest = [
+                    column for column in infos.columns if column[0] != "/"
+                ]
+                metadata["version"] = version
+                for column in column_interest:
+                    if column != "folder":
+                        info = str(infos[column].iloc[0])
+                        metadata[column] = info
+                metadata["date_begin"] = datetime.strftime(
+                    infos["datetime"].iloc[0], "%d.%m.%Y, %H:%M:"
+                )
+                metadata["date_end"] = datetime.strftime(
+                    infos["datetime"].iloc[-1], "%d.%m.%Y, %H:%M:"
+                )
+                metadata["number_timepoints"] = len(infos)
+                metadata["path_exp"] = f"{folder}/experiment.pick"
+                metadata["path_global_hypha_info"] = f"{folder}/global_hypha_info.json"
+                metadata["path_time_hypha_info"] = f"{folder}/time_hypha_info"
+                metadata["path_time_plate_info"] = f"{folder}/time_plate_info.json"
+                metadata["path_global_plate_info"] = f"{folder}/global_plate_info.json"
+                metadata["date_run_analysis"] = datetime.strftime(
+                    dt, "%d.%m.%Y, %H:%M:"
+                )
+                infos_analysed[folder] = metadata
+        else:
+            print(folder)
     target = os.path.join(temp_path, f"analysis_info{suffix_analysis_info}.json")
 
     with open(target, "w") as jsonf:
@@ -489,10 +420,10 @@ def get_analysis_info(directory, suffix_analysis_info=""):
     return analysis_info
 
 
-def get_analysis_folders():
+def get_analysis_folders(path=dropbox_path):
     analysis_folders = pd.DataFrame()
-    for dire in os.walk(dropbox_path):
-        name_analysis = dire[0].split("\\")[-1].split("_")
+    for dire in os.walk(path):
+        name_analysis = dire[0].split(os.sep)[-1].split("_")
         if name_analysis[0] == "Analysis":
             analysis_dir = dire[0]
             path_save = os.path.join(analysis_dir, "folder_info.json")
@@ -719,6 +650,68 @@ def get_time_edge_info_from_analysis(analysis_folders, use_saved=True):
     time_edge_info.to_json(path_save_info)
     folders.to_json(path_save_folders)
     return (folders, time_edge_info)
+
+
+def get_time_plate_info_long_from_analysis(analysis_folders, use_saved=True):
+    plates_in = analysis_folders["unique_id"].unique()
+    plates_in.sort()
+    ide = hashlib.sha256(np.sum(plates_in).encode("utf-8")).hexdigest()
+    path_save_info = os.path.join(temp_path, f"time_plate_info_long_{ide}")
+    path_save_folders = os.path.join(temp_path, f"folders_{ide}")
+
+    if os.path.exists(path_save_info) and use_saved:
+        time_plate_infos = pd.read_json(path_save_info)
+        folders = pd.read_json(path_save_folders)
+        return (folders, time_plate_infos)
+    analysis_dirs = analysis_folders["total_path"]
+    folders = pd.DataFrame()
+    time_plate_infos = []
+    for analysis_dir in analysis_dirs:
+        path_time_plate = os.path.join(analysis_dir, "time_plate_info_long")
+        if os.path.exists(path_time_plate):
+            path_save = os.path.join(analysis_dir, "folder_info.json")
+            folders_plate = pd.read_json(path_save)
+            folders_plate = folders_plate.reset_index()
+            folders_plate = folders_plate.sort_values("datetime")
+            json_paths = os.listdir(path_time_plate)
+            tables = []
+            for path in json_paths:
+                index = int(path.split("_")[-1].split(".")[0])
+                line = folders_plate.iloc[index]
+                try:
+                    table = pd.read_json(
+                        os.path.join(path_time_plate, path), orient="index"
+                    )
+                except:
+                    print(os.path.join(path_time_plate, path))
+                    continue
+                table = table.transpose()
+                table = table.fillna(-1)
+                table["time_since_begin_h"] = (
+                    line["datetime"] - folders_plate["datetime"].iloc[0]
+                )
+                table["folder"] = line["folder"]
+                table["Plate"] = line["Plate"]
+                table["unique_id"] = line["unique_id"]
+                table["datetime"] = line["datetime"]
+                for column in ["PrincePos", "root", "strain", "medium"]:
+                    try:
+                        table[column] = line[column]
+                    except KeyError:
+                        continue
+
+                tables.append(table)
+            time_plate_info_plate = pd.concat(tables, axis=0, ignore_index=True)
+            time_plate_info_plate = time_plate_info_plate.sort_values("datetime")
+            time_plate_info_plate.reset_index(inplace=True, drop=True)
+            time_plate_info_plate["timestep"] = time_plate_info_plate.index
+
+            time_plate_infos.append(time_plate_info_plate)
+            folders = pd.concat([folders, folders_plate], axis=0, ignore_index=True)
+    time_plate_info = pd.concat(time_plate_infos, axis=0, ignore_index=True)
+    time_plate_info.to_json(path_save_info)
+    folders.to_json(path_save_folders)
+    return (folders, time_plate_info)
 
 
 def get_data_tables(op_id=time_ns(), redownload=True):

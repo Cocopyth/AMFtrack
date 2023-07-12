@@ -62,6 +62,7 @@ list_f = [
     get_area_study_zone,
     get_num_tips_study_zone,
     get_num_nodes_study_zone,
+    get_num_edges,
     get_length_tot,
     get_length_study_zone,
     get_is_out_study,
@@ -96,7 +97,7 @@ incr = 100
 fs = [
     get_biovolume_density_in_ring,
     get_density_in_ring,
-    get_density_anastomose_in_ring,
+    # get_density_anastomose_in_ring,
     # get_density_branch_rate_in_ring,
     # get_density_stop_rate_in_ring,
     get_density_active_tips_in_ring,
@@ -208,14 +209,6 @@ run_parallel_post(
 
 if stage > 0:
     run_launcher(
-        "post_processer_2.py",
-        [directory_targ, name_job, stage - 1],
-        plates,
-        "12:00:00",
-        dependency=True,
-        name_job=name_job,
-    )
-    run_launcher(
         "post_processer_3.py",
         [directory_targ, name_job, stage - 1],
         plates,
@@ -223,6 +216,15 @@ if stage > 0:
         dependency=True,
         name_job=name_job,
     )
+    run_launcher(
+        "post_processer_2.py",
+        [directory_targ, name_job, stage - 1],
+        plates,
+        "12:00:00",
+        dependency=True,
+        name_job=name_job,
+    )
+
 elif stage == 0:
     run_launcher(
         "dropbox_uploader.py",

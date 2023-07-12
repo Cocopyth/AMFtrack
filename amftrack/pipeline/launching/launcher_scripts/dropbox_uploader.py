@@ -25,7 +25,7 @@ run_parallel_transfer(
     [dir_drop, delete],
     folders,
     50,
-    "24:00:00",
+    "4:00:00",
     "staging",
     cpus=1,
     node="staging",

@@ -13,6 +13,7 @@ from typing import List
 from time import time_ns
 from tqdm.autonotebook import tqdm
 import subprocess
+import pickle
 
 
 def make_stitching_loop(directory: str, dirname: str, op_id: int) -> None:
@@ -90,7 +91,39 @@ def run(
     folder_list = list(folders["folder"])
     folder_list.sort()
     args_str = [str(arg) for arg in args]
-    arg_str = " ".join(args_str)
+    with tqdm(total=len(folder_list), desc="folder_treated") as pbar:
+        for index, folder in enumerate(folder_list):
+            command = (
+                [f"{pyt_vers}", f"{path_code}{loc_code}{code}"]
+                + args_str
+                + [f"{op_id}", f"{index}"]
+            )
+            print(" ".join(command))
+            process = subprocess.run(command, stdout=subprocess.DEVNULL)
+            pbar.update(1)
+
+
+def run_post_process(
+    code: str,
+    list_f,
+    list_args: List,
+    args,
+    folders: pd.DataFrame,
+    loc_code="pipeline/scripts/post_processing/",
+    pyt_vers="python3",
+) -> None:
+    """
+    Run the chosen script `code` localy.
+    :param code: name of the script file such as "prune.py", it has to be in the image_processing file
+    :param args: list of arguments used by the script
+    """
+    op_id = time_ns()
+    folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
+    pickle.dump((list_f, list_args), open(f"{temp_path}/{op_id}.pick", "wb"))
+
+    folder_list = list(folders["folder_analysis"])
+    folder_list.sort()
+    args_str = [str(arg) for arg in args]
     with tqdm(total=len(folder_list), desc="folder_treated") as pbar:
         for index, folder in enumerate(folder_list):
             command = (
