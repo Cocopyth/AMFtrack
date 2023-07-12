@@ -415,7 +415,7 @@ def get_width(slices, avearing_window=50, num_std=2):
     return np.median(widths)
 
 
-def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(60, 160, 30), seg_thresh = 11, binning=2):
+def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(70, 170, 30), seg_thresh = 11, binning=2):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
     image:          Input image
@@ -434,15 +434,6 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(60, 160, 30
         coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
         if coverage < seg_thresh:
             break
-
-    # fig, ax = plt.subplots(3, figsize=(4,10))
-    # ax[0].imshow(smooth_im)
-    # ax[0].set_title("Smooth Image")
-    # ax[1].imshow(segmented)
-    # ax[1].set_title("Segmented")
-    # ax[2].imshow(skeletonized)
-    # ax[2].set_title("Skeletonized")
-    # fig.tight_layout()
     
     skeletonized = skeletonize(segmented > seg_thresh)
     skeleton = scipy.sparse.dok_matrix(skeletonized)

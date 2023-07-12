@@ -14,8 +14,8 @@ mpl.rcParams['figure.dpi'] = 150
 
 
 def save_raw_data(edge_objs, img_address, spd_max_percentile = 99.9):
-    if not os.path.exists(f"{img_address}/Analysis/"):
-        os.makedirs(f"{img_address}/Analysis/")
+    if not os.path.exists(f"{img_address}/"):
+        os.makedirs(f"{img_address}/")
     
     edge_table = {
             'edge_name': [],
@@ -265,6 +265,7 @@ def read_video_data(address_array, folders_frame):
 #         print(address)
         suffix = address.split('.')[-1]
         if suffix == 'xlsx':
+            print(address)
             raw_data = pd.read_excel(address)
             if 'Binned (Y/N)' not in raw_data:
                 raw_data['Binned (Y/N)'] = ['N' for entry in raw_data['Unnamed: 0']]
@@ -415,13 +416,13 @@ def read_video_data(address_array, folders_frame):
 #         print(txt_frame['unique_id'])
         merge_frame = pd.merge(txt_frame, csv_frame, how='outer', on='unique_id', suffixes=("", "_csv"))
         
-        merge_frame = merge_frame.drop(columns=['unique_id_xl', 'plate_id', 'video_folder', 'Plate number', 'folder', 'file_name'],axis=1)
+#         merge_frame = merge_frame.drop(columns=['unique_id_xl', 'plate_id', 'video_folder', 'Plate number', 'folder', 'file_name'],axis=1)
         merge_frame = merge_frame.rename(columns={'plate_id_xl' : 'plate_id'})
         merge_frame['imaging_day'] = merge_frame['imaging_day'].fillna(merge_frame['Date Imaged'])
         merge_frame['strain'] = merge_frame['strain'].fillna(merge_frame['strain_csv'])
         merge_frame['treatment'] = merge_frame['treatment'].fillna(merge_frame['treatment_csv'])
         merge_frame['video_int'] = merge_frame['video_int'].fillna(merge_frame['video_int_csv'])
-        merge_frame['time_(s)'] = merge_frame['time_(s)'].fillna(merge_frame['time'])
+#         merge_frame['time_(s)'] = merge_frame['time_(s)'].fillna(merge_frame['time'])
         merge_frame['mode'] = merge_frame['mode'].fillna(merge_frame['mode_csv'])
         merge_frame['fps'] = merge_frame['fps'].fillna(merge_frame['fps_csv'])
         merge_frame['binning'] = merge_frame['binning'].fillna(merge_frame['binning_csv'])
@@ -430,7 +431,7 @@ def read_video_data(address_array, folders_frame):
         merge_frame['magnification'] = merge_frame['magnification'].fillna(merge_frame['magnification_csv'])
         merge_frame['tot_path'] = merge_frame['tot_path'].fillna(merge_frame['tot_path_csv'])
         merge_frame['days_after_crossing'] = merge_frame['days_after_crossing'].fillna(merge_frame['days_after_crossing_csv'])
-        merge_frame = merge_frame.drop(columns=['root', 'video_int_csv', 'treatment_csv', 'strain_csv', 'days_after_crossing_csv', 'xpos_csv', 'ypos_csv', 'mode_csv', 'binning_csv', 'magnification_csv', 'fps_csv', 'plate_id_csv', 'Date Imaged', 'tot_path_csv', 'index'],axis=1)
+#         merge_frame = merge_frame.drop(columns=['root', 'video_int_csv', 'treatment_csv', 'strain_csv', 'days_after_crossing_csv', 'xpos_csv', 'ypos_csv', 'mode_csv', 'binning_csv', 'magnification_csv', 'fps_csv', 'plate_id_csv', 'Date Imaged', 'tot_path_csv', 'index'],axis=1)
 
     elif len(excel_frame) > 0 and len(txt_frame) > 0:
         merge_frame = pd.merge(excel_frame, csv_frame, how='left', on='unique_id', suffixes=("", "_csv"))
