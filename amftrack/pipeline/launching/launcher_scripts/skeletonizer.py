@@ -23,7 +23,10 @@ time = "6:00:00"
 hyph_width = 30
 perc_low = 93
 perc_high = 99.5
-args = [hyph_width, perc_low, perc_high, directory_targ]
+minlow = 20
+minhigh = 90
+
+args = [hyph_width, perc_low, perc_high, minlow, minhigh, directory_targ]
 run_parallel(
     "extract_skel_2.py",
     args,

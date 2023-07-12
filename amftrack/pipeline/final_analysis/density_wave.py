@@ -22,6 +22,24 @@ def wave(xt, c, lamb, K, x0):
 
 
 def dwave(xt, c, lamb, K, x0):
+    """This function represents a mathematical model that describes the
+        amplitude of a traveling wave along a one-dimensional medium.
+         The function takes in the input variables: xt, c, lamb, K, and x0,
+         and returns the amplitude of the wave.
+
+    Parameters:
+
+        xt (ndarray): A 2xN numpy array representing the spatiotemporal
+         coordinates of the wave. The first row contains the spatial
+         coordinates x, and the second row contains the temporal coordinates t.
+        c (float): The speed of the wave.
+        lamb (float): The wave attenuation coefficient.
+        K (float): The maximum amplitude of the wave.
+        x0 (float): The initial position of the wave.
+
+    Returns:
+
+        ndarray: A 1D numpy array of the same length as xt[0] representing the amplitude of the wave at each spatiotemporal coordinate in xt."""
     x = xt[0, :]
     t = xt[1, :]
     return K * (
@@ -167,13 +185,9 @@ def plot_single_plate(
         column = f"ring_density_incr-100_index-{index}"
         column2 = f"ring_active_tips_density_incr-100_index-{index}"
 
-        start = np.min(
-            table.loc[table[column] >= 400]["time_since_begin"]
-        ) / pd.Timedelta(hours=1)
+        start = np.min(table.loc[table[column] >= 400]["time_since_begin"])
         if not np.isnan(start):
-            table[f"time_since_begin_{index}"] = (
-                table["time_since_begin"] / pd.Timedelta(hours=1) - start
-            )
+            table[f"time_since_begin_{index}"] = table["time_since_begin"] - start
 
             area = np.sqrt(table["area_sep_comp"][0] + 100 * index)
 
@@ -293,13 +307,9 @@ def plot_single_plate_biovolume(
         column = f"ring_biovolume_density_incr-100_index-{index}"
         column2 = f"ring_active_tips_density_incr-100_index-{index}"
 
-        start = np.min(
-            table.loc[table[column] >= 5000]["time_since_begin"]
-        ) / pd.Timedelta(hours=1)
+        start = np.min(table.loc[table[column] >= 5000]["time_since_begin"])
         if not np.isnan(start):
-            table[f"time_since_begin_{index}"] = (
-                table["time_since_begin"] / pd.Timedelta(hours=1) - start
-            )
+            table[f"time_since_begin_{index}"] = table["time_since_begin"] - start
 
             area = np.sqrt(table["area_sep_comp"][0] + 100 * index)
 
