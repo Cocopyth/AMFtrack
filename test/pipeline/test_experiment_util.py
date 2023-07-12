@@ -29,7 +29,7 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     reconstruct_image,
     reconstruct_skeletton_from_edges,
     reconstruct_skeletton_unicolor,
-    plot_edge_width,
+    plot_edge_color_value,
     reconstruct_image_from_general,
     plot_full,
 )
@@ -323,10 +323,10 @@ class TestExperiment(unittest.TestCase):
         def f(edge):
             return random.random() * 10
 
-        plot_edge_width(
+        plot_edge_color_value(
             self.exp,
             0,
-            width_fun=f,
+            color_fun=f,
             region=None,
             downsizing=5,
             nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
@@ -335,10 +335,10 @@ class TestExperiment(unittest.TestCase):
         )
 
         # With no widths, interesting region
-        plot_edge_width(
+        plot_edge_color_value(
             self.exp,
             0,
-            width_fun=lambda x: -2,
+            color_fun=lambda x: -2,
             region=[[12000, 15000], [26000, 35000]],
             downsizing=5,
             nodes=[Node(10, self.exp), Node(23, self.exp), Node(1, self.exp)],
@@ -348,10 +348,10 @@ class TestExperiment(unittest.TestCase):
 
     def test_plot_edge_width_2(self):
         # Try plotting all the nodes
-        plot_edge_width(
+        plot_edge_color_value(
             self.exp,
             0,
-            width_fun=lambda x: -2,
+            color_fun=lambda x: -2,
             region=[[12000, 15000], [26000, 35000]],
             downsizing=5,
             nodes=get_all_nodes(self.exp, 0),

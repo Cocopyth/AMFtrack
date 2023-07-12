@@ -15,14 +15,11 @@ directory_project = "/projects/0/einf914/data/"
 directory_archive = "/archive/cbisot/"
 directory_sun = "/run/user/357100554/gvfs/smb-share:server=sun.amolf.nl,share=shimizu-data,user=bisot/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE/"
 
-if os.getenv("HOME") is not None:
-    path_bash = os.getenv("HOME") + "/bash/"
-else:
-    print("This is not a linux system, I am lost")
-    path_bash = "dfdfsfd"
+
+path_bash = os.getenv("HOME") + "/bash/"
 path_stitch = f"{temp_path}/stitching_loops/"
 if not os.path.isdir(path_stitch):
-    os.makedirs(path_stitch)
+    os.mkdir(path_stitch)
 
 
 def get_queue_size():
@@ -54,40 +51,33 @@ def run_parallel(
     name_job="job.sh",
 ):
     path_job = f"{path_bash}{name_job}"
-    print(f"{path_job}")
     op_id = time_ns()
-    print(f'Sending jobs with id {op_id}')
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     length = len(folders)
-    if length >= num_parallel:
-      num_jobs = length // num_parallel 
-    else:
-      num_jobs = length
-    print(length)
+    begin_skel = 0
+    end_skel = length // num_parallel + 1
     args_str = [str(arg) for arg in args]
     arg_str = " ".join(args_str)
     arg_str_out = "_".join([str(arg) for arg in args if type(arg) != str])
-    for j in range(num_jobs):
+    for j in range(begin_skel, end_skel):
         start = num_parallel * j
-        if j == num_jobs - 1:
+        if j == end_skel - 1:
             stop = length
         else:
             stop = num_parallel * j + num_parallel - 1
         ide = time_ns()
         my_file = open(path_job, "w")
         my_file.write(
-            f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask={num_jobs} \n#SBATCH --cpus-per-task=1\n#SBATCH -p {node} \n"
+            f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
         my_file.write(
             f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        my_file.write(f"module load 2021 \n")
-        my_file.write(f"module load Python/3.9.5-GCCcore-10.3.0 \n")
-        # my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
-#         my_file.write(f"conda activate amftrack\n")
+        my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
+        my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
-            f"\t python {path_code}pipeline/scripts/flow_processing/{code} {arg_str} {op_id} $i &\n"
+            f"\t python {path_code}pipeline/scripts/image_processing/{code} {arg_str} {op_id} $i &\n"
         )
         my_file.write("done\n")
         my_file.write("wait\n")
@@ -234,7 +224,7 @@ def run_parallel_stitch(
 
     for folder in folder_list:
         path_im_copy = f"{directory}/{folder}/Img/Img_r03_c05.tif"
-        if os.path.isfile(path_im_copy):
+        if os.path.isfile(path_im_copy) and os.path.getsize(path_im_copy) >= 1e6:
             # im = imageio.imread(path_im_copy)
             for x in range(1, size_x):
                 for y in range(1, size_y):
@@ -305,9 +295,8 @@ def run_parallel_transfer(
         my_file.write(
             f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-#         my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
-#         my_file.write(f"conda activate amftrack\n")
-        my_file.write("module load 2021 \n module load Python/3.9.5-GCCcore-10.3.0\n")
+        my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
+        my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
             f"\t python {path_code}transfer/scripts/{code} {arg_str} {op_id} $i \n"
@@ -391,3 +380,4 @@ def run_parallel_transfer_to_archive(
         my_file.write("wait\n")
         my_file.close()
         call(f"sbatch --dependency=singleton {path_job}", shell=True)
+

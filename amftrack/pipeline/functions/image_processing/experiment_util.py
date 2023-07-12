@@ -79,13 +79,14 @@ def get_all_nodes(exp, t) -> List[Node]:
     return [Node(i, exp) for i in exp.nx_graph[t].nodes]
 
 
-def find_nearest_edge(point: coord, exp: Experiment, t: int) -> Edge:
+def find_nearest_edge(point: coord, exp: Experiment, t: int, edge_list=None) -> Edge:
     """
     Find the nearest edge to `point` in `exp` at timestep `t`.
     The coordonates are given in the GENERAL ref.
+    If edge list is given, will only look in that list
     :return: Edge object
     """
-    edges = get_all_edges(exp, t)
+    edges = get_all_edges(exp, t) if edge_list is None else edge_list
     l = [edge.pixel_list(t) for edge in edges]
     return edges[get_closest_line_opt(point, l)[0]]
 
@@ -355,7 +356,7 @@ def plot_full_image_with_features(
         plt.savefig(save_path)
     else:
         plt.show()
-    return(ax)
+    return ax
 
 
 font_path = os.path.join(mpl.get_data_path(), "fonts/ttf/lucidasansdemibold.ttf")
@@ -793,6 +794,7 @@ def reconstruct_skeletton_from_edges(
     color_list: List[Tuple[int, int, int, int]] = None,
     downsizing=5,
     dilation=2,
+    timestep=True,
 ) -> Tuple[List[np.array], Callable[[float, float], float]]:
     """
     This is a wrapper function around reconstruct_skeletton, to apply it
@@ -807,7 +809,10 @@ def reconstruct_skeletton_from_edges(
     for pl in pixels:
         l = []
         for p in pl:
-            l.append(exp.general_to_timestep(p, t))
+            if timestep:
+                l.append(exp.general_to_timestep(p, t))
+            else:
+                l.append(p)
         pixels_.append(l)
 
     im, f = reconstruct_skeletton(
@@ -821,26 +826,39 @@ def reconstruct_skeletton_from_edges(
     return im, f
 
 
-def plot_edge_width(
+def get_timedelta_second(exp, t, tp1):
+    seconds = (exp.dates[tp1] - exp.dates[t]).total_seconds()
+    return seconds / 3600
+
+
+def plot_edge_color_value(
     exp: Experiment,
     t: int,
-    width_fun: Callable,
+    color_fun: Callable,
     region=None,
     intervals=[[1, 4], [4, 6], [6, 10], [10, 20]],
     cmap=cm.get_cmap("Reds", 100),
     plot_cmap=False,
-    max_width=10,
+    v_max=10,
+    v_min=0,
     nodes: List[Node] = [],
     downsizing=5,
     dilation=5,
     save_path="",
     color_seed=12,
-    dpi = None
+    dpi=None,
+    show_background=True,
+    label_colorbar="Width ($\mu m)$",
+    figsize=(36, 24),
+    figax=None,
+    alpha=0.5,
 ) -> None:
     """
     Plot the width for all the edges at a given timestep.
 
     :param region: choosen region in the full image, such as [[100, 100], [2000,2000]], if None the full image is shown
+    :param color_fun: edge -> float a function of edges that needs to be color plotted
+
     :param nodes: list of nodes to plot
     :param downsizing: factor by which we reduce the image resolution (5 -> image 25 times lighter)
     :param dilation: only for edges: thickness of the edges (dilation applied to the pixel list)
@@ -848,7 +866,7 @@ def plot_edge_width(
     :param intervals: different width intervals that will be given different colors
     :param cmap: a colormap to map width to color
     :param plot_cmap: a boolean, whether or not to plot with cmap
-    :param max_width: the max width for the colorbar/colormap
+    :param v_max: the max width for the colorbar/colormap
     """
     DIM_X, DIM_Y = get_dimX_dimY(exp)
 
@@ -860,18 +878,20 @@ def plot_edge_width(
         region[1][1] += DIM_Y
 
     edges = get_all_edges(exp, t)
-
-    fig = plt.figure(
-        figsize=(36, 24)
-    )  # width: 30 cm height: 20 cm # TODO(FK): change dpi
-    ax = fig.add_subplot(111)
+    if figax is None:
+        fig = plt.figure(
+            figsize=figsize
+        )  # width: 30 cm height: 20 cm # TODO(FK): change dpi
+        ax = fig.add_subplot(111)
+    else:
+        fig, ax = figax
 
     # Give colors to edges
     default_color = 1000
     colors = []
     widths = []
     for edge in edges:
-        width = width_fun(edge)
+        width = color_fun(edge)
         widths.append(width)
         if not plot_cmap:
             color = default_color
@@ -880,7 +900,7 @@ def plot_edge_width(
                     color = i + color_seed
             colors.append(color)
     if plot_cmap:
-        colors = [cmap(width / max_width) for width in widths]
+        colors = [cmap((width - v_min) / (v_max - v_min)) for width in widths]
     # 0/ Make color legend
     def convert(c):
         c_ = c / 255
@@ -900,13 +920,13 @@ def plot_edge_width(
         )
         fig.legend(handles=handles)
     else:
-        norm = mpl.colors.Normalize(vmin=0, vmax=max_width)
+        norm = mpl.colors.Normalize(vmin=v_min, vmax=v_max)
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])
         N = 5
-        plt.colorbar(sm, ticks=np.linspace(0, max_width, N), label="Width ($\mu m)$")
+        plt.colorbar(sm, ticks=np.linspace(v_min, v_max, N), label=label_colorbar)
     # 1/ Image layer
-    im, f = reconstruct_image(
+    im, f = reconstruct_image_from_general(
         exp,
         t,
         downsizing=downsizing,
@@ -920,7 +940,7 @@ def plot_edge_width(
     color_list = (
         [(np.array(color) * 255).astype(int) for color in colors] if plot_cmap else None
     )
-    skel_im, _ = reconstruct_skeletton_from_edges(
+    from_edges = reconstruct_skeletton_from_edges(
         exp,
         t,
         edges=edges,
@@ -929,15 +949,18 @@ def plot_edge_width(
         color_list=color_list,
         downsizing=downsizing,
         dilation=dilation,
+        timestep=False,
     )
+    skel_im, _ = from_edges
     new_region = [
         f_int(region[0]),
         f_int(region[1]),
     ]  # should be [[0, 0], [d_x/downsized, d_y/downsized]]
 
     # 3/ Fusing layers
-    ax.imshow(im, cmap="gray", interpolation="none")
-    ax.imshow(skel_im, alpha=0.5, interpolation="none")
+    if show_background:
+        ax.imshow(im, cmap="gray", interpolation="none")
+    ax.imshow(skel_im, alpha=alpha, interpolation="none")
 
     # 3/ Plotting the Nodes
     size = 5
@@ -957,9 +980,10 @@ def plot_edge_width(
             )
 
     if save_path:
-        plt.savefig(save_path,dpi=dpi)
+        plt.savefig(save_path, dpi=dpi)
     else:
         plt.show()
+    return ax
 
 
 def reconstruct_image_from_general(
