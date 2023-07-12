@@ -147,11 +147,10 @@ class Kymo_video_analysis(object):
         self.selection_file = self.images_total_path
         self.selection_file.sort()
         self.selection_file = self.selection_file[self.im_range[0]:self.im_range[1]]
-        if self.vid_type == 'FLUO':
-            self.frame_max = imageio.imread(self.selection_file[self.im_range[0]])
-            for address in self.im_range:
-                frame2 = imageio.imread(self.selection_file[address])
-                self.frame_max = np.maximum(self.frame_max, frame2)
+        self.frame_max = imageio.imread(self.selection_file[self.im_range[0]])
+        for address in self.im_range:
+            frame2 = imageio.imread(self.selection_file[address])
+            self.frame_max = np.maximum(self.frame_max, frame2)
 
         # print(self.selection_file[0])
         if self.logging:
@@ -534,7 +533,7 @@ class Kymo_edge_analysis(object):
                                                  img_suffix=str(bin_nr) + ' ' + str(i + 1),
                                                  kymo_adjust=kymo_adj,
                                                  x_len=space_pixel_size)
-                               for i in tqdm(range(bin_nr))])
+                               for i in range(bin_nr)])
         return self.kymos
 
     def extract_kymo(self,
@@ -588,7 +587,7 @@ class Kymo_edge_analysis(object):
         else:
             return None
 
-    def test_GST(self, w_size, w_start=3, C_thresh=0.90, blur_size=7, C_thresh_falloff=0.02, speed_thresh=10,
+    def test_GST(self, w_size, w_start=3, C_thresh=0.95, blur_size=7, C_thresh_falloff=0.002, speed_thresh=90,
                  preblur=True, plots=False):
 
         """Initialize the speed array and time array, as well as the bin values for the window size, and fourier
