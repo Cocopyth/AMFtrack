@@ -26,35 +26,38 @@ from amftrack.pipeline.launching.run import (
 )
 from amftrack.pipeline.launching.run_super import run_parallel_transfer
 import dropbox
-from amftrack.util.dbx import upload_folders, download, read_saved_dropbox_state, save_dropbox_state, load_dbx, download, get_dropbox_folders, get_dropbox_video_folders
+from amftrack.util.dbx import upload_folders, download, read_saved_dropbox_state, save_dropbox_state, load_dbx, \
+    download, get_dropbox_folders, get_dropbox_video_folders
 from subprocess import call
 import logging
 import datetime
 import glob
 import json
 from amftrack.pipeline.launching.run_super import run_parallel
+
 logging.basicConfig(stream=sys.stdout, level=logging.debug)
 mpl.rcParams['figure.dpi'] = 300
 
 
 class HighmagDataset(object):
     def __init__(self,
-                dataframe):
+                 dataframe):
         self.dataset = dataframe
-        
+
     def bin_dataset(self, column, bins):
         return None
-        
+
     def return_vid_objs(self):
         return None
-    
+
+
 class VideoDataset(object):
     def __init__(self,
-                series):
-        self. dataset = series
-        
+                 series):
+        self.dataset = series
+
+
 class EdgeDataset(object):
     def __init__(self,
                  dataframe):
         self.data = dataframe
-        

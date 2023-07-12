@@ -336,7 +336,7 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
                     files_list.append(x.path_display)
 
     for i, xc_file in enumerate(files_list):
-        suffix = xc_file.split('/')[-1].split('.')[-1]
+        suffix = xc_file.split(os.sep)[-1].split('.')[-1]
         if suffix.endswith(('xlsx', 'xlsb')):
             print("I found an excel sheet to use!")
             excel_list.append(files_list[i])
@@ -355,10 +355,10 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
     print(files_list)
 
     if is_rachael_video:
-        names = [file.split("/")[-1] for file in image_list]
+        names = [file.split(os.sep)[-1] for file in image_list]
     else:
-        names = [f'{file.split(os.sep)[-3]}_{file.split(os.sep)[-2]}/Img/' for file in image_list]
-    path_drop = [os.path.join(*file.split('/')) for file in image_list]
+        names = [f'{file.split(os.sep)[-3]}_{file.split(os.sep)[-2]}{os.sep}Img{os.sep}' for file in image_list]
+    path_drop = [os.path.join(*file.split(os.sep)) for file in image_list]
     plate_nr = [path.split(os.path.sep)[-3].split('_')[1][5:] for path in path_drop ]
     date_img = [path.split(os.path.sep)[-3].split('_')[0] for path in path_drop]
     video = [name.split('_')[-1] for name in names]
