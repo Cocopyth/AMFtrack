@@ -39,13 +39,37 @@ from amftrack.pipeline.launching.run_super import run_parallel
 logging.basicConfig(stream=sys.stdout, level=logging.debug)
 mpl.rcParams['figure.dpi'] = 300
 
+def index_videos_dropbox(analysis_folder, video_folder, dropbox_folder, REDO_SCROUNGING=False):
+    analysis_json = f"{analysis_folder}{dropbox_address[6:]}all_folders_drop.json"
+if os.path.exists(analysis_json):
+    all_folders_drop = pd.read_json(analysis_json)
+excel_json = f"{analysis_folder}{dropbox_address[6:]}excel_drop.json"
+if os.path.exists(excel_json):
+    excel_drop = pd.read_json(excel_json, typ='series')
+if not os.path.exists(analysis_json) or REDO_SCROUNGING:
+    print("Redoing the dropbox scrounging, hold on tight.")
+    all_folders_drop, excel_drop, txt_drop = get_dropbox_video_folders(dropbox_address, True)
+
+    clear_output(wait=False)
+    print("Scrounging complete, merging files...")
+    
+    excel_addresses = np.array([re.search("^.*Plate.*\/.*Plate.*$", entry, re.IGNORECASE) for entry in excel_drop])
+    excel_addresses = excel_addresses[excel_addresses != None]
+    excel_addresses = [address.group(0) for address in excel_addresses]
+    excel_drop = np.concatenate([excel_addresses,txt_drop])
+    if not os.path.exists(f"{analysis_folder}{dropbox_address[6:]}"):
+        os.makedirs(f"{analysis_folder}{dropbox_address[6:]}")
+    all_folders_drop.to_json(analysis_json)
+    pd.Series(excel_drop).to_json(excel_json)
+    
+
 
 class HighmagDataset(object):
     def __init__(self,
                  dataframe:pd.DataFrame):
         self.dataset = dataframe
         self.video_objs = [VideoDataset(row) for index, row in self.dataset.iterrows()]
-        self.edge_objs = [video.edge_objs for video on self.video_objs].flatten()
+        self.edge_objs = [video.edge_objs for video in self.video_objs].flatten()
 
         
     def filter_edges(self, column, compare, constant):
