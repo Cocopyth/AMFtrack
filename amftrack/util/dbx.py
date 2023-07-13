@@ -474,8 +474,35 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
                 "Analysis.zip",
                 "Img.zip",
                 "param.m",
+                "*.tif",
             ]:  # to fix!
+                print("Hello ,I am being downloaded")
                 download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
+            else:
+                print(f"Oh no! I am not being downloaded! {file.name}")
+                
+def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
+    dbx = load_dbx()
+    for index, row in folders_drop.iterrows():
+        path = "/" + row["tot_path_drop"]
+        response = dbx.files_list_folder(path, recursive=False)
+        listfiles = []
+        while response.has_more:
+            listfiles += [file for file in response.entries]
+            response = dbx.files_list_folder_continue(response.cursor)
+        listfiles += [file for file in response.entries]
+        folder = row["folder"]
+        path_folder = os.path.join(directory_target, folder)
+        if not os.path.exists(path_folder):
+            os.makedirs(path_folder)
+        for file in listfiles:
+            path_drop = file.path_display
+            path_local = os.path.join(
+                directory_target, folder, path_drop.split("/")[-1]
+            )
+            print(path_drop, path_local)
+            download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
+
 
 
 def compute_dropbox_hash(filename):
