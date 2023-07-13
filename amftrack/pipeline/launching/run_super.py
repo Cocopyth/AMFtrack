@@ -351,8 +351,8 @@ def run_parallel_transfer(
         my_file.write(
             f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
-        my_file.write(f"conda activate amftrack\n")
+        my_file.write(f"module load 2021 \n")
+        my_file.write(f"module load Python/3.9.5-GCCcore-10.3.0 \n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
             f"\t python {path_code}transfer/scripts/{code} {arg_str} {op_id} $i \n"
