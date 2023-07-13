@@ -45,12 +45,29 @@ class HighmagDataset(object):
                  dataframe:pd.DataFrame):
         self.dataset = dataframe
         self.video_objs = [VideoDataset(row) for index, row in self.dataset.iterrows()]
+        self.edge_objs = [video.edge_objs for video on self.video_objs].flatten()
+
+        
+    def filter_edges(self, column, compare, constant):
+        return None
+        
+    def filter_videos(self, column, compare, constant):
+        return None
 
     def bin_dataset(self, column, bins):
         return None
+    
+    def return_video_frame(self):
+        return self.dataset
+    
+    def return_edge_frame(self):
+        edge_frame
+    
+    def return_edge_objs(self):
+        return self.edge_objs
 
     def return_vid_objs(self):
-        return None
+        return self.video_objs
 
 
 class VideoDataset(object):
@@ -59,9 +76,12 @@ class VideoDataset(object):
         self.dataset = series
         if os.path.exists(self.dataset['analysis_folder']+'edges_data.csv'):
             self.edges_frame = pd.read_csv(self.dataset['analysis_folder']+'edges_data.csv')
+            self.edge_objs = [EdgeDataset(pd.concat([row, self.dataset])) for index, row in self.edges_frame.iterrows()]
+            self.dataset['nr_of_edges'] = len(self.edges_frame)
         else:
             print(f"Couldn't find the edges data file. Check analysis for {self.dataset['unique_id']}")
-        self.edge_objs = [EdgeDataset(pd.concat([row, self.dataset])) for index, row in self.edges_frame.iterrows()]
+            self.dataset['nr_of_edges'] = 0
+
 
     def show_summary(self):
         if os.path.exists(self.dataset['analysis_folder'] + 'Detected edges.png'):
@@ -82,7 +102,7 @@ class VideoDataset(object):
             ax.set_axis_off()
             fig.tight_layout()
 
-    def scatter_speeds(self):
+    def scatter_speeds_video(self):
         fig, ax = plt.subplots()
         # ax.grid(True)
         ax.axhline(c='black', linestyle='--', alpha=0.5)
