@@ -1,3 +1,6 @@
+import copy
+
+import numpy as np
 import pandas as pd
 from IPython.display import clear_output
 import re
@@ -39,54 +42,76 @@ from amftrack.pipeline.launching.run_super import run_parallel
 logging.basicConfig(stream=sys.stdout, level=logging.debug)
 mpl.rcParams['figure.dpi'] = 300
 
-def index_videos_dropbox(analysis_folder, video_folder, dropbox_folder, REDO_SCROUNGING=False):
-    analysis_json = f"{analysis_folder}{dropbox_address[6:]}all_folders_drop.json"
-if os.path.exists(analysis_json):
-    all_folders_drop = pd.read_json(analysis_json)
-excel_json = f"{analysis_folder}{dropbox_address[6:]}excel_drop.json"
-if os.path.exists(excel_json):
-    excel_drop = pd.read_json(excel_json, typ='series')
-if not os.path.exists(analysis_json) or REDO_SCROUNGING:
-    print("Redoing the dropbox scrounging, hold on tight.")
-    all_folders_drop, excel_drop, txt_drop = get_dropbox_video_folders(dropbox_address, True)
 
-    clear_output(wait=False)
-    print("Scrounging complete, merging files...")
-    
-    excel_addresses = np.array([re.search("^.*Plate.*\/.*Plate.*$", entry, re.IGNORECASE) for entry in excel_drop])
-    excel_addresses = excel_addresses[excel_addresses != None]
-    excel_addresses = [address.group(0) for address in excel_addresses]
-    excel_drop = np.concatenate([excel_addresses,txt_drop])
-    if not os.path.exists(f"{analysis_folder}{dropbox_address[6:]}"):
-        os.makedirs(f"{analysis_folder}{dropbox_address[6:]}")
-    all_folders_drop.to_json(analysis_json)
-    pd.Series(excel_drop).to_json(excel_json)
-    
+def index_videos_dropbox(analysis_folder, video_folder, dropbox_folder, REDO_SCROUNGING=False):
+    analysis_json = f"{analysis_folder}{dropbox_folder[6:]}all_folders_drop.json"
+    if os.path.exists(analysis_json):
+        all_folders_drop = pd.read_json(analysis_json)
+    excel_json = f"{analysis_folder}{dropbox_folder[6:]}excel_drop.json"
+    if os.path.exists(excel_json):
+        excel_drop = pd.read_json(excel_json, typ='series')
+    if not os.path.exists(analysis_json) or REDO_SCROUNGING:
+        print("Redoing the dropbox scrounging, hold on tight.")
+        all_folders_drop, excel_drop, txt_drop = get_dropbox_video_folders(dropbox_folder, True)
+
+        clear_output(wait=False)
+        print("Scrounging complete, merging files...")
+
+        excel_addresses = np.array([re.search("^.*Plate.*\/.*Plate.*$", entry, re.IGNORECASE) for entry in excel_drop])
+        excel_addresses = excel_addresses[excel_addresses != None]
+        excel_addresses = [address.group(0) for address in excel_addresses]
+        excel_drop = np.concatenate([excel_addresses, txt_drop])
+        if not os.path.exists(f"{analysis_folder}{dropbox_folder[6:]}"):
+            os.makedirs(f"{analysis_folder}{dropbox_folder[6:]}")
+        all_folders_drop.to_json(analysis_json)
+        pd.Series(excel_drop).to_json(excel_json)
 
 
 class HighmagDataset(object):
     def __init__(self,
-                 dataframe:pd.DataFrame):
-        self.dataset = dataframe
-        self.video_objs = [VideoDataset(row) for index, row in self.dataset.iterrows()]
-        self.edge_objs = [video.edge_objs for video in self.video_objs].flatten()
+                 dataframe: pd.DataFrame,
+                 analysis_folder: str,
+                 videos_folder: str):
+        self.analysis_folder = analysis_folder
+        self.videos_folder = videos_folder
+        self.video_frame = dataframe
+        self.video_objs = np.array(
+            [VideoDataset(row, analysis_folder, videos_folder) for index, row in self.video_frame.iterrows()])
+        self.edge_objs = np.concatenate([video.edge_objs for video in self.video_objs])
+        self.edges_frame = pd.concat([edg_obj.mean_data for edg_obj in self.edge_objs], axis =1).T.reset_index(drop=True)
 
-        
     def filter_edges(self, column, compare, constant):
-        return None
-        
+        filter_self = copy.deepcopy(self)
+        if compare == '>=':
+            filter_self.edges_frame = filter_self.edges_frame[filter_self.edges_frame[column].ge(constant)]
+        elif compare == '==':
+            filter_self.edges_frame = filter_self.edges_frame[filter_self.edges_frame[column] == constant]
+        elif compare == '<=':
+            filter_self.edges_frame = filter_self.edges_frame[filter_self.edges_frame[column].le(constant)]
+        else:
+            print("Comparison symbol not recognised. Please use >=, ==, or <=.")
+            raise("Comparison symbol not recognised. Please use >, ==, or <.")
+
+        filter_self.edge_objs = filter_self.edge_objs[filter_self.edges_frame.index.to_numpy()]
+        is_video = filter_self.video_frame['unique_id'].isin(filter_self.edges_frame['unique_id'])
+        filter_self.video_objs = filter_self.video_objs[is_video[is_video].index.values]
+        filter_self.video_frame = filter_self.video_frame[is_video].reset_index(drop=True)
+        filter_self.edges_frame = filter_self.edges_frame.reset_index(drop=True)
+        return filter_self
+
     def filter_videos(self, column, compare, constant):
         return None
 
-    def bin_dataset(self, column, bins):
+    def bin_values(self, column, bins, new_column_name ='edge_bin_values'):
+        bin_series = pd.cut(self.edges_frame[column], bins)
         return None
-    
+
     def return_video_frame(self):
-        return self.dataset
-    
+        return self.video_frame
+
     def return_edge_frame(self):
         edge_frame
-    
+
     def return_edge_objs(self):
         return self.edge_objs
 
@@ -96,16 +121,19 @@ class HighmagDataset(object):
 
 class VideoDataset(object):
     def __init__(self,
-                 series):
+                 series,
+                 analysis_folder,
+                 videos_folder):
         self.dataset = series
-        if os.path.exists(self.dataset['analysis_folder']+'edges_data.csv'):
-            self.edges_frame = pd.read_csv(self.dataset['analysis_folder']+'edges_data.csv')
-            self.edge_objs = [EdgeDataset(pd.concat([row, self.dataset])) for index, row in self.edges_frame.iterrows()]
+        if os.path.exists(f"{analysis_folder}{self.dataset['folder'][:-4]}edges_data.csv"):
+            self.edges_frame = pd.read_csv(f"{analysis_folder}{self.dataset['folder'][:-4]}edges_data.csv")
+            self.edge_objs = [EdgeDataset(pd.concat([row, self.dataset]), analysis_folder, videos_folder) for index, row
+                              in self.edges_frame.iterrows()]
             self.dataset['nr_of_edges'] = len(self.edges_frame)
         else:
             print(f"Couldn't find the edges data file. Check analysis for {self.dataset['unique_id']}")
             self.dataset['nr_of_edges'] = 0
-
+            self.edge_objs = []
 
     def show_summary(self):
         if os.path.exists(self.dataset['analysis_folder'] + 'Detected edges.png'):
@@ -145,16 +173,20 @@ class VideoDataset(object):
         fig.tight_layout()
 
 
-
 class EdgeDataset(object):
     def __init__(self,
-                 dataframe):
+                 dataframe,
+                 analysis_folder,
+                 videos_folder):
         self.mean_data = dataframe
         self.edge_name = self.mean_data['edge_name']
-        self.time_data = pd.read_csv(self.mean_data['analysis_folder']+'edge '+self.mean_data['edge_name']+os.sep+self.mean_data['edge_name']+'_data.csv')
+        self.time_data = pd.read_csv(
+            f"{analysis_folder}{self.mean_data['folder'][:-4]}edge {self.mean_data['edge_name']}{os.sep}{self.mean_data['edge_name']}_data.csv")
 
     def show_summary(self):
-        summ_img = imageio.imread(self.mean_data['analysis_folder']+'edge '+self.mean_data['edge_name']+os.sep+self.mean_data['edge_name']+'_summary.png')
+        summ_img = imageio.imread(
+            self.mean_data['analysis_folder'] + 'edge ' + self.mean_data['edge_name'] + os.sep + self.mean_data[
+                'edge_name'] + '_summary.png')
         fig = plt.figure()
         ax = fig.add_axes([0, 0, 1, 1], frameon=False, aspect=1)
         ax.imshow(summ_img)
@@ -164,4 +196,3 @@ class EdgeDataset(object):
         fig, ax = plt.subplots()
         ax.plot(self.time_data['times'], self.time_data['flux_mean'])
         fig.tight_layout()
-
