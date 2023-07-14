@@ -304,9 +304,12 @@ def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     return df
 
 
-def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
+def get_dropbox_video_folders(dir_drop, skip_size: bool = True) -> pd.DataFrame:
+
+    dir_drop_analysis = dir_drop/'Analysis'
+
     dbx = load_dbx()
-    response = dbx.files_list_folder(dir_drop, recursive=True)
+    response = dbx.files_list_folder(dir_drop.as_posix(), recursive=True)
     files_list = []
     excel_list = []
     txt_list = []
@@ -321,19 +324,17 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
     re_seq = [re_video, re_excel, re_rachael_video, re_video_info]
 
     for x in response.entries:
-        # print(x.path_display)
         for regex in re_seq:
             test = regex.search(x.path_display)
-            if test:
+            if test and not x.path_display[:len(dir_drop_analysis.as_posix())] == dir_drop_analysis.as_posix():
                 files_list.append(x.path_display)
 
     while response.has_more:
-        # print(x.path_display)
         response = dbx.files_list_folder_continue(response.cursor)
         for x in response.entries:
             for regex in re_seq:
                 test = regex.search(x.path_display)
-                if test:
+                if test and not x.path_display[:len(dir_drop_analysis.as_posix())] == dir_drop_analysis.as_posix():
                     files_list.append(x.path_display)
 
     for i, xc_file in enumerate(files_list):
@@ -352,8 +353,6 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
             txt_list.append(files_list[i])
         else:
             image_list.append(files_list[i])
-
-    print(image_list, os.sep)
 
     if is_rachael_video:
         names = [file.split('/')[-1] for file in image_list]
