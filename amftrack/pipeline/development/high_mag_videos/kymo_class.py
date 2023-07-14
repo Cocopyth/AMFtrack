@@ -1,7 +1,6 @@
 from pathlib import Path
 import imageio.v2 as imageio
 from amftrack.pipeline.development.high_mag_videos.high_mag_videos_fun import *
-from scipy import signal
 import pandas as pd
 from PIL import Image
 import os
@@ -9,14 +8,19 @@ from tqdm import tqdm
 import re
 import tensorflow as tf
 import matplotlib as mpl
+
 mpl.rcParams['figure.dpi'] = 300
 
 
-
-class Kymo_video_analysis(object):
+class KymoVideoAnalysis(object):
+    """
+    Master class for video processing. Will use nearby video parameters (from csv's, xslx's or the input frame)
+    to segment video, extract edges, and set up edge analysis.
+    Use address as input if you want to rely on nearby data sheets,
+    use input frame as input to specify video parameters with a pandas frame.
+    """
     def __init__(self,
                  imgs_address=None,
-                 format='tiff',
                  fps=None,
                  binning=2,
                  magnification=50,
@@ -26,22 +30,28 @@ class Kymo_video_analysis(object):
                  filter_step=70,
                  seg_thresh=20,
                  logging=False,
-                 segment_plots=False,
                  show_seg=False,
                  input_frame=None
                  ):
         """
-        imgs_address:   This is the folder address containing an "Img" file and potentially an Analysis file.
-        format:         The file format of the raw images, will always be tiff unless we do different experiments
-        fps:            The frames per second of the video that is analyzed. Will be extracted from the csv, unless manually assigned.
-        binning:        The level of binning done during measurement. 1 means the video is in 4X resolution, 2 means 2X resolution.
-        magnification:  The type of objective used during measurement. Typical values are 50 and 4
-        vid_type:       Either "BRIGHT" or "FLUO", should be extracted from the csv, changes filters for skeletonisation
-        im_range:       The range of images used in measurement, default is all of them
-        thresh:         Threshold for the skeletonization function, which makes a binary image for scipy skeletonize
-        filter_step:    Threshold for the filter step of the skeletonization function, which removes edges smaller than filter_step
-        logging:        Boolean on whether progress is printed to the terminal
-
+        Master class for video processing. Will use nearby video parameters (from csv's, xslx's or the input frame)
+        to segment video, extract edges, and set up edge analysis.
+        :param imgs_address:    Address for the video files
+        :param fps:             Frames per second of the video if unspecified
+        :param binning:         Binning (1 or 2) of the video if unspecified
+        :param magnification:   Magnification (4, 50, 60) of the video if unspecified
+        :param vid_type:        Imaging mode (F or BF) of the video if unspecified
+        :param im_range:        Largely obsolete function that says which frames to take
+        :param thresh:          Threshold value for something
+        :param filter_step:     Length threshold for extracted edges. Measured in pixels
+        :param seg_thresh:      Obsolete value, used to specify what percentage of a frame
+                                had to be segmented for proper hypha segmentation.
+        :param logging:         Boolean on how verbose the class needs to be about its progress
+        :param show_seg:        Whether to save the image segmentation
+        :param input_frame:     If None, the program will try to find nearby .csv's or .xlsx's to extract video parameters,
+                                otherwise it will pull the information from the input_frame.
+                                Frames need to be created with specific column names,
+                                just use the master notebook for guidance
         """
 
         # First we're assigning values, and extracting data about the video if there is a .csv (or .xlsx) available.
@@ -58,18 +68,18 @@ class Kymo_video_analysis(object):
             self.magnification = magnification
             self.vid_type = vid_type
             self.fps = fps
-    #         self.imformat = format
+            #         self.imformat = format
             self.im_range = im_range
             self.back_fit = [0, 0, 0]
             self.back_offset = 0
 
-    #         print(parent_files)
+            #         print(parent_files)
 
             ### Extracts the video parameters from the nearby csv.
             self.csv_path = next(Path(parent_files).glob("*.csv"), None)
             if self.csv_path is None:
                 self.xlsx_path = next(Path(parent_files).glob("*.xlsx"), None)
-    #             [a for a in Path(parent_files).glob(f'*.xlsx')]
+            #             [a for a in Path(parent_files).glob(f'*.xlsx')]
             else:
                 self.xlsx_path = []
             if logging:
@@ -81,9 +91,9 @@ class Kymo_video_analysis(object):
                 if self.csv_path is not None:
                     if logging:
                         print("Found a csv file, using that data")
-                    df_comma = pd.read_csv(self.csv_path, nrows=1,sep=",")
+                    df_comma = pd.read_csv(self.csv_path, nrows=1, sep=",")
                     df_semi = pd.read_csv(self.csv_path, nrows=1, sep=";")
-                    if df_comma.shape[1]>df_semi.shape[1]:
+                    if df_comma.shape[1] > df_semi.shape[1]:
                         videos_data = pd.read_csv(self.csv_path, sep=",")
                     else:
                         videos_data = pd.read_csv(self.csv_path, sep=";")
@@ -99,16 +109,16 @@ class Kymo_video_analysis(object):
                     self.fps = float(self.video_data["fps"].iloc[0])
                     self.binning = (self.video_data["Binned"].iloc[0] * 2) + 1
                     self.magnification = self.video_data["Lens"].iloc[0]
-#                     self.id = self.video_data["video"].iloc[0]
+                #                     self.id = self.video_data["video"].iloc[0]
                 elif self.xlsx_path is not None:
                     if logging:
                         print("Found an xlsx file, using that data")
                     videos_data = pd.read_excel(self.xlsx_path)
                     print(str(self.imgs_address))
-    #                 self.video_data = videos_data.loc[videos_data['Unnamed: 0'].str.contains(str(self.imgs_address).split(os.sep)[-1], case=False, na=False)]
+                    #                 self.video_data = videos_data.loc[videos_data['Unnamed: 0'].str.contains(str(self.imgs_address).split(os.sep)[-1], case=False, na=False)]
                     excel_addr = f"{imgs_address.split(os.sep)[-3]}_{imgs_address.split(os.sep)[-2]}"
-    #                 print(excel_addr)
-                    self.video_data = videos_data[videos_data["Unnamed: 0"].str.contains(excel_addr, case=False, na=False)]
+                    self.video_data = videos_data[
+                        videos_data["Unnamed: 0"].str.contains(excel_addr, case=False, na=False)]
                     print(self.video_data.to_string())
                     self.vid_type = ["FLUO", "BRIGHT"][self.video_data.iloc[0, 9] == "BF"]
                     self.fps = float(self.video_data["FPS"].iloc[0])
@@ -121,16 +131,15 @@ class Kymo_video_analysis(object):
                 if logging:
                     print(f"Analysing {self.vid_type} video of {self.magnification}X zoom, with {self.fps} fps")
         else:
-            self.fps=float(input_frame['fps'])
+            self.fps = float(input_frame['fps'])
             self.magnification = input_frame['magnification']
             self.binning = input_frame['binning']
             self.kymos_path = input_frame['analysis_folder']
             self.imgs_address = Path(input_frame['videos_folder'])
-            vid_dic = {'F' : 'FLUO',
-                       'BF' : 'BRIGHT'}
+            vid_dic = {'F': 'FLUO',
+                       'BF': 'BRIGHT'}
             self.vid_type = vid_dic[input_frame['mode']]
             self.video_nr = input_frame['unique_id']
-            
 
         self.time_pixel_size = 1 / self.fps
         self.space_pixel_size = 2 * 1.725 / (self.magnification) * self.binning  # um.pixel
@@ -140,8 +149,8 @@ class Kymo_video_analysis(object):
             if self.logging:
                 print('Kymos file created, address is at {}'.format(self.kymos_path))
         self.images_total_path = [str(adr) for adr in self.imgs_address.glob('*_*.ti*')]
-#         print(self.imgs_address)
-#         print(self.images_total_path)
+        #         print(self.imgs_address)
+        #         print(self.images_total_path)
         # self.images_total_path = [os.path.join(self.imgs_address, file_im) for file_im in self.files]
         self.images_total_path.sort()
         self.selection_file = self.images_total_path
@@ -161,11 +170,11 @@ class Kymo_video_analysis(object):
         if self.vid_type == 'BRIGHT':
             self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
                 imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh,
-                seg_thresh=seg_thresh, binning = self.binning)
+                seg_thresh=seg_thresh, binning=self.binning)
         elif self.vid_type == 'FLUO':
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
-                self.frame_max, thresh=thresh, 
-                seg_thresh=seg_thresh, magnif = self.magnification)
+                self.frame_max, thresh=thresh,
+                seg_thresh=seg_thresh, magnif=self.magnification)
         else:
             print("I don't have a valid flow_processing type!!! Using fluo thresholding.")
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
@@ -220,19 +229,19 @@ class Kymo_video_analysis(object):
         self.target_length = target_length * 2 // self.binning
         self.x_length = self.target_length * self.space_pixel_size
         image = imageio.imread(self.selection_file[self.im_range[0]])
-        fig2, ax2 = plt.subplots(figsize=(8,8))
-        ax2.imshow(self.segmented, extent=[0, self.space_pixel_size * image.shape[1], 
-                                  self.space_pixel_size * image.shape[0],0])
+        fig2, ax2 = plt.subplots(figsize=(8, 8))
+        ax2.imshow(self.segmented, extent=[0, self.space_pixel_size * image.shape[1],
+                                           self.space_pixel_size * image.shape[0], 0])
 
-        ax2.set_title("Segmentation and skeleton")        
+        ax2.set_title("Segmentation and skeleton")
         fig2.tight_layout()
         if save_img:
             save_path_seg = os.path.join(self.kymos_path, f"Video segmentation.png")
             fig2.savefig(save_path_seg)
         plt.close(fig2)
         fig1, ax1 = plt.subplots(figsize=(8, 8))
-        ax1.imshow(image,  extent=[0, self.space_pixel_size * image.shape[1], 
-                                  self.space_pixel_size * image.shape[0],0])
+        ax1.imshow(image, extent=[0, self.space_pixel_size * image.shape[1],
+                                  self.space_pixel_size * image.shape[0], 0])
         for edge in self.edge_objects:
             if logging:
                 print('Working on edge {}, sir!'.format(edge.edge_name))
@@ -243,16 +252,20 @@ class Kymo_video_analysis(object):
                 segments, ax1, bounds=bounds, color="white", alpha=0.1, adj=self.space_pixel_size
             )
             ax1.plot(
-                [self.pos[edge.edge_name[0]][1]* self.space_pixel_size, self.pos[edge.edge_name[1]][1]* self.space_pixel_size],
-                [self.pos[edge.edge_name[0]][0]* self.space_pixel_size, self.pos[edge.edge_name[1]][0]* self.space_pixel_size]
+                [self.pos[edge.edge_name[0]][1] * self.space_pixel_size,
+                 self.pos[edge.edge_name[1]][1] * self.space_pixel_size],
+                [self.pos[edge.edge_name[0]][0] * self.space_pixel_size,
+                 self.pos[edge.edge_name[1]][0] * self.space_pixel_size]
             )
             ax1.text(
-                *np.flip((1 - weight) * self.pos[edge.edge_name[0]] + weight * self.pos[edge.edge_name[1]]) * self.space_pixel_size,
+                *np.flip((1 - weight) * self.pos[edge.edge_name[0]] + weight * self.pos[
+                    edge.edge_name[1]]) * self.space_pixel_size,
                 str(edge.edge_name[0]),
                 color="white",
             )
             ax1.text(
-                *np.flip((1 - weight) * self.pos[edge.edge_name[1]] + weight * self.pos[edge.edge_name[0]])* self.space_pixel_size,
+                *np.flip((1 - weight) * self.pos[edge.edge_name[1]] + weight * self.pos[
+                    edge.edge_name[0]]) * self.space_pixel_size,
                 str(edge.edge_name[1]),
                 color="white",
             )
@@ -467,33 +480,34 @@ class Kymo_edge_analysis(object):
         return self.segments
 
     def get_widths(self,
-                  resolution=1,
-                  step=30,
-                  target_length=200,
-                  save_im=True,
-                  bounds=(0, 1),
-                  img_frame=0,
-                  quality=6,
-                  model_path = "/gpfs/home6/svstaalduine/AMF_project/amftrack/ml/models/default_CNN_GT_model.h5"):
+                   resolution=1,
+                   step=30,
+                   target_length=200,
+                   save_im=True,
+                   bounds=(0, 1),
+                   img_frame=0,
+                   quality=6,
+                   model_path="/gpfs/home6/svstaalduine/AMF_project/amftrack/ml/models/default_CNN_GT_model.h5"):
 
         if self.video_analysis.vid_type == "BRIGHT":
             self.create_segments(self.video_analysis.pos,
                                  imageio.imread(self.video_analysis.selection_file[self.video_analysis.im_range[0]]),
-                                 self.video_analysis.nx_graph_pruned, resolution, 4,target_length, bounds, step=step)
+                                 self.video_analysis.nx_graph_pruned, resolution, 4, target_length, bounds, step=step)
             width_model = tf.keras.models.load_model(model_path)
             # for slice in self.slices:
-                # print(slice)
-                # print(np.shape(slice))
+            # print(slice)
+            # print(np.shape(slice))
             self.widths = width_model.predict(self.slices, verbose=0)
         else:
             self.create_segments(self.video_analysis.pos, self.video_analysis.segmented,
-                                 self.video_analysis.nx_graph_pruned, resolution, 4,target_length, bounds, step=step)
-            self.widths = [max((sum(1 for _ in group) for value, group in itertools.groupby(pixel_row) if value == 0), default=0) for pixel_row in self.slices]
-#             print(self.widths)
+                                 self.video_analysis.nx_graph_pruned, resolution, 4, target_length, bounds, step=step)
+            self.widths = [
+                max((sum(1 for _ in group) for value, group in itertools.groupby(pixel_row) if value == 0), default=0)
+                for pixel_row in self.slices]
+            #             print(self.widths)
             self.widths = np.array(self.widths) * self.video_analysis.space_pixel_size
 
         return self.widths
-
 
     def extract_multi_kymo(self,
                            bin_nr,
@@ -566,7 +580,7 @@ class Kymo_edge_analysis(object):
             save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {img_suffix} kymo.npy")
             np.save(save_path_temp, (self.kymo))
         if save_im:
-            im = Image.fromarray((255 * self.kymo/ np.max(self.kymo)).astype(np.uint8))
+            im = Image.fromarray((255 * self.kymo / np.max(self.kymo)).astype(np.uint8))
             save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {img_suffix} kymo.png")
             im.save(save_path_temp)
         return self.kymo
@@ -668,25 +682,24 @@ class Kymo_edge_analysis(object):
                 spds_both[i] = spd_interest
                 spd_stack.append(spd_interest)
 
-#                 if plots:
-#                     ax[1][i].imshow(spds_both[i], aspect='auto', vmin=-speed_thresh, vmax=speed_thresh, cmap='coolwarm')
-#                     ax[1][i].set_title("Speeds")
-#                     ax[1][i].set_xlabel("space ($\mu m $)")
-#                     ax[1][i].set_ylabel("time ($s$)")
-#                     lay_plot = ax[0][i].imshow(kymo_interest, aspect='auto', vmin=0)
-#                     ax[0][i].set_title(
-#                         f"Filtered Fourier")
-#                     ax[0][i].set_xlabel("space ($\mu m $)")
-#                     ax[0][i].set_ylabel("time ($s$)")
+            #                 if plots:
+            #                     ax[1][i].imshow(spds_both[i], aspect='auto', vmin=-speed_thresh, vmax=speed_thresh, cmap='coolwarm')
+            #                     ax[1][i].set_title("Speeds")
+            #                     ax[1][i].set_xlabel("space ($\mu m $)")
+            #                     ax[1][i].set_ylabel("time ($s$)")
+            #                     lay_plot = ax[0][i].imshow(kymo_interest, aspect='auto', vmin=0)
+            #                     ax[0][i].set_title(
+            #                         f"Filtered Fourier")
+            #                     ax[0][i].set_xlabel("space ($\mu m $)")
+            #                     ax[0][i].set_ylabel("time ($s$)")
 
             speeds_tot.append(spds_both)
             self.speeds_tot = np.array(speeds_tot)
             self.times = times
 
-#             if plots:
-#                 fig.tight_layout()
+        #             if plots:
+        #                 fig.tight_layout()
         return np.array(speeds_tot), times
-
 
     def extract_transport(self,
                           noise_thresh=0.01,
@@ -758,78 +771,78 @@ class Kymo_edge_analysis(object):
             net_trans = np.array([np.nancumsum(flux_tot.transpose()[i][margin:-margin]) for i in
                                   range(margin, flux_tot.shape[1] - 1 * margin)]).transpose()
 
-#             if save_filters:
-#                 im_left = Image.fromarray((forw_thresh * 255 / np.max(forw_thresh)).astype(np.uint8))
-#                 im_right = Image.fromarray((back_thresh * 255 / np.max(back_thresh)).astype(np.uint8))
-#                 im_full = Image.fromarray((forw_back_thresh * 255 / np.max(forw_back_thresh)).astype(np.uint8))
-#                 save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {k} kymo_left.png")
-#                 im_left.save(save_path_temp)
-#                 save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {k} kymo_right.png")
-#                 im_right.save(save_path_temp)
-#                 save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {k} kymo_filtered.png")
-#                 im_full.save(save_path_temp)
+        #             if save_filters:
+        #                 im_left = Image.fromarray((forw_thresh * 255 / np.max(forw_thresh)).astype(np.uint8))
+        #                 im_right = Image.fromarray((back_thresh * 255 / np.max(back_thresh)).astype(np.uint8))
+        #                 im_full = Image.fromarray((forw_back_thresh * 255 / np.max(forw_back_thresh)).astype(np.uint8))
+        #                 save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {k} kymo_left.png")
+        #                 im_left.save(save_path_temp)
+        #                 save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {k} kymo_right.png")
+        #                 im_right.save(save_path_temp)
+        #                 save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {k} kymo_filtered.png")
+        #                 im_full.save(save_path_temp)
 
-#             if plots:
-#                 if histos:
-#                     fig, ax = plt.subplots(3, figsize=(8, 8), sharey=True, sharex=True)
-#                     ax[0].hist(back.flatten(), bins=50, log=True, label="pre-shift")
-#                     ax[0].hist(back_thresh.flatten(), bins=50, log=True, label="post-shift", alpha=0.5)
-#                     ax[0].set_title("Backward hist")
-#                     ax[1].hist(forw.flatten(), bins=50, log=True, label="pre-shift")
-#                     ax[1].hist(forw_thresh.flatten(), bins=50, log=True, label="post-shift", alpha=0.5)
-#                     ax[1].set_title("Forward hist")
-#                     ax[2].hist(kymo_adj.flatten(), bins=50, label='original', log=True)
-#                     ax[2].hist(forw_back_thresh.flatten(), bins=50, alpha=0.5, label='filtered', log=True)
-#                     ax[2].set_title("Total hist comparison")
-#                     for i in range(3):
-#                         ax[i].set_xlabel("Pixel intensity")
-#                         ax[i].set_ylabel("Log frequency")
-#                         ax[i].legend()
-#                     fig.tight_layout()
+        #             if plots:
+        #                 if histos:
+        #                     fig, ax = plt.subplots(3, figsize=(8, 8), sharey=True, sharex=True)
+        #                     ax[0].hist(back.flatten(), bins=50, log=True, label="pre-shift")
+        #                     ax[0].hist(back_thresh.flatten(), bins=50, log=True, label="post-shift", alpha=0.5)
+        #                     ax[0].set_title("Backward hist")
+        #                     ax[1].hist(forw.flatten(), bins=50, log=True, label="pre-shift")
+        #                     ax[1].hist(forw_thresh.flatten(), bins=50, log=True, label="post-shift", alpha=0.5)
+        #                     ax[1].set_title("Forward hist")
+        #                     ax[2].hist(kymo_adj.flatten(), bins=50, label='original', log=True)
+        #                     ax[2].hist(forw_back_thresh.flatten(), bins=50, alpha=0.5, label='filtered', log=True)
+        #                     ax[2].set_title("Total hist comparison")
+        #                     for i in range(3):
+        #                         ax[i].set_xlabel("Pixel intensity")
+        #                         ax[i].set_ylabel("Log frequency")
+        #                         ax[i].legend()
+        #                     fig.tight_layout()
 
-#                 fig, ax = plt.subplots(2, 2, figsize=(9, 9), sharey='row')
-#                 ax[0][0].imshow(np.prod((spds_back, back_thresh), 0), vmin=-flux_max, vmax=flux_max, aspect='auto',
-#                                 extent=self.imshow_extent, cmap='bwr')
-#                 ax[0][1].imshow(np.prod((spds_forw, forw_thresh), 0), vmin=-flux_max, vmax=flux_max, aspect='auto',
-#                                 extent=self.imshow_extent, cmap='bwr')
-#                 for i in [0, 1]:
-#                     ax[0][i].set_title(f"flux {['backward', 'forward'][i]}")
-#                     ax[0][i].set_xlabel("space ($\mu m$)")
-#                     ax[0][i].set_ylabel("time ($s$)")
+        #                 fig, ax = plt.subplots(2, 2, figsize=(9, 9), sharey='row')
+        #                 ax[0][0].imshow(np.prod((spds_back, back_thresh), 0), vmin=-flux_max, vmax=flux_max, aspect='auto',
+        #                                 extent=self.imshow_extent, cmap='bwr')
+        #                 ax[0][1].imshow(np.prod((spds_forw, forw_thresh), 0), vmin=-flux_max, vmax=flux_max, aspect='auto',
+        #                                 extent=self.imshow_extent, cmap='bwr')
+        #                 for i in [0, 1]:
+        #                     ax[0][i].set_title(f"flux {['backward', 'forward'][i]}")
+        #                     ax[0][i].set_xlabel("space ($\mu m$)")
+        #                     ax[0][i].set_ylabel("time ($s$)")
 
-#                 ax[1][0].imshow(net_trans / forw_back_thresh_int[margin:-margin], vmin=-1, vmax=1, cmap='bwr',
-#                                 aspect='auto', extent=self.imshow_extent)
-#                 ax[1][0].set_xlabel("space ($\mu m$)")
-#                 ax[1][0].set_ylabel("time ($s$)")
-#                 ax[1][0].set_title("Net transport")
-#                 ax[1][1].plot(np.sum(net_trans / forw_back_thresh_int[margin: -margin], axis=1) / (
-#                             space_pixel_size * net_trans.shape[1]),
-#                               self.times[0][margin:-margin])
-#                 ax[1][1].set_title("Mean net transport")
+        #                 ax[1][0].imshow(net_trans / forw_back_thresh_int[margin:-margin], vmin=-1, vmax=1, cmap='bwr',
+        #                                 aspect='auto', extent=self.imshow_extent)
+        #                 ax[1][0].set_xlabel("space ($\mu m$)")
+        #                 ax[1][0].set_ylabel("time ($s$)")
+        #                 ax[1][0].set_title("Net transport")
+        #                 ax[1][1].plot(np.sum(net_trans / forw_back_thresh_int[margin: -margin], axis=1) / (
+        #                             space_pixel_size * net_trans.shape[1]),
+        #                               self.times[0][margin:-margin])
+        #                 ax[1][1].set_title("Mean net transport")
 
-#                 fig.tight_layout()
+        #                 fig.tight_layout()
 
-#                 if save_im:
-#                     fig.savefig(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {k + 1} fluxfig')
+        #                 if save_im:
+        #                     fig.savefig(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {k + 1} fluxfig')
 
-#             if save_flux_array:
-#                 np.save(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {k + 1} fluxback.npy',
-#                         np.prod((spds_back, back_thresh), 0))
-#                 np.save(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {k + 1} fluxforw.npy',
-#                         np.prod((spds_forw, forw_thresh), 0))
+        #             if save_flux_array:
+        #                 np.save(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {k + 1} fluxback.npy',
+        #                         np.prod((spds_back, back_thresh), 0))
+        #                 np.save(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {k + 1} fluxforw.npy',
+        #                         np.prod((spds_forw, forw_thresh), 0))
 
-#                 # if len(self.kymos) > 1:
-#                 #     ax_spd[0][k].imshow(spds_tot,
-#                 #                         vmin=-1*abs(np.max(spds_tot.flatten())),
-#                 #                         vmax=abs(np.max(spds_tot.flatten())),
-#                 #                         cmap='bwr')
-#                 #     ax_spd[1][k].imshow(flux_tot,
-#                 #                         vmin=-1 * abs(np.max(flux_tot.flatten())),
-#                 #                         vmax=abs(np.max(flux_tot.flatten())),
-#                 #                         cmap='bwr'
-#                 #                         )
-#                 #
-#                 #     ax_trans[k].plot((net_trans[-1] - net_trans[0])/forw_back_thresh_int[margin:-margin])
-#                 #     ax_trans[k].set_xlabel("space (x)")
+        #                 # if len(self.kymos) > 1:
+        #                 #     ax_spd[0][k].imshow(spds_tot,
+        #                 #                         vmin=-1*abs(np.max(spds_tot.flatten())),
+        #                 #                         vmax=abs(np.max(spds_tot.flatten())),
+        #                 #                         cmap='bwr')
+        #                 #     ax_spd[1][k].imshow(flux_tot,
+        #                 #                         vmin=-1 * abs(np.max(flux_tot.flatten())),
+        #                 #                         vmax=abs(np.max(flux_tot.flatten())),
+        #                 #                         cmap='bwr'
+        #                 #                         )
+        #                 #
+        #                 #     ax_trans[k].plot((net_trans[-1] - net_trans[0])/forw_back_thresh_int[margin:-margin])
+        #                 #     ax_trans[k].set_xlabel("space (x)")
 
         return flux_tot
