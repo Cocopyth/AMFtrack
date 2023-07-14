@@ -482,7 +482,7 @@ def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
     dbx = load_dbx()
     for index, row in folders_drop.iterrows():
         path = "/" + row["tot_path_drop"]
-        response = dbx.files_list_folder(path, recursive=False)
+        response = dbx.files_list_folder(path, recursive=True)
         listfiles = []
         while response.has_more:
             listfiles += [file for file in response.entries]
@@ -499,6 +499,22 @@ def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
             )
             print(path_drop, path_local)
             download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
+
+def download_analysis_folders_drop(analysis_folder, dropbox_folder):
+    dbx = load_dbx()
+    listfiles = []
+    response = dbx.files_list_folder(dropbox_folder + 'Analysis/', recursive=True)
+    while response.has_more:
+        listfiles += [Path(file.path_display) for file in response.entries if Path(file.path_display).suffix != '']
+        response = dbx.files_list_folder_continue(response.cursor)
+    listfiles += [Path(file.path_display) for file in response.entries]
+
+    for file in listfiles:
+        local_path = analysis_folder / Path(dropbox_folder).relative_to('/DATA/') / file.relative_to(
+            Path(dropbox_folder) / 'Analysis')
+        if not local_path.parent.exists():
+            local_path.parent.mkdir(parents=True)
+        download(file.as_posix(), local_path)
 
 
 def compute_dropbox_hash(filename):
