@@ -17,10 +17,11 @@ import pandas as pd
 import hashlib
 import shutil
 import numpy as np
+from pathlib import Path
 
 DOTENV_FILE = (
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    + "/local.env"
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        + "/local.env"
 )
 env_config = Config(RepositoryEnv(DOTENV_FILE))
 
@@ -112,8 +113,8 @@ def upload(file_path, target_path, chunk_size=4 * 1024 * 1024, catch_exception=T
                                 cursor.offset = f.tell()
                             pbar.update(chunk_size)
             except (
-                requests.exceptions.RequestException,
-                dropbox.exceptions.ApiError,
+                    requests.exceptions.RequestException,
+                    dropbox.exceptions.ApiError,
             ) as e:
                 if catch_exception:
                     print("error")
@@ -156,7 +157,7 @@ def get_size_dbx(path):
         response = dbx.files_list_folder_continue(response.cursor)
     listfiles += [file for file in response.entries]
     size = sum(file.size for file in listfiles)
-    return size / 10**9
+    return size / 10 ** 9
 
 
 def download(file_path, target_path, end="", catch_exception=True, unzip=False):
@@ -302,13 +303,13 @@ def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     )
     return df
 
+
 def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
-    print("go")
     dbx = load_dbx()
     response = dbx.files_list_folder(dir_drop, recursive=True)
     files_list = []
     excel_list = []
-    txt_list   = []
+    txt_list = []
     image_list = []
     folders_interest = ('.csv', '.xlsx', 'xlsb')
     re_video = re.compile(r'\/\d*\/Img$')
@@ -318,7 +319,7 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
     is_rachael_video = True
     is_morrison_video = False
     re_seq = [re_video, re_excel, re_rachael_video, re_video_info]
-    
+
     for x in response.entries:
         # print(x.path_display)
         for regex in re_seq:
@@ -336,7 +337,7 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
                     files_list.append(x.path_display)
 
     for i, xc_file in enumerate(files_list):
-        suffix = xc_file.split(os.sep)[-1].split('.')[-1]
+        suffix = xc_file.split('/')[-1].split('.')[-1]
         if suffix.endswith(('xlsx', 'xlsb')):
             print("I found an excel sheet to use!")
             excel_list.append(files_list[i])
@@ -351,15 +352,15 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
             txt_list.append(files_list[i])
         else:
             image_list.append(files_list[i])
-    
-    print(files_list)
+
+    print(image_list, os.sep)
 
     if is_rachael_video:
-        names = [file.split(os.sep)[-1] for file in image_list]
+        names = [file.split('/')[-1] for file in image_list]
     else:
-        names = [f'{file.split(os.sep)[-3]}_{file.split(os.sep)[-2]}{os.sep}Img{os.sep}' for file in image_list]
-    path_drop = [os.path.join(*file.split(os.sep)) for file in image_list]
-    plate_nr = [path.split(os.path.sep)[-3].split('_')[1][5:] for path in path_drop ]
+        names = [f"{file.split('/')[-3]}_{file.split('/')[-2]}{'/'}Img{'/'}" for file in image_list]
+    path_drop = [os.path.join(*file.split('/')) for file in image_list]
+    plate_nr = [path.split(os.path.sep)[-3].split('_')[1][5:] for path in path_drop]
     date_img = [path.split(os.path.sep)[-3].split('_')[0] for path in path_drop]
     video = [name.split('_')[-1] for name in names]
     # id_uniques = [idi for idi in id_uniques if len(idi.split("_")) >= 2]
@@ -378,7 +379,7 @@ def get_dropbox_video_folders(dir_drop: str, skip_size: bool = True) -> pd.DataF
     return df, excel_list, txt_list
 
 
-def save_dropbox_state(dir_drop: str, skip_size: bool = True, is_video: bool=False):
+def save_dropbox_state(dir_drop: str, skip_size: bool = True, is_video: bool = False):
     if is_video:
         df = get_dropbox_video_folders(dir_drop, skip_size)
     else:
@@ -405,7 +406,7 @@ def read_saved_dropbox_state(dir_drop: str):
 
 
 def upload_folders(
-    folders: pd.DataFrame, dir_drop="DATA", catch_exception=True, delete=False
+        folders: pd.DataFrame, dir_drop="DATA", catch_exception=True, delete=False
 ):
     """
     Upload all the folders in the dataframe to a location on dropbox
@@ -418,9 +419,9 @@ def upload_folders(
             line = run_info.loc[run_info["folder"] == directory_name]
             try:
                 id_unique = (
-                    str(int(line["Plate"].iloc[0]))
-                    + "_"
-                    + str(int(str(line["CrossDate"].iloc[0]).replace("'", "")))
+                        str(int(line["Plate"].iloc[0]))
+                        + "_"
+                        + str(int(str(line["CrossDate"].iloc[0]).replace("'", "")))
                 )
             except:
                 id_unique = "faulty_param_files"
@@ -474,13 +475,10 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
                 "Analysis.zip",
                 "Img.zip",
                 "param.m",
-                "*.tif",
             ]:  # to fix!
-                print("Hello ,I am being downloaded")
                 download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
-            else:
-                print(f"Oh no! I am not being downloaded! {file.name}")
-                
+
+
 def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
     dbx = load_dbx()
     for index, row in folders_drop.iterrows():
@@ -502,7 +500,6 @@ def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
             )
             print(path_drop, path_local)
             download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
-
 
 
 def compute_dropbox_hash(filename):

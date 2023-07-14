@@ -24,7 +24,7 @@ dataframe = dataframe.iloc[i]
 if 'unique_id' in dataframe:
     drop_targ = os.path.relpath(f"/{dataframe['tot_path_drop']}", upl_targ)
     
-    test_video = Kymo_video_analysis(input_frame = dataframe, logging=True)
+    test_video = KymoVideoAnalysis(input_frame = dataframe, logging=True)
     img_address = dataframe['analysis_folder']
     db_address = f"{upl_targ}Analysis/{drop_targ}"
     print(f"HELLLO!!! {db_address}")
@@ -32,9 +32,9 @@ if 'unique_id' in dataframe:
 else:
     img_address = dataframe["address_total"]
     magnif = dataframe['magnification']
-    test_video = Kymo_video_analysis(img_address, logging=True, vid_type=None,
-                                     fps=None, binning=None, filter_step=[20, 70][magnif > 10],
-                                     seg_thresh=12, show_seg=False)
+    test_video = KymoVideoAnalysis(img_address, logging=True, vid_type=None,
+                                   fps=None, binning=None, filter_step=[20, 70][magnif > 10],
+                                   seg_thresh=12, show_seg=False)
     db_address = f"{upl_targ}Analysis/{dataframe['parent_folder']}/"
 
 edge_list = test_video.edge_objects
