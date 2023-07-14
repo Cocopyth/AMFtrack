@@ -9,7 +9,7 @@ from amftrack.pipeline.development.high_mag_videos.plot_data import (
     save_raw_data,
     plot_summary,
 )
-from pathlib import Path
+from pathlib import Path, PurePath
 import sys
 import os
 import imageio.v3 as imageio
@@ -17,27 +17,23 @@ import matplotlib.pyplot as plt
 import cv2
 from tifffile import imwrite
 from tqdm import tqdm
-from amftrack.pipeline.functions.image_processing.extract_graph import (
-    from_sparse_to_graph,
-    generate_nx_graph,
-    clean_degree_4,
-)
 import matplotlib as mpl
-
-from amftrack.pipeline.launching.run_super import run_parallel_transfer
 import dropbox
 from amftrack.util.dbx import upload_folders, download, read_saved_dropbox_state, save_dropbox_state, load_dbx, \
     download, get_dropbox_folders, get_dropbox_video_folders
 import logging
 import datetime
-import glob
-import json
 
 logging.basicConfig(stream=sys.stdout, level=logging.debug)
 mpl.rcParams['figure.dpi'] = 300
 
 
-def month_to_num(x):
+def month_to_num(x:str):
+    """
+    Takes a string with the name of a month, and returns that month's corresponding number as a string.
+    :param x:   String, preferably of a month
+    :return:    Two-digit string number of that month
+    """
     months = {
         'jan': '01',
         'feb': '02',
@@ -60,11 +56,29 @@ def month_to_num(x):
         raise ValueError('Not a month')
 
 
-def index_videos_dropbox(analysis_folder, dropbox_folder, REDO_SCROUNGING=False):
-    analysis_json = f"{analysis_folder}{dropbox_folder[6:]}all_folders_drop.json"
+def index_videos_dropbox(analysis_folder, videos_folder, dropbox_folder,
+                         REDO_SCROUNGING=False, CREATE_VIDEO_HIERARCHY=True):
+    """
+    Goes through the specified dropbox folder, and collects and organises all the relevant video data for all videos
+    stored in that dropbox. Works recursively. On the local machine will also create a folder structure in the
+    analysis and videos folder, populating the analysis folder with the video info. Returns a merged pandas dataframe
+    with all video information.
+    :param analysis_folder:         Local address where video info, and later analysis will be stored
+    :param videos_folder:           Local address where raw video data will be stored later
+    :param dropbox_folder:          Folder address on the dropbox with all videos you want to process
+    :param REDO_SCROUNGING:         Boolean whether to redo the dropbox searching. Dropbox will be searched anyway if cache .json cannot be found
+    :param CREATE_VIDEO_HIERARCHY:  Boolean whether to create the video hierarchy. Only set to False if you don't plan on downloading the raw data
+    :return:                        Pandas dataframe with all video information
+    """
+    analysis_folder = Path(analysis_folder)
+    dropbox_folder = Path(dropbox_folder)
+    videos_folder = Path(videos_folder)
+
+    analysis_json = analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).joinpath("all_folders_drop.json")
+    excel_json = analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).joinpath("excel_drop.json")
+
     if os.path.exists(analysis_json):
         all_folders_drop = pd.read_json(analysis_json)
-    excel_json = f"{analysis_folder}{dropbox_folder[6:]}excel_drop.json"
     if os.path.exists(excel_json):
         excel_drop = pd.read_json(excel_json, typ='series')
     if not os.path.exists(analysis_json) or REDO_SCROUNGING:
@@ -72,33 +86,50 @@ def index_videos_dropbox(analysis_folder, dropbox_folder, REDO_SCROUNGING=False)
         all_folders_drop, excel_drop, txt_drop = get_dropbox_video_folders(dropbox_folder, True)
 
         clear_output(wait=False)
-        print("Scrounging complete, merging files...")
+        print("Scrounging complete, downloading files...")
 
         excel_addresses = np.array([re.search("^.*Plate.*\/.*Plate.*$", entry, re.IGNORECASE) for entry in excel_drop])
-        excel_addresses = excel_addresses[excel_addresses != None]
-        excel_addresses = [address.group(0) for address in excel_addresses]
+        if len(excel_addresses > 0):
+            excel_addresses = excel_addresses[excel_addresses is not None]
+            excel_addresses = [address.group(0) for address in excel_addresses]
         excel_drop = np.concatenate([excel_addresses, txt_drop])
-        if not os.path.exists(f"{analysis_folder}{dropbox_folder[6:]}"):
-            os.makedirs(f"{analysis_folder}{dropbox_folder[6:]}")
+        if not analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).exists():
+            analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).mkdir()
         all_folders_drop.to_json(analysis_json)
         pd.Series(excel_drop).to_json(excel_json)
     info_addresses = []
     for address in excel_drop:
-        csv_name_len = len(address.split('/')[-1])
-        print(analysis_folder + address[6:-csv_name_len])
-        if not os.path.exists(analysis_folder + address[6:-csv_name_len]):
-            os.makedirs(analysis_folder + address[6:-csv_name_len])
-        if not os.path.exists(analysis_folder + address[6:]):
-            download(address, analysis_folder + address[6:])
-        info_addresses.append(analysis_folder + address[6:])
+        address_local = Path(address).relative_to('/DATA/')
+        if not (analysis_folder / address_local.parent).exists():
+            (analysis_folder / address_local.parent).mkdir(parents=True)
+        if not (analysis_folder / address_local).exists() or REDO_SCROUNGING:
+            download(address, (analysis_folder / address_local))
+        info_addresses.append(analysis_folder / address_local)
     clear_output(wait=False)
-    print("All files downloaded!")
+    print("All files downloaded! Merging files...")
     merge_frame = read_video_data(info_addresses, all_folders_drop, analysis_folder)
+    merge_frame = merge_frame.rename(columns={'tot_path': 'folder'})
+    merge_frame = merge_frame.sort_values('unique_id')
+    merge_frame = merge_frame.reset_index(drop=True)
+    merge_frame = merge_frame.loc[:, ~merge_frame.columns.duplicated()].copy()
+    merge_frame['analysis_folder'] = [np.nan for i in range(len(merge_frame))]
+    merge_frame['videos_folder'] = [np.nan for i in range(len(merge_frame))]
+
+    for index, row in merge_frame.iterrows():
+        target_anals_file = analysis_folder / row['folder'][:-4]
+        target_video_file = videos_folder / row['folder']
+
+        row.loc['analysis_folder'] = target_anals_file.as_posix()
+        row.loc['videos_folder'] = target_video_file.as_posix()
+
+        if not target_video_file.exists() and CREATE_VIDEO_HIERARCHY:
+            target_video_file.mkdir(parents=True)
+        row.to_json(target_anals_file / "video_data.json", orient="index")
+
     return merge_frame
 
 
 def read_video_data(address_array, folders_frame, analysis_folder):
-    #     print(folders_frame['video'].to_string())
     folders_frame['plate_id_csv'] = [f"{row['Date Imaged']}_Plate{row['Plate number']}" for index, row in
                                      folders_frame.iterrows()]
     folders_frame['unique_id_csv'] = [f"{row['plate_id_csv']}_{str(row['video']).split(os.sep)[0]}" for index, row in
@@ -108,19 +139,13 @@ def read_video_data(address_array, folders_frame, analysis_folder):
     folders_frame['unique_id_xl'] = [f"{row['plate_id_xl']}_{row['tot_path_drop'].split(os.sep)[-1].split('_')[-1]}" for
                                      index, row in folders_frame.iterrows()]
     folders_frame['unique_id_xl'] = [entry.lower() for entry in folders_frame['unique_id_xl']]
-    #     print(folders_frame['plate_id_csv'][0],
-    #           folders_frame['unique_id_csv'][0],
-    #           folders_frame['plate_id_xl'][0],
-    #           folders_frame['unique_id_xl'][0])
-    #     print(folders_frame['unique_id_xl'])
+
     excel_frame = pd.DataFrame()
     csv_frame = pd.DataFrame()
     txt_frame = pd.DataFrame()
     for address in tqdm(address_array):
-        #         print(address)
-        suffix = address.split('.')[-1]
-        if suffix == 'xlsx':
-            # print(address)
+        suffix = address.suffix
+        if suffix == '.xlsx':
             raw_data = pd.read_excel(address)
             if 'Binned (Y/N)' not in raw_data:
                 raw_data['Binned (Y/N)'] = ['N' for entry in raw_data['Unnamed: 0']]
@@ -131,30 +156,22 @@ def read_video_data(address_array, folders_frame, analysis_folder):
                                        raw_data['Unnamed: 0']]
             folders_plate_frame = folders_frame[
                 folders_frame['plate_id_xl'].str.lower().isin(raw_data['plate_id_xl'].str.lower())]
-            #             print(folders_plate_frame)
-            #             print(raw_data.set_index('Unnamed: 0'))
             raw_data = raw_data.join(folders_plate_frame.set_index('unique_id_xl'), lsuffix='', rsuffix='_folder',
                                      on='Unnamed: 0')
-            #             print(raw_data)
             raw_data = raw_data.reset_index()
-            #             print(raw_data.iloc[0])
             excel_frame = pd.concat([excel_frame, raw_data])
 
-        elif suffix == 'csv':
+        elif suffix == '.csv':
             df_comma = pd.read_csv(address, nrows=1, sep=",")
             df_semi = pd.read_csv(address, nrows=1, sep=";")
             if df_comma.shape[1] > df_semi.shape[1]:
                 raw_data = pd.read_csv(address, sep=",")
             else:
                 raw_data = pd.read_csv(address, sep=";")
-            raw_data['file_name'] = [address.split(os.sep)[-1].split('.')[-2]] * len(raw_data)
-            #             print(address.split(os.sep)[-1].split('.')[-2])
-
+            raw_data['file_name'] = [address.stem] * len(raw_data)
             folders_plate_frame = folders_frame[
                 folders_frame['plate_id_csv'].str.lower().isin(raw_data['file_name'].str.lower())].reset_index()
-            #             print(folders_plate_frame)
             raw_data['unique_id'] = folders_plate_frame['unique_id_csv']
-            #             print(raw_data['unique_id'])
             raw_data = raw_data.set_index('unique_id').join(folders_plate_frame.set_index('unique_id_csv'), lsuffix='',
                                                             rsuffix='_folder')
             raw_data = raw_data[raw_data['tot_path_drop'] == raw_data['tot_path_drop']]
@@ -162,21 +179,15 @@ def read_video_data(address_array, folders_frame, analysis_folder):
             raw_data = raw_data.reset_index()
             csv_frame = pd.concat([csv_frame, raw_data], axis=0, ignore_index=True)
 
-        elif suffix == 'txt':
-            if not os.path.exists(address):
+        elif suffix == '.txt':
+            if not address.exists():
                 print(f"Could not find {address}, skipping for now")
                 continue
             raw_data = pd.read_csv(address, sep=": ", engine='python').T
             raw_data = raw_data.dropna(axis=1, how='all')
-
-            #             raw_data = raw_data.reset_index(drop=True)
-            raw_data['unique_id'] = [f"{address.split(os.sep)[-3]}_{address.split(os.sep)[-2]}"]
-            # address_rel = os.path.dirname(os.path.relpath(address, analysis_folder))+os.sep + "Img"+os.sep
-            # print(address_rel)
-            # raw_data['tot_path'] = [address[34:-13] + 'Img/']
-            raw_data['tot_path'] = os.path.dirname(os.path.relpath(address, analysis_folder)) + os.sep + "Img" + os.sep
-            raw_data['tot_path_drop'] = ['DATA' + os.sep + raw_data['tot_path'][0]]
-            #             print(raw_data)
+            raw_data['unique_id'] = [f"{address.parts[-3]}_{address.parts[-2]}"]
+            raw_data["tot_path"] = (address.relative_to(analysis_folder).parent / "Img").as_posix()
+            raw_data['tot_path_drop'] = ['DATA/' + raw_data['tot_path'][0]]
             try:
                 txt_frame = pd.concat([txt_frame, raw_data], axis=0, ignore_index=True)
             except:
@@ -205,9 +216,7 @@ def read_video_data(address_array, folders_frame, analysis_folder):
             'Video Length (s)': 'time_(s)',
             'Comments': 'comments',
         })
-    #         print(excel_frame)
     if len(txt_frame) > 0:
-        #         print(txt_frame)
         txt_frame = txt_frame.dropna(axis=1, how='all')
         txt_frame = txt_frame.drop(
             ['Computer', 'User', 'DataRate', 'DataSize', 'Frames Recorded', 'Fluorescence', 'Four Led Bar', 'Model',
@@ -264,7 +273,6 @@ def read_video_data(address_array, folders_frame, analysis_folder):
         })
 
     if len(csv_frame) > 0:
-        #         print(csv_frame['unique_id'])
         csv_frame['video_id'] = [entry.split('_')[-1] for entry in csv_frame['unique_id']]
         csv_frame['plate_nr'] = [int(entry.split('_')[-2][5:]) for entry in csv_frame['unique_id']]
         csv_frame['Lens'] = csv_frame["Lens"].astype(float)
@@ -283,16 +291,15 @@ def read_video_data(address_array, folders_frame, analysis_folder):
         })
         csv_frame = csv_frame.drop(columns=['index', 'Plate number', 'video_folder', 'file_name'], axis=1)
     if len(csv_frame) > 0 and len(txt_frame) > 0:
-        #         print(txt_frame['unique_id'])
         merge_frame = pd.merge(txt_frame, csv_frame, how='outer', on='unique_id', suffixes=("", "_csv"))
-
-        #         merge_frame = merge_frame.drop(columns=['unique_id_xl', 'plate_id', 'video_folder', 'Plate number', 'folder', 'file_name'],axis=1)
+        merge_frame = merge_frame.drop(
+            columns=['unique_id_xl', 'plate_id', 'video_folder', 'Plate number', 'folder', 'file_name'], axis=1)
         merge_frame = merge_frame.rename(columns={'plate_id_xl': 'plate_id'})
         merge_frame['imaging_day'] = merge_frame['imaging_day'].fillna(merge_frame['Date Imaged'])
         merge_frame['strain'] = merge_frame['strain'].fillna(merge_frame['strain_csv'])
         merge_frame['treatment'] = merge_frame['treatment'].fillna(merge_frame['treatment_csv'])
         merge_frame['video_int'] = merge_frame['video_int'].fillna(merge_frame['video_int_csv'])
-        #         merge_frame['time_(s)'] = merge_frame['time_(s)'].fillna(merge_frame['time'])
+        merge_frame['time_(s)'] = merge_frame['time_(s)'].fillna(merge_frame['time'])
         merge_frame['mode'] = merge_frame['mode'].fillna(merge_frame['mode_csv'])
         merge_frame['fps'] = merge_frame['fps'].fillna(merge_frame['fps_csv'])
         merge_frame['binning'] = merge_frame['binning'].fillna(merge_frame['binning_csv'])
@@ -302,7 +309,10 @@ def read_video_data(address_array, folders_frame, analysis_folder):
         merge_frame['tot_path'] = merge_frame['tot_path'].fillna(merge_frame['tot_path_csv'])
         merge_frame['days_after_crossing'] = merge_frame['days_after_crossing'].fillna(
             merge_frame['days_after_crossing_csv'])
-    #         merge_frame = merge_frame.drop(columns=['root', 'video_int_csv', 'treatment_csv', 'strain_csv', 'days_after_crossing_csv', 'xpos_csv', 'ypos_csv', 'mode_csv', 'binning_csv', 'magnification_csv', 'fps_csv', 'plate_id_csv', 'Date Imaged', 'tot_path_csv', 'index'],axis=1)
+        merge_frame = merge_frame.drop(
+            columns=['video_int_csv', 'treatment_csv', 'strain_csv', 'days_after_crossing_csv', 'xpos_csv', 'ypos_csv',
+                     'mode_csv', 'binning_csv', 'magnification_csv', 'fps_csv', 'plate_id_csv', 'Date Imaged',
+                     'tot_path_csv', 'index'], axis=1)
 
     elif len(excel_frame) > 0 and len(txt_frame) > 0:
         merge_frame = pd.merge(excel_frame, csv_frame, how='left', on='unique_id', suffixes=("", "_csv"))
@@ -312,9 +322,7 @@ def read_video_data(address_array, folders_frame, analysis_folder):
                                    merge_frame.iterrows()]
     elif len(excel_frame) > 0:
         merge_frame = excel_frame.reset_index(drop=True)
-        #         print(merge_frame)
         merge_frame = merge_frame[merge_frame['tot_path_drop'] == merge_frame['tot_path_drop']]
-        #         print(merge_frame['tot_path_drop'].shape)
         merge_frame['tot_path'] = [entry[5:] + os.sep + 'Img' + os.sep for entry in merge_frame['tot_path_drop']]
         merge_frame = merge_frame.rename(columns={
             'plate_id_xl': 'plate_id',
