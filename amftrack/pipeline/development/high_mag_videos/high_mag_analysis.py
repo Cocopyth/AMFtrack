@@ -103,14 +103,40 @@ class HighmagDataset(object):
         return None
 
     def bin_values(self, column, bins, new_column_name ='edge_bin_values'):
-        bin_series = pd.cut(self.edges_frame[column], bins)
-        return None
+        bin_series = pd.cut(self.edges_frame[column], bins, labels=False)
+        self.edges_frame[new_column_name] = bin_series
+        return bin_series
+    
+    def plot_histo(self, bins, column, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+        ax.hist(self.edges_frame[column], bins = bins, edgecolor='black')
+        ax.set_xlabel(column)
+        ax.set_ylabel("counts")
+        fig.tight_layout()
+        return ax
+        
+    def plot_violins(self, column, bins, bin_separator='edge_bin_values', ax=None, c='tab:blue'):
+        if ax is None:
+            fig, ax = plt.subplots()
+        violin_data = [ self.edges_frame[column][self.edges_frame[bin_separator] == i].astype(float) for i in range(len(bins))]
+        violin_data_d = []
+        for data in violin_data:
+            if data.empty:
+                violin_data_d.append([np.nan, np.nan])
+            else:
+                violin_data_d.append(data)
+        violin_parts = ax.violinplot(dataset = violin_data_d)
+        for vp in violin_parts['bodies']:
+            vp.set_edgecolor('black')
+            vp.set_facecolor(c)
+        return ax
 
     def return_video_frame(self):
         return self.video_frame
 
     def return_edge_frame(self):
-        edge_frame
+        return self.edges_frame
 
     def return_edge_objs(self):
         return self.edge_objs
