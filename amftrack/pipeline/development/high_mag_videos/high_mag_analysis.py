@@ -9,6 +9,7 @@ from amftrack.pipeline.development.high_mag_videos.plot_data import (
     save_raw_data,
     plot_summary,
 )
+import matplotlib.patches as mpatches
 from pathlib import Path, PurePath
 import sys
 import os
@@ -70,12 +71,18 @@ def index_videos_dropbox(analysis_folder, videos_folder, dropbox_folder,
     :param CREATE_VIDEO_HIERARCHY:  Boolean whether to create the video hierarchy. Only set to False if you don't plan on downloading the raw data
     :return:                        Pandas dataframe with all video information
     """
+
+    # Using PathLib allows for more OS-ambiguous functionality
+
     analysis_folder = Path(analysis_folder)
     dropbox_folder = Path(dropbox_folder)
     videos_folder = Path(videos_folder)
 
     analysis_json = analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).joinpath("all_folders_drop.json")
     excel_json = analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).joinpath("excel_drop.json")
+
+    # First analysis_json and excel_json will be sought for, these serve as caches for the dropbox data.
+    # If they can't be found, the information will be assembled from the indexing files on the Dropbox.
 
     if os.path.exists(analysis_json):
         all_folders_drop = pd.read_json(analysis_json)
@@ -98,6 +105,9 @@ def index_videos_dropbox(analysis_folder, videos_folder, dropbox_folder,
         all_folders_drop.to_json(analysis_json)
         pd.Series(excel_drop).to_json(excel_json)
     info_addresses = []
+
+    # Once addresses have been found, all relevant index files will be downloaded to their respective position
+
     for address in excel_drop:
         address_local = Path(address).relative_to('/DATA/')
         if not (analysis_folder / address_local.parent).exists():
@@ -107,6 +117,9 @@ def index_videos_dropbox(analysis_folder, videos_folder, dropbox_folder,
         info_addresses.append(analysis_folder / address_local)
     clear_output(wait=False)
     print("All files downloaded! Merging files...")
+
+    # The downloaded information is then read and merged into one dataframe containing all relevant information.
+
     merge_frame = read_video_data(info_addresses, all_folders_drop, analysis_folder)
     merge_frame = merge_frame.rename(columns={'tot_path': 'folder'})
     merge_frame = merge_frame.sort_values('unique_id')
@@ -130,6 +143,15 @@ def index_videos_dropbox(analysis_folder, videos_folder, dropbox_folder,
 
 
 def read_video_data(address_array, folders_frame, analysis_folder):
+    """
+    Takes a list of index files, a frame with basic video information and the analysis folder to merge the
+    information altogether into a readable pandas dataframe with consistent columns and values.
+    :param address_array:   List of addresses pointing to downloaded .xslx, .csv and .txt files.
+    :param folders_frame:   Frame with basic video parameters which will be expanded, created with the dropbox download
+                            functions
+    :param analysis_folder: Folder where all of this will be found. Highest folder in the hierarchy.
+    :return:                Merged frame with all video information that could be found in the index files.
+    """
     folders_frame['plate_id_csv'] = [f"{row['Date Imaged']}_Plate{row['Plate number']}" for index, row in
                                      folders_frame.iterrows()]
     folders_frame['unique_id_csv'] = [f"{row['plate_id_csv']}_{str(row['video']).split(os.sep)[0]}" for index, row in
@@ -389,7 +411,7 @@ class HighmagDataset(object):
             fig.tight_layout()
         return ax
 
-    def plot_violins(self, column, bins, bin_separator='edge_bin_values', ax=None, c='tab:blue'):
+    def plot_violins(self, column, bins, bin_separator='edge_bin_values', ax=None, c='tab:blue', labels=None):
         if ax is None:
             fig, ax = plt.subplots()
         violin_data = [self.edges_frame[column][self.edges_frame[bin_separator] == i].astype(float) for i in
@@ -400,10 +422,16 @@ class HighmagDataset(object):
                 violin_data_d.append([np.nan, np.nan])
             else:
                 violin_data_d.append(data)
-        violin_parts = ax.violinplot(dataset=violin_data_d)
+        violin_parts = ax.violinplot(dataset=violin_data_d, positions=bins, widths = bins[1] - bins[0], showmeans=False, showmedians=False, showextrema=False)
+        violin_means = [np.nanmean(data, axis=0) for data in violin_data_d]
+        ax.scatter(bins, violin_means, s=4, c='black')
         for vp in violin_parts['bodies']:
             vp.set_edgecolor('black')
+            vp.set_alpha(1)
             vp.set_facecolor(c)
+        if labels is not None:
+            labels.append((mpatches.Patch(color=c), column))
+
         return ax
 
     def return_video_frame(self):
