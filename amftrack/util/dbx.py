@@ -304,9 +304,16 @@ def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     return df
 
 
-def get_dropbox_video_folders(dir_drop, skip_size: bool = True) -> pd.DataFrame:
+def get_dropbox_video_folders(dir_drop) -> pd.DataFrame:
+    """
+    Uses a dropbox address as highest folder in a video hierarchy to collect an index of all the files that are
+    present in the folder hierarchy. Particular of interest are the .xslx files, .csv files with video parameter
+    information, and VideoInfo.txt file  containing info on individual videos.
+    :param dir_drop: Highest folder in videos folder hierarchy. All videos in this folder will be indexed.
+    :return: Pandas dataframe with video info, list of .xslx and .csv files, list of .txt files.
+    """
 
-    dir_drop_analysis = dir_drop/'Analysis'
+    dir_drop_analysis = dir_drop / 'Analysis'
 
     dbx = load_dbx()
     response = dbx.files_list_folder(dir_drop.as_posix(), recursive=True)
@@ -314,15 +321,14 @@ def get_dropbox_video_folders(dir_drop, skip_size: bool = True) -> pd.DataFrame:
     excel_list = []
     txt_list = []
     image_list = []
-    folders_interest = ('.csv', '.xlsx', 'xlsb')
     re_video = re.compile(r'\/\d*\/Img$')
     re_excel = re.compile(r'(\d{8}.*\.(csv))|(xls[xb])$')
     re_rachael_video = re.compile(r'^.*\/DATA\/\d{8}_Plate\d{1,6}_\d{1,4}(\/|)$', re.IGNORECASE)
     re_video_info = re.compile(r'\/\d{8}_Plate\d{1,6}\/.*\/videoInfo\.txt$', re.IGNORECASE)
     is_rachael_video = True
-    is_morrison_video = False
     re_seq = [re_video, re_excel, re_rachael_video, re_video_info]
 
+    ### Get list of files from dropbox, look through all file names and remove image tiffs. Leaves just the index files.
     for x in response.entries:
         for regex in re_seq:
             test = regex.search(x.path_display)
@@ -349,7 +355,6 @@ def get_dropbox_video_folders(dir_drop, skip_size: bool = True) -> pd.DataFrame:
             is_rachael_video = False
         elif suffix.endswith(('txt')):
             print("I found many txts!")
-            is_morrison_video = True
             txt_list.append(files_list[i])
         else:
             image_list.append(files_list[i])
@@ -500,7 +505,15 @@ def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
             print(path_drop, path_local)
             download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
 
+
 def download_analysis_folders_drop(analysis_folder, dropbox_folder):
+    """
+    Get all analysis files from a dropbox folder. Dropbox folder must contain /Analysis/ directory. Downloads the
+    files to analysis_folder.
+    :param analysis_folder:     Folder where files will be downloaded to.
+    :param dropbox_folder:      Dropbox folder containing /Analysis/ directory with analysis files to be downloaded
+    :return:                    Nothing
+    """
     dbx = load_dbx()
     listfiles = []
     response = dbx.files_list_folder(dropbox_folder + 'Analysis/', recursive=True)
@@ -515,7 +528,7 @@ def download_analysis_folders_drop(analysis_folder, dropbox_folder):
         if not local_path.parent.exists():
             local_path.parent.mkdir(parents=True)
         download(file.as_posix(), local_path)
-
+    return None
 
 def compute_dropbox_hash(filename):
     file_size = os.stat(filename).st_size
