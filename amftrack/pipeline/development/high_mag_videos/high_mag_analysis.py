@@ -19,7 +19,6 @@ import cv2
 from tifffile import imwrite
 from tqdm import tqdm
 import matplotlib as mpl
-import dropbox
 from amftrack.util.dbx import upload_folders, download, read_saved_dropbox_state, save_dropbox_state, load_dbx, \
     download, get_dropbox_folders, get_dropbox_video_folders
 import logging
@@ -404,7 +403,6 @@ class HighmagDataset(object):
         frame_4x_filt = frame_4x_filt.filter_edges('ypos', '>=', pd_row['ypos'] - pic_4x_res[1])
         frame_4x_filt = frame_4x_filt.filter_edges('ypos', '<=', pd_row['ypos'] + pic_4x_res[1])
         frame_4x_filt.video_frame = pd.concat([pd_row.to_frame().T, frame_4x_filt.video_frame])
-
 
         return frame_4x_filt
 

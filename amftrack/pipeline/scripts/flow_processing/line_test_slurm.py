@@ -240,7 +240,7 @@ def do_line_test(
     tot_flux_back = np.sum(flux_stack_back, axis=0)
     img_max       = np.max(abs(tot_img.flatten()))
     flux_max      = np.max(abs(tot_flux.flatten()))
-    kymo_anal     = Kymo_edge_analysis(kymo = tot_img)
+    kymo_anal     = KymoEdgeAnalysis(kymo = tot_img)
     forw_thresh, back_thresh = kymo_anal.fourier_kymo(1, test_plots=False)
 #     forw_back = np.add(forw, back)
 #     forw_thresh = forw
