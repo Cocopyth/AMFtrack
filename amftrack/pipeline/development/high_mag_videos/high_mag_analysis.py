@@ -393,6 +393,55 @@ class HighmagDataset(object):
         filter_self.edges_frame = filter_self.edges_frame.reset_index(drop=True)
         return filter_self
 
+    def context_4x(self, pd_row, FLUO=True):
+        space_res = 2 * 1.725 / pd_row['magnification'] * pd_row['binning']
+        pic_4x_res = np.array([[4088, 3000],[2044, 1500]][pd_row['binning'] == 2]) * space_res / 2
+        frame_4x_filt = self.filter_edges('plate_id', '==', pd_row['plate_id'])
+        frame_4x_filt = frame_4x_filt.filter_edges('magnification', '==', 50.0)
+        frame_4x_filt = frame_4x_filt.filter_edges('mode', '==', ['BF', 'F'][FLUO])
+        frame_4x_filt = frame_4x_filt.filter_edges('xpos', '>=', pd_row['xpos'] - pic_4x_res[0])
+        frame_4x_filt = frame_4x_filt.filter_edges('xpos', '<=', pd_row['xpos'] + pic_4x_res[0])
+        frame_4x_filt = frame_4x_filt.filter_edges('ypos', '>=', pd_row['ypos'] - pic_4x_res[1])
+        frame_4x_filt = frame_4x_filt.filter_edges('ypos', '<=', pd_row['ypos'] + pic_4x_res[1])
+        frame_4x_filt.video_frame = pd.concat([pd_row.to_frame().T, frame_4x_filt.video_frame])
+
+
+        return frame_4x_filt
+
+    def plot_locs(self, analysis_folder, FLUO=True, x_adj = -500, y_adj = 400):
+        fig, ax = plt.subplots()
+
+        space_res = 2*1.725 / self.video_frame.iloc[0]['magnification'] * self.video_frame.iloc[0]['binning']
+        pic_4x_res = np.array([[4088, 3000],[2044, 1500]][self.video_frame.iloc[0]['binning'] == 2]) * space_res /2
+
+        vidcap = cv2.VideoCapture(f"{analysis_folder}{self.video_frame.iloc[0]['folder'][:-4]}{self.video_frame.iloc[0]['unique_id']}_video.mp4")
+        success, image = vidcap.read()
+        if success:
+            ax.imshow(image, extent = [(self.video_frame.iloc[0]['xpos'] - pic_4x_res[0]) + x_adj,
+                                       (self.video_frame.iloc[0]['xpos'] + pic_4x_res[0]) + x_adj,
+                                       (-self.video_frame.iloc[0]['ypos'] - pic_4x_res[1]) + y_adj,
+                                       (-self.video_frame.iloc[0]['ypos'] + pic_4x_res[1]) + y_adj
+                                       ])
+
+        for index, row in self.edges_frame.iterrows():
+            space_res = 2 * 1.725 / row['magnification'] * row['binning']
+            ax.annotate(row['unique_id'].split('_')[-1], (row['xpos'], -row['ypos']), c='white')
+
+            arrow_start = np.array([(row['xpos'] + space_res * row['edge_ypos_2'],
+                                     (row['ypos'] + space_res * row['edge_xpos_2']) * -1)])[0]
+            arrow_end = np.array([(row['xpos'] + space_res * row['edge_ypos_1'],
+                                   (row['ypos'] + space_res * row['edge_xpos_1']) * -1)])[0] - arrow_start
+            ax.quiver(arrow_start[0], arrow_start[1], arrow_end[0], arrow_end[1], angles='xy',
+                      color=['tab:green', 'gray'][row['magnification'] == 50], scale_units='xy', scale=1)
+        #     print(arrow_start, arrow_end)
+
+        ax.scatter(self.video_frame.iloc[1:]['xpos'], -self.video_frame.iloc[1:]['ypos'])
+        # ax.annotate(self.video_frame['unique_id'].astype(str), (self.video_frame['xpos'], self.video_frame['ypos']))
+        ax.axis('equal')
+        ax.set_title(f"4x overview of {self.video_frame.iloc[0]['unique_id']}")
+        fig.tight_layout()
+        return None
+
     def filter_videos(self, column, compare, constant):
         return None
 
@@ -411,18 +460,25 @@ class HighmagDataset(object):
             fig.tight_layout()
         return ax
 
-    def plot_violins(self, column, bins, bin_separator='edge_bin_values', ax=None, c='tab:blue', labels=None):
+    def plot_violins(self, column, bins=None, bin_separator='edge_bin_values', ax=None, c='tab:blue', labels=None):
         if ax is None:
             fig, ax = plt.subplots()
-        violin_data = [self.edges_frame[column][self.edges_frame[bin_separator] == i].astype(float) for i in
+        if bins is not None:
+            violin_data = [self.edges_frame[column][self.edges_frame[bin_separator] == i].astype(float) for i in
                        range(len(bins))]
+        else:
+            violin_data = [self.edges_frame[column][self.edges_frame[bin_separator] == i].astype(float) for i in
+                            self.edges_frame[bin_separator].unique()]
+            x_labels = self.edges_frame[bin_separator].unique()
+            bins = range(self.edges_frame[bin_separator].nunique())
+            ax.set_xticks(bins, labels = x_labels)
         violin_data_d = []
         for data in violin_data:
             if data.empty:
                 violin_data_d.append([np.nan, np.nan])
             else:
                 violin_data_d.append(data)
-        violin_parts = ax.violinplot(dataset=violin_data_d, positions=bins, widths = bins[1] - bins[0], showmeans=False, showmedians=False, showextrema=False)
+        violin_parts = ax.violinplot(dataset=violin_data_d, positions=bins, widths = (bins[1] - bins[0])*0.6, showmeans=False, showmedians=False, showextrema=False)
         violin_means = [np.nanmean(data, axis=0) for data in violin_data_d]
         ax.scatter(bins, violin_means, s=4, c='black')
         for vp in violin_parts['bodies']:
