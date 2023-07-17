@@ -304,7 +304,7 @@ class KymoVideoAnalysis(object):
         """
         Creates an edge analysis object
         """
-        return Kymo_edge_analysis(self, edge_name=edge)
+        return KymoEdgeAnalysis(self, edge_name=edge)
 
     def fit_backgr(self, img_seq, plots=False):
         # backgr_segm = np.invert(self.segmented)
@@ -354,7 +354,7 @@ class KymoVideoAnalysis(object):
         return self.back_fit
 
 
-class Kymo_edge_analysis(object):
+class KymoEdgeAnalysis(object):
     def __init__(self, video_analysis=None, edge_name=None, kymo=None):
         """
         Initialises an edge object, usually done by kymo_analysis object, but can also be initialised with a kymo image.
@@ -608,8 +608,6 @@ class Kymo_edge_analysis(object):
         filters. if not already done so"""
         times = []
         speeds_tot = []
-        discrete_bounds = np.linspace(w_start, w_size * 2 + w_start, w_size + 1)
-        w = 0
         if len(self.filtered_left) == 0:
             self.fourier_kymo(1, return_self=False)
 
@@ -627,8 +625,6 @@ class Kymo_edge_analysis(object):
 
         """Iterate over each kymograph, over the forward and backward directions, and over the window sizes"""
         for j, kymo in enumerate(self.kymos):
-            if plots:
-                fig, ax = plt.subplots(2, 2, figsize=(10, 10))
 
             """Set up the times axis, should be identical every iteration, also the forward/backward speed arrays"""
             times.append(np.array(range(kymo.shape[0])) * time_pixel_size)
@@ -682,23 +678,9 @@ class Kymo_edge_analysis(object):
                 spds_both[i] = spd_interest
                 spd_stack.append(spd_interest)
 
-            #                 if plots:
-            #                     ax[1][i].imshow(spds_both[i], aspect='auto', vmin=-speed_thresh, vmax=speed_thresh, cmap='coolwarm')
-            #                     ax[1][i].set_title("Speeds")
-            #                     ax[1][i].set_xlabel("space ($\mu m $)")
-            #                     ax[1][i].set_ylabel("time ($s$)")
-            #                     lay_plot = ax[0][i].imshow(kymo_interest, aspect='auto', vmin=0)
-            #                     ax[0][i].set_title(
-            #                         f"Filtered Fourier")
-            #                     ax[0][i].set_xlabel("space ($\mu m $)")
-            #                     ax[0][i].set_ylabel("time ($s$)")
-
             speeds_tot.append(spds_both)
             self.speeds_tot = np.array(speeds_tot)
             self.times = times
-
-        #             if plots:
-        #                 fig.tight_layout()
         return np.array(speeds_tot), times
 
     def extract_transport(self,
@@ -758,8 +740,6 @@ class Kymo_edge_analysis(object):
             spds_back = speeds[k][0]
             spds_forw = speeds[k][1]
 
-            iters = 1
-
             spds_tot = np.nansum(np.dstack((spds_back, spds_forw)), 2)
             flux_non_nan = ~(np.isnan(spds_back) * np.isnan(spds_forw))
             flux_tot = np.nansum((np.prod((spds_forw, forw_thresh), 0), np.prod((spds_back, back_thresh), 0)), 0)
@@ -770,79 +750,4 @@ class Kymo_edge_analysis(object):
             forw_back_thresh_int = np.sum(forw_back_thresh, axis=0)
             net_trans = np.array([np.nancumsum(flux_tot.transpose()[i][margin:-margin]) for i in
                                   range(margin, flux_tot.shape[1] - 1 * margin)]).transpose()
-
-        #             if save_filters:
-        #                 im_left = Image.fromarray((forw_thresh * 255 / np.max(forw_thresh)).astype(np.uint8))
-        #                 im_right = Image.fromarray((back_thresh * 255 / np.max(back_thresh)).astype(np.uint8))
-        #                 im_full = Image.fromarray((forw_back_thresh * 255 / np.max(forw_back_thresh)).astype(np.uint8))
-        #                 save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {k} kymo_left.png")
-        #                 im_left.save(save_path_temp)
-        #                 save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {k} kymo_right.png")
-        #                 im_right.save(save_path_temp)
-        #                 save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {k} kymo_filtered.png")
-        #                 im_full.save(save_path_temp)
-
-        #             if plots:
-        #                 if histos:
-        #                     fig, ax = plt.subplots(3, figsize=(8, 8), sharey=True, sharex=True)
-        #                     ax[0].hist(back.flatten(), bins=50, log=True, label="pre-shift")
-        #                     ax[0].hist(back_thresh.flatten(), bins=50, log=True, label="post-shift", alpha=0.5)
-        #                     ax[0].set_title("Backward hist")
-        #                     ax[1].hist(forw.flatten(), bins=50, log=True, label="pre-shift")
-        #                     ax[1].hist(forw_thresh.flatten(), bins=50, log=True, label="post-shift", alpha=0.5)
-        #                     ax[1].set_title("Forward hist")
-        #                     ax[2].hist(kymo_adj.flatten(), bins=50, label='original', log=True)
-        #                     ax[2].hist(forw_back_thresh.flatten(), bins=50, alpha=0.5, label='filtered', log=True)
-        #                     ax[2].set_title("Total hist comparison")
-        #                     for i in range(3):
-        #                         ax[i].set_xlabel("Pixel intensity")
-        #                         ax[i].set_ylabel("Log frequency")
-        #                         ax[i].legend()
-        #                     fig.tight_layout()
-
-        #                 fig, ax = plt.subplots(2, 2, figsize=(9, 9), sharey='row')
-        #                 ax[0][0].imshow(np.prod((spds_back, back_thresh), 0), vmin=-flux_max, vmax=flux_max, aspect='auto',
-        #                                 extent=self.imshow_extent, cmap='bwr')
-        #                 ax[0][1].imshow(np.prod((spds_forw, forw_thresh), 0), vmin=-flux_max, vmax=flux_max, aspect='auto',
-        #                                 extent=self.imshow_extent, cmap='bwr')
-        #                 for i in [0, 1]:
-        #                     ax[0][i].set_title(f"flux {['backward', 'forward'][i]}")
-        #                     ax[0][i].set_xlabel("space ($\mu m$)")
-        #                     ax[0][i].set_ylabel("time ($s$)")
-
-        #                 ax[1][0].imshow(net_trans / forw_back_thresh_int[margin:-margin], vmin=-1, vmax=1, cmap='bwr',
-        #                                 aspect='auto', extent=self.imshow_extent)
-        #                 ax[1][0].set_xlabel("space ($\mu m$)")
-        #                 ax[1][0].set_ylabel("time ($s$)")
-        #                 ax[1][0].set_title("Net transport")
-        #                 ax[1][1].plot(np.sum(net_trans / forw_back_thresh_int[margin: -margin], axis=1) / (
-        #                             space_pixel_size * net_trans.shape[1]),
-        #                               self.times[0][margin:-margin])
-        #                 ax[1][1].set_title("Mean net transport")
-
-        #                 fig.tight_layout()
-
-        #                 if save_im:
-        #                     fig.savefig(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {k + 1} fluxfig')
-
-        #             if save_flux_array:
-        #                 np.save(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {k + 1} fluxback.npy',
-        #                         np.prod((spds_back, back_thresh), 0))
-        #                 np.save(f'{self.edge_path}/{self.edge_name} {len(self.kymos)} {k + 1} fluxforw.npy',
-        #                         np.prod((spds_forw, forw_thresh), 0))
-
-        #                 # if len(self.kymos) > 1:
-        #                 #     ax_spd[0][k].imshow(spds_tot,
-        #                 #                         vmin=-1*abs(np.max(spds_tot.flatten())),
-        #                 #                         vmax=abs(np.max(spds_tot.flatten())),
-        #                 #                         cmap='bwr')
-        #                 #     ax_spd[1][k].imshow(flux_tot,
-        #                 #                         vmin=-1 * abs(np.max(flux_tot.flatten())),
-        #                 #                         vmax=abs(np.max(flux_tot.flatten())),
-        #                 #                         cmap='bwr'
-        #                 #                         )
-        #                 #
-        #                 #     ax_trans[k].plot((net_trans[-1] - net_trans[0])/forw_back_thresh_int[margin:-margin])
-        #                 #     ax_trans[k].set_xlabel("space (x)")
-
         return flux_tot
