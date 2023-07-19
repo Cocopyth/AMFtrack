@@ -72,12 +72,9 @@ class KymoVideoAnalysis(object):
             self.magnification = magnification
             self.vid_type = vid_type
             self.fps = fps
-            #         self.imformat = format
             self.im_range = im_range
             self.back_fit = [0, 0, 0]
             self.back_offset = 0
-
-            #         print(parent_files)
 
             ### Extracts the video parameters from the nearby csv.
             self.csv_path = next(Path(parent_files).glob("*.csv"), None)
@@ -105,10 +102,7 @@ class KymoVideoAnalysis(object):
                     if videos_data.isnull().values.any():
                         print("Found NaNs in the excel files! Blame the experimentalists.")
                         videos_data = videos_data.interpolate(method='pad', limit_direction='forward')
-                    # if videos_data.isnull().values.any():
-                    #     raise("This excel sheet is unworkable, please ask the responisble person")
                     self.video_data = videos_data.loc[videos_data['video'] == self.video_nr]
-                    # print(self.video_data["Illumination"][0])
                     self.vid_type = ["FLUO", "BRIGHT"][self.video_data["Illumination"].iloc[0] == "BF"]
                     self.fps = float(self.video_data["fps"].iloc[0])
                     self.binning = (self.video_data["Binned"].iloc[0] * 2) + 1
@@ -119,7 +113,6 @@ class KymoVideoAnalysis(object):
                         print("Found an xlsx file, using that data")
                     videos_data = pd.read_excel(self.xlsx_path)
                     print(str(self.imgs_address))
-                    #                 self.video_data = videos_data.loc[videos_data['Unnamed: 0'].str.contains(str(self.imgs_address).split(os.sep)[-1], case=False, na=False)]
                     excel_addr = f"{imgs_address.split(os.sep)[-3]}_{imgs_address.split(os.sep)[-2]}"
                     self.video_data = videos_data[
                         videos_data["Unnamed: 0"].str.contains(excel_addr, case=False, na=False)]
@@ -163,8 +156,7 @@ class KymoVideoAnalysis(object):
             self.frame_max = np.maximum(self.frame_max, frame2)
 
         if self.logging:
-            print(
-                'Using image selection {} to {}'.format(self.im_range[0], len(self.selection_file) + self.im_range[0]))
+            print('Data input succesful! Starting edge extraction...')
 
         ### Skeleton creation, we segment the image using either brightfield or fluo segmentation methods.
         if self.vid_type == 'BRIGHT':
@@ -289,6 +281,7 @@ class KymoVideoAnalysis(object):
         :return:                None
         """
         vid_out = os.path.join(self.kymos_path, f"{self.video_nr}_video.mp4")
+        print(vid_out)
         if os.path.exists(vid_out):
             os.remove(vid_out)
         with imageio.get_writer(vid_out, mode='I', fps=self.fps, quality=6) as writer:
@@ -442,15 +435,21 @@ class KymoEdgeAnalysis(object):
                 ax.set_xlabel("space ($\mu m$)")
                 ax.set_ylabel("space ($\mu m$)")
 
-                im = Image.fromarray(self.edge_array.astype(np.uint8))
-                save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} snapshot.png")
-                im.save(save_path_temp)
+                # im = Image.fromarray(self.edge_array.astype(np.uint8))
+                save_path_temp = os.path.join(self.edge_path, f"{self.edge_name}_snapshot.png")
+                if os.path.exists(save_path_temp):
+                    os.remove(save_path_temp)
+                fig.savefig(save_path_temp)
                 if self.video_analysis.logging:
-                    print('Saved an image of the edge')
+                    print(f'Saved an image of edge {self.edge_name}')
+                plt.close(fig)
+
                 return [self.edge_array]
             elif np.ndim(img_frame) == 1:
-                imageio.mimwrite(os.path.join(self.edge_path,
-                                              f'{self.edge_name} edge_video.mp4'),
+                vid_out = os.path.join(self.edge_path, f'{self.edge_name}_edge_video.mp4')
+                if os.path.exists(vid_out):
+                    os.remove(vid_out)
+                imageio.mimwrite(vid_out,
                                  self.edge_array,
                                  quality=quality,
                                  fps=self.video_analysis.fps)
@@ -484,7 +483,7 @@ class KymoEdgeAnalysis(object):
                    bounds=(0, 1),
                    img_frame=0,
                    quality=6,
-                   model_path="/gpfs/home6/svstaalduine/AMF_project/amftrack/ml/models/default_CNN_GT_model.h5"):
+                   model_path= Path('.').absolute().parents[1] / "ml/models/default_CNN_GT_model.h5"):
         """
         Returns the width of a selected edge
         :param resolution:      Distance between kymograph perpendicular lines
@@ -598,16 +597,12 @@ class KymoEdgeAnalysis(object):
             im.save(save_path_temp)
         return self.kymo
 
-    def fourier_kymo(self, bin_nr, hor_lines=1, return_self=True, test_plots=False, save_im=False,
-                     save_array=False):
+    def fourier_kymo(self, return_self=True, test_plots=False):
         """
         Separates forward and backward moving lines in kymographs
-        :param bin_nr:      Deprecated
-        :param hor_lines:   Deprecated
         :param return_self: Whether to return separation as a list of arrays
         :param test_plots:  Whether to plot the separated kymographs, either way they are stored in the object
-        :param save_im:     Deprecated
-        :param save_array:  Deprecated
+
         :return:            Either list of separated kymographs, or None
         """
 
@@ -621,7 +616,7 @@ class KymoEdgeAnalysis(object):
             return None
 
     def test_GST(self, w_size, w_start=3, C_thresh=0.95, blur_size=7, C_thresh_falloff=0.002, speed_thresh=90,
-                 preblur=True, plots=False):
+                 preblur=True):
         """
         Extract speeds from the kymographs. Will iterate different window sizes to get different particle size velocities
         :param w_size:          Number of window sizes to filter over the kymograph
@@ -713,71 +708,17 @@ class KymoEdgeAnalysis(object):
             self.times = times
         return np.array(speeds_tot), times
 
-    def extract_transport(self,
-                          noise_thresh=0.01,
-                          GST_window=15,
-                          speed_thresh=20,
-                          c_thresh=0.95,
-                          margin=5,
-                          plots=False,
-                          histos=False,
-                          save_filters=False,
-                          save_speeds=False,
-                          save_im=False,
-                          save_flux_array=False):
-        # TODO: Make this function smaller
+    def extract_transport(self):
         """
-        Function that extracts the net transport of internal kymographs.
-
-        :param noise_thresh: Deprecated
-        :param GST_window:   Deprecated
-        :param speed_thresh: Deprecated
-        :param c_thresh:     Deprecated
-        :param margin:       Cutoff in pixels to account for the vignette created during speed extraction
-        :param plots:        Deprecated
-        :param save_filters: Deprecated
-        :param save_speeds:  Deprecated
-        photobleach_adjust:  Deprecated
+        Function that extracts the flux of internal kymographs.
         """
-        if self.space_pixel_size is None:
-            space_pixel_size = self.video_analysis.space_pixel_size  # um.pixel
-            time_pixel_size = self.video_analysis.time_pixel_size  # s.pixel
-            self.imshow_extent = [0, self.video_analysis.space_pixel_size * self.kymos[0].shape[1],
-                                  self.video_analysis.time_pixel_size * self.kymos[0].shape[0], 0]
-        else:
-            space_pixel_size = self.space_pixel_size
-            time_pixel_size = self.time_pixel_size
-            self.imshow_extent = [0, self.space_pixel_size * self.kymos[0].shape[1],
-                                  self.time_pixel_size * self.kymos[0].shape[0], 0]
-        # if len(self.filtered_left) == 0:
-        #     print("Filtering kymos")
-        #     self.fourier_kymo(return_self=False)
-        # if self.speeds_tot is None:
-        #     print("Collecting speeds")
-        #     self.test_GST(speed_thresh=speed_thresh, c_thr=c_thresh, plots=plots, w=GST_window, preblur=True)
-
-        kernel = np.ones((5, 5), np.uint8) / 5 ** 2
-        spd_max = np.nanmax(abs(self.speeds_tot.flatten()))
-
         for k, kymo in enumerate(self.kymos):
             back_thresh, forw_thresh = (self.filtered_right[k], self.filtered_left[k])
-            forw, back = forw_thresh, back_thresh
-            forw_back_thresh = np.add(forw_thresh, back_thresh)
-            kymo_adj = kymo
-
             speeds = self.speeds_tot
-
             spds_back = speeds[k][0]
             spds_forw = speeds[k][1]
-
-            spds_tot = np.nansum(np.dstack((spds_back, spds_forw)), 2)
             flux_non_nan = ~(np.isnan(spds_back) * np.isnan(spds_forw))
             flux_tot = np.nansum((np.prod((spds_forw, forw_thresh), 0), np.prod((spds_back, back_thresh), 0)), 0)
             flux_tot = np.where(flux_non_nan, flux_tot, np.nan)
             self.flux_tot = flux_tot
-            flux_max = np.max(abs(flux_tot.flatten()))
-
-            forw_back_thresh_int = np.sum(forw_back_thresh, axis=0)
-            net_trans = np.array([np.nancumsum(flux_tot.transpose()[i][margin:-margin]) for i in
-                                  range(margin, flux_tot.shape[1] - 1 * margin)]).transpose()
         return flux_tot
