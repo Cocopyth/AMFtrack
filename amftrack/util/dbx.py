@@ -363,11 +363,10 @@ def get_dropbox_video_folders(dir_drop) -> pd.DataFrame:
         names = [file.split('/')[-1] for file in image_list]
     else:
         names = [f"{file.split('/')[-3]}_{file.split('/')[-2]}{'/'}Img{'/'}" for file in image_list]
-    path_drop = [os.path.join(*file.split('/')) for file in image_list]
-    plate_nr = [path.split(os.path.sep)[-3].split('_')[1][5:] for path in path_drop]
-    date_img = [path.split(os.path.sep)[-3].split('_')[0] for path in path_drop]
+    path_drop = [Path(file).as_posix() for file in image_list]
+    plate_nr = [Path(path).parts[-3].split('_')[1][5:] for path in path_drop]
+    date_img = [Path(path).parts[-3].split('_')[0] for path in path_drop]
     video = [name.split('_')[-1] for name in names]
-    # id_uniques = [idi for idi in id_uniques if len(idi.split("_")) >= 2]
     df = pd.DataFrame(
         (names, plate_nr, date_img, path_drop, video)
     ).transpose()
@@ -485,25 +484,24 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
 
 def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
     dbx = load_dbx()
+    directory_target = Path(directory_target)
     for index, row in folders_drop.iterrows():
         path = "/" + row["tot_path_drop"]
         response = dbx.files_list_folder(path, recursive=True)
         listfiles = []
         while response.has_more:
-            listfiles += [file for file in response.entries]
+            listfiles += [file for file in response.entries if Path(file.path_display).suffix != '']
             response = dbx.files_list_folder_continue(response.cursor)
-        listfiles += [file for file in response.entries]
-        folder = row["folder"]
-        path_folder = os.path.join(directory_target, folder)
-        if not os.path.exists(path_folder):
-            os.makedirs(path_folder)
+        listfiles += [file for file in response.entries if Path(file.path_display).suffix != '']
+        folder = Path(row["folder"][1:])
+        path_folder = directory_target / folder
+        if not path_folder.exists():
+            path_folder.mkdir(parents=True)
         for file in listfiles:
-            path_drop = file.path_display
-            path_local = os.path.join(
-                directory_target, folder, path_drop.split("/")[-1]
-            )
-            print(path_drop, path_local)
-            download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
+            path_drop = Path(file.path_display)
+            path_local = path_folder / path_drop.parts[-1]
+            print(path_drop.as_posix(), path_local)
+            download(path_drop.as_posix(), str(path_local), unzip=(path_drop.suffix == ".zip"))
 
 
 def download_analysis_folders_drop(analysis_folder, dropbox_folder):
