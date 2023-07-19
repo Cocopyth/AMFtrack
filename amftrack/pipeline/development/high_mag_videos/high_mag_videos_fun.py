@@ -496,7 +496,6 @@ def get_kymo_new(
             pixels = np.flip(pixels, axis=1)
             pixels = pixels[int(bounds[0] * target_length): int(bounds[1] * target_length)]
             pixels = pixels.reshape((1, len(pixels)))
-            # TODO(FK): Add thickness of the profile here
             l.append(pixels)
 
         slices = np.concatenate(l, axis=0)
