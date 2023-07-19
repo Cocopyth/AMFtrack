@@ -12,6 +12,9 @@ import matplotlib as mpl
 mpl.rcParams['figure.dpi'] = 300
 
 
+# TODO: Go through these functions to streamline them, and remove deprecated values. Outputting plots is also no longer necessary, as all outputs are created when called for.
+
+
 class KymoVideoAnalysis(object):
     """
     Master class for video processing. Will use nearby video parameters (from csv's, xslx's or the input frame)
@@ -19,6 +22,7 @@ class KymoVideoAnalysis(object):
     Use address as input if you want to rely on nearby data sheets,
     use input frame as input to specify video parameters with a pandas frame.
     """
+
     def __init__(self,
                  imgs_address=None,
                  fps=None,
@@ -149,9 +153,6 @@ class KymoVideoAnalysis(object):
             if self.logging:
                 print('Kymos file created, address is at {}'.format(self.kymos_path))
         self.images_total_path = [str(adr) for adr in self.imgs_address.glob('*_*.ti*')]
-        #         print(self.imgs_address)
-        #         print(self.images_total_path)
-        # self.images_total_path = [os.path.join(self.imgs_address, file_im) for file_im in self.files]
         self.images_total_path.sort()
         self.selection_file = self.images_total_path
         self.selection_file.sort()
@@ -161,12 +162,11 @@ class KymoVideoAnalysis(object):
             frame2 = imageio.imread(self.selection_file[address])
             self.frame_max = np.maximum(self.frame_max, frame2)
 
-        # print(self.selection_file[0])
         if self.logging:
             print(
                 'Using image selection {} to {}'.format(self.im_range[0], len(self.selection_file) + self.im_range[0]))
 
-        ###Skeleton creation, we segment the image using either brightfield or fluo segmentation methods.
+        ### Skeleton creation, we segment the image using either brightfield or fluo segmentation methods.
         if self.vid_type == 'BRIGHT':
             self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
                 imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh,
@@ -201,7 +201,9 @@ class KymoVideoAnalysis(object):
 
     def filter_edges(self, step):
         """
-        Uses the edge name as a measure of distance, filters edges that are too short.
+        Filter edges by length, return filtered edge object
+        :param step:    Length threshold
+        :return:        Edge objects which have come through the filter
         """
         filt_edge_objects = []
         for edge in self.edges:
@@ -210,22 +212,20 @@ class KymoVideoAnalysis(object):
                 filt_edge_objects.append(edge)
         return filt_edge_objects
 
-    #
-    # def plot_start_end(self):
-    #     image = imageio.imread(self.selection_file[self.im_range[0]])
-    #     image2 = imageio.imread(self.selection_file[self.im_range[1]])
-    #     fig, ax = plt.subplots()
-    #     ax.imshow(image, cmap="gray")
-    #     ax.imshow(image2, alpha=0.5)
-    #     plt.show()
-    #     return None
-
     def plot_extraction_img(self, weight=0.05, bounds=(0.0, 1.0), target_length=130, resolution=1, step=30,
                             save_img=True, logging=False):
         """
-        Sadly an essential function, that makes each edge calculate its own edges.
-        Will output a chart of all edges with node points to select hypha from.
+        Further organises the graph structure of the video, and plots the edge maps.
+        :param weight:          Padding for the text placement
+        :param bounds:          Tuple of what fraction of the edge is used.
+        :param target_length:   Width of the kymograph box
+        :param resolution:      Spacing between kymograph perpendicular lines.
+        :param step:            Extent of skeleton to use to smooth the kymograph box
+        :param save_img:        Bool on whether to save the edge plot image
+        :param logging:         Bool on whether to announce progress in console
+        :return:                None
         """
+
         self.target_length = target_length * 2 // self.binning
         self.x_length = self.target_length * self.space_pixel_size
         image = imageio.imread(self.selection_file[self.im_range[0]])
@@ -283,31 +283,35 @@ class KymoVideoAnalysis(object):
         return None
 
     def makeVideo(self, resize_ratio=4):
+        """
+        Creates a video from the raw TIFFs
+        :param resize_ratio:    Resize the images to reduce video size
+        :return:                None
+        """
         vid_out = os.path.join(self.kymos_path, f"{self.video_nr}_video.mp4")
-
         if os.path.exists(vid_out):
             os.remove(vid_out)
-
         with imageio.get_writer(vid_out, mode='I', fps=self.fps, quality=6) as writer:
             for img_path in self.selection_file:
                 img = imageio.imread(img_path)
                 image_resize = img[::resize_ratio, ::resize_ratio]
                 assert img.dtype == np.uint8, "Must be uint8 array!"
                 writer.append_data(image_resize)
-        # video_array = [imageio.imread(img) for img in self.selection_file]
-        # imageio.mimwrite(os.path.join(self.kymos_path, f"{self.video_nr}_video.mp4"), video_array, quality=6,
-        #                  fps=self.fps)
-
         return None
 
     def createEdge(self, edge):
         """
-        Creates an edge analysis object
+        Creates an edge analysis object from the specified edge
         """
         return KymoEdgeAnalysis(self, edge_name=edge)
 
-    def fit_backgr(self, img_seq, plots=False):
-        # backgr_segm = np.invert(self.segmented)
+    def fit_backgr(self, plots=False):
+        """
+        Use a matrix problem to calculate the exponential falloff of a fluorescence video.
+        If the exponential function with offset fitting does not work, will use a linear fit.
+        :param plots:   Boolean on whether to plot the brightness of a video over time
+        :return:        Fit variables
+        """
         backgr_segm = self.segmented
         video_array = [imageio.imread(img) for img in self.selection_file]
         backgr_ints = [np.mean(img[backgr_segm].flatten()) for img in video_array]
@@ -357,8 +361,10 @@ class KymoVideoAnalysis(object):
 class KymoEdgeAnalysis(object):
     def __init__(self, video_analysis=None, edge_name=None, kymo=None):
         """
-        Initialises an edge object, usually done by kymo_analysis object, but can also be initialised with a kymo image.
-        Will contain a copy of the video analysis object for video parameters.
+        Create an edge analysis object through multiple means.
+        :param video_analysis:  Added if created from KymoVideoAnalysis
+        :param edge_name:       Added if created from KymoVideoAnalysis
+        :param kymo:            Add kymograph image to create edge analysis object without attached video.
         """
         if kymo is None:
             self.video_analysis = video_analysis
@@ -392,13 +398,6 @@ class KymoEdgeAnalysis(object):
         self.times = []
         self.imshow_extent = []
 
-    # def extract_photobleach(self):
-    #     edge_vid_intensity = [np.sum(imageio.imread(img).flatten()) for img in self.video_analysis.selection_file]
-    #     bleach_trend = np.polyfit(np.arange(len(self.video_analysis.selection_file)), np.log(edge_vid_intensity), 1)
-    #     return bleach_trend[0]
-    #     # for frame_address in self.video_analysis.selection_file:
-    #     #     edge_vid_intensity = [np.sum()]
-
     def view_edge(self,
                   resolution=1,
                   step=30,
@@ -413,7 +412,7 @@ class KymoEdgeAnalysis(object):
         This function recalculates the segments,
         so make sure the target length is equal to that of the edge extraction plot.
 
-        resolution:     Not sure what it does, but it generates pivot indices.
+        resolution:     Determines offset between perpendicular lines
         step:           Used to calculate orientation of profiles, smaller steps will produce more wobbly images.
         target_length:  Width of eventual image or video
         save_im:        Boolean whether the image or video should be saved
@@ -432,8 +431,6 @@ class KymoEdgeAnalysis(object):
                                          img_frame,
                                          bounds,
                                          logging=self.video_analysis.logging)
-        # fig, ax = plt.subplots()
-        # ax.imshow(self.edge_array)
 
         if save_im:
             if np.ndim(img_frame) == 0:
@@ -488,15 +485,23 @@ class KymoEdgeAnalysis(object):
                    img_frame=0,
                    quality=6,
                    model_path="/gpfs/home6/svstaalduine/AMF_project/amftrack/ml/models/default_CNN_GT_model.h5"):
-
+        """
+        Returns the width of a selected edge
+        :param resolution:      Distance between kymograph perpendicular lines
+        :param step:            Smoothing factor of kymograph
+        :param target_length:   Keep at 200, determines width of kymo perpendicular lines. Network model only uses 200 pixels.
+        :param save_im:
+        :param bounds:          Fraction tuple on what part of the kymograph to use
+        :param img_frame:
+        :param quality:
+        :param model_path:      Folder address where the model to be used is located.
+        :return:
+        """
         if self.video_analysis.vid_type == "BRIGHT":
             self.create_segments(self.video_analysis.pos,
                                  imageio.imread(self.video_analysis.selection_file[self.video_analysis.im_range[0]]),
                                  self.video_analysis.nx_graph_pruned, resolution, 4, target_length, bounds, step=step)
             width_model = tf.keras.models.load_model(model_path)
-            # for slice in self.slices:
-            # print(slice)
-            # print(np.shape(slice))
             self.widths = width_model.predict(self.slices, verbose=0)
         else:
             self.create_segments(self.video_analysis.pos, self.video_analysis.segmented,
@@ -504,9 +509,7 @@ class KymoEdgeAnalysis(object):
             self.widths = [
                 max((sum(1 for _ in group) for value, group in itertools.groupby(pixel_row) if value == 0), default=0)
                 for pixel_row in self.slices]
-            #             print(self.widths)
             self.widths = np.array(self.widths) * self.video_analysis.space_pixel_size
-
         return self.widths
 
     def extract_multi_kymo(self,
@@ -522,21 +525,20 @@ class KymoEdgeAnalysis(object):
         Creates kymograph for the edge. Uses bin_nr to divide the width into evenly distributed strips.
         Kymographs are stored in the object, and images will be stored in the analysis folder.
 
-        bin_nr:         Number of evenly distributed width strips to make kymogrpahs from
-        resolution:     Something related to section creation
-        step:           Quality parameter in calculating the orientation of the edges
-        target_length:  Width of edge to make kymographs from, really should be just the internal length.
-        save_array:     Boolean on whether to make a .npy file of the array
-        save_im:        Boolean on whether to save the kymographs as images
-        bounds:         Fraction-based limit on edge width, probably interferes with target_length.
+        :param bin_nr:         Number of evenly distributed width strips to make kymogrpahs from
+        :param resolution:     Something related to section creation
+        :param step:           Quality parameter in calculating the orientation of the edges
+        :param target_length:  Width of edge to make kymographs from, really should be just the internal length.
+        :param save_array:     Boolean on whether to make a .npy file of the array
+        :param save_im:        Boolean on whether to save the kymographs as images
+        :param bounds:         Fraction-based limit on edge length
+        :return:               Extracted kymograph arrays
         """
         bin_edges = np.linspace(bounds[0], bounds[1], bin_nr + 1)
         if self.space_pixel_size is None:
             space_pixel_size = self.video_analysis.space_pixel_size  # um.pixel
-            time_pixel_size = self.video_analysis.time_pixel_size  # s.pixel
         else:
             space_pixel_size = self.space_pixel_size
-            time_pixel_size = self.time_pixel_size
         self.kymos = np.array([self.extract_kymo(bounds=(bin_edges[i],
                                                          bin_edges[i + 1]),
                                                  resolution=resolution,
@@ -560,6 +562,19 @@ class KymoEdgeAnalysis(object):
                      img_suffix="",
                      x_len=10,
                      kymo_adjust=False):
+        """
+        Single version of kymograph extraction, is used as a sub-function in multi_kymo_extract
+        :param resolution:      Skipping factor for perpendicular kymo lines
+        :param step:            SMoothing factor for kymograph
+        :param target_length:   Width of kymogeaph box
+        :param save_array:      Whether to save kymograph as np array
+        :param save_im:         Whether to save kymograph as png
+        :param bounds:          Fraction tuple what length of edge to use.
+        :param img_suffix:      fuidsvbsdi
+        :param x_len:           Spacial resolution of images
+        :param kymo_adjust:     Deprecated
+        :return:                Kymograph as array
+        """
         self.kymo = get_kymo_new(self.edge_name,
                                  self.video_analysis.pos,
                                  self.video_analysis.selection_file,
@@ -571,11 +586,9 @@ class KymoEdgeAnalysis(object):
                                  bounds,
                                  x_len)
         if kymo_adjust:
-            adj_params = self.video_analysis.back_fit
             norm_exp = self.video_analysis.back_fit / self.video_analysis.back_fit[0]
             self.kymo -= self.video_analysis.back_offset
             self.kymo = np.array([self.kymo[i] / norm_exp[i] for i in range(self.kymo.shape[0])])
-
         if save_array:
             save_path_temp = os.path.join(self.edge_path, f"{self.edge_name} {img_suffix} kymo.npy")
             np.save(save_path_temp, (self.kymo))
@@ -588,8 +601,14 @@ class KymoEdgeAnalysis(object):
     def fourier_kymo(self, bin_nr, hor_lines=1, return_self=True, test_plots=False, save_im=False,
                      save_array=False):
         """
-        Internal function which takes a kymograph and produces a forward and backward filtered kymograph.
-        These are stored in the object.
+        Separates forward and backward moving lines in kymographs
+        :param bin_nr:      Deprecated
+        :param hor_lines:   Deprecated
+        :param return_self: Whether to return separation as a list of arrays
+        :param test_plots:  Whether to plot the separated kymographs, either way they are stored in the object
+        :param save_im:     Deprecated
+        :param save_array:  Deprecated
+        :return:            Either list of separated kymographs, or None
         """
 
         if len(self.kymos) > 0:
@@ -603,9 +622,20 @@ class KymoEdgeAnalysis(object):
 
     def test_GST(self, w_size, w_start=3, C_thresh=0.95, blur_size=7, C_thresh_falloff=0.002, speed_thresh=90,
                  preblur=True, plots=False):
+        """
+        Extract speeds from the kymographs. Will iterate different window sizes to get different particle size velocities
+        :param w_size:          Number of window sizes to filter over the kymograph
+        :param w_start:         Smallest window size
+        :param C_thresh:        Confidence threshold above which to use the extracted orientation
+        :param blur_size:       Gaussian window size to use in the blur step of the kymograph
+        :param C_thresh_falloff:Value to subtract from C_thresh with each increasing window size
+        :param speed_thresh:    Maximum speed to record.
+        :param preblur:         Whether to blur the kymograph before extracting speeds
+        :param plots:           Deprecated
+        :return:                list of array of speeds and time-steps
+        """
 
-        """Initialize the speed array and time array, as well as the bin values for the window size, and fourier
-        filters. if not already done so"""
+        """Initialize the speed array and time array"""
         times = []
         speeds_tot = []
         if len(self.filtered_left) == 0:
@@ -695,20 +725,20 @@ class KymoEdgeAnalysis(object):
                           save_speeds=False,
                           save_im=False,
                           save_flux_array=False):
+        # TODO: Make this function smaller
         """
         Function that extracts the net transport of internal kymographs.
 
-        noise_thresh: Simple threshold below which everything is considered noise, and set to zero
-        GST_window:     Parameter for speed extraction, decides how big the GST kernel is.
-        speed_thresh:   Parameter for speed extraction, decides maximum absolute speed.
-        c_thresh:       Parameter for speed extraction, removes all datapoints where image coherency is below it
-        margin:         Cutoff in pixels to account for the vignette created during speed extraction
-        plots:          Boolean on whether to create plots
-        save_filters:   Boolean on whether to save the filtered kymographs as an image
-        save_speeds:    Boolean on whether to save the speed data as a pd dataframe
-        photobleach_adjust: Boolean on whether to calculate a fluorescence falloff curve, and to adjust kymographs based on it.
+        :param noise_thresh: Deprecated
+        :param GST_window:   Deprecated
+        :param speed_thresh: Deprecated
+        :param c_thresh:     Deprecated
+        :param margin:       Cutoff in pixels to account for the vignette created during speed extraction
+        :param plots:        Deprecated
+        :param save_filters: Deprecated
+        :param save_speeds:  Deprecated
+        photobleach_adjust:  Deprecated
         """
-
         if self.space_pixel_size is None:
             space_pixel_size = self.video_analysis.space_pixel_size  # um.pixel
             time_pixel_size = self.video_analysis.time_pixel_size  # s.pixel
@@ -719,12 +749,12 @@ class KymoEdgeAnalysis(object):
             time_pixel_size = self.time_pixel_size
             self.imshow_extent = [0, self.space_pixel_size * self.kymos[0].shape[1],
                                   self.time_pixel_size * self.kymos[0].shape[0], 0]
-        if len(self.filtered_left) == 0:
-            print("Filtering kymos")
-            self.fourier_kymo(return_self=False)
-        if self.speeds_tot is None:
-            print("Collecting speeds")
-            self.test_GST(speed_thresh=speed_thresh, c_thr=c_thresh, plots=plots, w=GST_window, preblur=True)
+        # if len(self.filtered_left) == 0:
+        #     print("Filtering kymos")
+        #     self.fourier_kymo(return_self=False)
+        # if self.speeds_tot is None:
+        #     print("Collecting speeds")
+        #     self.test_GST(speed_thresh=speed_thresh, c_thr=c_thresh, plots=plots, w=GST_window, preblur=True)
 
         kernel = np.ones((5, 5), np.uint8) / 5 ** 2
         spd_max = np.nanmax(abs(self.speeds_tot.flatten()))

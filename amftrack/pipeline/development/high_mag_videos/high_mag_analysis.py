@@ -89,14 +89,16 @@ def index_videos_dropbox(analysis_folder, videos_folder, dropbox_folder,
         excel_drop = pd.read_json(excel_json, typ='series')
     if not os.path.exists(analysis_json) or REDO_SCROUNGING:
         print("Redoing the dropbox scrounging, hold on tight.")
-        all_folders_drop, excel_drop, txt_drop = get_dropbox_video_folders(dropbox_folder, True)
+        all_folders_drop, excel_drop, txt_drop = get_dropbox_video_folders(dropbox_folder)
 
         clear_output(wait=False)
         print("Scrounging complete, downloading files...")
 
         excel_addresses = np.array([re.search("^.*Plate.*\/.*Plate.*$", entry, re.IGNORECASE) for entry in excel_drop])
-        if len(excel_addresses > 0):
-            excel_addresses = excel_addresses[excel_addresses is not None]
+        print(excel_addresses)
+        if len(excel_addresses) > 0:
+            excel_addresses = [i for i in excel_addresses if i is not None]
+            print(excel_addresses)
             excel_addresses = [address.group(0) for address in excel_addresses]
         excel_drop = np.concatenate([excel_addresses, txt_drop])
         if not analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).exists():
