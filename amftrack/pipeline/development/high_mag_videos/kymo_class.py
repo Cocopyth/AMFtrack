@@ -533,13 +533,13 @@ class KymoEdgeAnalysis(object):
         :param bounds:         Fraction-based limit on edge length
         :return:               Extracted kymograph arrays
         """
-        bin_edges = np.linspace(bounds[0], bounds[1], bin_nr + 1)
+        self.bin_edges = np.linspace(bounds[0], bounds[1], bin_nr + 1)
         if self.space_pixel_size is None:
             space_pixel_size = self.video_analysis.space_pixel_size  # um.pixel
         else:
             space_pixel_size = self.space_pixel_size
-        self.kymos = np.array([self.extract_kymo(bounds=(bin_edges[i],
-                                                         bin_edges[i + 1]),
+        self.kymos = np.array([self.extract_kymo(bounds=(self.bin_edges[i],
+                                                         self.bin_edges[i + 1]),
                                                  resolution=resolution,
                                                  step=step,
                                                  target_length=target_length * 2 // self.video_analysis.binning,
@@ -548,7 +548,7 @@ class KymoEdgeAnalysis(object):
                                                  img_suffix=str(bin_nr) + ' ' + str(i + 1),
                                                  kymo_adjust=kymo_adj,
                                                  x_len=space_pixel_size)
-                               for i in range(bin_nr)])
+                               for i in tqdm(range(bin_nr))])
         return self.kymos
 
     def extract_kymo(self,
@@ -568,7 +568,7 @@ class KymoEdgeAnalysis(object):
         :param target_length:   Width of kymogeaph box
         :param save_array:      Whether to save kymograph as np array
         :param save_im:         Whether to save kymograph as png
-        :param bounds:          Fraction tuple what length of edge to use.
+        :param bounds:          Fraction tuple what fraction of edge width to use.
         :param img_suffix:      fuidsvbsdi
         :param x_len:           Spacial resolution of images
         :param kymo_adjust:     Deprecated
@@ -615,8 +615,8 @@ class KymoEdgeAnalysis(object):
         else:
             return None
 
-    def test_GST(self, w_size, w_start=3, C_thresh=0.95, blur_size=7, C_thresh_falloff=0.002, speed_thresh=90,
-                 preblur=True):
+    def extract_speeds(self, w_size, w_start=3, C_thresh=0.95, blur_size=7, C_thresh_falloff=0.002, speed_thresh=90,
+                       preblur=True):
         """
         Extract speeds from the kymographs. Will iterate different window sizes to get different particle size velocities
         :param w_size:          Number of window sizes to filter over the kymograph
@@ -712,6 +712,7 @@ class KymoEdgeAnalysis(object):
         """
         Function that extracts the flux of internal kymographs.
         """
+        flux_arrays = []
         for k, kymo in enumerate(self.kymos):
             back_thresh, forw_thresh = (self.filtered_right[k], self.filtered_left[k])
             speeds = self.speeds_tot
@@ -721,4 +722,8 @@ class KymoEdgeAnalysis(object):
             flux_tot = np.nansum((np.prod((spds_forw, forw_thresh), 0), np.prod((spds_back, back_thresh), 0)), 0)
             flux_tot = np.where(flux_non_nan, flux_tot, np.nan)
             self.flux_tot = flux_tot
-        return flux_tot
+            flux_arrays.append(flux_tot)
+        if len(kymo)==1:
+            return flux_tot
+        else:
+            return flux_arrays
