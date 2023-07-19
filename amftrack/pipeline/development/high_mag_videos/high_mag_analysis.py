@@ -1,6 +1,4 @@
 import copy
-
-import numpy as np
 import pandas as pd
 from IPython.display import clear_output
 import re
@@ -23,12 +21,13 @@ from amftrack.util.dbx import upload_folder, download, read_saved_dropbox_state,
     download, get_dropbox_folders, get_dropbox_video_folders
 import logging
 import datetime
+import numpy as np
 
 logging.basicConfig(stream=sys.stdout, level=logging.debug)
 mpl.rcParams['figure.dpi'] = 300
 
 
-def month_to_num(x:str):
+def month_to_num(x: str):
     """
     Takes a string with the name of a month, and returns that month's corresponding number as a string.
     :param x:   String, preferably of a month
@@ -122,7 +121,7 @@ def index_videos_dropbox(analysis_folder, videos_folder, dropbox_folder,
     # The downloaded information is then read and merged into one dataframe containing all relevant information.
 
     merge_frame = read_video_data(info_addresses, all_folders_drop, analysis_folder)
-    merge_frame = merge_frame.rename(columns={'tot_path': 'folder'}) # This is for the dropbox download functions
+    merge_frame = merge_frame.rename(columns={'tot_path': 'folder'})  # This is for the dropbox download functions
     merge_frame = merge_frame.sort_values('unique_id')
     merge_frame = merge_frame.reset_index(drop=True)
     merge_frame = merge_frame.loc[:, ~merge_frame.columns.duplicated()].copy()
@@ -426,13 +425,13 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
             ### Create kymograph of edge, do fourier filtering, extract speeds, extract transport ###
             edge.extract_multi_kymo(1, target_length=target_length, kymo_adj=False)
             edge.fourier_kymo(return_self=False)
-            edge.test_GST(w_size=speed_ext_window_number,
-                          w_start=3,
-                          C_thresh=speed_ext_c_thresh,
-                          C_thresh_falloff=speed_ext_c_falloff,
-                          blur_size=speed_ext_blur_size,
-                          preblur=speed_ext_blur,
-                          speed_thresh=speed_ext_max_thresh)
+            edge.extract_speeds(w_size=speed_ext_window_number,
+                                w_start=3,
+                                C_thresh=speed_ext_c_thresh,
+                                C_thresh_falloff=speed_ext_c_falloff,
+                                blur_size=speed_ext_blur_size,
+                                preblur=speed_ext_blur,
+                                speed_thresh=speed_ext_max_thresh)
             edge.extract_transport()
 
         plot_summary(edge_objs)
@@ -440,6 +439,7 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
         if dropbox_upload:
             upload_folder(row['analysis_folder'], db_address)
     return all_edge_objs
+
 
 class HighmagDataset(object):
     def __init__(self,
@@ -475,7 +475,7 @@ class HighmagDataset(object):
 
     def context_4x(self, pd_row, FLUO=True):
         space_res = 2 * 1.725 / pd_row['magnification'] * pd_row['binning']
-        pic_4x_res = np.array([[4088, 3000],[2044, 1500]][pd_row['binning'] == 2]) * space_res / 2
+        pic_4x_res = np.array([[4088, 3000], [2044, 1500]][pd_row['binning'] == 2]) * space_res / 2
         frame_4x_filt = self.filter_edges('plate_id', '==', pd_row['plate_id'])
         frame_4x_filt = frame_4x_filt.filter_edges('magnification', '==', 50.0)
         frame_4x_filt = frame_4x_filt.filter_edges('mode', '==', ['BF', 'F'][FLUO])
@@ -487,20 +487,21 @@ class HighmagDataset(object):
 
         return frame_4x_filt
 
-    def plot_locs(self, analysis_folder, FLUO=True, x_adj = -500, y_adj = 400):
+    def plot_4x_locs(self, analysis_folder, FLUO=True, x_adj=-500, y_adj=400):
         fig, ax = plt.subplots()
 
-        space_res = 2*1.725 / self.video_frame.iloc[0]['magnification'] * self.video_frame.iloc[0]['binning']
-        pic_4x_res = np.array([[4088, 3000],[2044, 1500]][self.video_frame.iloc[0]['binning'] == 2]) * space_res /2
+        space_res = 2 * 1.725 / self.video_frame.iloc[0]['magnification'] * self.video_frame.iloc[0]['binning']
+        pic_4x_res = np.array([[4088, 3000], [2044, 1500]][self.video_frame.iloc[0]['binning'] == 2]) * space_res / 2
 
-        vidcap = cv2.VideoCapture(f"{analysis_folder}{self.video_frame.iloc[0]['folder'][:-4]}{self.video_frame.iloc[0]['unique_id']}_video.mp4")
+        vidcap = cv2.VideoCapture(
+            f"{analysis_folder}{self.video_frame.iloc[0]['folder'][:-4]}{self.video_frame.iloc[0]['unique_id']}_video.mp4")
         success, image = vidcap.read()
         if success:
-            ax.imshow(image, extent = [(self.video_frame.iloc[0]['xpos'] - pic_4x_res[0]) + x_adj,
-                                       (self.video_frame.iloc[0]['xpos'] + pic_4x_res[0]) + x_adj,
-                                       (-self.video_frame.iloc[0]['ypos'] - pic_4x_res[1]) + y_adj,
-                                       (-self.video_frame.iloc[0]['ypos'] + pic_4x_res[1]) + y_adj
-                                       ])
+            ax.imshow(image, extent=[(self.video_frame.iloc[0]['xpos'] - pic_4x_res[0]) + x_adj,
+                                     (self.video_frame.iloc[0]['xpos'] + pic_4x_res[0]) + x_adj,
+                                     (-self.video_frame.iloc[0]['ypos'] - pic_4x_res[1]) + y_adj,
+                                     (-self.video_frame.iloc[0]['ypos'] + pic_4x_res[1]) + y_adj
+                                     ])
 
         for index, row in self.edges_frame.iterrows():
             space_res = 2 * 1.725 / row['magnification'] * row['binning']
@@ -512,13 +513,41 @@ class HighmagDataset(object):
                                    (row['ypos'] + space_res * row['edge_xpos_1']) * -1)])[0] - arrow_start
             ax.quiver(arrow_start[0], arrow_start[1], arrow_end[0], arrow_end[1], angles='xy',
                       color=['tab:green', 'gray'][row['magnification'] == 50], scale_units='xy', scale=1)
-        #     print(arrow_start, arrow_end)
 
         ax.scatter(self.video_frame.iloc[1:]['xpos'], -self.video_frame.iloc[1:]['ypos'])
-        # ax.annotate(self.video_frame['unique_id'].astype(str), (self.video_frame['xpos'], self.video_frame['ypos']))
         ax.axis('equal')
         ax.set_title(f"4x overview of {self.video_frame.iloc[0]['unique_id']}")
         fig.tight_layout()
+        return None
+
+    def plot_plate_locs(self, analysis_folder, modes=['scatter']):
+        # There is no way to align to stitched plates for now, so we'll just output a clean graph
+        fig, ax = plt.subplots(figsize=(16, 9))
+        videos_4x = self.video_frame[self.video_frame['magnification'] == 4.0]
+        videos_50x = self.video_frame[self.video_frame['magnification'] == 50.0]
+        if 'scatter' in modes:
+            ax.scatter(videos_50x['xpos'], -videos_50x['ypos'], c='black', label='50x mag')
+            ax.scatter(videos_4x['xpos'], -videos_4x['ypos'], c='tab:green', label='4x mag')
+        if 'speeds_mean' in modes:
+            videos_speeds = self.edges_frame[self.edges_frame['magnification'] == 50.0]
+            videos_speeds = videos_speeds[videos_speeds['mode'] == 'F']
+            arr_lengths = videos_speeds['speed_mean'] / 10 * 6.5
+            edge_ori_x = videos_speeds['edge_xpos_2'] - videos_speeds['edge_xpos_1']
+            edge_ori_y = videos_speeds['edge_ypos_2'] - videos_speeds['edge_ypos_1']
+            edge_ori_theta = np.arctan2(edge_ori_x, edge_ori_y)
+            edge_ori_theta = -1*edge_ori_theta
+            ax.quiver(videos_speeds['xpos'], -videos_speeds['ypos'],
+                      arr_lengths * np.cos(edge_ori_theta),
+                      arr_lengths * np.sin(edge_ori_theta),
+                      scale=300, width=0.0015, alpha=1.0, color='black')
+
+        ax.axis('equal')
+        if np.mean(self.video_frame['ypos']) > 100:
+            ax.set_xlim((-5000, 70000))
+            ax.set_ylim((-50000, -10000))
+        ax.set_title(f"Plate {self.video_frame['plate_id'][0]}")
+        ax.legend()
+
         return None
 
     def filter_videos(self, column, compare, constant):
@@ -544,20 +573,21 @@ class HighmagDataset(object):
             fig, ax = plt.subplots()
         if bins is not None:
             violin_data = [self.edges_frame[column][self.edges_frame[bin_separator] == i].astype(float) for i in
-                       range(len(bins))]
+                           range(len(bins))]
         else:
             violin_data = [self.edges_frame[column][self.edges_frame[bin_separator] == i].astype(float) for i in
-                            self.edges_frame[bin_separator].unique()]
+                           self.edges_frame[bin_separator].unique()]
             x_labels = self.edges_frame[bin_separator].unique()
             bins = range(self.edges_frame[bin_separator].nunique())
-            ax.set_xticks(bins, labels = x_labels)
+            ax.set_xticks(bins, labels=x_labels)
         violin_data_d = []
         for data in violin_data:
             if data.empty:
                 violin_data_d.append([np.nan, np.nan])
             else:
                 violin_data_d.append(data)
-        violin_parts = ax.violinplot(dataset=violin_data_d, positions=bins, widths = (bins[1] - bins[0])*0.6, showmeans=False, showmedians=False, showextrema=False)
+        violin_parts = ax.violinplot(dataset=violin_data_d, positions=bins, widths=(bins[1] - bins[0]) * 0.6,
+                                     showmeans=False, showmedians=False, showextrema=False)
         violin_means = [np.nanmean(data, axis=0) for data in violin_data_d]
         ax.scatter(bins, violin_means, s=4, c='black')
         for vp in violin_parts['bodies']:

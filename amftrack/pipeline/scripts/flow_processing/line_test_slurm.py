@@ -246,7 +246,7 @@ def do_line_test(
 #     forw_thresh = forw
 #     back_thresh = back 
 #     forw_back_thresh = np.add(forw_thresh, back_thresh)
-    speeds, times = kymo_anal.test_GST(7, w_start=5, C_thresh=0.95, C_thresh_falloff = 0.0, blur_size = 7, preblur=True, speed_thresh=speed_thresh, plots=False)
+    speeds, times = kymo_anal.extract_speeds(7, w_start=5, C_thresh=0.95, C_thresh_falloff = 0.0, blur_size = 7, preblur=True, speed_thresh=speed_thresh, plots=False)
 #     spd_max = np.nanmax(abs(speeds.flatten()))
     spds_forw = speeds[0][1]
     spds_back = speeds[0][0]
