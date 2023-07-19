@@ -19,7 +19,7 @@ import cv2
 from tifffile import imwrite
 from tqdm import tqdm
 import matplotlib as mpl
-from amftrack.util.dbx import upload_folders, download, read_saved_dropbox_state, save_dropbox_state, load_dbx, \
+from amftrack.util.dbx import upload_folder, download, read_saved_dropbox_state, save_dropbox_state, load_dbx, \
     download, get_dropbox_folders, get_dropbox_video_folders
 import logging
 import datetime
@@ -122,7 +122,7 @@ def index_videos_dropbox(analysis_folder, videos_folder, dropbox_folder,
     # The downloaded information is then read and merged into one dataframe containing all relevant information.
 
     merge_frame = read_video_data(info_addresses, all_folders_drop, analysis_folder)
-    merge_frame = merge_frame.rename(columns={'tot_path': 'folder'})
+    merge_frame = merge_frame.rename(columns={'tot_path': 'folder'}) # This is for the dropbox download functions
     merge_frame = merge_frame.sort_values('unique_id')
     merge_frame = merge_frame.reset_index(drop=True)
     merge_frame = merge_frame.loc[:, ~merge_frame.columns.duplicated()].copy()
@@ -153,6 +153,9 @@ def read_video_data(address_array, folders_frame, analysis_folder):
     :param analysis_folder: Folder where all of this will be found. Highest folder in the hierarchy.
     :return:                Merged frame with all video information that could be found in the index files.
     """
+
+    # Excel and cvs files have different information, and are stored in different hierarchies.
+
     folders_frame['plate_id_csv'] = [f"{row['Date Imaged']}_Plate{row['Plate number']}" for index, row in
                                      folders_frame.iterrows()]
     folders_frame['unique_id_csv'] = [f"{row['plate_id_csv']}_{str(row['video']).split(os.sep)[0]}" for index, row in
@@ -170,10 +173,13 @@ def read_video_data(address_array, folders_frame, analysis_folder):
         suffix = address.suffix
         if suffix == '.xlsx':
             raw_data = pd.read_excel(address)
+            # Earliest .xlsx files did not contain binning information. Assume 1x1 binning
             if 'Binned (Y/N)' not in raw_data:
                 raw_data['Binned (Y/N)'] = ['N' for entry in raw_data['Unnamed: 0']]
             raw_data["Binned (Y/N)"] = raw_data["Binned (Y/N)"].astype(str)
+            # Filter on excel rows that actually contain data
             raw_data = raw_data[raw_data['Treatment'] == raw_data['Treatment']].reset_index(drop=True)
+            # 'Plate[nr] can be both upper case and lower case'
             raw_data['Unnamed: 0'] = [entry.lower() for entry in raw_data['Unnamed: 0']]
             raw_data['plate_id_xl'] = [f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}" for entry in
                                        raw_data['Unnamed: 0']]
@@ -185,6 +191,7 @@ def read_video_data(address_array, folders_frame, analysis_folder):
             excel_frame = pd.concat([excel_frame, raw_data])
 
         elif suffix == '.csv':
+            # Different OS languages create different CSV's. Below checks for comma, or semicolon separation
             df_comma = pd.read_csv(address, nrows=1, sep=",")
             df_semi = pd.read_csv(address, nrows=1, sep=";")
             if df_comma.shape[1] > df_semi.shape[1]:
@@ -203,10 +210,13 @@ def read_video_data(address_array, folders_frame, analysis_folder):
             csv_frame = pd.concat([csv_frame, raw_data], axis=0, ignore_index=True)
 
         elif suffix == '.txt':
+            # If VideoInfo is missing, likely that the video was not worth saving anyway
             if not address.exists():
                 print(f"Could not find {address}, skipping for now")
                 continue
+            # Read .txt with read_csv? More likely than you think!
             raw_data = pd.read_csv(address, sep=": ", engine='python').T
+            # Drop all columns with no data
             raw_data = raw_data.dropna(axis=1, how='all')
             raw_data['unique_id'] = [f"{address.parts[-3]}_{address.parts[-2]}"]
             raw_data["tot_path"] = (address.relative_to(analysis_folder).parent / "Img").as_posix()
@@ -217,6 +227,10 @@ def read_video_data(address_array, folders_frame, analysis_folder):
                 print(f"Weird concatenation with {address}, trying to reset index")
                 print(raw_data.columns)
                 txt_frame = pd.concat([txt_frame, raw_data], axis=0, ignore_index=True)
+
+    # Now that three different kinds of data have been recorded, it's time to merge all of them.
+    # A definite final product is not standardized, but below you can see the renaming schemes.
+    # These new names will be used in the bulk analysis.
 
     if len(excel_frame) > 0:
         excel_frame['Binned (Y/N)'] = [np.where(entry == 'Y', 2, 1) for entry in excel_frame['Binned (Y/N)']]
@@ -361,6 +375,71 @@ def read_video_data(address_array, folders_frame, analysis_folder):
         raise "Could not find enough data!"
     return merge_frame
 
+
+def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
+                 logging=True,
+                 kymo_section_width=2.1,
+                 save_edge_extraction_plot=True,
+                 make_video=True,
+                 create_snapshot=True,
+                 create_edge_video=True,
+                 photobleach_adjust=False,
+                 speed_ext_window_number=15,
+                 speed_ext_c_thresh=0.95,
+                 speed_ext_c_falloff=0.005,
+                 speed_ext_blur_size=5,
+                 speed_ext_blur=True,
+                 speed_ext_max_thresh=80,
+                 dropbox_upload=True
+                 ):
+    all_edge_objs = []
+    for index, row in input_frame.iterrows():
+        ### Below code starts the whole address management. ###
+        drop_targ = Path(f"/{row['tot_path_drop']}").relative_to(dropbox_address)
+        db_address = f"{dropbox_address}Analysis/{drop_targ.as_posix()}"
+        row['analysis_folder'] = str(Path(f"{analysis_folder}{row['folder'][:-4]}"))
+        row['videos_folder'] = str(Path(f"{videos_folder}{row['folder']}"))
+        video_analysis = KymoVideoAnalysis(input_frame=row, logging=logging, show_seg=False)
+        img_seq = np.arange(len(video_analysis.selection_file))
+        edge_objs = video_analysis.edge_objects
+        all_edge_objs.append(edge_objs)
+
+        ### Use code below to adjust the width of the kymograph area. ###
+        target_length = int(kymo_section_width * video_analysis.magnification)
+
+        ### Plot and save the extracted edges to the analysis folder ###
+        video_analysis.plot_extraction_img(target_length=target_length,
+                                           save_img=save_edge_extraction_plot,
+                                           logging=True)
+
+        ### Save a compressed video of the raw TIFFs ###
+        if make_video:
+            video_analysis.makeVideo()
+
+        for edge in edge_objs:
+            ### Create video snapshot and edge video ###
+            if create_snapshot:
+                edge.view_edge(img_frame=40, save_im=True, target_length=target_length)
+            if create_edge_video:
+                edge.view_edge(img_frame=img_seq, save_im=True, quality=6, target_length=target_length)
+
+            ### Create kymograph of edge, do fourier filtering, extract speeds, extract transport ###
+            edge.extract_multi_kymo(1, target_length=target_length, kymo_adj=False)
+            edge.fourier_kymo(return_self=False)
+            edge.test_GST(w_size=speed_ext_window_number,
+                          w_start=3,
+                          C_thresh=speed_ext_c_thresh,
+                          C_thresh_falloff=speed_ext_c_falloff,
+                          blur_size=speed_ext_blur_size,
+                          preblur=speed_ext_blur,
+                          speed_thresh=speed_ext_max_thresh)
+            edge.extract_transport()
+
+        plot_summary(edge_objs)
+        save_raw_data(edge_objs, row['analysis_folder'])
+        if dropbox_upload:
+            upload_folder(row['analysis_folder'], db_address)
+    return all_edge_objs
 
 class HighmagDataset(object):
     def __init__(self,

@@ -661,7 +661,7 @@ def validate_interpolation_order(image_dtype, order):
     return order
 
 
-def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, magnif = 50, binning=2):
+def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, magnif = 50, binning=2, test_plot=False):
     kernel = np.ones((k_size, k_size), np.uint8)
     kernel_2 = np.ones((10, 10), np.uint8)
     smooth_im = cv2.GaussianBlur(image, (5, 5), 0)
@@ -679,39 +679,30 @@ def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, magnif = 50, b
 
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.85)
     retval, labels, centers = cv2.kmeans(k_data, [4, 2][magnif<30], None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
-#     print(labels.shape, centers.shape)
     centers=np.uint8(centers)
     labels=np.array(labels.T[0])
     centers = [center[0] for center in centers]
-#     print(centers)
-#     print(labels)
     segmented_data  = np.array([centers[label] for label in labels])
     segmented_image = segmented_data.reshape((smooth_im.shape))
     segmented_image = np.uint8(segmented_image>np.min(centers))
     segmented = cv2.morphologyEx(segmented_image, cv2.MORPH_CLOSE, kernel_2)
-    
-#     for i in range(1, 100):
-#         _, segmented = cv2.threshold(smooth_im_close, i, 255, cv2.THRESH_BINARY)
-#         seg_shape = segmented.shape
-#         coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
-#         if coverage < seg_thresh:
-#             break
 
     skeletonized = skeletonize(segmented > thresh)
 
-    fig, ax = plt.subplots(7, figsize=(9, 25))
-    ax[0].imshow(im_canny)
-    ax[0].set_title("Smooth")
-    ax[1].imshow(std_im)
-    ax[1].set_title("open")
-    ax[2].imshow(smooth_im)
-    ax[2].set_title("smooth_im")
-    ax[3].imshow(segmented)
-    ax[3].set_title("segmented")
-    ax[4].imshow(skeletonized)
-    ax[5].hist(smooth_im_close.flatten(), log=True, bins=50)
-    ax[6].plot(smooth_im_close[1000])
-    fig.tight_layout()
+    if test_plot:
+        fig, ax = plt.subplots(7, figsize=(9, 25))
+        ax[0].imshow(im_canny)
+        ax[0].set_title("Smooth")
+        ax[1].imshow(std_im)
+        ax[1].set_title("open")
+        ax[2].imshow(smooth_im)
+        ax[2].set_title("smooth_im")
+        ax[3].imshow(segmented)
+        ax[3].set_title("segmented")
+        ax[4].imshow(skeletonized)
+        ax[5].hist(smooth_im_close.flatten(), log=True, bins=50)
+        ax[6].plot(smooth_im_close[1000])
+        fig.tight_layout()
 
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
