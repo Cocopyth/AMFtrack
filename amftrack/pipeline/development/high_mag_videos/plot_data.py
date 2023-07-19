@@ -111,8 +111,8 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
     for edge in edge_objs:
         space_res = edge.video_analysis.space_pixel_size
         time_res = edge.video_analysis.time_pixel_size
-        speed_max = np.nanpercentile(edge.speeds_tot.flatten(), 0.1)
-        flux_max = np.nanpercentile(edge.flux_tot.flatten(), 1)
+        # speed_max = np.nanpercentile(edge.speeds_tot.flatten(), 0.1)
+        # flux_max = np.nanpercentile(edge.flux_tot.flatten(), 1)
 
         kymo_tiff = np.array([edge.kymos[0],
                               edge.filtered_left[0] + edge.filtered_right[0],
@@ -129,14 +129,14 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
         speedmax = np.max([np.nanpercentile(abs(spd_tiff[0:2].flatten()), spd_max_percentile), 15])
 
         back_thresh, forw_thresh = (edge.filtered_right[0], edge.filtered_left[0])
-        speed_weight_left = np.nansum(np.prod((edge.speeds_tot[0][0], back_thresh), 0), 1) / np.nansum(back_thresh,
-                                                                                                       axis=1)
-        speed_weight_right = np.nansum(np.prod((edge.speeds_tot[0][1], forw_thresh), 0), 1) / np.nansum(forw_thresh,
-                                                                                                        axis=1)
+        # speed_weight_left = np.nansum(np.prod((edge.speeds_tot[0][0], back_thresh), 0), 1) / np.nansum(back_thresh,
+        #                                                                                                axis=1)
+        # speed_weight_right = np.nansum(np.prod((edge.speeds_tot[0][1], forw_thresh), 0), 1) / np.nansum(forw_thresh,
+        #                                                                                                 axis=1)
 
         speed_left_coverage = 1 - np.count_nonzero(np.isnan(edge.speeds_tot[0][0]), axis=1) / len(edge.flux_tot[0])
         speed_right_coverage = 1 - np.count_nonzero(np.isnan(edge.speeds_tot[0][1]), axis=1) / len(edge.flux_tot[0])
-        coverage_sum = speed_left_coverage + speed_right_coverage
+        # coverage_sum = speed_left_coverage + speed_right_coverage
 
         vel_adj = np.where(np.isinf(np.divide(spd_tiff[2], kymo_tiff[1])), np.nan, np.divide(spd_tiff[2], kymo_tiff[1]))
         vel_adj = np.where(abs(vel_adj) > 2 * speedmax, np.nan, vel_adj)
@@ -212,6 +212,7 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
         ax['flux_plot'].grid(True)
 
         fig.savefig(f"{edge.edge_path}/{edge.edge_name}_summary.png")
+        plt.close(fig)
 
         fig, ax = plt.subplot_mosaic([['kymo', 'kymo_left', 'kymo_right'],
                                       ['kymo_stat', 'spd_left', 'spd_right']], figsize=(12, 9), layout='constrained')
@@ -237,6 +238,7 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
             ax[axis].set_ylabel("time (s)")
         #         fig.tight_layout()
         fig.savefig(f"{edge.edge_path}{os.sep}{edge.edge_name}_kymos.png")
+        plt.close(fig)
 
 
 

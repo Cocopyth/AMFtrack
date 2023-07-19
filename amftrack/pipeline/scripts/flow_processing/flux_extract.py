@@ -48,9 +48,9 @@ for edge in edge_objs:
     edge.view_edge(img_frame=40, save_im=True, target_length=target_length)
     edge.view_edge(img_frame=img_seq, save_im=True, quality=6, target_length=target_length)
     edge.extract_multi_kymo(bin_nr, target_length=target_length, kymo_adj=False)
-    edge.fourier_kymo(bin_nr, save_im=True, save_array=False)
-    edge.test_GST(int(GST_params[0]), w_start=3, C_thresh=float(GST_params[1]), C_thresh_falloff=float(GST_params[2]), blur_size=5, preblur=True, speed_thresh=int(GST_params[3]), plots=False)
-    edge.extract_transport(noise_thresh=0.15, plots=False, save_im=False, save_flux_array=False, margin=5)
+    edge.fourier_kymo(return_self=False)
+    edge.test_GST(int(GST_params[0]), w_start=3, C_thresh=float(GST_params[1]), C_thresh_falloff=float(GST_params[2]), blur_size=5, preblur=True, speed_thresh=int(GST_params[3]))
+    edge.extract_transport()
 
 dataplot.plot_summary(edge_objs)
 dataplot.save_raw_data(edge_objs, img_address)
