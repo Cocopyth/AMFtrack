@@ -33,9 +33,9 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile=99.9):
 
     for edge in edge_objs:
         space_res = edge.video_analysis.space_pixel_size
-        time_res = edge.video_analysis.time_pixel_size
-        speed_max = np.nanpercentile(edge.speeds_tot.flatten(), 0.1)
-        flux_max = np.nanpercentile(edge.flux_tot.flatten(), 1)
+        # time_res = edge.video_analysis.time_pixel_size
+        # speed_max = np.nanpercentile(edge.speeds_tot.flatten(), 0.1)
+        # flux_max = np.nanpercentile(edge.flux_tot.flatten(), 1)
 
         kymo_tiff = np.array([edge.kymos[0],
                               edge.filtered_left[0] + edge.filtered_right[0],
@@ -184,15 +184,18 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
         #         ax[1][0].set_xlim(ax[1][0].get_ylim()[::-1])
         ax['speed_plot'].legend()
 
+        hist_cmap = 'magma'
+        hist_cmap = 'gist_stern'
+
         ax['speed_hist'].imshow(speed_histo.T, extent=[0, len(speed_histo) * time_res, -50, 50], origin='lower',
-                                aspect='auto', cmap='magma')
+                                aspect='auto', cmap=hist_cmap)
         ax['speed_hist'].axhline(c='w', linestyle='--')
         ax['speed_hist'].set_title(f"Velocity histogram")
         ax['speed_hist'].set_xlabel("time (s)")
         ax['speed_hist'].set_ylabel("speed ($\mu m/s$)")
 
         ax['speed_hist_zoom'].imshow(speed_histo.T[215 * 2:286 * 2 - 1], extent=[0, len(speed_histo) * time_res, -7, 7],
-                                     origin='lower', aspect='auto', cmap='magma')
+                                     origin='lower', aspect='auto', cmap=hist_cmap)
         ax['speed_hist_zoom'].axhline(c='w', linestyle='--')
         ax['speed_hist_zoom'].set_title(f"Velocity histogram")
         ax['speed_hist_zoom'].set_xlabel("time (s)")
