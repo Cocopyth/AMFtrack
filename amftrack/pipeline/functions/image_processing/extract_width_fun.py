@@ -77,9 +77,9 @@ def compute_section_coordinates(
     """
     Compute the coordinates of each segment section where the width will be computed
     :param pivot_indexes: list of indexes in the pixel_list
-    :param step: this determine which neibooring points to use for computing the tangent
+    :param step: this determines which neighboring points to use for computing the tangent
     :param target_length: the approximate target_length that we want for the segment
-    WARNING: taget_length is not exact as the coordinates are ints
+    WARNING: target_length is not exact as the coordinates are ints
     NB: the coordinates are all in the general referential
     """
     # TODO(FK): handle case where the step is bigger than the offset, raise error instead of logging
