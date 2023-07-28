@@ -85,7 +85,7 @@ for i, img in enumerate(imgs):
 time = time_ns()
 save_path_temp = os.path.join(temp_path, f"{time}.mp4")
 imageio.mimsave(save_path_temp, imgs)
-dir_drop = "DATA/PRINCE"
+dir_drop = "DATA/PRINCE_ANALYSIS"
 upload_path = f"/{dir_drop}/{id_unique}/{id_unique}_skelet.mp4"
 upload(save_path_temp, upload_path)
 print(upload_path, len(imgs), len(select))

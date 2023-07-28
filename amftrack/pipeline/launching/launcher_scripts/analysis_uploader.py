@@ -13,7 +13,7 @@ plates = sys.argv[3:]
 update_analysis_info(directory_targ)
 analysis_info = get_analysis_info(directory_targ)
 analysis_folders = analysis_info.loc[analysis_info["unique_id"].isin(plates)]
-dir_drop = "DATA/PRINCE"
+dir_drop = "DATA/PRINCE_ANALYSIS"
 
 for index, row in analysis_folders.iterrows():
     folder = row["folder_analysis"]
