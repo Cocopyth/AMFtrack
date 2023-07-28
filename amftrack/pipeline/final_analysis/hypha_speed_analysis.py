@@ -73,18 +73,13 @@ def get_hyphae_hull(plate_id, analysis_folders):
     analysis_dirs = selection["total_path"]
     folders = pd.DataFrame()
     for analysis_dir in analysis_dirs:
-        hyphae_hull = []
+        hyphae_hull = {}
         path_time_hypha = os.path.join(analysis_dir, "time_hull_info")
         if os.path.exists(path_time_hypha):
-            path_save = os.path.join(analysis_dir, "folder_info.json")
-            folders_plate = pd.read_json(path_save)
-            folders_plate = folders_plate.reset_index()
-            folders_plate = folders_plate.sort_values("datetime")
             json_paths = os.listdir(path_time_hypha)
-            tables = []
             for path in json_paths:
                 index = int(path.split("_")[-1].split(".")[0])
-                line = folders_plate.iloc[index]
                 hyphae = np.load(os.path.join(path_time_hypha, path))
-                hyphae_hull.append(hyphae)
+                hyphae_hull[index] = hyphae
+
     return hyphae_hull
