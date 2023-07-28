@@ -110,6 +110,35 @@ def get_length_in_ring_new(hull1, hull2, t, exp):
     print(tot_length)
     return tot_length
 
+def get_length_fast(edge, t):
+    return np.linalg.norm(edge.begin.pos(t) - edge.end.pos(t))
+
+f = lambda edge: np.log(
+    edge.width(edge.ts()[-1])
+    * get_length_fast(edge, edge.ts()[-1])
+    * edge.end.degree(edge.ts()[-1])
+    * edge.begin.degree(edge.ts()[-1])
+)
+
+
+f = lambda edge: np.log(
+    edge.width(edge.ts()[-1])
+    * get_length_fast(edge, edge.ts()[-1])
+    * edge.end.degree(edge.ts()[-1])
+    * edge.begin.degree(edge.ts()[-1])
+)
+
+
+def get_BAS_length_in_ring(hull1, hull2, t, exp):
+    nodes = get_nodes_in_ring(hull1, hull2, t, exp)
+    edges = {edge for node in nodes for edge in node.edges(t) if f(edge) <= 10}
+    tot_length = np.sum(
+        [
+            np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725 / 2
+            for edge in edges
+        ]
+    )
+    return tot_length
 
 def get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples=100):
     shape = hull2.difference(hull1)
@@ -227,7 +256,7 @@ def get_rate_anas_in_ring(hull1, hull2, t, exp, rh_only):
         tip
         for tip in growing_tips
         if tip.degree(t) == 1
-        and tip.degree(t + 1) == 3
+        and tip.degree(t + 1) >= 3
         and 1 not in [tip.degree(t) for t in [tau for tau in tip.ts() if tau > t]]
     ]
     timedelta = get_time(exp, t, t + 1)
@@ -242,6 +271,20 @@ def get_rate_branch_in_ring(hull1, hull2, t, exp, rh_only, max_t=np.inf):
 
 
 def get_rate_stop_in_ring(hull1, hull2, t, exp, rh_only, max_t=np.inf):
+    growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only, max_t)
+    interest_tips = [
+        tip for tip in growing_tips if tip.ts()[-1] != t + 1 and tip.degree(t + 1) == 1
+    ]
+    stop_tips = []
+    for tip in interest_tips:
+        timesteps = [tim for tim in tip.ts() if tim <= max_t]
+        tim = timesteps[-1] if len(timesteps) > 0 else tip.ts()[-1]
+        if np.linalg.norm(tip.pos(tim) - tip.pos(t + 1)) <= 40:
+            stop_tips.append(tip)
+    timedelta = get_time(exp, t, t + 1)
+    return len(stop_tips) / timedelta
+
+def get_rate_lost_track_in_ring(hull1, hull2, t, exp, rh_only, max_t=np.inf):
     growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only, max_t)
     interest_tips = [
         tip for tip in growing_tips if tip.ts()[-1] != t + 1 and tip.degree(t + 1) == 1
