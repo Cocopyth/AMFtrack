@@ -30,7 +30,7 @@ id_unique = (
     + str(int(str(select["CrossDate"].iloc[0]).replace("'", "")))
 )
 print(paths_list)
-dir_drop = "DATA/PRINCE"
+dir_drop = "DATA/PRINCE_ANALYSIS"
 upload_path = f"/{dir_drop}/{id_unique}/{id_unique}_single_tiled.mp4"
 make_video_tile(
     paths_list, texts, resize, save_path=None, upload_path=upload_path, fontScale=3
