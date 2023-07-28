@@ -25,6 +25,8 @@ import os
 
 is_circle = False
 
+dir_drop = "DATA/PRINCE_ANALYSIS"
+
 
 def delete_files(paths_list):
     for paths in paths_list:
@@ -34,7 +36,6 @@ def delete_files(paths_list):
 
 def plot_hulls(exp, args=None):
     paths_list = make_hull_images(exp, range(exp.ts))
-    dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
     texts = [[folder] for folder in list(exp.folders["folder"])]
     folder_analysis = exp.save_location.split("/")[-1]
@@ -91,7 +92,6 @@ def plot_get_hull_nodes(exp, args=None):
 
 def plot_tracking(exp, args=None):
     paths_list = make_images_track(exp, is_circle)
-    dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
     folder_analysis = exp.save_location.split("/")[-1]
     upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/full_track/"
@@ -119,7 +119,6 @@ def plot_tracking(exp, args=None):
 
 def plot_blobs(exp, args=None):
     paths_list = make_images_spores(exp)
-    dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
     folder_analysis = exp.save_location.split("/")[-1]
     upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/full_spores/"
@@ -148,7 +147,6 @@ def plot_blobs(exp, args=None):
 def plot_tracking2(exp, args=None):
     for i in range(100):
         paths_list = make_images_track2(exp)
-        dir_drop = "DATA/PRINCE"
         id_unique = exp.unique_id
         folder_analysis = exp.save_location.split("/")[-1]
         upload_path = (
@@ -170,7 +168,6 @@ def plot_tracking2(exp, args=None):
 def plot_hypha(exp, args=None):
     for i in range(100):
         paths_list = make_images_track3(exp)
-        dir_drop = "DATA/PRINCE"
         id_unique = exp.unique_id
         folder_analysis = exp.save_location.split("/")[-1]
         upload_path = (
@@ -192,7 +189,6 @@ def plot_hypha(exp, args=None):
 def plot_hypha_track(exp, args=[]):
     for hypha in args:
         paths_list = make_images_track_hypha(exp, hypha)
-        dir_drop = "DATA/PRINCE"
         id_unique = exp.unique_id
         folder_analysis = exp.save_location.split("/")[-1]
         upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/tracked_hyphae/hypha_{hypha}.mp4"
@@ -211,7 +207,6 @@ def plot_hypha_track(exp, args=[]):
 
 def plot_anastomosis(exp, args=None):
     paths_list = make_images_anas(exp)
-    dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
     folder_analysis = exp.save_location.split("/")[-1]
     upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/full_anas/"
@@ -239,7 +234,6 @@ def plot_anastomosis(exp, args=None):
 
 def plot_width(exp, args=None):
     paths_list = make_images_width(exp)
-    dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
     folder_analysis = exp.save_location.split("/")[-1]
     upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/full_width/"
@@ -267,7 +261,6 @@ def plot_width(exp, args=None):
 
 def plot_betweenness(exp, args=None):
     paths_list = make_images_betweenness(exp)
-    dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
     folder_analysis = exp.save_location.split("/")[-1]
     upload_path = f"/{dir_drop}/{id_unique}/{folder_analysis}/validation/betweenness/"
@@ -295,7 +288,6 @@ def plot_betweenness(exp, args=None):
 
 def plot_betweenness_random(exp, args=None):
     paths_list = make_images_betweenness_random(exp)
-    dir_drop = "DATA/PRINCE"
     id_unique = exp.unique_id
     folder_analysis = exp.save_location.split("/")[-1]
     upload_path = (

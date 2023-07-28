@@ -22,7 +22,7 @@ id_unique = (
     + "_"
     + str(int(str(select["CrossDate"].iloc[0]).replace("'", "")))
 )
-dir_drop = "DATA/PRINCE"
+dir_drop = "DATA/PRINCE_ANALYSIS"
 upload_path = f"/{dir_drop}/{id_unique}/{id_unique}_stitched.mp4"
 resize = (2624, 1312)
 make_video(paths, texts, resize, save_path=None, upload_path=upload_path, fontScale=3)
