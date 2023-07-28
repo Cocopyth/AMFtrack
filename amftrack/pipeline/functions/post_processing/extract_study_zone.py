@@ -352,7 +352,7 @@ def get_study_zone(exp, dist, radius, i=0):
     directory_name = get_dirname(date, exp.folders)
     path_snap = exp.directory + directory_name
     im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
-    shape_compressed = im.shape[1] // 5, im.shape[0] // 5
+    shape_compressed = im.shape[1]*15//25, im.shape[0]*15//25
     im_comp = cv2.resize(im, shape_compressed)
     dr_orth, dr_center = place_study_zone(im_comp, dist, radius)
     return (dr_orth, dr_center)
