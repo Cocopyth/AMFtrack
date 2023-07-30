@@ -128,13 +128,13 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
             edge.flux_tot
         ], dtype=float)
 
-        speedmax = np.max([np.nanpercentile(abs(spd_tiff[0:2].flatten()), spd_max_percentile), 15])
+        speedmax = np.max([np.nanpercentile(abs(spd_tiff[0:2].flatten()), spd_max_percentile), 5])
 
         vel_adj = np.where(np.isinf(np.divide(spd_tiff[2], kymo_tiff[1])), np.nan, np.divide(spd_tiff[2], kymo_tiff[1]))
         vel_adj = np.where(abs(vel_adj) > 2 * speedmax, np.nan, vel_adj)
         vel_adj_mean = np.nanmean(vel_adj, axis=1)
 
-        speed_bins = np.linspace(-50, 50, 1001)
+        speed_bins = np.linspace(-speedmax, speedmax, 1001)
         speed_histo_left = np.array([np.histogram(row, speed_bins)[0] for row in edge.speeds_tot[0][0]])
         speed_histo_right = np.array([np.histogram(row, speed_bins)[0] for row in edge.speeds_tot[0][1]])
         speed_histo = (speed_histo_left + speed_histo_right) / (2 * len(edge.speeds_tot[0][0][0]))
@@ -175,7 +175,7 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
         hist_cmap = 'magma'
         hist_cmap = 'gist_stern'
 
-        ax['speed_hist'].imshow(speed_histo.T, extent=[0, len(speed_histo) * time_res, -50, 50], origin='lower',
+        ax['speed_hist'].imshow(speed_histo.T, extent=[0, len(speed_histo) * time_res, -speedmax, speedmax], origin='lower',
                                 aspect='auto', cmap=hist_cmap)
         ax['speed_hist'].axhline(c='w', linestyle='--')
         ax['speed_hist'].set_title(f"Velocity histogram")
@@ -205,9 +205,9 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
         fig, ax = plt.subplot_mosaic([['kymo', 'kymo_left', 'kymo_right'],
                                       ['kymo_stat', 'spd_left', 'spd_right']], figsize=(12, 9), layout='constrained')
         ax['kymo'].imshow(kymo_tiff[0], cmap='gray', vmin=0, aspect='auto', extent=imshow_extent)
-        ax['kymo_stat'].imshow(kymo_tiff[1], cmap='gray', vmin=0, aspect='auto', extent=imshow_extent)
-        ax['kymo_right'].imshow(kymo_tiff[2], cmap='gray', vmin=0, aspect='auto', extent=imshow_extent)
-        ax['kymo_left'].imshow(kymo_tiff[3], cmap='gray', vmin=0, aspect='auto', extent=imshow_extent)
+        ax['kymo_stat'].imshow(kymo_tiff[1], cmap='gray', aspect='auto', extent=imshow_extent)
+        ax['kymo_right'].imshow(kymo_tiff[2], cmap='gray', aspect='auto', extent=imshow_extent)
+        ax['kymo_left'].imshow(kymo_tiff[3], cmap='gray', aspect='auto', extent=imshow_extent)
         ax['spd_left'].imshow(spd_tiff[0], cmap='coolwarm', vmin=-speedmax, vmax=speedmax, aspect='auto',
                               extent=imshow_extent)
         spd_colors = ax['spd_right'].imshow(spd_tiff[1], cmap='coolwarm', vmin=-speedmax, vmax=speedmax, aspect='auto',

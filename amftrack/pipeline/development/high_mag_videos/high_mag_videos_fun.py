@@ -426,14 +426,16 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(70, 170, 30
     frangi_range = frangi_range * 2 / binning
     smooth_im_blur = cv2.blur(-image, (11, 11))
     smooth_im = frangi(-smooth_im_blur, frangi_range)
-    smooth_im *= (255/np.max(smooth_im))
-    seg_shape = smooth_im.shape
+    smooth_im = np.array(smooth_im * (255/np.max(smooth_im)), dtype=np.uint8)
+    _, segmented = cv2.threshold(smooth_im, 0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    
+#     seg_shape = smooth_im.shape
 
-    for i in range(1, 100):
-        _, segmented = cv2.threshold(smooth_im, i, 255, cv2.THRESH_BINARY)
-        coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
-        if coverage < seg_thresh:
-            break
+#     for i in range(1, 100):
+#         _, segmented = cv2.threshold(smooth_im, i, 255, cv2.THRESH_BINARY)
+#         coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
+#         if coverage < seg_thresh:
+#             break
     
     skeletonized = skeletonize(segmented > seg_thresh)
     skeleton = scipy.sparse.dok_matrix(skeletonized)

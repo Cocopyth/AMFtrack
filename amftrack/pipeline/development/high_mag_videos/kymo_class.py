@@ -150,20 +150,22 @@ class KymoVideoAnalysis(object):
         self.selection_file = self.images_total_path
         self.selection_file.sort()
         self.selection_file = self.selection_file[self.im_range[0]:self.im_range[1]]
-        self.frame_max = imageio.imread(self.selection_file[self.im_range[0]])
-        for address in self.im_range:
-            frame2 = imageio.imread(self.selection_file[address])
-            self.frame_max = np.maximum(self.frame_max, frame2)
+
 
         if self.logging:
             print('Data input succesful! Starting edge extraction...')
 
         ### Skeleton creation, we segment the image using either brightfield or fluo segmentation methods.
         if self.vid_type == 'BRIGHT':
+            frangi_range = [np.arange(5, 20, 3), np.arange(50, 90, 20)][self.magnification == 50]
             self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
-                imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh,
+                imageio.imread(self.selection_file[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
                 seg_thresh=seg_thresh, binning=self.binning)
         elif self.vid_type == 'FLUO':
+            self.frame_max = imageio.imread(self.selection_file[self.im_range[0]])
+            for address in self.im_range:
+                frame2 = imageio.imread(self.selection_file[address])
+                self.frame_max = np.maximum(self.frame_max, frame2)
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
                 self.frame_max, thresh=thresh,
                 seg_thresh=seg_thresh, magnif=self.magnification)
@@ -519,6 +521,7 @@ class KymoEdgeAnalysis(object):
                            kymo_adj=False,
                            save_array=False,
                            save_im=False,
+                           kymo_normalize=False,
                            bounds=(0, 1)):
         """
         Creates kymograph for the edge. Uses bin_nr to divide the width into evenly distributed strips.
@@ -547,8 +550,10 @@ class KymoEdgeAnalysis(object):
                                                  save_im=save_im,
                                                  img_suffix=str(bin_nr) + ' ' + str(i + 1),
                                                  kymo_adjust=kymo_adj,
+                                                 kymo_normalize=kymo_normalize,
                                                  x_len=space_pixel_size)
                                for i in tqdm(range(bin_nr))])
+        
         return self.kymos
 
     def extract_kymo(self,
@@ -560,7 +565,8 @@ class KymoEdgeAnalysis(object):
                      bounds=(0, 1),
                      img_suffix="",
                      x_len=10,
-                     kymo_adjust=False):
+                     kymo_adjust=False,
+                     kymo_normalize=False):
         """
         Single version of kymograph extraction, is used as a sub-function in multi_kymo_extract
         :param resolution:      Skipping factor for perpendicular kymo lines
@@ -584,6 +590,9 @@ class KymoEdgeAnalysis(object):
                                  target_length,
                                  bounds,
                                  x_len)
+        if kymo_normalize:
+            self.kymo -= np.nanmin(self.kymo)
+            self.kymo *= 255.0/np.nanmax(self.kymo) 
         if kymo_adjust:
             norm_exp = self.video_analysis.back_fit / self.video_analysis.back_fit[0]
             self.kymo -= self.video_analysis.back_offset
