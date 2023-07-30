@@ -35,7 +35,7 @@ else:
                                    seg_thresh=12, show_seg=False)
     db_address = f"{upl_targ}Analysis/{dataframe['parent_folder']}/"
 
-target_length = int(2.1 * test_video.magnification)
+target_length = int(2.4 * test_video.magnification)
 
 test_video.plot_extraction_img(target_length=target_length, save_img=True)
 edge_objs = test_video.edge_objects
@@ -47,9 +47,9 @@ img_seq = np.arange(len(edge_objs[0].video_analysis.selection_file))
 for edge in edge_objs:
     edge.view_edge(img_frame=40, save_im=True, target_length=target_length)
     edge.view_edge(img_frame=img_seq, save_im=True, quality=6, target_length=target_length)
-    edge.extract_multi_kymo(bin_nr, target_length=target_length, kymo_adj=False)
+    edge.extract_multi_kymo(bin_nr, target_length=target_length, kymo_adj=False, kymo_normalize=True)
     edge.fourier_kymo(return_self=False)
-    edge.extract_speeds(int(GST_params[0]), w_start=3, C_thresh=float(GST_params[1]), C_thresh_falloff=float(GST_params[2]), blur_size=5, preblur=True, speed_thresh=int(GST_params[3]))
+    edge.extract_speeds(int(GST_params[0]), w_start=3, C_thresh=float(GST_params[1]), C_thresh_falloff=float(GST_params[2]), blur_size=3, preblur=True, speed_thresh=int(GST_params[3]))
     edge.extract_transport()
 
 dataplot.plot_summary(edge_objs)
