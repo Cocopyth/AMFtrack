@@ -364,8 +364,11 @@ def get_dropbox_video_folders(dir_drop) -> pd.DataFrame:
     else:
         names = [f"{file.split('/')[-3]}_{file.split('/')[-2]}{'/'}Img{'/'}" for file in image_list]
     path_drop = [Path(file).as_posix() for file in image_list]
-    plate_nr = [Path(path).parts[-3].split('_')[1][5:] for path in path_drop]
-    date_img = [Path(path).parts[-3].split('_')[0] for path in path_drop]
+    print(path_drop, ['_' in Path(path).parts[-3] for path in path_drop])
+    plate_nr = [Path(path).parts[-3].split('_')[1][5:] for path in path_drop if '_' in Path(path).parts[-3]]
+    plate_nr = [Path(path).parts[-3] for path in path_drop if '_' not in Path(path).parts[-3]]
+    date_img = [Path(path).parts[-3].split('_')[0] for path in path_drop if '_' in Path(path).parts[-3]]
+
     video = [name.split('_')[-1] for name in names]
     df = pd.DataFrame(
         (names, plate_nr, date_img, path_drop, video)
@@ -493,7 +496,7 @@ def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
             listfiles += [file for file in response.entries if Path(file.path_display).suffix != '']
             response = dbx.files_list_folder_continue(response.cursor)
         listfiles += [file for file in response.entries if Path(file.path_display).suffix != '']
-        folder = Path(row["folder"][1:])
+        folder = Path(row["folder"])
         path_folder = directory_target / folder
         if not path_folder.exists():
             path_folder.mkdir(parents=True)
