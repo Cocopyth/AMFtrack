@@ -135,6 +135,7 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
         vel_adj_mean = np.nanmean(vel_adj, axis=1)
 
         speed_bins = np.linspace(-speedmax, speedmax, 1001)
+        speed_bins_trunc = (abs(speed_bins) < 7.0)[:-1]
         speed_histo_left = np.array([np.histogram(row, speed_bins)[0] for row in edge.speeds_tot[0][0]])
         speed_histo_right = np.array([np.histogram(row, speed_bins)[0] for row in edge.speeds_tot[0][1]])
         speed_histo = (speed_histo_left + speed_histo_right) / (2 * len(edge.speeds_tot[0][0][0]))
@@ -182,7 +183,7 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
         ax['speed_hist'].set_xlabel("time (s)")
         ax['speed_hist'].set_ylabel("speed ($\mu m/s$)")
 
-        ax['speed_hist_zoom'].imshow(speed_histo.T[215 * 2:286 * 2 - 1], extent=[0, len(speed_histo) * time_res, -7, 7],
+        ax['speed_hist_zoom'].imshow(speed_histo.T[speed_bins_trunc], extent=[0, len(speed_histo) * time_res, -7, 7],
                                      origin='lower', aspect='auto', cmap=hist_cmap)
         ax['speed_hist_zoom'].axhline(c='w', linestyle='--')
         ax['speed_hist_zoom'].set_title(f"Velocity histogram")
