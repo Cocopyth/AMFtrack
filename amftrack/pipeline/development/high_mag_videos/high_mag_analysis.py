@@ -433,7 +433,6 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
 
             ### Create kymograph of edge, do fourier filtering, extract speeds, extract transport ###
             kymos = edge.extract_multi_kymo(1, target_length=target_length, kymo_adj=False, kymo_normalize=kymo_normalize)
-            print(kymos)
             edge.fourier_kymo(return_self=False)
             edge.extract_speeds(w_size=speed_ext_window_number,
                                 w_start=speed_ext_window_start,
@@ -579,7 +578,6 @@ class HighmagDataset(object):
             label_frame = self.video_frame.copy()
             label_frame['coords'] = [f"{row['xpos']}, {row['ypos']}" for index, row in label_frame.iterrows()]
             for label in label_frame['coords'].unique():
-#                 print(label_frame[label_frame['coords'] == label]['xpos'])
                 coordx = label_frame[label_frame['coords'] == label]['xpos'].iloc[0]
                 coordy = label_frame[label_frame['coords'] == label]['ypos'].iloc[0]
                 vid_list = [int(row['video_int']) for index, row in label_frame[label_frame['coords'] == label].iterrows()]
@@ -590,7 +588,6 @@ class HighmagDataset(object):
             ax.set_xlim((-5000, 70000))
             ax.set_ylim((-50000, -10000))
         else:
-#             print(len(videos_50x['xpos']))
             x_mean = videos_50x['xpos'].mean()
             y_mean = -videos_50x['ypos'].mean()
             ax.set_xlim((x_mean - 45, x_mean + 45))
