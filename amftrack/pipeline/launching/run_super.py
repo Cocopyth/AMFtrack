@@ -9,8 +9,16 @@ import pickle
 import imageio
 import sys
 from time import sleep
+directory_scratch = "/scratch-shared/amftrack/"
+directory_project = "/projects/0/einf914/data/"
+directory_archive = "/archive/cbisot/"
+directory_sun = "/run/user/357100554/gvfs/smb-share:server=sun.amolf.nl,share=shimizu-data,user=bisot/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE/"
 
-path_bash = os.getenv("HOME") + "/bash/"
+
+if os.getenv("HOME") is not None:
+    path_bash = os.getenv("HOME") + "/bash/"
+else:
+    print("This is not a linux system, I am lost")
 path_stitch = f"{temp_path}/stitching_loops/"
 if not os.path.isdir(path_stitch):
     os.mkdir(path_stitch)
@@ -67,7 +75,7 @@ def run_parallel(
         my_file.write(
             f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        my_file.write(f"source {conda_path}\n")
+        my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
@@ -112,7 +120,7 @@ def run_parallel_all_time(
         my_file.write(
             f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        my_file.write(f"source {conda_path}\n")
+        my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
@@ -159,7 +167,7 @@ def run_parallel_post(
         my_file.write(
             f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        my_file.write(f"source {conda_path}\n")
+        my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
@@ -289,7 +297,7 @@ def run_parallel_transfer(
         my_file.write(
             f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        my_file.write(f"source {conda_path}\n")
+        my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
@@ -324,7 +332,7 @@ def run_launcher(
         f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
     )
     my_file.write(f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}.out" \n')
-    my_file.write(f"source {conda_path}\n")
+    my_file.write(f"source {os.path.join(conda_path, 'etc/profile.d/conda.sh')}\n")
     my_file.write(f"conda activate amftrack\n")
     my_file.write(
         f"python {path_code}pipeline/launching/launcher_scripts/{code} {arg_str}  &\n"
@@ -366,7 +374,7 @@ def run_parallel_transfer_to_archive(
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
         my_file.write(f'#SBATCH -o "{slurm_path}/{name}_{ide}.out" \n')
-        my_file.write(f"source {conda_path}\n")
+        my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(
             f"tar cvf /archive/cbisot/prince_data/{id_unique}.tar {folder}*\n"
