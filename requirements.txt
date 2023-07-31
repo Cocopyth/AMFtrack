@@ -28,3 +28,4 @@ tensorflow
 imageio-ffmpeg
 geopandas
 statsmodels
+openpyxl
