@@ -131,16 +131,17 @@ def identify_nodes(exp,t):
     def on_text_box_submit(sender):
         selected_point_info[text_box.value] = selected_point
         print(f'Saved point {text_box.value} with coordinates {selected_point}')
-        dicopoint[text_box.value] = selected_point
+        dicopoint[text_box.value] = selected_node
         text_box.value = ''  # clear the text box
 
     text_box.on_submit(on_text_box_submit)
 
     def onclick(event):
-        global selected_point, selected_rectangle
+        global selected_point, selected_rectangle, selected_node
         distances = (points[0] - event.xdata) ** 2 + (points[1] - event.ydata) ** 2
         closest_point_index = np.argmin(distances)
         selected_point = points[:, closest_point_index]
+        selected_node = nodes[closest_point_index]
         print(f"You clicked closest to point at coordinates ({selected_point[0]}, {selected_point[1]})")
 
         # Draw a rectangle around the selected point, and remove the previous one
@@ -153,4 +154,4 @@ def identify_nodes(exp,t):
 
     # Connect the click event with the callback function
     cid = fig.canvas.mpl_connect('button_press_event', onclick)
-    return cid, fig
+    return cid, fig,dicopoint
