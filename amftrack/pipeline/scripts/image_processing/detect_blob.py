@@ -72,9 +72,9 @@ for index, name in enumerate(tileconfig[0]):
         x_tot = x + boundaries[0]
         y_tot = y + boundaries[1]
         complete_spores.append((x_tot, y_tot, r))
-    if name == choosen_picture:
-        if len(blobs) > 0:
-            plot_blobs_upload(im)
+    # if name == choosen_picture:
+    #     if len(blobs) > 0:
+    #         plot_blobs_upload(im)
 
 complete_spores = np.array(complete_spores)
 # removing duplicate due to image overlap

@@ -43,6 +43,7 @@ if not os.path.isdir(ml_path):
 slurm_path = env_config.get("SLURM_PATH")
 slurm_path_transfer = env_config.get("SLURM_PATH_transfer")
 dropbox_path = env_config.get("DROPBOX_PATH")
+dropbox_path_analysis = env_config.get("DROPBOX_PATH_ANALYSIS")
 
 
 def pad_number(number):
@@ -420,7 +421,7 @@ def get_analysis_info(directory, suffix_analysis_info=""):
     return analysis_info
 
 
-def get_analysis_folders(path=dropbox_path):
+def get_analysis_folders(path=dropbox_path_analysis):
     analysis_folders = pd.DataFrame()
     for dire in os.walk(path):
         name_analysis = dire[0].split(os.sep)[-1].split("_")
