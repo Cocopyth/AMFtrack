@@ -22,6 +22,8 @@ from amftrack.util.dbx import upload_folder, download, read_saved_dropbox_state,
 import logging
 import datetime
 import numpy as np
+import matplotlib.patheffects as pe
+
 
 logging.basicConfig(stream=sys.stdout, level=logging.debug)
 mpl.rcParams['figure.dpi'] = 300
@@ -572,8 +574,8 @@ class HighmagDataset(object):
             arrow_dirx_l = (arr_lengths_l * np.cos(edge_ori_theta)).astype(float).to_numpy()
             arrow_diry_l = (arr_lengths_l * np.sin(edge_ori_theta)).astype(float).to_numpy()
             
-            ax.quiver(arrow_posx, arrow_posy, arrow_dirx_r, arrow_diry_r, scale=300, width=0.0015, alpha=1.0, color='tab:orange')
-            ax.quiver(arrow_posx, arrow_posy, arrow_dirx_l, arrow_diry_l, scale=300, width=0.0015, alpha=1.0, color='tab:blue')
+            ax.quiver(arrow_posx, arrow_posy, arrow_dirx_r, arrow_diry_r, scale=300, width=0.0005, alpha=1.0, color='tab:orange')
+            ax.quiver(arrow_posx, arrow_posy, arrow_dirx_l, arrow_diry_l, scale=300, width=0.0005, alpha=1.0, color='tab:blue')
         if 'vid_labels' in modes:
             label_frame = self.video_frame.copy()
             label_frame['coords'] = [f"{row['xpos']}, {row['ypos']}" for index, row in label_frame.iterrows()]
@@ -582,6 +584,10 @@ class HighmagDataset(object):
                 coordy = label_frame[label_frame['coords'] == label]['ypos'].iloc[0]
                 vid_list = [int(row['video_int']) for index, row in label_frame[label_frame['coords'] == label].iterrows()]
                 ax.annotate(vid_list, (coordx+annotate_adj, -coordy+annotate_adj), c='black', fontsize=2)
+                
+        if 'speeds_text' in modes:
+            for video in self.video_objs:
+                video.plot_speed_arrows(ax, [video.dataset['ypos'], video.dataset['xpos']])
 
         ax.axis('equal')
         if np.mean(self.video_frame['ypos']) > 100:
@@ -667,7 +673,13 @@ class VideoDataset(object):
                  analysis_folder,
                  videos_folder):
         self.dataset = series
+        self.img_dim = [[2048, 1500],[4096, 3000]][self.dataset['binning'] == 1]
+        self.space_res = 2 * 1.725 / self.dataset['magnification'] * self.dataset['binning']
+        self.time_res = 1/ self.dataset['fps']
+        self.vid_analysis_folder = Path(f"{analysis_folder}{self.dataset['folder']}").parent
         edge_adr = Path(f"{analysis_folder}{self.dataset['folder']}").parent / "edges_data.csv"
+        self.imshow_extent = [0, self.space_res * self.img_dim[0],
+                 self.space_res * self.img_dim[1], 0]
         if edge_adr.exists():
             self.edges_frame = pd.read_csv(edge_adr)
             self.edge_objs = [EdgeDataset(pd.concat([row, self.dataset]), analysis_folder, videos_folder) for index, row
@@ -714,6 +726,69 @@ class VideoDataset(object):
         ax.set_title(f"Edge speed overview for {self.dataset['unique_id']}")
         ax.set_ylabel("Velocity $(\mu m /s)$")
         fig.tight_layout()
+        
+    def get_first_frame(self):
+        vid_address = self.vid_analysis_folder / f"{self.dataset['unique_id']}_video.mp4"
+        vidcap = cv2.VideoCapture(str(vid_address))
+        success, image = vidcap.read()
+        if success:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            image = cv2.resize(image, self.img_dim)
+            return image  # save frame as JPEG file
+        
+    def plot_speed_arrows(self, ax=None, vid_pos=None):
+        
+        if ax is None:
+            fig, ax = plt.subplots()
+            plate_offset = [0,0]
+        else:
+            plate_offset = vid_pos
+
+        for edge_obj in self.edge_objs:
+            medians = edge_obj.return_speed_medians()
+            edge_mids = np.mean([[edge_obj.mean_data['edge_ypos_1'], edge_obj.mean_data['edge_xpos_1']],
+                                 [edge_obj.mean_data['edge_ypos_2'], edge_obj.mean_data['edge_xpos_2']]], axis=0) * self.space_res
+            
+            edge_tangent =  [edge_obj.mean_data['edge_ypos_2'] - edge_obj.mean_data['edge_ypos_1'], 
+                             edge_obj.mean_data['edge_xpos_2'] - edge_obj.mean_data['edge_xpos_1']] /                             np.linalg.norm([edge_obj.mean_data['edge_ypos_2'] - edge_obj.mean_data['edge_ypos_1'], 
+                             edge_obj.mean_data['edge_xpos_2'] - edge_obj.mean_data['edge_xpos_1']])
+            edge_rot = np.arctan2(edge_tangent[0], edge_tangent[1]) * 180 / np.pi + 90
+            edge_dir = edge_tangent * 100 * self.space_res
+            edge_starts = edge_mids - 0.5*edge_dir
+            edge_ends = edge_starts + edge_dir
+
+            edge_normal = np.array([[0, -1],[1, 0]]).dot(np.array(edge_tangent))
+            edge_offset = edge_normal * 80 * self.space_res
+            
+            ax.arrow(edge_starts[0] + edge_offset[0] + plate_offset[0],
+                     edge_starts[1] + edge_offset[1] + plate_offset[1],
+                     edge_dir[0] * np.sqrt(medians[1]),
+                     edge_dir[1] * np.sqrt(medians[1]),
+                     width=3,
+                     facecolor='tab:orange',
+                     edgecolor='black')
+            ax.arrow(edge_ends[0] - edge_offset[0] + plate_offset[0],
+                     edge_ends[1] - edge_offset[1] + plate_offset[1],
+                     -edge_dir[0] * np.sqrt(-medians[0]),
+                     -edge_dir[1] * np.sqrt(-medians[0]),
+                     width=3,
+                     facecolor='tab:blue',
+                     edgecolor='black')
+            
+            ax.annotate(f"{medians[1]:.3}",edge_starts +edge_offset , 
+                        xytext = edge_starts +edge_offset + plate_offset - 20*edge_normal*self.space_res + 20*edge_tangent*self.space_res, rotation = edge_rot,
+                        color='white',
+                        path_effects=[pe.withStroke(linewidth=2, foreground="black")])
+            ax.annotate(f"{-medians[0]:.3}",edge_ends -edge_offset ,
+                        xytext = edge_ends -edge_offset + plate_offset - 110*edge_normal*self.space_res - 80*edge_tangent*self.space_res, 
+                        rotation = edge_rot,
+                        color='white',
+                        path_effects=[pe.withStroke(linewidth=2, foreground="black")])
+        
+        if ax is None:
+            vid_frame = self.get_first_frame()
+            ax.imshow(vid_frame, extent=self.imshow_extent)
+            fig.tight_layout()
 
 
 class EdgeDataset(object):
@@ -745,6 +820,16 @@ class EdgeDataset(object):
         ax.plot(self.time_data['times'], self.time_data['flux_mean'])
         fig.tight_layout()
         
+    def return_speed_medians(self, spd_tiff_lowbound = 0.5):
+        spd_array_path = Path(self.mean_data['analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff"
+        spd_tiff = imread(spd_array_path)
+        spd_tiff[0] = np.where(spd_tiff[0] < -spd_tiff_lowbound, spd_tiff[0], np.nan)
+        spd_tiff[1] = np.where(spd_tiff[1] > spd_tiff_lowbound, spd_tiff[1], np.nan)
+        
+        spd_max_l = np.nanmedian(spd_tiff[0].flatten())
+        spd_max_r = np.nanmedian(spd_tiff[1].flatten())
+        return spd_max_l, spd_max_r        
+        
     def plot_speed_histo(self, spd_extent=15, spd_tiff_lowbound = 0.5, spd_cutoff = 0.2, bin_res=100, plot_fig=True):
         spd_array_path = Path(self.mean_data['analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff"
         spd_tiff = imread(spd_array_path)
@@ -760,13 +845,9 @@ class EdgeDataset(object):
         spd_hist_l = np.histogram(spd_tiff[0], spd_bins, density=True)
         spd_hist_r = np.histogram(spd_tiff[1], spd_bins, density=True)
         spd_hist = [spd_hist_l, spd_hist_r]
-#         spd_max_l = spd_bins[np.argmax(spd_hist_l[0][:spd_cut_l])]
-#         spd_max_r = spd_bins[spd_cut_r:][np.argmax(spd_hist_r[0][spd_cut_r:])]
         spd_max_l = np.nanmedian(spd_tiff[0].flatten())
         spd_max_r = np.nanmedian(spd_tiff[1].flatten())
         
-#         print(spd_bins[np.argmax(spd_hist_l[0][:spd_cut_l])])
-#         print(spd_bins[spd_cut_r:][np.argmax(spd_hist_r[0][spd_cut_r:])])
         if plot_fig:
             fig, ax = plt.subplot_mosaic([['kymo', 'spd_left', 'spd_right'],
                                           ['spd_histo', 'spd_histo', 'spd_histo']])
@@ -776,12 +857,10 @@ class EdgeDataset(object):
             ax['kymo'].set_xlabel('x $(\mu m)$')
             ax['kymo'].set_ylabel('t $(s)$')
             ax['spd_left'].imshow(spd_tiff[0], cmap='coolwarm', vmin=-20, vmax=20, extent=self.imshow_extent, aspect='auto')
-    #         ax['spd_left'].axis('equal')
             ax['spd_left'].set_title('Speeds_left')
             ax['spd_left'].set_xlabel('x $(\mu m)$')
             ax['spd_left'].set_ylabel('t $(s)$')
             ax['spd_right'].imshow(spd_tiff[1], cmap='coolwarm', vmin=-20, vmax=20, extent=self.imshow_extent, aspect='auto')
-    #         ax['spd_right'].axis('equal')
             ax['spd_right'].set_title('Speeds_right')
             ax['spd_right'].set_xlabel('x $(\mu m)$')
             ax['spd_right'].set_ylabel('t $(s)$')
@@ -797,8 +876,3 @@ class EdgeDataset(object):
         spd_hist_l_f = spd_hist_l[0][:]
         
         return spd_max_l, spd_max_r
-        
-#         for i in range(2):
-#             ax[i][0].imshow(spd_tiff[i], cmap='coolwarm', vmin=-20, vmax=20)
-#             ax[i][1].plot(spd_hist[i][1][:-1], spd_hist[i][0])
-       
