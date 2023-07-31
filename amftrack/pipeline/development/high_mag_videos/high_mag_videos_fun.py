@@ -415,7 +415,7 @@ def get_width(slices, avearing_window=50, num_std=2):
     return np.median(widths)
 
 
-def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(60, 160, 30), seg_thresh = 11, binning=2):
+def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(70, 170, 30), seg_thresh = 11, binning=2):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
     image:          Input image
@@ -426,23 +426,16 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(60, 160, 30
     frangi_range = frangi_range * 2 / binning
     smooth_im_blur = cv2.blur(-image, (11, 11))
     smooth_im = frangi(-smooth_im_blur, frangi_range)
-    smooth_im *= (255/np.max(smooth_im))
-    seg_shape = smooth_im.shape
+    smooth_im = np.array(smooth_im * (255/np.max(smooth_im)), dtype=np.uint8)
+    _, segmented = cv2.threshold(smooth_im, 0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    
+#     seg_shape = smooth_im.shape
 
-    for i in range(1, 100):
-        _, segmented = cv2.threshold(smooth_im, i, 255, cv2.THRESH_BINARY)
-        coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
-        if coverage < seg_thresh:
-            break
-
-    # fig, ax = plt.subplots(3, figsize=(4,10))
-    # ax[0].imshow(smooth_im)
-    # ax[0].set_title("Smooth Image")
-    # ax[1].imshow(segmented)
-    # ax[1].set_title("Segmented")
-    # ax[2].imshow(skeletonized)
-    # ax[2].set_title("Skeletonized")
-    # fig.tight_layout()
+#     for i in range(1, 100):
+#         _, segmented = cv2.threshold(smooth_im, i, 255, cv2.THRESH_BINARY)
+#         coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
+#         if coverage < seg_thresh:
+#             break
     
     skeletonized = skeletonize(segmented > seg_thresh)
     skeleton = scipy.sparse.dok_matrix(skeletonized)
@@ -505,7 +498,6 @@ def get_kymo_new(
             pixels = np.flip(pixels, axis=1)
             pixels = pixels[int(bounds[0] * target_length): int(bounds[1] * target_length)]
             pixels = pixels.reshape((1, len(pixels)))
-            # TODO(FK): Add thickness of the profile here
             l.append(pixels)
 
         slices = np.concatenate(l, axis=0)
@@ -670,7 +662,7 @@ def validate_interpolation_order(image_dtype, order):
     return order
 
 
-def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, magnif = 50, binning=2):
+def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, magnif = 50, binning=2, test_plot=False):
     kernel = np.ones((k_size, k_size), np.uint8)
     kernel_2 = np.ones((10, 10), np.uint8)
     smooth_im = cv2.GaussianBlur(image, (5, 5), 0)
@@ -688,39 +680,30 @@ def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, magnif = 50, b
 
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.85)
     retval, labels, centers = cv2.kmeans(k_data, [4, 2][magnif<30], None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
-#     print(labels.shape, centers.shape)
     centers=np.uint8(centers)
     labels=np.array(labels.T[0])
     centers = [center[0] for center in centers]
-#     print(centers)
-#     print(labels)
     segmented_data  = np.array([centers[label] for label in labels])
     segmented_image = segmented_data.reshape((smooth_im.shape))
     segmented_image = np.uint8(segmented_image>np.min(centers))
     segmented = cv2.morphologyEx(segmented_image, cv2.MORPH_CLOSE, kernel_2)
-    
-#     for i in range(1, 100):
-#         _, segmented = cv2.threshold(smooth_im_close, i, 255, cv2.THRESH_BINARY)
-#         seg_shape = segmented.shape
-#         coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
-#         if coverage < seg_thresh:
-#             break
 
     skeletonized = skeletonize(segmented > thresh)
 
-    fig, ax = plt.subplots(7, figsize=(9, 25))
-    ax[0].imshow(im_canny)
-    ax[0].set_title("Smooth")
-    ax[1].imshow(std_im)
-    ax[1].set_title("open")
-    ax[2].imshow(smooth_im)
-    ax[2].set_title("smooth_im")
-    ax[3].imshow(segmented)
-    ax[3].set_title("segmented")
-    ax[4].imshow(skeletonized)
-    ax[5].hist(smooth_im_close.flatten(), log=True, bins=50)
-    ax[6].plot(smooth_im_close[1000])
-    fig.tight_layout()
+    if test_plot:
+        fig, ax = plt.subplots(7, figsize=(9, 25))
+        ax[0].imshow(im_canny)
+        ax[0].set_title("Smooth")
+        ax[1].imshow(std_im)
+        ax[1].set_title("open")
+        ax[2].imshow(smooth_im)
+        ax[2].set_title("smooth_im")
+        ax[3].imshow(segmented)
+        ax[3].set_title("segmented")
+        ax[4].imshow(skeletonized)
+        ax[5].hist(smooth_im_close.flatten(), log=True, bins=50)
+        ax[6].plot(smooth_im_close[1000])
+        fig.tight_layout()
 
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))

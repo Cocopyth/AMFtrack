@@ -240,13 +240,13 @@ def do_line_test(
     tot_flux_back = np.sum(flux_stack_back, axis=0)
     img_max       = np.max(abs(tot_img.flatten()))
     flux_max      = np.max(abs(tot_flux.flatten()))
-    kymo_anal     = Kymo_edge_analysis(kymo = tot_img)
+    kymo_anal     = KymoEdgeAnalysis(kymo = tot_img)
     forw_thresh, back_thresh = kymo_anal.fourier_kymo(1, test_plots=False)
 #     forw_back = np.add(forw, back)
 #     forw_thresh = forw
 #     back_thresh = back 
 #     forw_back_thresh = np.add(forw_thresh, back_thresh)
-    speeds, times = kymo_anal.test_GST(7, w_start=5, C_thresh=0.95, C_thresh_falloff = 0.0, blur_size = 7, preblur=True, speed_thresh=speed_thresh, plots=False)
+    speeds, times = kymo_anal.extract_speeds(7, w_start=5, C_thresh=0.95, C_thresh_falloff = 0.0, blur_size = 7, preblur=True, speed_thresh=speed_thresh, plots=False)
 #     spd_max = np.nanmax(abs(speeds.flatten()))
     spds_forw = speeds[0][1]
     spds_back = speeds[0][0]
