@@ -152,23 +152,22 @@ Create a text file named `local.env` in the base folder
 
 And fill the file with the following lines and adapt them to your situation:
 
-```
-DATA_PATH=/home/cbisot/pycode/data_info.json
-FIJI_PATH=/home/cbisot/Fiji.app/ImageJ-linux64
-TEMP_PATH=/scratch-shared/amftrack/temp #careful no backslash here
-STORAGE_PATH=/scratch-shared/amftrack/temp #careful no backslash here
-PASTIS_PATH=/home/cbisot/anis_filter/anifilters/bin/ani2D 
-#the path to the executable of anisotropic filtering
-SLURM_PATH=/scratch-shared/amftrack/slurm #this is for parallelizez job on snellius
+DATA_PATH=C:\Users\coren\Documents\PhD\Code\data_info.json
+FIJI_PATH=C:\Users\coren\Documents\PhD\Code\fiji-win64\Fiji.app/ImageJ-win64.exe
+TEMP_PATH=C:\Users\coren\Documents\PhD\Code\temp
+STORAGE_PATH=C:\Users\coren\Documents\PhD\Code
+PASTIS_PATH=/home/ipausers/bisot/anis_filter/anifilters/bin/ani2D
+SLURM_PATH=/data/temp
+SLURM_PATH_transfer=/data/temp
 DROPBOX_PATH = C:\Users\coren\AMOLF-SHIMIZU Dropbox\DATA\PRINCE
+DROPBOX_PATH_ANALYSIS = C:\Users\coren\AMOLF-SHIMIZU Dropbox\DATA\PRINCE_ANALYSIS
+CONDA_PATH = /home/cbisot/miniconda3/etc/profile.d/conda.sh
 
-#For Dropbox transfers, ask dropbox admin for these values
-APP_KEY=___
-APP_SECRET=___
-REFRESH_TOKEN = ___
-FOLDER_ID=___
-USER_ID=___
-SLURM_PATH_transfer=___
+APP_KEY=
+APP_SECRET= 
+REFRESH_TOKEN = 
+FOLDER_ID=
+USER_ID= 
 ```
 
 To have access to a path: 
