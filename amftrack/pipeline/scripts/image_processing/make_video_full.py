@@ -37,7 +37,7 @@ exp = Experiment(directory)
 exp.load(select)
 
 paths_list = make_images_track(exp)
-dir_drop = "DATA/PRINCE"
+dir_drop = "DATA/PRINCE_ANALYSIS"
 upload_path = f"/{dir_drop}/{id_unique}/{id_unique}_tracked.mp4"
 texts = [(folder, "", "", "") for folder in list(select["folder"])]
 resize = (2048, 2048)

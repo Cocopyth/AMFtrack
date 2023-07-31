@@ -29,31 +29,6 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 )
 
 
-# def get_BAS_length_in_ring(hull1, hull2, t, exp, op_id):
-#     hyphae_ring = get_hyphae_in_ring(hull1, hull2, t, exp)
-#     hyphae_ring = [hyph.end.label for hyph in hyphae_ring]
-#     plate = exp.folders["Plate"].unique()[0]
-#     time_plate_info, global_hypha_info, time_hypha_info = get_data_tables(
-#         op_id, redownload=False
-#     )
-#     table = global_hypha_info.loc[global_hypha_info["Plate"] == plate].copy()
-#     table["log_length"] = np.log10((table["tot_length_C"] + 1).astype(float))
-#     table["is_rh"] = (table["log_length"] >= 3.36).astype(int)
-#     table = table.set_index("hypha")
-#     hyphaes = table.loc[
-#         (table["strop_track"] >= t)
-#         & (table["timestep_init_growth"] <= t)
-#         & ((table["out_of_ROI"].isnull()) | (table["out_of_ROI"] > t))
-#     ]
-#     bas = hyphaes.loc[(hyphaes["is_rh"] == 0)].index
-#     select_time = time_hypha_info.loc[time_hypha_info["Plate"] == plate]
-#     bas_ring = select_time.loc[
-#         (select_time["end"].isin(bas))
-#         & (select_time["end"].isin(hyphae_ring))
-#         & (select_time["timestep"] == t)
-#     ]
-#     L_bas_ring = np.sum(bas_ring["tot_length_C"])
-#     return L_bas_ring
 
 
 # def get_speed_in_ring(hull1, hull2, t, exp, rh_only, op_id):
@@ -207,18 +182,17 @@ def get_biovolume_density_in_ring(exp, t, args):
         return (f"ring_biovolume_density_incr-{incr}_index-{i}", None)
 
 
-# def get_density_BAS_in_ring(exp, t, args):
-#     incr = args["incr"]
-#     i = args["i"]
-#     op_id = args["op_id"]
-#     regular_hulls, indexes = get_regular_hulls_area_fixed(exp, range(exp.ts), incr)
-#     if i + 2 <= len(regular_hulls) and t <= exp.ts - 2:
-#         hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
-#         length = get_BAS_length_in_ring(hull1, hull2, t, exp, op_id)
-#         area = ring_area(hull1, hull2)
-#         return (f"ring_bas_density_incr-{incr}_index-{i}", length / area)
-#     else:
-#         return (f"ring_bas_density_incr-{incr}_index-{i}", None)
+def get_density_BAS_in_ring(exp, t, args):
+    incr = args["incr"]
+    i = args["i"]
+    regular_hulls, indexes = get_regular_hulls_area_fixed(exp, range(exp.ts), incr)
+    if i + 2 <= len(regular_hulls) and t <= exp.ts - 2:
+        hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
+        length = get_BAS_length_in_ring(hull1, hull2, t, exp)
+        area = ring_area(hull1, hull2)
+        return (f"ring_bas_density_incr-{incr}_index-{i}", length / area)
+    else:
+        return (f"ring_bas_density_incr-{incr}_index-{i}", None)
 
 
 # def get_mean_speed_in_ring(exp, t, args):
@@ -284,6 +258,19 @@ def get_density_stop_rate_in_ring(exp, t, args):
     else:
         return (f"ring_stop_density_incr-{incr}_index-{i}", None)
 
+def get_density_lost_track_in_ring(exp, t, args):
+    incr = args["incr"]
+    i = args["i"]
+    rh_only = args["rh_only"]
+    max_t = args["max_t"] if "max_t" in args.keys() else np.inf
+    regular_hulls, indexes = get_regular_hulls_area_fixed(exp, range(exp.ts), incr)
+    if i + 2 <= len(regular_hulls) and t <= exp.ts - 2:
+        hull1, hull2 = regular_hulls[i], regular_hulls[i + 1]
+        rate = get_rate_stop_in_ring(hull1, hull2, t, exp, rh_only, max_t)
+        area = ring_area(hull1, hull2)
+        return (f"ring_stop_density_incr-{incr}_index-{i}", rate / area)
+    else:
+        return (f"ring_stop_density_incr-{incr}_index-{i}", None)
 
 def get_density_active_tips_in_ring(exp, t, args):
     incr = args["incr"]
