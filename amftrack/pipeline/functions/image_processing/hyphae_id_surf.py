@@ -296,12 +296,18 @@ def resolve_anastomosis_crossing_by_root(exp, lim_considered=1):
     exp.hyphaes = hyphaes
 
 
-def get_hyphae(experiment, lim_considered=1):
+def get_hyphae(experiment, lim_considered=1,rh_only=True):
     tips = [
         node
         for node in experiment.nodes
         if node.degree(node.ts()[0]) == 1 and len(node.ts()) >= lim_considered
     ]
+    if rh_only:
+        tips = [
+            node
+            for node in tips
+            if np.linalg.norm(node.pos(node.ts()[0]) - node.pos(node.ts()[-1])) >= 1500
+        ]
     problems = []
     hyphaes = []
     for i, tip in enumerate(tips):

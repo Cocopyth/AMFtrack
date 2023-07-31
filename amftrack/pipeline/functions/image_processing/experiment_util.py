@@ -918,7 +918,7 @@ def plot_edge_color_value(
         handles.append(
             mpatches.Patch(color=convert(make_random_color(1000)), label="out of bound")
         )
-        fig.legend(handles=handles)
+        # fig.legend(handles=handles)
     else:
         norm = mpl.colors.Normalize(vmin=v_min, vmax=v_max)
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -926,15 +926,16 @@ def plot_edge_color_value(
         N = 5
         plt.colorbar(sm, ticks=np.linspace(v_min, v_max, N), label=label_colorbar)
     # 1/ Image layer
-    im, f = reconstruct_image_from_general(
-        exp,
-        t,
-        downsizing=downsizing,
-        region=region,
-        prettify=False,
-        white_background=False,
-    )
-    f_int = lambda c: f(c).astype(int)
+    if show_background:
+        im, f = reconstruct_image_from_general(
+            exp,
+            t,
+            downsizing=downsizing,
+            region=region,
+            prettify=False,
+            white_background=False,
+        )
+        f_int = lambda c: f(c).astype(int)
 
     # 2/ Edges layer
     color_list = (
@@ -952,10 +953,11 @@ def plot_edge_color_value(
         timestep=False,
     )
     skel_im, _ = from_edges
-    new_region = [
-        f_int(region[0]),
-        f_int(region[1]),
-    ]  # should be [[0, 0], [d_x/downsized, d_y/downsized]]
+    if show_background:
+        new_region = [
+            f_int(region[0]),
+            f_int(region[1]),
+        ]  # should be [[0, 0], [d_x/downsized, d_y/downsized]]
 
     # 3/ Fusing layers
     if show_background:
@@ -983,7 +985,7 @@ def plot_edge_color_value(
         plt.savefig(save_path, dpi=dpi)
     else:
         plt.show()
-    return ax
+    return fig,ax
 
 
 def reconstruct_image_from_general(
