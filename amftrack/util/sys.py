@@ -28,6 +28,8 @@ env_config = Config(RepositoryEnv(DOTENV_FILE))
 path_code = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + os.sep
 
 storage_path = env_config.get("STORAGE_PATH")
+conda_path = env_config.get("CONDA_PATH")
+
 fiji_path = env_config.get("FIJI_PATH")
 test_path = os.path.join(
     storage_path,
