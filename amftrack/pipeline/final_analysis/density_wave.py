@@ -55,7 +55,7 @@ def S(t, lamb, C, t0):
     return C * (1 / (1 + np.exp(lamb * (t0 - t))))
 
 
-def get_wave_fit(time_plate_info, plate, timesteps, max_indexes, lamb=-1, C=0.2):
+def get_wave_fit(time_plate_info, plate, timesteps, max_indexes, lamb=-1, C=0.2,suffix = ""):
     table = time_plate_info.loc[time_plate_info["Plate"] == plate]
     table = table.replace(np.nan, -1)
     ts = list(table["timestep"])
@@ -79,7 +79,7 @@ def get_wave_fit(time_plate_info, plate, timesteps, max_indexes, lamb=-1, C=0.2)
         def density(x):
             area = x**2
             index = int(area // incr)
-            column = f"ring_density_incr-100_index-{index}"
+            column = f"ring_density_incr-100_index-{index}{suffix}"
             return float(table[column][time])
 
         xvalues = np.array([np.sqrt(100 * i) for i in range(max_indexes[plate])])
