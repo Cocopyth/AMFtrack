@@ -26,3 +26,5 @@ venv
 *.ipython/
 *.mp4
 *.jupyter/
+amftrack/notebooks/HFSP_paper/figures/
+amftrack/notebooks/HFSP_paper/video/
