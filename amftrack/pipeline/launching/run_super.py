@@ -1,7 +1,7 @@
 from datetime import datetime
 from subprocess import call, DEVNULL, check_output
 from typing import List
-from amftrack.util.sys import path_code, temp_path, slurm_path, slurm_path_transfer
+from amftrack.util.sys import path_code, temp_path, slurm_path, slurm_path_transfer,conda_path
 import os
 from copy import copy
 from time import time_ns
@@ -9,7 +9,6 @@ import pickle
 import imageio
 import sys
 from time import sleep
-
 directory_scratch = "/scratch-shared/amftrack/"
 directory_project = "/projects/0/einf914/data/"
 directory_archive = "/archive/cbisot/"
@@ -77,7 +76,7 @@ def run_parallel(
         my_file.write(
             f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
+        my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
@@ -174,7 +173,7 @@ def run_parallel_all_time(
         my_file.write(
             f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
+        my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
@@ -221,7 +220,7 @@ def run_parallel_post(
         my_file.write(
             f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
+        my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
@@ -351,8 +350,13 @@ def run_parallel_transfer(
         my_file.write(
             f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        my_file.write(f"module load 2021 \n")
-        my_file.write(f"module load Python/3.9.5-GCCcore-10.3.0 \n")
+        if os.path.isfile(os.path.join(conda_path,'envs','amftrack')):
+          my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
+          my_file.write(f"conda activate amftrack\n")
+        else:
+          my_file.write(f"module load 2021 \n")
+          my_file.write(f"module load Python/3.9.5-GCCcore-10.3.0 \n")
+
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
             f"\t python {path_code}transfer/scripts/{code} {arg_str} {op_id} $i \n"
@@ -386,7 +390,7 @@ def run_launcher(
         f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
     )
     my_file.write(f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}.out" \n')
-    my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
+    my_file.write(f"source {os.path.join(conda_path, 'etc/profile.d/conda.sh')}\n")
     my_file.write(f"conda activate amftrack\n")
     my_file.write(
         f"python {path_code}pipeline/launching/launcher_scripts/{code} {arg_str}  &\n"
@@ -428,7 +432,7 @@ def run_parallel_transfer_to_archive(
             f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
         )
         my_file.write(f'#SBATCH -o "{slurm_path}/{name}_{ide}.out" \n')
-        my_file.write(f"source /home/cbisot/miniconda3/etc/profile.d/conda.sh\n")
+        my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(
             f"tar cvf /archive/cbisot/prince_data/{id_unique}.tar {folder}*\n"
