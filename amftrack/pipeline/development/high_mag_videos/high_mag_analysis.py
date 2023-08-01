@@ -26,7 +26,7 @@ import matplotlib.patheffects as pe
 
 
 logging.basicConfig(stream=sys.stdout, level=logging.debug)
-mpl.rcParams['figure.dpi'] = 300
+mpl.rcParams['figure.dpi'] = 500
 
 
 def month_to_num(x: str):
@@ -555,27 +555,29 @@ class HighmagDataset(object):
 #             print(arrow_posx, arrow_posy, arrow_dirx, arrow_diry)
             ax.quiver(arrow_posx, arrow_posy, arrow_dirx, arrow_diry, scale=300, width=0.0015, alpha=1.0, color='black')
         if 'speeds_both' in modes:
-            videos_speeds = self.edges_frame[self.edges_frame['magnification'] == 50.0]
-            arr_lengths_l = videos_speeds['speed_left'] *spd_adj
-            arr_lengths_r = videos_speeds['speed_right'] *spd_adj
+            for video in self.video_objs:
+                video.plot_speed_arrows(ax, [video.dataset['xpos'], -video.dataset['ypos']], plot_text=False)
+#             videos_speeds = self.edges_frame[self.edges_frame['magnification'] == 50.0]
+#             arr_lengths_l = videos_speeds['speed_left'] *spd_adj
+#             arr_lengths_r = videos_speeds['speed_right'] *spd_adj
 
-            edge_ori_x = videos_speeds['edge_xpos_2'] - videos_speeds['edge_xpos_1']
-            edge_ori_y = videos_speeds['edge_ypos_2'] - videos_speeds['edge_ypos_1']
-            testx, testy = edge_ori_x.astype(float), edge_ori_y.astype(float)
-            edge_ori_theta = np.arctan2(testx, testy)
-            edge_ori_theta = -1*edge_ori_theta
+#             edge_ori_x = videos_speeds['edge_xpos_2'] - videos_speeds['edge_xpos_1']
+#             edge_ori_y = videos_speeds['edge_ypos_2'] - videos_speeds['edge_ypos_1']
+#             testx, testy = edge_ori_x.astype(float), edge_ori_y.astype(float)
+#             edge_ori_theta = np.arctan2(testx, testy)
+#             edge_ori_theta = -1*edge_ori_theta
 
-            arrow_posx = videos_speeds['xpos'].astype(float).to_numpy()
-            arrow_posy = -videos_speeds['ypos'].astype(float).to_numpy()
+#             arrow_posx = videos_speeds['xpos'].astype(float).to_numpy()
+#             arrow_posy = -videos_speeds['ypos'].astype(float).to_numpy()
 
-            arrow_dirx_r = (arr_lengths_r * np.cos(edge_ori_theta)).astype(float).to_numpy()
-            arrow_diry_r = (arr_lengths_r * np.sin(edge_ori_theta)).astype(float).to_numpy()
+#             arrow_dirx_r = (arr_lengths_r * np.cos(edge_ori_theta)).astype(float).to_numpy()
+#             arrow_diry_r = (arr_lengths_r * np.sin(edge_ori_theta)).astype(float).to_numpy()
 
-            arrow_dirx_l = (arr_lengths_l * np.cos(edge_ori_theta)).astype(float).to_numpy()
-            arrow_diry_l = (arr_lengths_l * np.sin(edge_ori_theta)).astype(float).to_numpy()
+#             arrow_dirx_l = (arr_lengths_l * np.cos(edge_ori_theta)).astype(float).to_numpy()
+#             arrow_diry_l = (arr_lengths_l * np.sin(edge_ori_theta)).astype(float).to_numpy()
             
-            ax.quiver(arrow_posx, arrow_posy, arrow_dirx_r, arrow_diry_r, scale=300, width=0.0005, alpha=1.0, color='tab:orange')
-            ax.quiver(arrow_posx, arrow_posy, arrow_dirx_l, arrow_diry_l, scale=300, width=0.0005, alpha=1.0, color='tab:blue')
+#             ax.quiver(arrow_posx, arrow_posy, arrow_dirx_r, arrow_diry_r, scale=300, width=0.0005, alpha=1.0, color='tab:orange')
+#             ax.quiver(arrow_posx, arrow_posy, arrow_dirx_l, arrow_diry_l, scale=300, width=0.0005, alpha=1.0, color='tab:blue')
         if 'vid_labels' in modes:
             label_frame = self.video_frame.copy()
             label_frame['coords'] = [f"{row['xpos']}, {row['ypos']}" for index, row in label_frame.iterrows()]
@@ -584,10 +586,9 @@ class HighmagDataset(object):
                 coordy = label_frame[label_frame['coords'] == label]['ypos'].iloc[0]
                 vid_list = [int(row['video_int']) for index, row in label_frame[label_frame['coords'] == label].iterrows()]
                 ax.annotate(vid_list, (coordx+annotate_adj, -coordy+annotate_adj), c='black', fontsize=2)
-                
         if 'speeds_text' in modes:
             for video in self.video_objs:
-                video.plot_speed_arrows(ax, [video.dataset['ypos'], video.dataset['xpos']])
+                video.plot_speed_arrows(ax, [video.dataset['xpos'], -video.dataset['ypos']])
 
         ax.axis('equal')
         if np.mean(self.video_frame['ypos']) > 100:
@@ -736,56 +737,91 @@ class VideoDataset(object):
             image = cv2.resize(image, self.img_dim)
             return image  # save frame as JPEG file
         
-    def plot_speed_arrows(self, ax=None, vid_pos=None):
+    def plot_speed_arrows(self, ax=None, vid_pos=None, plot_text=True):
         
         if ax is None:
             fig, ax = plt.subplots()
             plate_offset = [0,0]
+            space_factor = self.space_res
+            arr_width = 3
+            txt_size  = 10
+            line_size = 1
         else:
-            plate_offset = vid_pos
+            plate_offset = np.add(vid_pos, [-0.30, -0.42])
+            space_factor = 0.0005
+            arr_width = 0.03
+            txt_size = 1.75
+            line_size = 0.2
 
         for edge_obj in self.edge_objs:
-            medians = edge_obj.return_speed_medians()
-            edge_mids = np.mean([[edge_obj.mean_data['edge_ypos_1'], edge_obj.mean_data['edge_xpos_1']],
-                                 [edge_obj.mean_data['edge_ypos_2'], edge_obj.mean_data['edge_xpos_2']]], axis=0) * self.space_res
+            speed_l, speed_r = edge_obj.return_speed_medians()
             
-            edge_tangent =  [edge_obj.mean_data['edge_ypos_2'] - edge_obj.mean_data['edge_ypos_1'], 
-                             edge_obj.mean_data['edge_xpos_2'] - edge_obj.mean_data['edge_xpos_1']] /                             np.linalg.norm([edge_obj.mean_data['edge_ypos_2'] - edge_obj.mean_data['edge_ypos_1'], 
-                             edge_obj.mean_data['edge_xpos_2'] - edge_obj.mean_data['edge_xpos_1']])
-            edge_rot = np.arctan2(edge_tangent[0], edge_tangent[1]) * 180 / np.pi + 90
-            edge_dir = edge_tangent * 100 * self.space_res
+            if vid_pos is None:
+                edge_coords = [[edge_obj.mean_data['edge_ypos_1'], edge_obj.mean_data['edge_xpos_1']],
+                               [edge_obj.mean_data['edge_ypos_2'], edge_obj.mean_data['edge_xpos_2']]]
+            else:
+                edge_coords = [[edge_obj.mean_data['edge_ypos_1'], edge_obj.mean_data['edge_xpos_1']],
+                               [edge_obj.mean_data['edge_ypos_2'], edge_obj.mean_data['edge_xpos_2']]]
+            
+            edge_mids = np.mean([[edge_coords[0][0], edge_coords[0][1]],
+                                 [edge_coords[1][0], edge_coords[1][1]]], axis=0) * space_factor
+            
+            edge_tangent =  [edge_coords[1][0] - edge_coords[0][0], 
+                             edge_coords[1][1] - edge_coords[0][1]] / np.linalg.norm([edge_coords[1][0] - edge_coords[0][0], 
+                             edge_coords[1][1] - edge_coords[0][1]])
+            if vid_pos is not None:
+                edge_tangent[0] *= -1
+                edge_rot = np.arctan2(edge_tangent[1], edge_tangent[0]) * 180 / np.pi
+                if edge_rot < -90:
+                    edge_rot += 180
+            else:
+                
+                edge_rot = np.arctan2(edge_tangent[0], edge_tangent[1]) * 180 / np.pi + 90
+            edge_dir = edge_tangent * 70 * space_factor
             edge_starts = edge_mids - 0.5*edge_dir
             edge_ends = edge_starts + edge_dir
 
             edge_normal = np.array([[0, -1],[1, 0]]).dot(np.array(edge_tangent))
-            edge_offset = edge_normal * 80 * self.space_res
+            edge_offset = edge_normal * 80 * space_factor
+            
+#             print(edge_coords)
+#             print(edge_mids)
+#             print(edge_starts)
+#             print(edge_tangent)
+#             print(plate_offset)
+#             print(edge_normal)
+            
             
             ax.arrow(edge_starts[0] + edge_offset[0] + plate_offset[0],
                      edge_starts[1] + edge_offset[1] + plate_offset[1],
-                     edge_dir[0] * np.sqrt(medians[1]),
-                     edge_dir[1] * np.sqrt(medians[1]),
-                     width=3,
+                     edge_dir[0] * speed_r,
+                     edge_dir[1] * speed_r,
+                     width=arr_width,
+                     linewidth=line_size,
                      facecolor='tab:orange',
                      edgecolor='black')
             ax.arrow(edge_ends[0] - edge_offset[0] + plate_offset[0],
                      edge_ends[1] - edge_offset[1] + plate_offset[1],
-                     -edge_dir[0] * np.sqrt(-medians[0]),
-                     -edge_dir[1] * np.sqrt(-medians[0]),
-                     width=3,
+                     -edge_dir[0] * -speed_l,
+                     -edge_dir[1] * -speed_l,
+                     width=arr_width,
+                     linewidth=line_size,
                      facecolor='tab:blue',
                      edgecolor='black')
-            
-            ax.annotate(f"{medians[1]:.3}",edge_starts +edge_offset , 
-                        xytext = edge_starts +edge_offset + plate_offset - 20*edge_normal*self.space_res + 20*edge_tangent*self.space_res, rotation = edge_rot,
-                        color='white',
-                        path_effects=[pe.withStroke(linewidth=2, foreground="black")])
-            ax.annotate(f"{-medians[0]:.3}",edge_ends -edge_offset ,
-                        xytext = edge_ends -edge_offset + plate_offset - 110*edge_normal*self.space_res - 80*edge_tangent*self.space_res, 
-                        rotation = edge_rot,
-                        color='white',
-                        path_effects=[pe.withStroke(linewidth=2, foreground="black")])
+            if plot_text:
+                ax.annotate(f"{speed_r:.3}",edge_starts +edge_offset , 
+                            xytext = edge_starts +edge_offset + plate_offset - 10*edge_normal*space_factor + 20*edge_tangent*space_factor, rotation = edge_rot,
+                            color='white',
+                            fontsize = txt_size,
+                            path_effects=[pe.withStroke(linewidth=[0.2, 2][vid_pos is None], foreground="black")])
+                ax.annotate(f"{-speed_l:.3}",edge_ends -edge_offset ,
+                            xytext = edge_ends -edge_offset + plate_offset - 130*edge_normal*space_factor - 80*edge_tangent*space_factor, 
+                            rotation = edge_rot,
+                            color='white',
+                            fontsize = txt_size,
+                            path_effects=[pe.withStroke(linewidth=[0.2, 2][vid_pos is None], foreground="black")])
         
-        if ax is None:
+        if vid_pos is None:
             vid_frame = self.get_first_frame()
             ax.imshow(vid_frame, extent=self.imshow_extent)
             fig.tight_layout()
