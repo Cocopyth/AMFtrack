@@ -110,7 +110,7 @@ Additionnal packages to install:
 ```bash
 git clone https://github.com/gattia/cycpd
 cd cycpd
-sudo python setup.py install
+pip install .
 ```
 
 For github authentification 
