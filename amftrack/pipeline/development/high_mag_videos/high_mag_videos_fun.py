@@ -662,12 +662,13 @@ def validate_interpolation_order(image_dtype, order):
     return order
 
 
-def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, magnif = 50, binning=2, test_plot=False):
+def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=40, magnif = 50, binning=2, test_plot=False):
+    k_size = [50, 5][magnif < 50]
     kernel = np.ones((k_size, k_size), np.uint8)
     kernel_2 = np.ones((10, 10), np.uint8)
     smooth_im = cv2.GaussianBlur(image, (5, 5), 0)
-    if magnif < 30:
-        smooth_im = cv2.morphologyEx(smooth_im, cv2.MORPH_TOPHAT, kernel)
+#     if magnif < 30:
+    smooth_im = cv2.morphologyEx(smooth_im, cv2.MORPH_TOPHAT, kernel)
     im_canny = cv2.Canny(smooth_im, 0, 20)
     im_canny_smooth = cv2.GaussianBlur(im_canny, (5, 5), 0)
     smooth_im_close = cv2.morphologyEx(smooth_im, cv2.MORPH_CLOSE, kernel)

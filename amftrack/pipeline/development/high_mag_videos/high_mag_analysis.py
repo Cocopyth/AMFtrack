@@ -429,7 +429,7 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
         for edge in edge_objs:
             ### Create video snapshot and edge video ###
             if create_snapshot:
-                edge.view_edge(img_frame=40, save_im=True, target_length=target_length)
+                edge.view_edge(img_frame=0, save_im=True, target_length=target_length)
             if create_edge_video:
                 edge.view_edge(img_frame=img_seq, save_im=True, quality=6, target_length=target_length)
 
@@ -489,7 +489,7 @@ class HighmagDataset(object):
         pic_4x_res = np.array([[4088, 3000], [2044, 1500]][pd_row['binning'] == 2]) * space_res / 2
         frame_4x_filt = self.filter_edges('plate_id', '==', pd_row['plate_id'])
         frame_4x_filt = frame_4x_filt.filter_edges('magnification', '==', 50.0)
-        frame_4x_filt = frame_4x_filt.filter_edges('mode', '==', ['BF', 'F'][FLUO])
+#         frame_4x_filt = frame_4x_filt.filter_edges('mode', '==', ['BF', 'F'][FLUO])
         frame_4x_filt = frame_4x_filt.filter_edges('xpos', '>=', pd_row['xpos'] - pic_4x_res[0])
         frame_4x_filt = frame_4x_filt.filter_edges('xpos', '<=', pd_row['xpos'] + pic_4x_res[0])
         frame_4x_filt = frame_4x_filt.filter_edges('ypos', '>=', pd_row['ypos'] - pic_4x_res[1])
@@ -516,7 +516,7 @@ class HighmagDataset(object):
 
         for index, row in self.edges_frame.iterrows():
             space_res = 2 * 1.725 / row['magnification'] * row['binning']
-            ax.annotate(row['unique_id'].split('_')[-1], (row['xpos'], -row['ypos']), c='white')
+            ax.annotate(row['unique_id'].split('_')[-1], (row['xpos'], -row['ypos']), c='black')
 
             arrow_start = np.array([(row['xpos'] + space_res * row['edge_ypos_2'],
                                      (row['ypos'] + space_res * row['edge_xpos_2']) * -1)])[0]
@@ -540,23 +540,25 @@ class HighmagDataset(object):
             ax.scatter(videos_50x['xpos'], -videos_50x['ypos'], c='black', label='50x mag', s=2)
             ax.scatter(videos_4x['xpos'], -videos_4x['ypos'], c='tab:green', label='4x mag')
         if 'speeds_mean' in modes:
-            videos_speeds = self.edges_frame[self.edges_frame['magnification'] == 50.0]
-#             videos_speeds = videos_speeds[videos_speeds['mode'] == 'F']
-            arr_lengths = videos_speeds['speed_mean'] *spd_adj
-            edge_ori_x = videos_speeds['edge_xpos_2'] - videos_speeds['edge_xpos_1']
-            edge_ori_y = videos_speeds['edge_ypos_2'] - videos_speeds['edge_ypos_1']
-            testx, testy = edge_ori_x.astype(float), edge_ori_y.astype(float)
-            edge_ori_theta = np.arctan2(testx, testy)
-            edge_ori_theta = -1*edge_ori_theta
-            arrow_posx = videos_speeds['xpos'].astype(float).to_numpy()
-            arrow_posy = -videos_speeds['ypos'].astype(float).to_numpy()
-            arrow_dirx = (arr_lengths * np.cos(edge_ori_theta)).astype(float).to_numpy()
-            arrow_diry = (arr_lengths * np.sin(edge_ori_theta)).astype(float).to_numpy()
-#             print(arrow_posx, arrow_posy, arrow_dirx, arrow_diry)
-            ax.quiver(arrow_posx, arrow_posy, arrow_dirx, arrow_diry, scale=300, width=0.0015, alpha=1.0, color='black')
+            for video in self.video_objs:
+                video.plot_speed_arrows(ax, [video.dataset['xpos'], -video.dataset['ypos']], plot_text=False, plot_mean=True)
+#             videos_speeds = self.edges_frame[self.edges_frame['magnification'] == 50.0]
+# #             videos_speeds = videos_speeds[videos_speeds['mode'] == 'F']
+#             arr_lengths = videos_speeds['speed_mean'] *spd_adj
+#             edge_ori_x = videos_speeds['edge_xpos_2'] - videos_speeds['edge_xpos_1']
+#             edge_ori_y = videos_speeds['edge_ypos_2'] - videos_speeds['edge_ypos_1']
+#             testx, testy = edge_ori_x.astype(float), edge_ori_y.astype(float)
+#             edge_ori_theta = np.arctan2(testx, testy)
+#             edge_ori_theta = -1*edge_ori_theta
+#             arrow_posx = videos_speeds['xpos'].astype(float).to_numpy()
+#             arrow_posy = -videos_speeds['ypos'].astype(float).to_numpy()
+#             arrow_dirx = (arr_lengths * np.cos(edge_ori_theta)).astype(float).to_numpy()
+#             arrow_diry = (arr_lengths * np.sin(edge_ori_theta)).astype(float).to_numpy()
+# #             print(arrow_posx, arrow_posy, arrow_dirx, arrow_diry)
+#             ax.quiver(arrow_posx, arrow_posy, arrow_dirx, arrow_diry, scale=300, width=0.0015, alpha=1.0, color='black')
         if 'speeds_both' in modes:
             for video in self.video_objs:
-                video.plot_speed_arrows(ax, [video.dataset['xpos'], -video.dataset['ypos']], plot_text=False)
+                video.plot_speed_arrows(ax, [video.dataset['xpos'], -video.dataset['ypos']], plot_text=False, plot_both=True)
 #             videos_speeds = self.edges_frame[self.edges_frame['magnification'] == 50.0]
 #             arr_lengths_l = videos_speeds['speed_left'] *spd_adj
 #             arr_lengths_r = videos_speeds['speed_right'] *spd_adj
@@ -737,7 +739,7 @@ class VideoDataset(object):
             image = cv2.resize(image, self.img_dim)
             return image  # save frame as JPEG file
         
-    def plot_speed_arrows(self, ax=None, vid_pos=None, plot_text=True):
+    def plot_speed_arrows(self, ax=None, vid_pos=None, plot_text=True, plot_both=False, plot_mean=False, significance_thresh=0.3):
         
         if ax is None:
             fig, ax = plt.subplots()
@@ -755,6 +757,7 @@ class VideoDataset(object):
 
         for edge_obj in self.edge_objs:
             speed_l, speed_r = edge_obj.return_speed_medians()
+            speed_m = edge_obj.time_data['speed_weight_mean'].mean()
             
             if vid_pos is None:
                 edge_coords = [[edge_obj.mean_data['edge_ypos_1'], edge_obj.mean_data['edge_xpos_1']],
@@ -784,43 +787,57 @@ class VideoDataset(object):
             edge_normal = np.array([[0, -1],[1, 0]]).dot(np.array(edge_tangent))
             edge_offset = edge_normal * 80 * space_factor
             
-#             print(edge_coords)
-#             print(edge_mids)
-#             print(edge_starts)
-#             print(edge_tangent)
-#             print(plate_offset)
-#             print(edge_normal)
-            
-            
-            ax.arrow(edge_starts[0] + edge_offset[0] + plate_offset[0],
-                     edge_starts[1] + edge_offset[1] + plate_offset[1],
-                     edge_dir[0] * speed_r,
-                     edge_dir[1] * speed_r,
-                     width=arr_width,
-                     linewidth=line_size,
-                     facecolor='tab:orange',
-                     edgecolor='black')
-            ax.arrow(edge_ends[0] - edge_offset[0] + plate_offset[0],
-                     edge_ends[1] - edge_offset[1] + plate_offset[1],
-                     -edge_dir[0] * -speed_l,
-                     -edge_dir[1] * -speed_l,
-                     width=arr_width,
-                     linewidth=line_size,
-                     facecolor='tab:blue',
-                     edgecolor='black')
+            if plot_both:
+                ax.arrow(edge_starts[0] + edge_offset[0] + plate_offset[0],
+                         edge_starts[1] + edge_offset[1] + plate_offset[1],
+                         edge_dir[0] * speed_r,
+                         edge_dir[1] * speed_r,
+                         width=arr_width,
+                         linewidth=line_size,
+                         facecolor='tab:orange',
+                         edgecolor='black')
+                ax.arrow(edge_ends[0] - edge_offset[0] + plate_offset[0],
+                         edge_ends[1] - edge_offset[1] + plate_offset[1],
+                         -edge_dir[0] * -speed_l,
+                         -edge_dir[1] * -speed_l,
+                         width=arr_width,
+                         linewidth=line_size,
+                         facecolor='tab:blue',
+                         edgecolor='black')
+            if plot_mean:
+                if speed_m > significance_thresh:
+                    ax.arrow(edge_ends[0] + plate_offset[0],
+                             edge_ends[1] + plate_offset[1],
+                             edge_dir[0] * speed_m,
+                             edge_dir[1] * speed_m,
+                             width=arr_width,
+                             linewidth=line_size,
+                             facecolor='black',
+                             edgecolor='black')
+                else:
+                    ax.scatter([edge_ends[0] + plate_offset[0]],
+                               [edge_ends[1] + plate_offset[1]],
+                              color='black',
+                              s=0.5)
             if plot_text:
-                ax.annotate(f"{speed_r:.3}",edge_starts +edge_offset , 
-                            xytext = edge_starts +edge_offset + plate_offset - 10*edge_normal*space_factor + 20*edge_tangent*space_factor, rotation = edge_rot,
-                            color='white',
-                            fontsize = txt_size,
-                            path_effects=[pe.withStroke(linewidth=[0.2, 2][vid_pos is None], foreground="black")])
-                ax.annotate(f"{-speed_l:.3}",edge_ends -edge_offset ,
-                            xytext = edge_ends -edge_offset + plate_offset - 130*edge_normal*space_factor - 80*edge_tangent*space_factor, 
-                            rotation = edge_rot,
-                            color='white',
-                            fontsize = txt_size,
-                            path_effects=[pe.withStroke(linewidth=[0.2, 2][vid_pos is None], foreground="black")])
-        
+                if plot_both:
+                    ax.annotate(f"{speed_r:.3}",edge_starts +edge_offset , 
+                                xytext = edge_starts +edge_offset + plate_offset - 10*edge_normal*space_factor + 20*edge_tangent*space_factor, rotation = edge_rot,
+                                color='white',
+                                fontsize = txt_size,
+                                path_effects=[pe.withStroke(linewidth=[0.2, 2][vid_pos is None], foreground="black")])
+                    ax.annotate(f"{-speed_l:.3}",edge_ends -edge_offset ,
+                                xytext = edge_ends -edge_offset + plate_offset - 130*edge_normal*space_factor - 80*edge_tangent*space_factor, 
+                                rotation = edge_rot,
+                                color='white',
+                                fontsize = txt_size,
+                                path_effects=[pe.withStroke(linewidth=[0.2, 2][vid_pos is None], foreground="black")])
+                if plot_mean:
+                    ax.annotate(f"{speed_m:.3}",edge_starts +edge_offset , 
+                                xytext = edge_starts +edge_offset + plate_offset - 10*edge_normal*space_factor + 20*edge_tangent*space_factor, rotation = edge_rot,
+                                color='white',
+                                fontsize = txt_size,
+                                path_effects=[pe.withStroke(linewidth=[0.2, 2][vid_pos is None], foreground="black")])
         if vid_pos is None:
             vid_frame = self.get_first_frame()
             ax.imshow(vid_frame, extent=self.imshow_extent)
