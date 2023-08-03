@@ -243,21 +243,30 @@ def sync_fold(origin, target):
     # print(cmd)
     call(cmd, shell=True)
 
+def get_dropbox_folders_general(dir_drop: str):
+    dbx = load_dbx()
+    response = dbx.files_list_folder(dir_drop, recursive=False)
+    # for fil in response.entries:
+    while response.has_more:
+        response = dbx.files_list_folder_continue(response.cursor)
+    return (response)
+
+def get_dropbox_folders_general_recursive(dir_drop: str,level):
+    if level == 0:
+        return(get_dropbox_folders_general(dir_drop).entries)
+    else:
+        response = []
+        response_level_down = get_dropbox_folders_general(dir_drop)
+        for entry in response_level_down.entries:
+            response += get_dropbox_folders_general_recursive(entry.path_display,level-1)
+        return(response)
 
 def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
-    dbx = load_dbx()
-    response = dbx.files_list_folder(dir_drop, recursive=True)
     # for fil in response.entries:
     listfiles = []
     folders_interest = ["param.m", "experiment.pick"]
-    while response.has_more:
-        listfiles += [
-            file
-            for file in response.entries
-            if file.name.split("/")[-1] in folders_interest
-        ]
-        response = dbx.files_list_folder_continue(response.cursor)
-    listfiles += [file for file in response.entries if file.name in folders_interest]
+    entries = get_dropbox_folders_general_recursive(dir_drop, 2)
+    listfiles += [file for file in entries if file.name in folders_interest]
     # print([((file.path_lower.split(".")[0]) + "_info.json") for file in listfiles if (file.name.split(".")[-1] == "zip") &
     #        (((file.path_lower.split(".")[0]) + "_info.json") not in listjson)])
     listfiles.reverse()
