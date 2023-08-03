@@ -261,7 +261,7 @@ def get_dropbox_folders_general_recursive(dir_drop: str,level):
             response += get_dropbox_folders_general_recursive(entry.path_display,level-1)
         return(response)
 
-def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
+def get_dropbox_folders_prince(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     # for fil in response.entries:
     listfiles = []
     folders_interest = ["param.m", "experiment.pick"]
@@ -398,7 +398,7 @@ def save_dropbox_state(dir_drop: str, skip_size: bool = True, is_video: bool = F
     if is_video:
         df = get_dropbox_video_folders(dir_drop, skip_size)
     else:
-        df = get_dropbox_folders(dir_drop, skip_size)
+        df = get_dropbox_folders_prince(dir_drop, skip_size)
     source = os.path.join(f'{temp_path}', f"dropbox_info.json")
     df.to_json(source)
     target = f"{dir_drop}/folder_info.json"

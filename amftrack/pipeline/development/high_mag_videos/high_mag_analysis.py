@@ -18,7 +18,7 @@ from tifffile import imwrite, imread
 from tqdm import tqdm
 import matplotlib as mpl
 from amftrack.util.dbx import upload_folder, download, read_saved_dropbox_state, save_dropbox_state, load_dbx, \
-    download, get_dropbox_folders, get_dropbox_video_folders
+    download, get_dropbox_folders_prince, get_dropbox_video_folders
 import logging
 import datetime
 import numpy as np
