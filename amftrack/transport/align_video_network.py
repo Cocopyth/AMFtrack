@@ -25,7 +25,7 @@ from amftrack.util.sys import (
 )
 
 from time import time_ns
-from amftrack.util.dbx import upload_folders, load_dbx, download, get_dropbox_folders
+from amftrack.util.dbx import upload_folders, load_dbx, download, get_dropbox_folders_prince
 from datetime import datetime
 from amftrack.pipeline.launching.run_super import (
     run_parallel,
@@ -33,7 +33,7 @@ from amftrack.pipeline.launching.run_super import (
     directory_project,
     run_parallel_stitch,
 )
-from amftrack.util.dbx import read_saved_dropbox_state,get_dropbox_folders
+from amftrack.util.dbx import read_saved_dropbox_state,get_dropbox_folders_prince
 import sys
 import os
 
