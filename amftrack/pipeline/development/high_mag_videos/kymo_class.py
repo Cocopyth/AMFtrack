@@ -32,10 +32,13 @@ class KymoVideoAnalysis(object):
                  im_range=(0, -1),
                  thresh=5e-07,
                  filter_step=70,
+                 thresh_adjust=0,
+                 frangi_range = None,
                  seg_thresh=20,
                  logging=False,
                  show_seg=False,
-                 input_frame=None
+                 input_frame=None,
+                 close_size=None
                  ):
         """
         Master class for video processing. Will use nearby video parameters (from csv's, xslx's or the input frame)
@@ -157,10 +160,11 @@ class KymoVideoAnalysis(object):
 
         ### Skeleton creation, we segment the image using either brightfield or fluo segmentation methods.
         if self.vid_type == 'BRIGHT':
-            frangi_range = [np.arange(5, 20, 3), np.arange(50, 90, 20)][self.magnification == 50]
+            if frangi_range is None:
+                frangi_range = [np.arange(5, 20, 3), np.arange(20, 160, 20)][self.magnification == 50]
             self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
                 imageio.imread(self.selection_file[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
-                seg_thresh=seg_thresh, binning=self.binning)
+                seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
         elif self.vid_type == 'FLUO':
             self.frame_max = imageio.imread(self.selection_file[self.im_range[0]])
             for address in self.im_range:
