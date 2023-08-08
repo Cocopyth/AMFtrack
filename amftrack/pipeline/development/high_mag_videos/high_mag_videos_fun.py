@@ -415,7 +415,7 @@ def get_width(slices, avearing_window=50, num_std=2):
     return np.median(widths)
 
 
-def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(70, 170, 30), seg_thresh = 11, binning=2):
+def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(70, 170, 30), seg_thresh = 11, binning=2, close_size=None, thresh_adjust=0):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
     image:          Input image
@@ -427,7 +427,13 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(70, 170, 30
     smooth_im_blur = cv2.blur(-image, (11, 11))
     smooth_im = frangi(-smooth_im_blur, frangi_range)
     smooth_im = np.array(smooth_im * (255/np.max(smooth_im)), dtype=np.uint8)
-    _, segmented = cv2.threshold(smooth_im, 0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    ret, segmented = cv2.threshold(smooth_im, 0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    print(ret)
+    if thresh_adjust != 0:
+        ret, segmented = cv2.threshold(smooth_im, 0,255,int(ret) + thresh_adjust)
+    if close_size is not None:
+        segmented = cv2.morphologyEx(segmented, cv2.MORPH_CLOSE, np.ones((close_size,close_size)))
+
     
 #     seg_shape = smooth_im.shape
 
