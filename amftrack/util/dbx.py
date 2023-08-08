@@ -332,7 +332,7 @@ def dropbox_videos_iter(dbx, plate_list, excel_list, txt_list, other_folder_list
     return plate_list, excel_list, txt_list, other_folder_list
 
 
-def get_dropbox_video_folders_new(dir_drop, max_depth = 3) -> pd.DataFrame:
+def get_dropbox_video_folders_new(dir_drop, date_start: int=None, date_end:int=None, plate_names: np.array=None, max_depth = 3) -> pd.DataFrame:
     dbx = load_dbx()
 
     folder_list = [dir_drop.as_posix()]
@@ -347,6 +347,21 @@ def get_dropbox_video_folders_new(dir_drop, max_depth = 3) -> pd.DataFrame:
         folder_list = other_folder_list
 
     for plate_addr in plate_list:
+        
+        plate_name = Path(plate_addr).parts[-1]
+        if len(plate_name.split('_')) == 2:
+            plate_date, plate_id = plate_name.split('_')
+        print(plate_date, plate_id)
+        if date_start is not None:
+            if int(plate_date) < date_start:
+                continue
+        if date_end is not None:
+            if int(plate_end) > date_start:
+                continue
+        if plate_names is not None:
+            if int(plate_id[5:]) not in plate_names:
+                continue
+        
         print(plate_addr)
         plate_response = dbx.files_list_folder(plate_addr, recursive=False)
         has_more_bool=True
