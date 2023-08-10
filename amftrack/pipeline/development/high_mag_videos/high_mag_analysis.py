@@ -877,6 +877,17 @@ class EdgeDataset(object):
         ax.imshow(summ_img)
         ax.set_title(self.mean_data['unique_id'])
         ax.set_axis_off()
+        
+    def show_kymos(self):
+        summ_path = Path(self.mean_data['analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_kymos.png"
+        summ_img = imageio.imread(summ_path)
+        fig = plt.figure()
+        fig.suptitle(f"{self.mean_data['unique_id']}")
+        ax = fig.add_axes([0, 0, 1, 1], frameon=False, aspect=1)
+        ax.imshow(summ_img)
+        ax.set_title(self.mean_data['unique_id'])
+        ax.set_axis_off()
+        fig.tight_layout()
 
     def plot_flux(self):
         fig, ax = plt.subplots()
