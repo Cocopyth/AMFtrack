@@ -157,36 +157,36 @@ def plot_segments_on_image(segments, ax, color="red", bounds=(0, 1), alpha=1, ad
 
 
 # OLD FUNCTION. Use get_kymo_new
-def get_kymo(
-        edge,
-        pos,
-        images_adress,
-        nx_graph_pruned,
-        resolution=1,
-        offset=4,
-        step=15,
-        target_length=10,
-        bound1=0,
-        bound2=1,
-):
-    kymo = []
-    for image_adress in images_adress:
-        image = imageio.imread(image_adress)
-        slices, segments = extract_section_profiles_for_edge(
-            edge,
-            pos,
-            image,
-            nx_graph_pruned,
-            resolution=resolution,
-            offset=offset,
-            step=step,
-            target_length=target_length,
-            bound1=bound1,
-            bound2=bound2,
-        )
-        kymo_line = np.mean(slices, axis=1)
-        kymo.append(kymo_line)
-    return np.array(kymo)
+# def get_kymo(
+#         edge,
+#         pos,
+#         images_adress,
+#         nx_graph_pruned,
+#         resolution=1,
+#         offset=4,
+#         step=15,
+#         target_length=10,
+#         bound1=0,
+#         bound2=1,
+# ):
+#     kymo = []
+#     for image_adress in images_adress:
+#         image = imageio.imread(image_adress)
+#         slices, segments = extract_section_profiles_for_edge(
+#             edge,
+#             pos,
+#             image,
+#             nx_graph_pruned,
+#             resolution=resolution,
+#             offset=offset,
+#             step=step,
+#             target_length=target_length,
+#             bound1=bound1,
+#             bound2=bound2,
+#         )
+#         kymo_line = np.mean(slices, axis=1)
+#         kymo.append(kymo_line)
+#     return np.array(kymo)
 
 
 def filter_kymo_left_old(kymo):
@@ -250,7 +250,14 @@ def filter_kymo_left(kymo, nr_tiles=1, static_offset=1, static_angle=1000, plots
 
     img = kymo.copy()
     for i in range(nr_tiles):
-        img = tile_image(img)
+        A = img[:, :]
+        B = np.flip(A, axis=0)
+        C = np.flip(A, axis=1)
+        D = np.flip(B, axis=1)
+        tiles = [[D, B, D], [C, A, C], [D, B, D]]
+        tiles = [cv2.hconcat(imgs) for imgs in tiles]
+        fourrier = cv2.vconcat(tiles)
+        img = fourrier
     tiling_for_fourrier = img
     shape_v, shape_h = tiling_for_fourrier.shape
 

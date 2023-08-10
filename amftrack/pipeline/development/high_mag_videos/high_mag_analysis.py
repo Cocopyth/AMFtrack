@@ -24,7 +24,6 @@ import datetime
 import numpy as np
 import matplotlib.patheffects as pe
 
-
 logging.basicConfig(stream=sys.stdout, level=logging.debug)
 mpl.rcParams['figure.dpi'] = 500
 
@@ -56,9 +55,10 @@ def month_to_num(x: str):
     except:
         raise ValueError('Not a month')
 
+
 def index_videos_dropbox_new(analysis_folder, videos_folder, dropbox_folder,
-                         REDO_SCROUNGING=False, CREATE_VIDEO_HIERARCHY=True,
-                            date_start: int=None, date_end:int=None, plate_names: np.array=None):
+                             REDO_SCROUNGING=False, CREATE_VIDEO_HIERARCHY=True,
+                             date_start: int = None, date_end: int = None, plate_names: np.array = None):
     """
     Goes through the specified dropbox folder, and collects and organises all the relevant video data for all videos
     stored in that dropbox. Works recursively. On the local machine will also create a folder structure in the
@@ -83,21 +83,23 @@ def index_videos_dropbox_new(analysis_folder, videos_folder, dropbox_folder,
 
     # First analysis_json and excel_json will be sought for, these serve as caches for the dropbox data.
     # If they can't be found, the information will be assembled from the indexing files on the Dropbox.
-
-    if os.path.exists(analysis_json):
-        all_folders_drop = pd.read_json(analysis_json)
+    #
+    # if os.path.exists(analysis_json):
+    #     all_folders_drop = pd.read_json(analysis_json)
     if os.path.exists(excel_json):
         excel_drop = pd.read_json(excel_json, typ='series')
     if not os.path.exists(analysis_json) or REDO_SCROUNGING:
         print("Redoing the dropbox scrounging, hold on tight.")
-        excel_drop, txt_drop = get_dropbox_video_folders_new(dropbox_folder, date_start=date_start, date_end=date_end, plate_names=plate_names)
+        excel_drop, txt_drop = get_dropbox_video_folders_new(dropbox_folder, date_start=date_start, date_end=date_end,
+                                                             plate_names=plate_names)
         if not analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).exists():
             analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).mkdir(parents=True)
 
-#         clear_output(wait=False)
+        #         clear_output(wait=False)
         print("Scrounging complete, downloading files...")
 
-        excel_addresses = np.array([re.search("^.*Plate.*\/.*Plate\d{2,6}\..*$", entry, re.IGNORECASE) for entry in excel_drop])
+        excel_addresses = np.array(
+            [re.search("^.*Plate.*\/.*Plate\d{2,6}\..*$", entry, re.IGNORECASE) for entry in excel_drop])
         print(excel_addresses)
         if len(excel_addresses) > 0:
             excel_addresses = [i for i in excel_addresses if i is not None]
@@ -145,6 +147,7 @@ def index_videos_dropbox_new(analysis_folder, videos_folder, dropbox_folder,
 
     return merge_frame
 
+
 def read_video_data_new(address_array, analysis_folder):
     """
     Takes a list of index files, a frame with basic video information and the analysis folder to merge the
@@ -157,7 +160,7 @@ def read_video_data_new(address_array, analysis_folder):
     """
 
     # Excel and cvs files have different information, and are stored in different hierarchies.
-    
+
     excel_frame = pd.DataFrame()
     csv_frame = pd.DataFrame()
     txt_frame = pd.DataFrame()
@@ -173,11 +176,14 @@ def read_video_data_new(address_array, analysis_folder):
             raw_data = raw_data[raw_data['Treatment'] == raw_data['Treatment']].reset_index(drop=True)
             # 'Plate[nr] can be both upper case and lower case'
             raw_data['Unnamed: 0'] = [entry.lower() for entry in raw_data['Unnamed: 0']]
-            raw_data['plate_id'] = [f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}" for entry in raw_data['Unnamed: 0']]
+            raw_data['plate_id'] = [f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}" for entry in
+                                    raw_data['Unnamed: 0']]
             raw_data['imaging_day'] = [f"{entry.split('_')[-3]}" for entry in raw_data['Unnamed: 0']]
             raw_data['Position mm'] = [float(entry) / 1000.0 for entry in raw_data['Position mm']]
             raw_data['Unnamed: 6'] = [float(entry) / 1000.0 for entry in raw_data['Unnamed: 6']]
-            raw_data['tot_path_drop'] = [f"/DATA/{address.relative_to(analysis_folder).parent.as_posix()}/DATA/{row['Unnamed: 0']}" for index, row in raw_data.iterrows()]
+            raw_data['tot_path_drop'] = [
+                f"/DATA/{address.relative_to(analysis_folder).parent.as_posix()}/DATA/{row['Unnamed: 0']}" for
+                index, row in raw_data.iterrows()]
             excel_frame = pd.concat([excel_frame, raw_data])
 
         elif suffix == '.csv':
@@ -189,10 +195,14 @@ def read_video_data_new(address_array, analysis_folder):
             else:
                 raw_data = pd.read_csv(address, sep=";")
             raw_data['file_name'] = [address.stem] * len(raw_data)
-            raw_data['unique_id'] = [f"{address.parent.parts[-1]}_{str(row['video']).zfill(3)}" for index, row in raw_data.iterrows()]
+            raw_data['unique_id'] = [f"{address.parent.parts[-1]}_{str(row['video']).zfill(3)}" for index, row in
+                                     raw_data.iterrows()]
             raw_data['imaging_day'] = [entry.split('_')[0] for entry in raw_data['unique_id']]
-            raw_data['plate_id'] = [f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}" for entry in raw_data['unique_id']]
-            raw_data['tot_path_drop'] = [f"/DATA/{address.relative_to(analysis_folder).parent.as_posix()}/{str(row['video']).zfill(3)}/Img" for index, row in raw_data.iterrows()]
+            raw_data['plate_id'] = [f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}" for entry in
+                                    raw_data['unique_id']]
+            raw_data['tot_path_drop'] = [
+                f"/DATA/{address.relative_to(analysis_folder).parent.as_posix()}/{str(row['video']).zfill(3)}/Img" for
+                index, row in raw_data.iterrows()]
             raw_data['tot_path'] = [entry[6:] for entry in raw_data['tot_path_drop']]
             raw_data = raw_data.reset_index()
             csv_frame = pd.concat([csv_frame, raw_data], axis=0, ignore_index=True)
@@ -210,7 +220,8 @@ def read_video_data_new(address_array, analysis_folder):
             raw_data["tot_path"] = (address.relative_to(analysis_folder).parent / "Img").as_posix()
             raw_data['tot_path_drop'] = ['DATA/' + raw_data['tot_path'][0]]
             if raw_data['Operation'].to_string().split(' ')[-1] == 'Undetermined':
-                print(f"Undetermined operation in {raw_data['unique_id'].to_string().split(' ')[-1]}, please amend. Assuming 50x BF.")
+                print(
+                    f"Undetermined operation in {raw_data['unique_id'].to_string().split(' ')[-1]}, please amend. Assuming 50x BF.")
                 raw_data['Operation'] = '  50x Brightfield'
             try:
                 txt_frame = pd.concat([txt_frame, raw_data], axis=0, ignore_index=True)
@@ -311,7 +322,7 @@ def read_video_data_new(address_array, analysis_folder):
             'Treatment': 'treatment',
             'Strain': 'strain',
             'tGermination': 'days_after_crossing',
-            'tCrossing' : 'days_after_crossing',
+            'tCrossing': 'days_after_crossing',
             'Illumination': 'mode',
             'Binned': 'binning',
             'Lens': 'magnification',
@@ -379,7 +390,7 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
                  create_edge_video=True,
                  photobleach_adjust=False,
                  speed_ext_window_number=15,
-                 speed_ext_window_start = 3,
+                 speed_ext_window_start=3,
                  speed_ext_c_thresh=0.95,
                  speed_ext_c_falloff=0.005,
                  speed_ext_blur_size=5,
@@ -394,8 +405,8 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
         db_address = f"{dropbox_address}Analysis/{drop_targ.as_posix()}"
         row['analysis_folder'] = str(Path(f"{analysis_folder}{row['folder'][:-4]}"))
         row['videos_folder'] = str(Path(f"{videos_folder}{row['folder']}"))
-        video_analysis = KymoVideoAnalysis(input_frame=row, logging=logging, 
-                                           show_seg=False, filter_step=edge_len_min, 
+        video_analysis = KymoVideoAnalysis(input_frame=row, logging=logging,
+                                           show_seg=False, filter_step=edge_len_min,
                                            close_size=close_size, thresh_adjust=thresh_adjust,
                                            frangi_range=frangi_range)
         img_seq = np.arange(len(video_analysis.selection_file))
@@ -422,7 +433,8 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
                 edge.view_edge(img_frame=img_seq, save_im=True, quality=6, target_length=target_length)
 
             ### Create kymograph of edge, do fourier filtering, extract speeds, extract transport ###
-            kymos = edge.extract_multi_kymo(1, target_length=target_length, kymo_adj=False, kymo_normalize=kymo_normalize)
+            kymos = edge.extract_multi_kymo(1, target_length=target_length, kymo_adj=False,
+                                            kymo_normalize=kymo_normalize)
             edge.fourier_kymo(return_self=False)
             edge.extract_speeds(w_size=speed_ext_window_number,
                                 w_start=speed_ext_window_start,
@@ -477,7 +489,7 @@ class HighmagDataset(object):
         pic_4x_res = np.array([[4088, 3000], [2044, 1500]][pd_row['binning'] == 2]) * space_res / 2
         frame_4x_filt = self.filter_edges('plate_id', '==', pd_row['plate_id'])
         frame_4x_filt = frame_4x_filt.filter_edges('magnification', '==', 50.0)
-#         frame_4x_filt = frame_4x_filt.filter_edges('mode', '==', ['BF', 'F'][FLUO])
+        #         frame_4x_filt = frame_4x_filt.filter_edges('mode', '==', ['BF', 'F'][FLUO])
         frame_4x_filt = frame_4x_filt.filter_edges('xpos', '>=', pd_row['xpos'] - pic_4x_res[0])
         frame_4x_filt = frame_4x_filt.filter_edges('xpos', '<=', pd_row['xpos'] + pic_4x_res[0])
         frame_4x_filt = frame_4x_filt.filter_edges('ypos', '>=', pd_row['ypos'] - pic_4x_res[1])
@@ -529,12 +541,12 @@ class HighmagDataset(object):
             ax.scatter(videos_4x['xpos'], -videos_4x['ypos'], c='tab:green', label='4x mag')
         if 'speeds_mean' in modes:
             for video in self.video_objs:
-                video.plot_speed_arrows(ax, [video.dataset['xpos'], -video.dataset['ypos']], 
+                video.plot_speed_arrows(ax, [video.dataset['xpos'], -video.dataset['ypos']],
                                         plot_text=False, plot_mean=True, significance_thresh=spd_thresh)
-                
+
         if 'flux_mean' in modes:
             for video in self.video_objs:
-                video.plot_speed_arrows(ax, [video.dataset['xpos'], -video.dataset['ypos']], 
+                video.plot_speed_arrows(ax, [video.dataset['xpos'], -video.dataset['ypos']],
                                         plot_text=False, plot_flux=True, significance_thresh=spd_thresh)
 
         if 'speeds_both' in modes:
@@ -548,8 +560,9 @@ class HighmagDataset(object):
             for label in label_frame['coords'].unique():
                 coordx = label_frame[label_frame['coords'] == label]['xpos'].iloc[0]
                 coordy = label_frame[label_frame['coords'] == label]['ypos'].iloc[0]
-                vid_list = [int(row['video_int']) for index, row in label_frame[label_frame['coords'] == label].iterrows()]
-                ax.annotate(vid_list, (coordx+annotate_adj, -coordy+annotate_adj), c='black', fontsize=2)
+                vid_list = [int(row['video_int']) for index, row in
+                            label_frame[label_frame['coords'] == label].iterrows()]
+                ax.annotate(vid_list, (coordx + annotate_adj, -coordy + annotate_adj), c='black', fontsize=2)
         if 'speeds_text' in modes:
             for video in self.video_objs:
                 video.plot_speed_arrows(ax, [video.dataset['xpos'], -video.dataset['ypos']])
@@ -566,11 +579,12 @@ class HighmagDataset(object):
         ax.set_title(f"Plate {self.video_frame['plate_id'][0]}")
         ax.legend()
         fig.tight_layout()
-        
+
         if not os.path.exists(f"{analysis_folder}plot_outs/{'_'.join(modes)}/"):
             os.makedirs(f"{analysis_folder}plot_outs/{'_'.join(modes)}/")
-        
-        fig.savefig(f"{analysis_folder}plot_outs/{'_'.join(modes)}/plate_{self.video_frame['plate_id'][0]}_scatter.png", transparent=True)
+
+        fig.savefig(f"{analysis_folder}plot_outs/{'_'.join(modes)}/plate_{self.video_frame['plate_id'][0]}_scatter.png",
+                    transparent=True)
 
         return None
 
@@ -592,7 +606,8 @@ class HighmagDataset(object):
             fig.tight_layout()
         return ax
 
-    def plot_violins(self, column, bins=None, bin_separator='edge_bin_values', ax=None, fig=None, c='tab:blue', labels=None):
+    def plot_violins(self, column, bins=None, bin_separator='edge_bin_values', ax=None, fig=None, c='tab:blue',
+                     labels=None):
         if ax is None:
             fig, ax = plt.subplots()
         if bins is not None:
@@ -642,13 +657,13 @@ class VideoDataset(object):
                  analysis_folder,
                  videos_folder):
         self.dataset = series
-        self.img_dim = [[2048, 1500],[4096, 3000]][self.dataset['binning'] == 1]
+        self.img_dim = [[2048, 1500], [4096, 3000]][self.dataset['binning'] == 1]
         self.space_res = 2 * 1.725 / self.dataset['magnification'] * self.dataset['binning']
-        self.time_res = 1/ self.dataset['fps']
+        self.time_res = 1 / self.dataset['fps']
         self.vid_analysis_folder = Path(f"{analysis_folder}{self.dataset['folder']}").parent
         edge_adr = Path(f"{analysis_folder}{self.dataset['folder']}").parent / "edges_data.csv"
         self.imshow_extent = [0, self.space_res * self.img_dim[0],
-                 self.space_res * self.img_dim[1], 0]
+                              self.space_res * self.img_dim[1], 0]
         if edge_adr.exists():
             self.edges_frame = pd.read_csv(edge_adr)
             self.edge_objs = [EdgeDataset(pd.concat([row, self.dataset]), analysis_folder, videos_folder) for index, row
@@ -660,10 +675,9 @@ class VideoDataset(object):
             self.edge_objs = []
 
     def show_summary(self):
-        if os.path.exists(self.dataset['analysis_folder'] + 'Detected edges.png'):
-            print('Index, edge name')
-            print(self.edges_frame['edge_name'].to_string())
-            extraction_img = imageio.imread(self.dataset['analysis_folder'] + 'Detected edges.png')
+        summ_path = Path(self.dataset['analysis_folder']) /'Detected edges.png'
+        if summ_path.exists():
+            extraction_img = imageio.imread(summ_path)
             fig, ax = plt.subplots()
             ax.imshow(extraction_img)
             ax.set_axis_off()
@@ -671,10 +685,13 @@ class VideoDataset(object):
             fig.tight_layout()
 
     def show_segmentation(self):
-        if os.path.exists(self.dataset['analysis_folder'] + 'Video segmentation.png'):
-            extraction_img = imageio.imread(self.dataset['analysis_folder'] + 'Video segmentation.png')
-            fig, ax = plt.subplots()
+        seg_path = Path(self.dataset['analysis_folder']) / 'Video segmentation.png'
+        if seg_path.exists():
+            extraction_img = imageio.imread(seg_path)
+            fig = plt.figure()
+            ax = fig.add_axes([0, 0, 1, 1], frameon=False, aspect=1)
             ax.imshow(extraction_img)
+            fig.suptitle(self.dataset['unique_id'])
             ax.set_axis_off()
             fig.tight_layout()
 
@@ -695,7 +712,7 @@ class VideoDataset(object):
         ax.set_title(f"Edge speed overview for {self.dataset['unique_id']}")
         ax.set_ylabel("Velocity $(\mu m /s)$")
         fig.tight_layout()
-        
+
     def get_first_frame(self):
         vid_address = self.vid_analysis_folder / f"{self.dataset['unique_id']}_video.mp4"
         vidcap = cv2.VideoCapture(str(vid_address))
@@ -704,16 +721,17 @@ class VideoDataset(object):
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             image = cv2.resize(image, self.img_dim)
             return image  # save frame as JPEG file
-        
-    def plot_speed_arrows(self, ax=None, vid_pos=None, video_txt_size=10, plot_text=True, plot_flux=False, plot_both=False, plot_mean=False, significance_thresh=0.2, save_im: bool =False):
-        
+
+    def plot_speed_arrows(self, ax=None, vid_pos=None, video_txt_size=10, plot_text=True, plot_flux=False,
+                          plot_both=False, plot_mean=False, significance_thresh=0.2, save_im: bool = False):
+
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_title(f"{self.dataset['unique_id']}")
-            plate_offset = [0,0]
+            plate_offset = [0, 0]
             space_factor = self.space_res
             arr_width = 3
-            txt_size  = video_txt_size
+            txt_size = video_txt_size
             line_size = 1
         else:
             plate_offset = np.add(vid_pos, [-0.30, -0.42])
@@ -730,19 +748,14 @@ class VideoDataset(object):
                             edge_obj.mean_data['edge_xpos_1']],
                            [edge_obj.mean_data['edge_ypos_2'],
                             edge_obj.mean_data['edge_xpos_2']]]
-            
-#             if vid_pos is None:
-#                 edge_coords = [[edge_obj.mean_data['edge_ypos_1'], edge_obj.mean_data['edge_xpos_1']],
-#                                [edge_obj.mean_data['edge_ypos_2'], edge_obj.mean_data['edge_xpos_2']]]
-#             else:
-                
-            
+
             edge_mids = np.mean([[edge_coords[0][0], edge_coords[0][1]],
                                  [edge_coords[1][0], edge_coords[1][1]]], axis=0) * space_factor
-            
-            edge_tangent =  [edge_coords[1][0] - edge_coords[0][0], 
-                             edge_coords[1][1] - edge_coords[0][1]] / np.linalg.norm([edge_coords[1][0] - edge_coords[0][0], 
-                             edge_coords[1][1] - edge_coords[0][1]])
+
+            edge_tangent = [edge_coords[1][0] - edge_coords[0][0],
+                            edge_coords[1][1] - edge_coords[0][1]] / np.linalg.norm(
+                [edge_coords[1][0] - edge_coords[0][0],
+                 edge_coords[1][1] - edge_coords[0][1]])
             if vid_pos is not None:
                 edge_tangent[0] *= -1
                 edge_tangent *= -1
@@ -756,12 +769,12 @@ class VideoDataset(object):
                 if edge_rot > 90:
                     edge_rot -= 180
             edge_dir = edge_tangent * 70 * space_factor
-            edge_starts = edge_mids - 0.5*edge_dir
+            edge_starts = edge_mids - 0.5 * edge_dir
             edge_ends = edge_starts + edge_dir
 
-            edge_normal = np.array([[0, -1],[1, 0]]).dot(np.array(edge_tangent))
+            edge_normal = np.array([[0, -1], [1, 0]]).dot(np.array(edge_tangent))
             edge_offset = edge_normal * 80 * space_factor
-            
+
             if plot_both:
                 if abs(speed_r) > significance_thresh:
                     ax.arrow(edge_starts[0] + edge_offset[0] + plate_offset[0],
@@ -775,8 +788,8 @@ class VideoDataset(object):
                 else:
                     ax.scatter([edge_starts[0] + edge_offset[0] + plate_offset[0]],
                                [edge_starts[1] + edge_offset[1] + plate_offset[1]],
-                              c='tab:orange',
-                              s=0.3)
+                               c='tab:orange',
+                               s=0.3)
                 if abs(speed_l) > significance_thresh:
                     ax.arrow(edge_ends[0] - edge_offset[0] + plate_offset[0],
                              edge_ends[1] - edge_offset[1] + plate_offset[1],
@@ -804,14 +817,14 @@ class VideoDataset(object):
                 else:
                     ax.scatter([edge_ends[0] + plate_offset[0]],
                                [edge_ends[1] + plate_offset[1]],
-                              color='black',
-                              s=0.5)
+                               color='black',
+                               s=0.5)
             if plot_flux:
-                if abs(speed_f/100) > significance_thresh:
+                if abs(speed_f / 100) > significance_thresh:
                     ax.arrow(edge_ends[0] + plate_offset[0],
                              edge_ends[1] + plate_offset[1],
-                             edge_dir[0] * speed_f/100,
-                             edge_dir[1] * speed_f/100,
+                             edge_dir[0] * speed_f / 100,
+                             edge_dir[1] * speed_f / 100,
                              width=arr_width,
                              linewidth=line_size,
                              facecolor='black',
@@ -819,32 +832,35 @@ class VideoDataset(object):
                 else:
                     ax.scatter([edge_ends[0] + plate_offset[0]],
                                [edge_ends[1] + plate_offset[1]],
-                              color='black',
-                              s=0.5)
+                               color='black',
+                               s=0.5)
             if plot_text:
                 if plot_both:
-                    ax.annotate(f"{speed_r:.3}",edge_starts +edge_offset , 
-                                xytext = edge_starts +edge_offset + plate_offset - 10*edge_normal*space_factor + 20*edge_tangent*space_factor, rotation = edge_rot,
+                    ax.annotate(f"{speed_r:.3}", edge_starts + edge_offset,
+                                xytext=edge_starts + edge_offset + plate_offset - 10 * edge_normal * space_factor + 20 * edge_tangent * space_factor,
+                                rotation=edge_rot,
                                 color='white',
-                                fontsize = txt_size,
+                                fontsize=txt_size,
                                 path_effects=[pe.withStroke(linewidth=[0.2, 2][vid_pos is None], foreground="black")])
-                    ax.annotate(f"{-speed_l:.3}",edge_ends -edge_offset ,
-                                xytext = edge_ends -edge_offset + plate_offset - 100*edge_normal*space_factor - 80*edge_tangent*space_factor, 
-                                rotation = edge_rot,
+                    ax.annotate(f"{-speed_l:.3}", edge_ends - edge_offset,
+                                xytext=edge_ends - edge_offset + plate_offset - 100 * edge_normal * space_factor - 80 * edge_tangent * space_factor,
+                                rotation=edge_rot,
                                 color='white',
-                                fontsize = txt_size,
+                                fontsize=txt_size,
                                 path_effects=[pe.withStroke(linewidth=[0.2, 2][vid_pos is None], foreground="black")])
                 if plot_mean:
-                    ax.annotate(f"{speed_m:.3}",edge_starts +edge_offset , 
-                                xytext = edge_starts +edge_offset + plate_offset - 10*edge_normal*space_factor + 20*edge_tangent*space_factor, rotation = edge_rot,
+                    ax.annotate(f"{speed_m:.3}", edge_starts + edge_offset,
+                                xytext=edge_starts + edge_offset + plate_offset - 10 * edge_normal * space_factor + 20 * edge_tangent * space_factor,
+                                rotation=edge_rot,
                                 color='white',
-                                fontsize = txt_size,
+                                fontsize=txt_size,
                                 path_effects=[pe.withStroke(linewidth=[0.2, 2][vid_pos is None], foreground="black")])
                 if plot_flux:
-                    ax.annotate(f"{speed_f/100:.3}",edge_starts +edge_offset , 
-                                xytext = edge_starts +edge_offset + plate_offset - 10*edge_normal*space_factor + 20*edge_tangent*space_factor, rotation = edge_rot,
+                    ax.annotate(f"{speed_f / 100:.3}", edge_starts + edge_offset,
+                                xytext=edge_starts + edge_offset + plate_offset - 10 * edge_normal * space_factor + 20 * edge_tangent * space_factor,
+                                rotation=edge_rot,
                                 color='white',
-                                fontsize = txt_size,
+                                fontsize=txt_size,
                                 path_effects=[pe.withStroke(linewidth=[0.2, 2][vid_pos is None], foreground="black")])
         if vid_pos is None:
             vid_frame = self.get_first_frame()
@@ -861,25 +877,28 @@ class EdgeDataset(object):
                  videos_folder):
         self.mean_data = dataframe
         self.edge_name = self.mean_data['edge_name']
-        edge_dat_adr = Path(f"{analysis_folder}{self.mean_data['folder']}").parent / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_data.csv"
+        edge_dat_adr = Path(
+            f"{analysis_folder}{self.mean_data['folder']}").parent / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_data.csv"
         self.time_data = pd.read_csv(edge_dat_adr)
         self.space_res = 2 * 1.725 / self.mean_data['magnification'] * self.mean_data['binning']
-        self.time_res = 1/ self.mean_data['fps']
+        self.time_res = 1 / self.mean_data['fps']
         self.img_dim = imread(Path(self.mean_data['analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff")[0].shape
         self.imshow_extent = [0, self.space_res * self.img_dim[1],
-                         self.time_res * self.img_dim[0], 0]
+                              self.time_res * self.img_dim[0], 0]
 
     def show_summary(self):
-        summ_path = Path(self.mean_data['analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_summary.png"
+        summ_path = Path(self.mean_data[
+                             'analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_summary.png"
         summ_img = imageio.imread(summ_path)
         fig = plt.figure()
         ax = fig.add_axes([0, 0, 1, 1], frameon=False, aspect=1)
         ax.imshow(summ_img)
         ax.set_title(self.mean_data['unique_id'])
         ax.set_axis_off()
-        
+
     def show_kymos(self):
-        summ_path = Path(self.mean_data['analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_kymos.png"
+        summ_path = Path(self.mean_data[
+                             'analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_kymos.png"
         summ_img = imageio.imread(summ_path)
         fig = plt.figure()
         fig.suptitle(f"{self.mean_data['unique_id']}")
@@ -893,35 +912,95 @@ class EdgeDataset(object):
         fig, ax = plt.subplots()
         ax.plot(self.time_data['times'], self.time_data['flux_mean'])
         fig.tight_layout()
-        
-    def return_speed_medians(self, spd_tiff_lowbound = 0.5):
+
+    def return_speed_medians(self, spd_tiff_lowbound=0.5):
         spd_array_path = Path(self.mean_data['analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff"
         spd_tiff = imread(spd_array_path)
         spd_tiff[0] = np.where(spd_tiff[0] < -spd_tiff_lowbound, spd_tiff[0], np.nan)
         spd_tiff[1] = np.where(spd_tiff[1] > spd_tiff_lowbound, spd_tiff[1], np.nan)
-        
+
         spd_max_l = np.nanmedian(spd_tiff[0].flatten())
         spd_max_r = np.nanmedian(spd_tiff[1].flatten())
-        return spd_max_l, spd_max_r        
-        
-    def plot_speed_histo(self, spd_extent=15, spd_tiff_lowbound = 0.5, spd_cutoff = 0.2, bin_res=100, plot_fig=True):
+        return spd_max_l, spd_max_r
+
+    def direction_filter(self):
+        kymo_tiff = imread(Path(self.mean_data['analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_kymos_array.tiff")[0]
+        flux_tiff = imread(Path(self.mean_data['analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff")[2]
+        kymo_filts=[[],[]]
+        fig, ax = plt.subplots(4, figsize=(5, 10))
+        fig.suptitle(self.mean_data['unique_id'])
+
+        for j, kymo in enumerate([kymo_tiff, np.flip(kymo_tiff, axis=1)]):
+            img = kymo.copy()
+            for i in range(1):
+                A = img[:, :]
+                B = np.flip(A, axis=0)
+                C = np.flip(A, axis=1)
+                D = np.flip(B, axis=1)
+                tiles = [[D, B, D], [C, A, C], [D, B, D]]
+                tiles = [cv2.hconcat(imgs) for imgs in tiles]
+                fourrier = cv2.vconcat(tiles)
+                img = fourrier
+            tiling_for_fourrier = img
+            shape_v, shape_h = tiling_for_fourrier.shape
+
+            dark_image_grey_fourier = np.fft.fftshift(np.fft.fft2(tiling_for_fourrier, norm='ortho'))
+            coordinates_middle = np.array(dark_image_grey_fourier.shape) // 2
+
+            # Within the fourier transform, we have four quadrants, where we remove two of them. This in addition to the DC term
+            LT_quadrant = np.s_[: coordinates_middle[0] + 0, : coordinates_middle[1]]
+            RB_quadrant = np.s_[coordinates_middle[0] + 1:, coordinates_middle[1] + 1:]
+
+            filtered_fourrier = dark_image_grey_fourier.copy()
+
+            # Calculation of the static part of the fourier spectrum. Looks like a horizontal band with vertically flared ends.
+            v_axis = np.arange(0, shape_v) - (shape_v // 2)
+            h_axis = np.arange(0, shape_h) - (shape_h // 2)
+            v_array = np.array([v_axis for i in range(shape_h)]).transpose()
+            h_array = np.array([h_axis for i in range(shape_v)])
+            stat_array = 1 * (abs(v_array) <= (1 + abs(h_array) / 1000))
+
+            filtered_fourrier[LT_quadrant] = 0
+            filtered_fourrier[RB_quadrant] = 0
+            filtered_fourrier *= (1 - stat_array)
+
+            stat_filt = np.fft.ifft2(np.fft.ifftshift(dark_image_grey_fourier * stat_array), norm='ortho')
+            filtered = np.fft.ifft2(np.fft.ifftshift(filtered_fourrier), norm='ortho')
+
+            shape_v, shape_h = shape_v // 3, shape_h // 3
+            middle_slice = np.s_[shape_v: 2 * shape_v, shape_h: 2 * shape_h]
+            middle = filtered[middle_slice]
+
+            kymo_filts[j] = np.array(middle.real)
+        ax[0].imshow(kymo_filts[0], aspect=4, cmap='coolwarm',
+                     vmin=np.array(kymo_filts).flatten().min(), vmax=np.array(kymo_filts).flatten().max())
+        ax[1].imshow(kymo_filts[1], aspect=4, cmap='coolwarm',
+                     vmin=np.array(kymo_filts).flatten().min(), vmax=np.array(kymo_filts).flatten().max())
+        # ax[2].plot(np.sum(abs(kymo_filts[0]), axis=1))
+        # ax[2].plot(np.sum(abs(kymo_filts[1]), axis=1))
+        ax[2].plot(np.mean(kymo_filts[0], axis=1))
+        ax[2].plot(np.mean(kymo_filts[1], axis=1))
+        ax[3].plot(np.mean(kymo_filts[0], axis=1) - np.mean(kymo_filts[1], axis=1))
+        ax[3].plot(np.nanmean(flux_tiff, axis=1)/5)
+
+    def plot_speed_histo(self, spd_extent=15, spd_tiff_lowbound=0.5, spd_cutoff=0.2, bin_res=100, plot_fig=True):
         spd_array_path = Path(self.mean_data['analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff"
         spd_tiff = imread(spd_array_path)
         kymo_tiff = imread(Path(self.mean_data['analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_kymos_array.tiff")[1]
-        
+
         spd_tiff[0] = np.where(spd_tiff[0] < -spd_tiff_lowbound, spd_tiff[0], np.nan)
         spd_tiff[1] = np.where(spd_tiff[1] > spd_tiff_lowbound, spd_tiff[1], np.nan)
-        
+
         spd_bins = np.linspace(-spd_extent, spd_extent, bin_res)
-        spd_cut = spd_cutoff/spd_extent/2
-        spd_cut_l = bin_res//2 - int(bin_res*spd_cut)
-        spd_cut_r = bin_res//2 + int(bin_res*spd_cut)
+        spd_cut = spd_cutoff / spd_extent / 2
+        spd_cut_l = bin_res // 2 - int(bin_res * spd_cut)
+        spd_cut_r = bin_res // 2 + int(bin_res * spd_cut)
         spd_hist_l = np.histogram(spd_tiff[0], spd_bins, density=True)
         spd_hist_r = np.histogram(spd_tiff[1], spd_bins, density=True)
         spd_hist = [spd_hist_l, spd_hist_r]
         spd_max_l = np.nanmedian(spd_tiff[0].flatten())
         spd_max_r = np.nanmedian(spd_tiff[1].flatten())
-        
+
         if plot_fig:
             fig, ax = plt.subplot_mosaic([['kymo', 'spd_left', 'spd_right'],
                                           ['spd_histo', 'spd_histo', 'spd_histo']])
@@ -930,11 +1009,13 @@ class EdgeDataset(object):
             ax['kymo'].set_title("Kymograph")
             ax['kymo'].set_xlabel('x $(\mu m)$')
             ax['kymo'].set_ylabel('t $(s)$')
-            ax['spd_left'].imshow(spd_tiff[0], cmap='coolwarm', vmin=-20, vmax=20, extent=self.imshow_extent, aspect='auto')
+            ax['spd_left'].imshow(spd_tiff[0], cmap='coolwarm', vmin=-20, vmax=20, extent=self.imshow_extent,
+                                  aspect='auto')
             ax['spd_left'].set_title('Speeds_left')
             ax['spd_left'].set_xlabel('x $(\mu m)$')
             ax['spd_left'].set_ylabel('t $(s)$')
-            ax['spd_right'].imshow(spd_tiff[1], cmap='coolwarm', vmin=-20, vmax=20, extent=self.imshow_extent, aspect='auto')
+            ax['spd_right'].imshow(spd_tiff[1], cmap='coolwarm', vmin=-20, vmax=20, extent=self.imshow_extent,
+                                   aspect='auto')
             ax['spd_right'].set_title('Speeds_right')
             ax['spd_right'].set_xlabel('x $(\mu m)$')
             ax['spd_right'].set_ylabel('t $(s)$')
@@ -946,7 +1027,7 @@ class EdgeDataset(object):
             ax['spd_histo'].grid(True)
             ax['spd_histo'].legend()
             fig.tight_layout()
-        
+
         spd_hist_l_f = spd_hist_l[0][:]
-        
+
         return spd_max_l, spd_max_r
