@@ -583,7 +583,7 @@ class HighmagDataset(object):
         if not os.path.exists(f"{analysis_folder}plot_outs/{'_'.join(modes)}/"):
             os.makedirs(f"{analysis_folder}plot_outs/{'_'.join(modes)}/")
 
-        fig.savefig(f"{analysis_folder}plot_outs/{'_'.join(modes)}/plate_{self.video_frame['plate_id'][0]}_scatter.png",
+        fig.savefig(f"{analysis_folder}plot_outs/{'_'.join(modes)}/{self.video_frame['plate_id'][0]}_{'_'.join(modes)}.png",
                     transparent=True)
 
         return None
@@ -867,7 +867,7 @@ class VideoDataset(object):
             ax.imshow(vid_frame, extent=self.imshow_extent)
             fig.tight_layout()
         if save_im:
-            fig.savefig(self.vid_analysis_folder / f"{self.dataset['unique_id']}_speed_arrows")
+            fig.savefig(self.vid_analysis_folder.parent / "single_imgs" / f"{self.dataset['unique_id']}_speed_arrows")
 
 
 class EdgeDataset(object):
