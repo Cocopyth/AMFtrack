@@ -1,6 +1,5 @@
 absl-py==1.2.0
 addict==2.4.0
--e git+https://github.com/Cocopyth/AMFtrack.git@cfd61943a772c1f0311a62d93bb7a06383ca8c81#egg=AMFTrack
 anyio==3.6.1
 appdirs==1.4.4
 argon2-cffi==21.3.0
