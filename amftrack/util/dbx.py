@@ -243,35 +243,41 @@ def sync_fold(origin, target):
     # print(cmd)
     call(cmd, shell=True)
 
+
 def get_dropbox_folders_general(dir_drop: str):
     dbx = load_dbx()
     response = dbx.files_list_folder(dir_drop, recursive=False)
-    # for fil in response.entries:
+    entries = response.entries
+
     while response.has_more:
         response = dbx.files_list_folder_continue(response.cursor)
-    return (response)
+        entries.extend(response.entries)
+
+    return entries
 
 def get_dropbox_folders_general_recursive(dir_drop: str,level):
     if level == 0:
-        return(get_dropbox_folders_general(dir_drop).entries)
+        return(get_dropbox_folders_general(dir_drop))
     else:
         response = []
-        response_level_down = get_dropbox_folders_general(dir_drop)
-        for entry in response_level_down.entries:
-            response += get_dropbox_folders_general_recursive(entry.path_display,level-1)
+        entries = get_dropbox_folders_general(dir_drop)
+        with tqdm(total=len(entries), desc="sizes") as pbar:
+            for entry in entries:
+                if type(entry) != dropbox.files.FileMetadata:
+                    response += get_dropbox_folders_general_recursive(entry.path_display,level-1)
+                    pbar.update(1)
         return(response)
 
 def get_dropbox_folders_prince(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     # for fil in response.entries:
     listfiles = []
-    folders_interest = ["param.m", "experiment.pick"]
-    entries = get_dropbox_folders_general_recursive(dir_drop, 2)
-    listfiles += [file for file in entries if file.name in folders_interest]
+    entries = get_dropbox_folders_general_recursive(dir_drop, 1)
+    listfiles += [file for file in entries if file.name]
     # print([((file.path_lower.split(".")[0]) + "_info.json") for file in listfiles if (file.name.split(".")[-1] == "zip") &
     #        (((file.path_lower.split(".")[0]) + "_info.json") not in listjson)])
     listfiles.reverse()
-    names = [file.path_display.split("/")[-2] for file in listfiles]
-    path_drop = [os.path.join(*file.path_lower.split("/")[:-1]) for file in listfiles]
+    names = [file.path_display.split("/")[-1] for file in listfiles]
+    path_drop = [os.path.join(*file.path_lower.split("/")[:]) for file in listfiles]
     id_uniques = [path.split(os.path.sep)[-2] for path in path_drop]
 
     path_drop = [
@@ -311,7 +317,6 @@ def get_dropbox_folders_prince(dir_drop: str, skip_size: bool = True) -> pd.Data
         }
     )
     return df
-
 
 def get_dropbox_video_folders(dir_drop) -> pd.DataFrame:
     """
