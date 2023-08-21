@@ -86,7 +86,7 @@ def make_video(
         if save_path is None:
             time = time_ns()
             save_path_temp = os.path.join(temp_path, f"{time}.mp4")
-            imageio.mimsave(save_path_temp, imgs)
+            imageio.mimsave(save_path_temp, imgs,codec='libx264', quality=2, pixelformat='yuv420p')
         else:
             save_path_temp = save_path
         upload(save_path_temp, upload_path)
