@@ -154,4 +154,4 @@ def identify_nodes(exp,t):
 
     # Connect the click event with the callback function
     cid = fig.canvas.mpl_connect('button_press_event', onclick)
-    return cid, fig,dicopoint
+    return cid, dicopoint
