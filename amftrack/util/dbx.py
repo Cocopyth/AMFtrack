@@ -318,6 +318,90 @@ def get_dropbox_folders_prince(dir_drop: str, skip_size: bool = True) -> pd.Data
     )
     return df
 
+def dropbox_videos_iter(dbx, plate_list, excel_list, txt_list, other_folder_list, folder_address):
+    check_plate = re.search(r"\d{8}_Plate\d{2,6}$", folder_address.split('/')[-1])
+    print(folder_address)
+    if check_plate:
+        plate_list.append(folder_address)
+    else:
+        response = dbx.files_list_folder(folder_address, recursive=False)
+        continue_bool=True
+        while continue_bool:
+            for entry in response.entries:
+                check_plate = re.search(r"\d{8}_Plate\d{2,6}$", entry.name)
+                check_txt = re.search(r"videoInfo\.txt$", entry.name)
+                check_sheet = re.search(r'(.*\.(csv))|(xls[xb])$', entry.name)
+                if check_plate:
+                    plate_list.append(entry.path_display)
+                elif check_txt:
+                    txt_list.append(entry.path_display)
+                elif check_sheet:
+                    excel_list.append(entry.path_display)
+                elif isinstance(entry, dropbox.files.FolderMetadata):
+                    if entry.name not in ["Analysis", "analysis", "Img", "img", "Analysis_old", "kymograph", "Kymographs"]:
+                        other_folder_list.append(entry.path_display)
+            continue_bool = response.has_more
+            if response.has_more:
+                response = dbx.files_list_folder_continue(response.cursor)
+
+    return plate_list, excel_list, txt_list, other_folder_list
+
+
+def get_dropbox_video_folders_new(dir_drop, date_start: int=None, date_end:int=None, plate_names: np.array=None, max_depth = 3) -> pd.DataFrame:
+    dbx = load_dbx()
+
+    folder_list = [dir_drop.as_posix()]
+    plate_list = []
+    excel_list = []
+    txt_list = []
+
+    for i in range(max_depth):
+        other_folder_list = []
+        for i, address in enumerate(folder_list):
+            plate_list, excel_list, txt_list, other_folder_list = dropbox_videos_iter(dbx, plate_list, excel_list, txt_list, other_folder_list, address)
+        folder_list = other_folder_list
+
+    for plate_addr in plate_list:
+        
+        plate_name = Path(plate_addr).parts[-1]
+        if len(plate_name.split('_')) == 2:
+            plate_date, plate_id = plate_name.split('_')
+        print(plate_date, plate_id)
+        if date_start is not None:
+            if int(plate_date) < date_start:
+                continue
+        if date_end is not None:
+            if int(plate_end) > date_start:
+                continue
+        if plate_names is not None:
+            if int(plate_id[5:]) not in plate_names:
+                continue
+        
+        print(plate_addr)
+        plate_response = dbx.files_list_folder(plate_addr, recursive=False)
+        has_more_bool=True
+        while has_more_bool:
+            for entry in plate_response.entries:
+                check_sheet = re.search(r'(.*\.(csv))|(xls[xb])$', entry.name)
+                if check_sheet:
+                    print("Hello!!")
+                    excel_list.append(entry.path_display)
+                try:
+                    dbx.files_get_metadata(entry.path_display + '/videoInfo.txt')
+                except:
+                    continue
+                txt_list.append(entry.path_display + '/videoInfo.txt')
+            has_more_bool = plate_response.has_more
+            if has_more_bool:
+                plate_response = dbx.files_list_folder_continue(plate_response.cursor)
+
+
+    print(f"Other folders: {other_folder_list}")
+    print(f"txt files: {txt_list}")
+    print(f"sheets: {excel_list}")
+    return excel_list, txt_list
+
+
 def get_dropbox_video_folders(dir_drop) -> pd.DataFrame:
     """
     Uses a dropbox address as highest folder in a video hierarchy to collect an index of all the files that are
