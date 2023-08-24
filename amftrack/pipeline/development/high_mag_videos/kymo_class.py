@@ -358,7 +358,7 @@ class KymoVideoAnalysis(object):
 
 
 class KymoEdgeAnalysis(object):
-    def __init__(self, video_analysis=None, edge_name=None, kymo=None):
+    def __init__(self, video_analysis=None, edge_name=None, kymo=None, address=None):
         """
         Create an edge analysis object through multiple means.
         :param video_analysis:  Added if created from KymoVideoAnalysis
@@ -373,19 +373,19 @@ class KymoEdgeAnalysis(object):
             self.kymo = []
             self.kymos = []
             self.edge_path = os.path.join(self.video_analysis.kymos_path, f"edge {self.edge_name}")
-            if not os.path.exists(self.edge_path):
-                os.makedirs(self.edge_path)
-
-            self.space_pixel_size = None
-            self.time_pixel_size = None
+            self.space_pixel_size = self.video_analysis.space_pixel_size
+            self.time_pixel_size = self.video_analysis.time_pixel_size
         else:
             if len(kymo.shape) == 2:
                 self.kymo = kymo
             self.kymos = [kymo]
-            self.edge_name = (-1, -1)
+            self.edge_name = edge_name
             self.space_pixel_size = 1.0
             self.time_pixel_size = 1.0
+            self.edge_path = Path(address) / f"edge {self.edge_name}"
 
+        if not os.path.exists(self.edge_path):
+            os.makedirs(self.edge_path)
         self.filtered_left = []
         self.filtered_right = []
         self.slices = []
