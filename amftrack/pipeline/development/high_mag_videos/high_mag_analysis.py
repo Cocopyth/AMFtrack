@@ -25,7 +25,7 @@ import numpy as np
 import matplotlib.patheffects as pe
 
 logging.basicConfig(stream=sys.stdout, level=logging.debug)
-mpl.rcParams['figure.dpi'] = 500
+mpl.rcParams['figure.dpi'] = 200
 
 
 def month_to_num(x: str):
@@ -396,7 +396,9 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
                  speed_ext_blur_size=5,
                  speed_ext_blur=True,
                  speed_ext_max_thresh=80,
-                 dropbox_upload=True
+                 dropbox_upload=True,
+                 fourier_radius = 30,
+                 fourier_prominence = 1
                  ):
     all_edge_objs = []
     for index, row in input_frame.iterrows():
@@ -444,6 +446,7 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
                                 preblur=speed_ext_blur,
                                 speed_thresh=speed_ext_max_thresh)
             edge.extract_transport()
+            edge.fourier_analysis(R_thresh = fourier_radius, prominence= fourier_prominence)
 
         plot_summary(edge_objs)
         save_raw_data(edge_objs, row['analysis_folder'])

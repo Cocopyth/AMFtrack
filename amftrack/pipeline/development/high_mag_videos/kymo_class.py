@@ -8,6 +8,8 @@ from tqdm import tqdm
 import re
 import tensorflow as tf
 import matplotlib as mpl
+from scipy.signal import find_peaks
+
 
 mpl.rcParams['figure.dpi'] = 300
 
@@ -396,6 +398,10 @@ class KymoEdgeAnalysis(object):
         self.flux_tot = []
         self.times = []
         self.imshow_extent = []
+        self.fourier_speeds = []
+        self.angle_plot = []
+        self.ftabsimage = []
+        self.ftpolarimage  =[]
 
     def view_edge(self,
                   resolution=1,
@@ -740,3 +746,24 @@ class KymoEdgeAnalysis(object):
             return flux_tot
         else:
             return flux_arrays
+        
+        
+    def fourier_analysis(self, R_thresh=50, prominence=0.5):
+        for k, img in enumerate(self.kymos):
+            img_dims = np.array(img.shape)
+            ftimage = np.fft.fft2(img)
+            ftimage = np.fft.fftshift(ftimage)
+            self.ftabsimage = np.log(abs(ftimage.real))
+            self.ftpolarimage = cv2.warpPolar(self.ftabsimage, (-1,-1), (img_dims[1]/2, img_dims[0]/2), img_dims[1], cv2.WARP_POLAR_LINEAR + cv2.WARP_FILL_OUTLIERS)
+            polardims = self.ftpolarimage.shape
+            self.ftpolarimage = self.ftpolarimage[0:polardims[0]//2, R_thresh:polardims[1]]
+            self.ftpolarimage = np.where(self.ftpolarimage == 0, np.nan, self.ftpolarimage)
+            angle_plot = [np.linspace(0, np.pi, len(self.ftpolarimage)), np.nanmean(self.ftpolarimage, axis=1)]
+            self.angle_plot = [np.tan((angle_plot[0] - 0.5*np.pi)) * self.space_pixel_size / self.time_pixel_size, angle_plot[1]]
+            self.fourier_peak_data = find_peaks(angle_plot[1], prominence=prominence)
+            peaks, _ = self.fourier_peak_data
+            speeds = np.tan((angle_plot[0][peaks] - 0.5*np.pi)) * self.space_pixel_size / self.time_pixel_size
+            print(angle_plot[0][peaks])
+            print(speeds)
+            self.fourier_speeds = speeds
+        return self.fourier_peak_data
