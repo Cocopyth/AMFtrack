@@ -129,7 +129,9 @@ run_parallel_post(
 )
 
 time = "24:00:00"
-list_f = [plot_hulls, plot_tracking, plot_anastomosis]
+# list_f = [plot_hulls, plot_tracking, plot_anastomosis]
+list_f = [plot_hulls]
+
 # list_f = [plot_tracking]
 # list_f = [plot_anastomosis]
 
@@ -208,14 +210,14 @@ run_parallel_post(
 )
 
 if stage > 0:
-    run_launcher(
-        "post_processer_3.py",
-        [directory_targ, name_job, stage - 1],
-        plates,
-        "12:00:00",
-        dependency=True,
-        name_job=name_job,
-    )
+    # run_launcher(
+    #     "post_processer_3.py",
+    #     [directory_targ, name_job, stage - 1],
+    #     plates,
+    #     "12:00:00",
+    #     dependency=True,
+    #     name_job=name_job,
+    # )
     run_launcher(
         "post_processer_2.py",
         [directory_targ, name_job, stage - 1],

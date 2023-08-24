@@ -23,7 +23,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 from amftrack.pipeline.functions.post_processing.extract_study_zone import (
     load_study_zone,
 )
-from amftrack.util.dbx import get_dropbox_folders
+from amftrack.util.dbx import get_dropbox_folders_prince
 
 video_path = os.path.join(test_path, "flow_processing")
 from amftrack.pipeline.launching.run import run_transfer
@@ -98,7 +98,7 @@ def make_experiment_object():
     folder_df = get_current_folders(directory)
     selected_df = folder_df.loc[folder_df["unique_id"] == plate_name]
     if len(selected_df) < 4:
-        all_folders_drop = get_dropbox_folders("/DATA/PRINCE", True)
+        all_folders_drop = get_dropbox_folders_prince("/DATA/PRINCE", True)
         folders_drop = all_folders_drop.loc[all_folders_drop["unique_id"] == plate_name]
         run_transfer(
             "from_drop.py",
@@ -139,7 +139,7 @@ def make_experiment_object_multi():
     folder_df = get_current_folders(directory)
     selected_df = folder_df.loc[folder_df["unique_id"] == plate_name]
     if len(selected_df) < 4:
-        all_folders_drop = get_dropbox_folders("/DATA/PRINCE", True)
+        all_folders_drop = get_dropbox_folders_prince("/DATA/PRINCE", True)
         folders_drop = all_folders_drop.loc[all_folders_drop["unique_id"] == plate_name]
         run_transfer(
             "from_drop.py",
