@@ -127,7 +127,6 @@ def generate_dash_leaflet_app(vid_frame):
         ]
     )
     def toggle_screen(selected_id, display_data):
-        print("Callback Triggered")
         ctx = dash.callback_context
         if not ctx.triggered:
             raise dash.exceptions.PreventUpdate
@@ -160,6 +159,7 @@ def generate_dash_leaflet_app(vid_frame):
                 html.Div(id='image-container', children=image_components,
                                style={'width': '50%', 'height': '50vh', 'display': 'flex'}),
                 html.Button("Go Back", id="select_button", style={'display': 'block'}),
+                html.Button("Load videos", id="load_button", style={'display': 'block'}),
                 dcc.Dropdown(id='unique_id_dropdown',
                                    options=[{'label': uid, 'value': uid} for uid in vid_frame['plate_id'].unique()], style={'display': 'none'}),
                 html.Div(not_shown, style={'display': 'none'})
@@ -187,14 +187,11 @@ def generate_dash_leaflet_app(vid_frame):
 
     @app.callback(
         [Output(f"video-{i}", 'style') for i in range(len(vid_frame['unique_id'].unique()))] +
-        [Output(f"image-{i}", 'style') for i in range(len(vid_frame['unique_id'].unique()))] +
-        [Output(f"video-{i}", 'src') for i in range(len(vid_frame['unique_id'].unique()))]+
-        [Output(f"image-{i}", 'src') for i in range(len(vid_frame['unique_id'].unique()))],
+        [Output(f"image-{i}", 'style') for i in range(len(vid_frame['unique_id'].unique()))],
         [Input(f"marker-{i}", 'n_clicks') for i in range(len(vid_frame['unique_id'].unique()))],
         [State("video-data-store", 'data')]
     )
     def display_video(*args):
-        clicks = args[:-1]
         data = args[-1]
         if not data or 'video_list' not in data:
             raise dash.exceptions.PreventUpdate
@@ -216,8 +213,32 @@ def generate_dash_leaflet_app(vid_frame):
         image_sources = [
             f"/images_edges/{data['selected_id']}/{os.path.basename(video_list[marker_index])}" if i == marker_index else None
             for i in range(len(video_list))]
-        return styles + styles + sources+ image_sources
+        return styles + styles
+
+    @app.callback(
+        [Output(f"video-{i}", 'src') for i in range(len(vid_frame['unique_id'].unique()))] +
+        [Output(f"image-{i}", 'src') for i in range(len(vid_frame['unique_id'].unique()))],
+        [Input("load_button", "n_clicks")],
+        [State("video-data-store", 'data')],
+        prevent_initial_call = True
+    )
+    def load_video(*args):
+        data = args[-1]
+        if not data or 'video_list' not in data:
+            raise dash.exceptions.PreventUpdate
+        selected_id = data["selected_id"]
+        video_pos, video_list, modes, displays, image_paths = load_data(vid_frame, selected_id)
+        # Setting src for the video that was clicked.
+        sources = [
+            f"/videos/{data['selected_id']}/{os.path.basename(video_list[i])}" if displays[i] else None
+            for i in range(len(video_list))]
+        image_sources = [
+            f"/images_edges/{data['selected_id']}/{os.path.basename(video_list[i])}" if displays[i]  else None
+            for i in range(len(video_list))]
+        return sources + image_sources
+
     return(app)
+
     
 if __name__ == "__main__":
     analysis_folder = r"C:\Users\coren\AMOLF-SHIMIZU Dropbox\DATA\CocoTransport\Analysis"
