@@ -44,7 +44,7 @@ list_args = [{}] * len(list_f)
 # list_args= [[500]]
 overwrite = True
 load_graphs = True
-num_parallel = 32
+num_parallel = 16
 time = "12:00:00"
 for index, row in analysis_folders.iterrows():
     folder = row["folder_analysis"]
