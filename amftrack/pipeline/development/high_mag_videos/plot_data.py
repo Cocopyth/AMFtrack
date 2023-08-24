@@ -77,6 +77,11 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile=99.9):
                       }
         data_out = pd.DataFrame(data=data_table)
         data_out.to_csv(f"{edge.edge_path}/{edge.edge_name}_data.csv")
+        
+        data_fourier = {'speed_range' : edge.angle_plot[0],
+                        'vel_prominence' : edge.angle_plot[1]}
+        data_fourier = pd.DataFrame(data=data_fourier)
+        data_fourier.to_csv(f"{edge.edge_path}/{edge.edge_name}_fourier_data.csv")
 
         new_row = pd.DataFrame([{'edge_name': f'{edge.edge_name}',
                                  'edge_length': space_res * edge.kymos[0].shape[1],
@@ -230,6 +235,29 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
         #         fig.tight_layout()
         fig.savefig(f"{edge.edge_path}{os.sep}{edge.edge_name}_kymos.png")
         plt.close(fig)
+        
+        peaks, _ = edge.fourier_peak_data
+        
+        fig, ax = plt.subplot_mosaic([['fft', 'polarfft'], ['angle_plot', 'angle_plot']], figsize=(10, 6))
+        
+        ax['fft'].imshow(edge.ftabsimage, aspect='auto')
+        ax['fft'].set_xlabel('u')
+        ax['fft'].set_ylabel('v')
+        ax['fft'].set_title("Fourier Transform")
+
+        ax['polarfft'].imshow(edge.ftpolarimage, aspect='auto', extent=[0, 1, 0, np.pi])
+        ax['polarfft'].set_xlabel("radius")
+        ax['polarfft'].set_ylabel("orientation (rad)")
+        ax['polarfft'].set_title("Polar representation")
+
+        ax['angle_plot'].plot(edge.angle_plot[0], edge.angle_plot[1])
+        ax['angle_plot'].set_xlabel("Velocity $(\mu m / s)$")
+        ax['angle_plot'].set_ylabel("Prominence")
+        ax['angle_plot'].plot(angle_plot[0][peaks], angle_plot[1][peaks], "xr")
+        ax['angle_plot'].set_title(f"Angle intensity with found peaks {[round(speed, 4) for speed in speeds]} $\mu m / s$")
+        fig.suptitle(f"{edge.edge_name} Fourier analysis")
+        fig.tight_layout()
+        fig.savefig(f"{edge.edge_path}{os.sep}{edge.edge_name}_fourier.png")
 
 
 
