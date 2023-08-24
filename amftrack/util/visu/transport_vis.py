@@ -40,7 +40,10 @@ def load_data(vid_frame,plate_id):
 
     modes = [(row['mode']) for index, row in analysis_frame.iterrows()]
     displays = [(row['plate_id'] == plate_id) for index, row in analysis_frame.iterrows()]
-    return video_pos, video_paths,modes,displays
+    image_paths = [os.path.join(analysis_folder, row['plate_id'], row['video_int'],
+                    "Img", "Detected edges.png") for index, row in analysis_frame.iterrows()]
+    print(image_paths)
+    return video_pos, video_paths,modes,displays,image_paths
 
 
 
@@ -60,7 +63,7 @@ def adjust_position(video_pos,modes):
 
 
 def generate_map_children(plate_id):
-    video_pos, video_list,modes,displays = load_data(vid_frame,plate_id)
+    video_pos, video_list,modes,displays, image_paths = load_data(vid_frame,plate_id)
     video_pos = adjust_position(video_pos,modes)
 
     # Your existing logic to set up markers, circles, image overlay, etc.
@@ -97,6 +100,10 @@ def generate_dash_leaflet_app(vid_frame):
     @app.server.route('/images/<plate_id>/<image_name>')
     def serve_image(plate_id, image_name):
         return send_file(os.path.join(analysis_folder, plate_id, image_name), mimetype='image/png')
+
+    @app.server.route('/images_edges/<plate_id>/<video_name>')
+    def serve_image_edge(plate_id, video_name):
+        return send_file(os.path.join(analysis_folder, plate_id,video_name.split('_')[-2] ,"Img" ,"Detected edges.png"), mimetype='image/png')
 
     app.layout = html.Div([
         dcc.Store(id="display-state", data={"show_map": False}),
@@ -136,9 +143,11 @@ def generate_dash_leaflet_app(vid_frame):
             with Image.open(image_path_global) as img:
                 image_width, image_height = img.size
                 image_center = [image_height / 2, image_width / 2]
-            video_pos, video_list, modes,displays = load_data(vid_frame, selected_id)
-            video_data = {"video_list": video_list, "selected_id": selected_id}
+            video_pos, video_list, modes,displays,image_paths = load_data(vid_frame, selected_id)
+            video_data = {"video_list": video_list, "selected_id": selected_id,"image_paths": image_paths}
             video_components = [html.Video(id=f"video-{i}", controls=True, style={'width': '50%', 'display': 'none'}, preload=None) for
+                                i in range(len(video_list))]
+            image_components = [html.Img(id=f"image-{i}", style={'width': '50%', 'display': 'none'}) for
                                 i in range(len(video_list))]
             childr = [dl.Map(children=map_children,
                        id='map',
@@ -148,6 +157,8 @@ def generate_dash_leaflet_app(vid_frame):
                        minZoom=-4,
                        center=image_center),
                 html.Div(id='video-container', children=video_components,style={'width': '50%', 'height': '50vh', 'display': 'flex'}),
+                html.Div(id='image-container', children=image_components,
+                               style={'width': '50%', 'height': '50vh', 'display': 'flex'}),
                 html.Button("Go Back", id="select_button", style={'display': 'block'}),
                 dcc.Dropdown(id='unique_id_dropdown',
                                    options=[{'label': uid, 'value': uid} for uid in vid_frame['plate_id'].unique()], style={'display': 'none'}),
@@ -162,7 +173,7 @@ def generate_dash_leaflet_app(vid_frame):
                          options=[{'label': uid, 'value': uid} for uid in vid_frame['plate_id'].unique()]),
             html.Button("Select", id="select_button"),
         ], id="content-div")
-            return {"video_list": [], "selected_id": None}, childr
+            return {"video_list": [], "selected_id": None,"image_paths":[]}, childr
     @app.callback(
         Output("display-state", "data"),
         Input("select_button", "n_clicks"),
@@ -176,7 +187,9 @@ def generate_dash_leaflet_app(vid_frame):
 
     @app.callback(
         [Output(f"video-{i}", 'style') for i in range(len(vid_frame['unique_id'].unique()))] +
-        [Output(f"video-{i}", 'src') for i in range(len(vid_frame['unique_id'].unique()))],
+        [Output(f"image-{i}", 'style') for i in range(len(vid_frame['unique_id'].unique()))] +
+        [Output(f"video-{i}", 'src') for i in range(len(vid_frame['unique_id'].unique()))]+
+        [Output(f"image-{i}", 'src') for i in range(len(vid_frame['unique_id'].unique()))],
         [Input(f"marker-{i}", 'n_clicks') for i in range(len(vid_frame['unique_id'].unique()))],
         [State("video-data-store", 'data')]
     )
@@ -190,6 +203,8 @@ def generate_dash_leaflet_app(vid_frame):
             raise dash.exceptions.PreventUpdate
 
         video_list = data["video_list"]
+        image_paths = data["image_paths"]
+
         clicked_marker_id = ctx.triggered[0]['prop_id'].split('.')[0]
         marker_index = int(clicked_marker_id.split('-')[1])
         styles = [{'display': 'flex' if i == marker_index else 'none', 'width': '100%'} for i in range(len(video_list))]
@@ -198,10 +213,12 @@ def generate_dash_leaflet_app(vid_frame):
         sources = [
             f"/videos/{data['selected_id']}/{os.path.basename(video_list[marker_index])}" if i == marker_index else None
             for i in range(len(video_list))]
-
-        return styles + sources
+        image_sources = [
+            f"/images_edges/{data['selected_id']}/{os.path.basename(video_list[marker_index])}" if i == marker_index else None
+            for i in range(len(video_list))]
+        return styles + styles + sources+ image_sources
     return(app)
-
+    
 if __name__ == "__main__":
     analysis_folder = r"C:\Users\coren\AMOLF-SHIMIZU Dropbox\DATA\CocoTransport\Analysis"
     vid_frame = read_video_data(analysis_folder)
