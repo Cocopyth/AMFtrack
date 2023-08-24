@@ -34,6 +34,7 @@ run_parallel_all_time(
     dependency=False,
     name_job=name_job,
 )
+
 run_parallel_all_time(
     "make_video_stitched.py",
     args,
@@ -46,9 +47,10 @@ run_parallel_all_time(
     dependency=False,
     name_job=name_job,
 )
+
 if stage > 0:
     run_launcher(
-        "skeletonizer.py",
+        "skeletonizer_agg.py",
         [directory_targ, name_job, stage - 1],
         plates,
         "3:00:00",
