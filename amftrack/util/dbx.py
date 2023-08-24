@@ -244,25 +244,40 @@ def sync_fold(origin, target):
     call(cmd, shell=True)
 
 
-def get_dropbox_folders(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
+def get_dropbox_folders_general(dir_drop: str):
     dbx = load_dbx()
-    response = dbx.files_list_folder(dir_drop, recursive=True)
+    response = dbx.files_list_folder(dir_drop, recursive=False)
+    entries = response.entries
+
+    while response.has_more:
+        response = dbx.files_list_folder_continue(response.cursor)
+        entries.extend(response.entries)
+
+    return entries
+
+def get_dropbox_folders_general_recursive(dir_drop: str,level):
+    if level == 0:
+        return(get_dropbox_folders_general(dir_drop))
+    else:
+        response = []
+        entries = get_dropbox_folders_general(dir_drop)
+        with tqdm(total=len(entries), desc="sizes") as pbar:
+            for entry in entries:
+                if type(entry) != dropbox.files.FileMetadata:
+                    response += get_dropbox_folders_general_recursive(entry.path_display,level-1)
+                    pbar.update(1)
+        return(response)
+
+def get_dropbox_folders_prince(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     # for fil in response.entries:
     listfiles = []
-    folders_interest = ["param.m", "experiment.pick"]
-    while response.has_more:
-        listfiles += [
-            file
-            for file in response.entries
-            if file.name.split("/")[-1] in folders_interest
-        ]
-        response = dbx.files_list_folder_continue(response.cursor)
-    listfiles += [file for file in response.entries if file.name in folders_interest]
+    entries = get_dropbox_folders_general_recursive(dir_drop, 1)
+    listfiles += [file for file in entries if file.name]
     # print([((file.path_lower.split(".")[0]) + "_info.json") for file in listfiles if (file.name.split(".")[-1] == "zip") &
     #        (((file.path_lower.split(".")[0]) + "_info.json") not in listjson)])
     listfiles.reverse()
-    names = [file.path_display.split("/")[-2] for file in listfiles]
-    path_drop = [os.path.join(*file.path_lower.split("/")[:-1]) for file in listfiles]
+    names = [file.path_display.split("/")[-1] for file in listfiles]
+    path_drop = [os.path.join(*file.path_lower.split("/")[:]) for file in listfiles]
     id_uniques = [path.split(os.path.sep)[-2] for path in path_drop]
 
     path_drop = [
@@ -386,6 +401,7 @@ def get_dropbox_video_folders_new(dir_drop, date_start: int=None, date_end:int=N
     print(f"sheets: {excel_list}")
     return excel_list, txt_list
 
+
 def get_dropbox_video_folders(dir_drop) -> pd.DataFrame:
     """
     Uses a dropbox address as highest folder in a video hierarchy to collect an index of all the files that are
@@ -471,7 +487,7 @@ def save_dropbox_state(dir_drop: str, skip_size: bool = True, is_video: bool = F
     if is_video:
         df = get_dropbox_video_folders(dir_drop, skip_size)
     else:
-        df = get_dropbox_folders(dir_drop, skip_size)
+        df = get_dropbox_folders_prince(dir_drop, skip_size)
     source = os.path.join(f'{temp_path}', f"dropbox_info.json")
     df.to_json(source)
     target = f"{dir_drop}/folder_info.json"
