@@ -350,7 +350,7 @@ def run_parallel_transfer(
         my_file.write(
             f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        if os.path.isfile(os.path.join(conda_path,'envs','amftrack')):
+        if os.path.exists(os.path.join(conda_path,'envs','amftrack')):
           my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
           my_file.write(f"conda activate amftrack\n")
         else:
