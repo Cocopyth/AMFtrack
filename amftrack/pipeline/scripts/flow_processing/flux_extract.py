@@ -31,8 +31,11 @@ else:
     img_address = dataframe["address_total"]
     magnif = dataframe['magnification']
     test_video = KymoVideoAnalysis(img_address, logging=True, vid_type=None,
-                                   fps=None, binning=None, filter_step=[20, 70][magnif > 10],
-                                   seg_thresh=12, show_seg=False)
+                                   fps=None, binning=None,
+                                   filter_step=[20, 50][magnif > 10],seg_thresh=12,
+                                   show_seg=False,
+                                   close_size = 200,
+                                  thresh_adjust=-2)
     db_address = f"{upl_targ}Analysis/{dataframe['parent_folder']}/"
 
 target_length = int(2.4 * test_video.magnification)
@@ -45,7 +48,7 @@ bin_nr = 1
 img_seq = np.arange(len(edge_objs[0].video_analysis.selection_file))
 
 for edge in edge_objs:
-    edge.view_edge(img_frame=40, save_im=True, target_length=target_length)
+    edge.view_edge(img_frame=0, save_im=True, target_length=target_length)
     edge.view_edge(img_frame=img_seq, save_im=True, quality=6, target_length=target_length)
     edge.extract_multi_kymo(bin_nr, target_length=target_length, kymo_adj=False, kymo_normalize=True)
     edge.fourier_kymo(return_self=False)
