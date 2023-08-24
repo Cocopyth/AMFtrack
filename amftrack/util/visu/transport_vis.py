@@ -144,10 +144,8 @@ def generate_dash_leaflet_app(vid_frame):
                 image_center = [image_height / 2, image_width / 2]
             video_pos, video_list, modes,displays,image_paths = load_data(vid_frame, selected_id)
             video_data = {"video_list": video_list, "selected_id": selected_id,"image_paths": image_paths}
-            video_components = [html.Video(id=f"video-{i}", controls=True, style={'width': '50%', 'display': 'none'}, preload=None) for
-                                i in range(len(video_list))]
-            image_components = [html.Img(id=f"image-{i}", style={'width': '50%', 'display': 'none'}) for
-                                i in range(len(video_list))]
+            video_components = [html.Video(id=f"video", controls=True, style={'width': '50%', 'display': 'none'}, preload=None)]
+            image_components = [html.Img(id=f"image", style={'width': '50%', 'display': 'none'})]
             childr = [dl.Map(children=map_children,
                        id='map',
                        style={'width': '50%', 'height': '50vh', 'display': 'flex'},
@@ -186,8 +184,10 @@ def generate_dash_leaflet_app(vid_frame):
         return display_data
 
     @app.callback(
-        [Output(f"video-{i}", 'style') for i in range(len(vid_frame['unique_id'].unique()))] +
-        [Output(f"image-{i}", 'style') for i in range(len(vid_frame['unique_id'].unique()))],
+        [Output(f"video", 'style')] +
+        [Output(f"image", 'style')]+
+        [Output(f"video", 'src')] +
+        [Output(f"image", 'src')],
         [Input(f"marker-{i}", 'n_clicks') for i in range(len(vid_frame['unique_id'].unique()))],
         [State("video-data-store", 'data')]
     )
@@ -204,38 +204,36 @@ def generate_dash_leaflet_app(vid_frame):
 
         clicked_marker_id = ctx.triggered[0]['prop_id'].split('.')[0]
         marker_index = int(clicked_marker_id.split('-')[1])
-        styles = [{'display': 'flex' if i == marker_index else 'none', 'width': '100%'} for i in range(len(video_list))]
+        styles = [{'display': 'flex', 'width': '100%'}]
 
         # Setting src for the video that was clicked.
         sources = [
-            f"/videos/{data['selected_id']}/{os.path.basename(video_list[marker_index])}" if i == marker_index else None
-            for i in range(len(video_list))]
+            f"/videos/{data['selected_id']}/{os.path.basename(video_list[marker_index])}"]
         image_sources = [
-            f"/images_edges/{data['selected_id']}/{os.path.basename(video_list[marker_index])}" if i == marker_index else None
-            for i in range(len(video_list))]
-        return styles + styles
+            f"/images_edges/{data['selected_id']}/{os.path.basename(video_list[marker_index])}"]
+        return styles + styles+sources+image_sources
 
-    @app.callback(
-        [Output(f"video-{i}", 'src') for i in range(len(vid_frame['unique_id'].unique()))] +
-        [Output(f"image-{i}", 'src') for i in range(len(vid_frame['unique_id'].unique()))],
-        [Input("load_button", "n_clicks")],
-        [State("video-data-store", 'data')],
-        prevent_initial_call = True
-    )
-    def load_video(*args):
-        data = args[-1]
-        if not data or 'video_list' not in data:
-            raise dash.exceptions.PreventUpdate
-        selected_id = data["selected_id"]
-        video_pos, video_list, modes, displays, image_paths = load_data(vid_frame, selected_id)
-        # Setting src for the video that was clicked.
-        sources = [
-            f"/videos/{data['selected_id']}/{os.path.basename(video_list[i])}" if displays[i] else None
-            for i in range(len(video_list))]
-        image_sources = [
-            f"/images_edges/{data['selected_id']}/{os.path.basename(video_list[i])}" if displays[i]  else None
-            for i in range(len(video_list))]
-        return sources + image_sources
+    # @app.callback(
+    #     [Output(f"video-{i}", 'src') for i in range(len(vid_frame['unique_id'].unique()))] +
+    #     [Output(f"image-{i}", 'src') for i in range(len(vid_frame['unique_id'].unique()))],
+    #     [Input("load_button", "n_clicks")],
+    #     [State("video-data-store", 'data')],
+    #     prevent_initial_call = True
+    # )
+    # def load_video(*args):
+    #     data = args[-1]
+    #     if not data or 'video_list' not in data:
+    #         raise dash.exceptions.PreventUpdate
+    #     selected_id = data["selected_id"]
+    #     video_pos, video_list, modes, displays, image_paths = load_data(vid_frame, selected_id)
+    #     # Setting src for the video that was clicked.
+    #     sources = [
+    #         f"/videos/{data['selected_id']}/{os.path.basename(video_list[i])}" if displays[i] else None
+    #         for i in range(len(video_list))]
+    #     image_sources = [
+    #         f"/images_edges/{data['selected_id']}/{os.path.basename(video_list[i])}" if displays[i]  else None
+    #         for i in range(len(video_list))]
+    #     return sources + image_sources
 
     return(app)
 
