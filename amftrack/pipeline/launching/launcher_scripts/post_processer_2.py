@@ -33,6 +33,8 @@ list_f = [
     get_width_average,
     get_has_reached_final_pos,
     get_in_ROI,
+    get_width_tip_edge,
+    get_width_root_edge,
 ]
 # list_f = [local_density,local_density,local_density]
 # list_f = [get_time_since_begin_exp]
@@ -42,7 +44,7 @@ list_args = [{}] * len(list_f)
 # list_args= [[500]]
 overwrite = True
 load_graphs = True
-num_parallel = 32
+num_parallel = 16
 time = "12:00:00"
 for index, row in analysis_folders.iterrows():
     folder = row["folder_analysis"]
