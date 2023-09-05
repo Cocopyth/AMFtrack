@@ -25,7 +25,7 @@ import datetime
 import numpy as np
 import matplotlib.patheffects as pe
 
-logging.basicConfig(stream=sys.stdout, level=logging.debug)
+# logging.basicConfig(stream=sys.stdout, level=logging.debug)
 mpl.rcParams['figure.dpi'] = 200
 
 
