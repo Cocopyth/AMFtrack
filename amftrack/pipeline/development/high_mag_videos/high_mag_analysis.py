@@ -1,6 +1,6 @@
 import copy
 import pandas as pd
-from IPython.display import clear_output
+# from IPython.display import clear_output
 import re
 from amftrack.pipeline.development.high_mag_videos.kymo_class import *
 from amftrack.pipeline.development.high_mag_videos.plot_data import (
@@ -10,20 +10,20 @@ from amftrack.pipeline.development.high_mag_videos.plot_data import (
 import matplotlib.patches as mpatches
 from pathlib import Path, PurePath
 import sys
-# import os
-# import imageio.v3 as imageio
-# import matplotlib.pyplot as plt
-# import cv2
-# from tifffile import imwrite, imread
-# from tqdm import tqdm
-# import matplotlib as mpl
-# from amftrack.util.dbx import upload_folder, download, read_saved_dropbox_state, save_dropbox_state, load_dbx, \
-#     download, get_dropbox_folders_prince, get_dropbox_video_folders, get_dropbox_video_folders_new
-#
-# import logging
-# import datetime
-# import numpy as np
-# import matplotlib.patheffects as pe
+import os
+import imageio.v3 as imageio
+import matplotlib.pyplot as plt
+import cv2
+from tifffile import imwrite, imread
+from tqdm import tqdm
+import matplotlib as mpl
+from amftrack.util.dbx import upload_folder, download, read_saved_dropbox_state, save_dropbox_state, load_dbx, \
+    download, get_dropbox_folders_prince, get_dropbox_video_folders, get_dropbox_video_folders_new
+
+import logging
+import datetime
+import numpy as np
+import matplotlib.patheffects as pe
 #
 # # logging.basicConfig(stream=sys.stdout, level=logging.debug)
 # mpl.rcParams['figure.dpi'] = 200
