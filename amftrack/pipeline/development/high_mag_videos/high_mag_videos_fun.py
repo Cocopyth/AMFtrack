@@ -7,17 +7,17 @@
 #     from_sparse_to_graph,
 #     generate_nx_graph,
 # )
-import scipy
-from amftrack.pipeline.functions.image_processing.node_id import remove_spurs
-from amftrack.pipeline.functions.image_processing.extract_skel import (
-    remove_component,
-    remove_holes,
-)
-import numpy as np
-from amftrack.pipeline.functions.image_processing.extract_width_fun import (
-    generate_pivot_indexes,
-    compute_section_coordinates,
-)
+# import scipy
+# from amftrack.pipeline.functions.image_processing.node_id import remove_spurs
+# from amftrack.pipeline.functions.image_processing.extract_skel import (
+#     remove_component,
+#     remove_holes,
+# )
+# import numpy as np
+# from amftrack.pipeline.functions.image_processing.extract_width_fun import (
+#     generate_pivot_indexes,
+#     compute_section_coordinates,
+# )
 from skimage.measure import profile_line
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
 from skimage.filters import frangi
