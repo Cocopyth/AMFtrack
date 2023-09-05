@@ -26,127 +26,127 @@ import numpy as np
 import matplotlib.patheffects as pe
 #
 # # logging.basicConfig(stream=sys.stdout, level=logging.debug)
-# mpl.rcParams['figure.dpi'] = 200
-#
-#
-# def month_to_num(x: str):
-#     """
-#     Takes a string with the name of a month, and returns that month's corresponding number as a string.
-#     :param x:   String, preferably of a month
-#     :return:    Two-digit string number of that month
-#     """
-#     months = {
-#         'jan': '01',
-#         'feb': '02',
-#         'mar': '03',
-#         'apr': '04',
-#         'may': '05',
-#         'jun': '06',
-#         'jul': '07',
-#         'aug': '08',
-#         'sep': '09',
-#         'oct': '10',
-#         'nov': '11',
-#         'dec': '12'
-#     }
-#     a = x.strip()[:3].lower()
-#     try:
-#         ez = months[a]
-#         return ez
-#     except:
-#         raise ValueError('Not a month')
-#
-#
-# def index_videos_dropbox_new(analysis_folder, videos_folder, dropbox_folder,
-#                              REDO_SCROUNGING=False, CREATE_VIDEO_HIERARCHY=True,
-#                              date_start: int = None, date_end: int = None, plate_names: np.array = None):
-#     """
-#     Goes through the specified dropbox folder, and collects and organises all the relevant video data for all videos
-#     stored in that dropbox. Works recursively. On the local machine will also create a folder structure in the
-#     analysis and videos folder, populating the analysis folder with the video info. Returns a merged pandas dataframe
-#     with all video information.
-#     :param analysis_folder:         Local address where video info, and later analysis will be stored
-#     :param videos_folder:           Local address where raw video data will be stored later
-#     :param dropbox_folder:          Folder address on the dropbox with all videos you want to process
-#     :param REDO_SCROUNGING:         Boolean whether to redo the dropbox searching. Dropbox will be searched anyway if cache .json cannot be found
-#     :param CREATE_VIDEO_HIERARCHY:  Boolean whether to create the video hierarchy. Only set to False if you don't plan on downloading the raw data
-#     :return:                        Pandas dataframe with all video information
-#     """
-#
-#     # Using PathLib allows for more OS-ambiguous functionality
-#
-#     analysis_folder = Path(analysis_folder)
-#     dropbox_folder = Path(dropbox_folder)
-#     videos_folder = Path(videos_folder)
-#
-#     analysis_json = analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).joinpath("all_folders_drop.json")
-#     excel_json = analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).joinpath("excel_drop.json")
-#
-#     # First analysis_json and excel_json will be sought for, these serve as caches for the dropbox data.
-#     # If they can't be found, the information will be assembled from the indexing files on the Dropbox.
-#     #
-#     # if os.path.exists(analysis_json):
-#     #     all_folders_drop = pd.read_json(analysis_json)
-#     if os.path.exists(excel_json):
-#         excel_drop = pd.read_json(excel_json, typ='series')
-#     if not os.path.exists(analysis_json) or REDO_SCROUNGING:
-#         print("Redoing the dropbox scrounging, hold on tight.")
-#         excel_drop, txt_drop = get_dropbox_video_folders_new(dropbox_folder, date_start=date_start, date_end=date_end,
-#                                                              plate_names=plate_names)
-#         if not analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).exists():
-#             analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).mkdir(parents=True)
-#
-#         #         clear_output(wait=False)
-#         print("Scrounging complete, downloading files...")
-#
-#         excel_addresses = np.array(
-#             [re.search("^.*Plate.*\/.*Plate\d{2,6}\..*$", entry, re.IGNORECASE) for entry in excel_drop])
-#         print(excel_addresses)
-#         if len(excel_addresses) > 0:
-#             excel_addresses = [i for i in excel_addresses if i is not None]
-#             print(excel_addresses)
-#             excel_addresses = [address.group(0) for address in excel_addresses]
-#         excel_drop = np.concatenate([excel_addresses, txt_drop])
-#         pd.Series(excel_drop).to_json(excel_json)
-#     info_addresses = []
-#
-#     # Once addresses have been found, all relevant index files will be downloaded to their respective position
-#
-#     for address in excel_drop:
-#         address_local = Path(address).relative_to('/DATA/')
-#         if REDO_SCROUNGING:
-#             if not (analysis_folder / address_local.parent).exists():
-#                 (analysis_folder / address_local.parent).mkdir(parents=True)
-#             if not (analysis_folder / address_local).exists():
-#                 download(address, (analysis_folder / address_local))
-#         info_addresses.append(analysis_folder / address_local)
-#     clear_output(wait=False)
-#     print("All files downloaded! Merging files...")
-#
-#     # The downloaded information is then read and merged into one dataframe containing all relevant information.
-#
-#     merge_frame = read_video_data_new(info_addresses, analysis_folder)
-#     merge_frame = merge_frame.rename(columns={'tot_path': 'folder'})  # This is for the dropbox download functions
-#     merge_frame = merge_frame.sort_values('unique_id')
-#     merge_frame = merge_frame.reset_index(drop=True)
-#     merge_frame = merge_frame.loc[:, ~merge_frame.columns.duplicated()].copy()
-#     merge_frame['analysis_folder'] = [np.nan for i in range(len(merge_frame))]
-#     merge_frame['videos_folder'] = [np.nan for i in range(len(merge_frame))]
-#
-#     for index, row in merge_frame.iterrows():
-#         target_anals_file = analysis_folder / row['folder'][:-4]
-#         target_video_file = videos_folder / row['folder']
-#
-#         row.loc['analysis_folder'] = target_anals_file.as_posix()
-#         row.loc['videos_folder'] = target_video_file.as_posix()
-#
-#         if not target_video_file.exists() and CREATE_VIDEO_HIERARCHY:
-#             target_video_file.mkdir(parents=True)
-#         if not target_anals_file.exists() and CREATE_VIDEO_HIERARCHY:
-#             target_anals_file.mkdir(parents=True)
-#         row.to_json(target_anals_file / "video_data.json", orient="index")
-#
-#     return merge_frame
+mpl.rcParams['figure.dpi'] = 200
+
+
+def month_to_num(x: str):
+    """
+    Takes a string with the name of a month, and returns that month's corresponding number as a string.
+    :param x:   String, preferably of a month
+    :return:    Two-digit string number of that month
+    """
+    months = {
+        'jan': '01',
+        'feb': '02',
+        'mar': '03',
+        'apr': '04',
+        'may': '05',
+        'jun': '06',
+        'jul': '07',
+        'aug': '08',
+        'sep': '09',
+        'oct': '10',
+        'nov': '11',
+        'dec': '12'
+    }
+    a = x.strip()[:3].lower()
+    try:
+        ez = months[a]
+        return ez
+    except:
+        raise ValueError('Not a month')
+
+
+def index_videos_dropbox_new(analysis_folder, videos_folder, dropbox_folder,
+                             REDO_SCROUNGING=False, CREATE_VIDEO_HIERARCHY=True,
+                             date_start: int = None, date_end: int = None, plate_names: np.array = None):
+    """
+    Goes through the specified dropbox folder, and collects and organises all the relevant video data for all videos
+    stored in that dropbox. Works recursively. On the local machine will also create a folder structure in the
+    analysis and videos folder, populating the analysis folder with the video info. Returns a merged pandas dataframe
+    with all video information.
+    :param analysis_folder:         Local address where video info, and later analysis will be stored
+    :param videos_folder:           Local address where raw video data will be stored later
+    :param dropbox_folder:          Folder address on the dropbox with all videos you want to process
+    :param REDO_SCROUNGING:         Boolean whether to redo the dropbox searching. Dropbox will be searched anyway if cache .json cannot be found
+    :param CREATE_VIDEO_HIERARCHY:  Boolean whether to create the video hierarchy. Only set to False if you don't plan on downloading the raw data
+    :return:                        Pandas dataframe with all video information
+    """
+
+    # Using PathLib allows for more OS-ambiguous functionality
+
+    analysis_folder = Path(analysis_folder)
+    dropbox_folder = Path(dropbox_folder)
+    videos_folder = Path(videos_folder)
+
+    analysis_json = analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).joinpath("all_folders_drop.json")
+    excel_json = analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).joinpath("excel_drop.json")
+
+    # First analysis_json and excel_json will be sought for, these serve as caches for the dropbox data.
+    # If they can't be found, the information will be assembled from the indexing files on the Dropbox.
+    #
+    # if os.path.exists(analysis_json):
+    #     all_folders_drop = pd.read_json(analysis_json)
+    if os.path.exists(excel_json):
+        excel_drop = pd.read_json(excel_json, typ='series')
+    if not os.path.exists(analysis_json) or REDO_SCROUNGING:
+        print("Redoing the dropbox scrounging, hold on tight.")
+        excel_drop, txt_drop = get_dropbox_video_folders_new(dropbox_folder, date_start=date_start, date_end=date_end,
+                                                             plate_names=plate_names)
+        if not analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).exists():
+            analysis_folder.joinpath(dropbox_folder.relative_to('/DATA/')).mkdir(parents=True)
+
+        #         clear_output(wait=False)
+        print("Scrounging complete, downloading files...")
+
+        excel_addresses = np.array(
+            [re.search("^.*Plate.*\/.*Plate\d{2,6}\..*$", entry, re.IGNORECASE) for entry in excel_drop])
+        print(excel_addresses)
+        if len(excel_addresses) > 0:
+            excel_addresses = [i for i in excel_addresses if i is not None]
+            print(excel_addresses)
+            excel_addresses = [address.group(0) for address in excel_addresses]
+        excel_drop = np.concatenate([excel_addresses, txt_drop])
+        pd.Series(excel_drop).to_json(excel_json)
+    info_addresses = []
+
+    # Once addresses have been found, all relevant index files will be downloaded to their respective position
+
+    for address in excel_drop:
+        address_local = Path(address).relative_to('/DATA/')
+        if REDO_SCROUNGING:
+            if not (analysis_folder / address_local.parent).exists():
+                (analysis_folder / address_local.parent).mkdir(parents=True)
+            if not (analysis_folder / address_local).exists():
+                download(address, (analysis_folder / address_local))
+        info_addresses.append(analysis_folder / address_local)
+    clear_output(wait=False)
+    print("All files downloaded! Merging files...")
+
+    # The downloaded information is then read and merged into one dataframe containing all relevant information.
+
+    merge_frame = read_video_data_new(info_addresses, analysis_folder)
+    merge_frame = merge_frame.rename(columns={'tot_path': 'folder'})  # This is for the dropbox download functions
+    merge_frame = merge_frame.sort_values('unique_id')
+    merge_frame = merge_frame.reset_index(drop=True)
+    merge_frame = merge_frame.loc[:, ~merge_frame.columns.duplicated()].copy()
+    merge_frame['analysis_folder'] = [np.nan for i in range(len(merge_frame))]
+    merge_frame['videos_folder'] = [np.nan for i in range(len(merge_frame))]
+
+    for index, row in merge_frame.iterrows():
+        target_anals_file = analysis_folder / row['folder'][:-4]
+        target_video_file = videos_folder / row['folder']
+
+        row.loc['analysis_folder'] = target_anals_file.as_posix()
+        row.loc['videos_folder'] = target_video_file.as_posix()
+
+        if not target_video_file.exists() and CREATE_VIDEO_HIERARCHY:
+            target_video_file.mkdir(parents=True)
+        if not target_anals_file.exists() and CREATE_VIDEO_HIERARCHY:
+            target_anals_file.mkdir(parents=True)
+        row.to_json(target_anals_file / "video_data.json", orient="index")
+
+    return merge_frame
 #
 #
 # def read_video_data_new(address_array, analysis_folder):
