@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output, State
 import numpy as np
 import pandas as pd
 from dash import html, dcc
+import dash_bootstrap_components as dbc
 from tqdm import tqdm
 
 import glob
@@ -103,7 +104,7 @@ def generate_dash_leaflet_app(vid_frame):
 
     @app.server.route('/images_edges/<plate_id>/<video_name>')
     def serve_image_edge(plate_id, video_name):
-        return send_file(os.path.join(analysis_folder, plate_id,video_name.split('_')[-2] ,"Img" ,"Detected edges.png"), mimetype='image/png')
+        return send_file(os.path.join(analysis_folder, plate_id,video_name.split('_')[-2] ,"Img" ,"speed_arrows.png"), mimetype='image/png')
 
     app.layout = html.Div([
         dcc.Store(id="display-state", data={"show_map": False}),
@@ -145,24 +146,36 @@ def generate_dash_leaflet_app(vid_frame):
             video_pos, video_list, modes,displays,image_paths = load_data(vid_frame, selected_id)
             video_data = {"video_list": video_list, "selected_id": selected_id,"image_paths": image_paths}
             video_components = [html.Video(id=f"video", controls=True, style={'width': '50%', 'display': 'none'}, preload=None)]
-            image_components = [html.Img(id=f"image", style={'width': '50%', 'display': 'none'})]
-            childr = [dl.Map(children=map_children,
-                       id='map',
-                       style={'width': '50%', 'height': '50vh', 'display': 'flex'},
-                       crs="Simple",
-                       zoom=-4,
-                       minZoom=-4,
-                       center=image_center),
-                html.Div(id='video-container', children=video_components,style={'width': '50%', 'height': '50vh', 'display': 'flex'}),
+            image_components = [html.Img(id=f"image", style={'max-width': '100%', 'height': 'auto', 'display': 'none'})]
+            childr = [
+                html.Div([
+                    html.Div([
+                        dl.Map(children=map_children,
+                               id='map',
+                               style={'width': '100%', 'height': '100%'},
+                               crs="Simple",
+                               zoom=-4,
+                               minZoom=-4,
+                               center=image_center),
+                    ], style={'width': '50%', 'height': '100%'}),
+
+                    html.Div(id='video-container', children=video_components,
+                             style={'width': '50%', 'height': '100%'}),
+                ], style={'display': 'flex', 'flex-direction': 'row', 'height': '60vh', 'width': '100%'}),
+
                 html.Div(id='image-container', children=image_components,
-                               style={'width': '50%', 'height': '50vh', 'display': 'flex'}),
+                         style={'height': '40vh', 'display': 'flex', 'align-items': 'flex-start', 'justify-content': 'flex-start'}),
+
                 html.Button("Go Back", id="select_button", style={'display': 'block'}),
-                html.Button("Load videos", id="load_button", style={'display': 'block'}),
+
                 dcc.Dropdown(id='unique_id_dropdown',
-                                   options=[{'label': uid, 'value': uid} for uid in vid_frame['plate_id'].unique()], style={'display': 'none'}),
+                             options=[{'label': uid, 'value': uid} for uid in vid_frame['plate_id'].unique()],
+                             style={'display': 'none'}),
+
                 html.Div(not_shown, style={'display': 'none'})
-                ]
-            childr = html.Div(childr,id="map_screen", style={'display': 'flex'})
+            ]
+
+            childr = html.Div(childr, id="map_screen", style={'display': 'flex', 'flex-direction': 'column'})
             return video_data, childr
         else:
             childr = html.Div([
@@ -170,7 +183,7 @@ def generate_dash_leaflet_app(vid_frame):
             dcc.Dropdown(id='unique_id_dropdown',
                          options=[{'label': uid, 'value': uid} for uid in vid_frame['plate_id'].unique()]),
             html.Button("Select", id="select_button"),
-        ], id="content-div")
+        ], id="content-div", style={'display': 'flex', 'flex-direction': 'column'})
             return {"video_list": [], "selected_id": None,"image_paths":[]}, childr
     @app.callback(
         Output("display-state", "data"),
@@ -204,36 +217,15 @@ def generate_dash_leaflet_app(vid_frame):
 
         clicked_marker_id = ctx.triggered[0]['prop_id'].split('.')[0]
         marker_index = int(clicked_marker_id.split('-')[1])
-        styles = [{'display': 'flex', 'width': '100%'}]
+        styles = [{'display': 'flex', 'height': '60vh', 'width': 'auto'}]
+        styles2 = [{'display': 'flex', 'height': '40vh', 'width': 'auto'}]
 
         # Setting src for the video that was clicked.
         sources = [
             f"/videos/{data['selected_id']}/{os.path.basename(video_list[marker_index])}"]
         image_sources = [
             f"/images_edges/{data['selected_id']}/{os.path.basename(video_list[marker_index])}"]
-        return styles + styles+sources+image_sources
-
-    # @app.callback(
-    #     [Output(f"video-{i}", 'src') for i in range(len(vid_frame['unique_id'].unique()))] +
-    #     [Output(f"image-{i}", 'src') for i in range(len(vid_frame['unique_id'].unique()))],
-    #     [Input("load_button", "n_clicks")],
-    #     [State("video-data-store", 'data')],
-    #     prevent_initial_call = True
-    # )
-    # def load_video(*args):
-    #     data = args[-1]
-    #     if not data or 'video_list' not in data:
-    #         raise dash.exceptions.PreventUpdate
-    #     selected_id = data["selected_id"]
-    #     video_pos, video_list, modes, displays, image_paths = load_data(vid_frame, selected_id)
-    #     # Setting src for the video that was clicked.
-    #     sources = [
-    #         f"/videos/{data['selected_id']}/{os.path.basename(video_list[i])}" if displays[i] else None
-    #         for i in range(len(video_list))]
-    #     image_sources = [
-    #         f"/images_edges/{data['selected_id']}/{os.path.basename(video_list[i])}" if displays[i]  else None
-    #         for i in range(len(video_list))]
-    #     return sources + image_sources
+        return styles + styles2+sources+image_sources
 
     return(app)
 

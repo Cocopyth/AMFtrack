@@ -236,28 +236,28 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
         fig.savefig(f"{edge.edge_path}{os.sep}{edge.edge_name}_kymos.png")
         plt.close(fig)
         
-        peaks, _ = edge.fourier_peak_data
-        
-        fig, ax = plt.subplot_mosaic([['fft', 'polarfft'], ['angle_plot', 'angle_plot']], figsize=(10, 6))
-        
-        ax['fft'].imshow(edge.ftabsimage, aspect='auto')
-        ax['fft'].set_xlabel('u')
-        ax['fft'].set_ylabel('v')
-        ax['fft'].set_title("Fourier Transform")
-
-        ax['polarfft'].imshow(edge.ftpolarimage, aspect='auto', extent=[0, 1, 0, np.pi])
-        ax['polarfft'].set_xlabel("radius")
-        ax['polarfft'].set_ylabel("orientation (rad)")
-        ax['polarfft'].set_title("Polar representation")
-
-        ax['angle_plot'].plot(edge.angle_plot[0], edge.angle_plot[1])
-        ax['angle_plot'].set_xlabel("Velocity $(\mu m / s)$")
-        ax['angle_plot'].set_ylabel("Prominence")
-        ax['angle_plot'].plot(angle_plot[0][peaks], angle_plot[1][peaks], "xr")
-        ax['angle_plot'].set_title(f"Angle intensity with found peaks {[round(speed, 4) for speed in speeds]} $\mu m / s$")
-        fig.suptitle(f"{edge.edge_name} Fourier analysis")
-        fig.tight_layout()
-        fig.savefig(f"{edge.edge_path}{os.sep}{edge.edge_name}_fourier.png")
+        # peaks, _ = edge.fourier_peak_data
+        #
+        # fig, ax = plt.subplot_mosaic([['fft', 'polarfft'], ['angle_plot', 'angle_plot']], figsize=(10, 6))
+        #
+        # ax['fft'].imshow(edge.ftabsimage, aspect='auto')
+        # ax['fft'].set_xlabel('u')
+        # ax['fft'].set_ylabel('v')
+        # ax['fft'].set_title("Fourier Transform")
+        #
+        # ax['polarfft'].imshow(edge.ftpolarimage, aspect='auto', extent=[0, 1, 0, np.pi])
+        # ax['polarfft'].set_xlabel("radius")
+        # ax['polarfft'].set_ylabel("orientation (rad)")
+        # ax['polarfft'].set_title("Polar representation")
+        #
+        # ax['angle_plot'].plot(edge.angle_plot[0], edge.angle_plot[1])
+        # ax['angle_plot'].set_xlabel("Velocity $(\mu m / s)$")
+        # ax['angle_plot'].set_ylabel("Prominence")
+        # ax['angle_plot'].plot(angle_plot[0][peaks], angle_plot[1][peaks], "xr")
+        # ax['angle_plot'].set_title(f"Angle intensity with found peaks {[round(speed, 4) for speed in speeds]} $\mu m / s$")
+        # fig.suptitle(f"{edge.edge_name} Fourier analysis")
+        # fig.tight_layout()
+        # fig.savefig(f"{edge.edge_path}{os.sep}{edge.edge_name}_fourier.png")
 
 
 
