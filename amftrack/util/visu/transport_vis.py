@@ -104,7 +104,10 @@ def generate_dash_leaflet_app(vid_frame):
 
     @app.server.route('/images_edges/<plate_id>/<video_name>')
     def serve_image_edge(plate_id, video_name):
-        return send_file(os.path.join(analysis_folder, plate_id,video_name.split('_')[-2] ,"Img" ,"speed_arrows.png"), mimetype='image/png')
+        return send_file(os.path.join(analysis_folder, plate_id,video_name.split('_')[-2] ,"Img" ,"speed.png"), mimetype='image/png')
+    @app.server.route('/images_edges2/<plate_id>/<video_name>')
+    def serve_image_edge_flux(plate_id, video_name):
+        return send_file(os.path.join(analysis_folder, plate_id,video_name.split('_')[-2] ,"Img" ,"flux.png"), mimetype='image/png')
 
     app.layout = html.Div([
         dcc.Store(id="display-state", data={"show_map": False}),
@@ -147,6 +150,8 @@ def generate_dash_leaflet_app(vid_frame):
             video_data = {"video_list": video_list, "selected_id": selected_id,"image_paths": image_paths}
             video_components = [html.Video(id=f"video", controls=True, style={'width': '50%', 'display': 'none'}, preload=None)]
             image_components = [html.Img(id=f"image", style={'max-width': '100%', 'height': 'auto', 'display': 'none'})]
+            image_components += [html.Img(id=f"image2", style={'max-width': '100%', 'height': 'auto', 'display': 'none'})]
+
             childr = [
                 html.Div([
                     html.Div([
@@ -199,8 +204,11 @@ def generate_dash_leaflet_app(vid_frame):
     @app.callback(
         [Output(f"video", 'style')] +
         [Output(f"image", 'style')]+
+        [Output(f"image2", 'style')] +
+
         [Output(f"video", 'src')] +
-        [Output(f"image", 'src')],
+        [Output(f"image", 'src')]+
+        [Output(f"image2", 'src')],
         [Input(f"marker-{i}", 'n_clicks') for i in range(len(vid_frame['unique_id'].unique()))],
         [State("video-data-store", 'data')]
     )
@@ -225,7 +233,9 @@ def generate_dash_leaflet_app(vid_frame):
             f"/videos/{data['selected_id']}/{os.path.basename(video_list[marker_index])}"]
         image_sources = [
             f"/images_edges/{data['selected_id']}/{os.path.basename(video_list[marker_index])}"]
-        return styles + styles2+sources+image_sources
+        image_sources2 = [
+            f"/images_edges2/{data['selected_id']}/{os.path.basename(video_list[marker_index])}"]
+        return styles + styles2+styles2+sources+image_sources+image_sources2
 
     return(app)
 
