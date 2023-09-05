@@ -1,11 +1,10 @@
-open3d
 scipy
 pandas
 networkx
 matplotlib
 pymatreader
 numpy
-opencv-contrib-python #TODO(FK): change to headless?
+python-opencv
 # https://stackoverflow.com/questions/57427233/module-cv2-cv2-has-no-attribute-ximgproc
 imageio
 jupyterlab
