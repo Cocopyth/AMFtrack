@@ -18,7 +18,7 @@ from tifffile import imwrite, imread
 from tqdm import tqdm
 import matplotlib as mpl
 from amftrack.util.dbx import upload_folder, download, read_saved_dropbox_state, save_dropbox_state, load_dbx, \
-    download, get_dropbox_folders, get_dropbox_video_folders, get_dropbox_video_folders_new
+    download, get_dropbox_folders_prince, get_dropbox_video_folders, get_dropbox_video_folders_new
 
 import logging
 import datetime
@@ -664,8 +664,8 @@ class VideoDataset(object):
         self.img_dim = [[2048, 1500], [4096, 3000]][self.dataset['binning'] == 1]
         self.space_res = 2 * 1.725 / self.dataset['magnification'] * self.dataset['binning']
         self.time_res = 1 / self.dataset['fps']
-        self.vid_analysis_folder = Path(f"{analysis_folder}{self.dataset['folder']}").parent
-        edge_adr = Path(f"{analysis_folder}{self.dataset['folder']}").parent / "edges_data.csv"
+        self.vid_analysis_folder = Path(f"{analysis_folder}{self.dataset['folder']}")
+        edge_adr = Path(f"{analysis_folder}{self.dataset['folder']}") / "edges_data.csv"
         self.imshow_extent = [0, self.space_res * self.img_dim[0],
                               self.space_res * self.img_dim[1], 0]
         if edge_adr.exists():
@@ -674,7 +674,7 @@ class VideoDataset(object):
                               in self.edges_frame.iterrows()]
             self.dataset['nr_of_edges'] = len(self.edges_frame)
         else:
-            print(f"Couldn't find the edges data file. Check analysis for {self.dataset['unique_id']}")
+            print(f"Couldn't find the edges data file at {edge_adr}. Check analysis for {self.dataset['unique_id']}")
             self.dataset['nr_of_edges'] = 0
             self.edge_objs = []
 
@@ -719,6 +719,7 @@ class VideoDataset(object):
 
     def get_first_frame(self):
         vid_address = self.vid_analysis_folder / f"{self.dataset['unique_id']}_video.mp4"
+        print(vid_address)
         vidcap = cv2.VideoCapture(str(vid_address))
         success, image = vidcap.read()
         if success:
@@ -871,7 +872,8 @@ class VideoDataset(object):
             ax.imshow(vid_frame, extent=self.imshow_extent)
             fig.tight_layout()
         if save_im:
-            fig.savefig(self.vid_analysis_folder.parent / "single_imgs" / f"{self.dataset['unique_id']}_speed_arrows")
+            # print(Path(f"{edge_obj.mean_data['analysis_folder']}{edge_obj.mean_data['folder']}")/ "speed_arrows.png")
+            fig.savefig(Path(f"{edge_obj.mean_data['analysis_folder']}{edge_obj.mean_data['folder']}")/ "speed_arrows.png")
 
 
 class EdgeDataset(object):
@@ -882,11 +884,11 @@ class EdgeDataset(object):
         self.mean_data = dataframe
         self.edge_name = self.mean_data['edge_name']
         edge_dat_adr = Path(
-            f"{analysis_folder}{self.mean_data['folder']}").parent / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_data.csv"
+            f"{analysis_folder}{self.mean_data['folder']}") / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_data.csv"
         self.time_data = pd.read_csv(edge_dat_adr)
         self.space_res = 2 * 1.725 / self.mean_data['magnification'] * self.mean_data['binning']
         self.time_res = 1 / self.mean_data['fps']
-        self.img_dim = imread(Path(self.mean_data['analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff")[0].shape
+        self.img_dim = imread(Path(f"{analysis_folder}{self.mean_data['folder']}") / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff")[0].shape
         self.imshow_extent = [0, self.space_res * self.img_dim[1],
                               self.time_res * self.img_dim[0], 0]
 
@@ -918,7 +920,7 @@ class EdgeDataset(object):
         fig.tight_layout()
 
     def return_speed_medians(self, spd_tiff_lowbound=0.5):
-        spd_array_path = Path(self.mean_data['analysis_folder']) / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff"
+        spd_array_path = Path(f"{self.mean_data['analysis_folder']}{self.mean_data['folder']}") / f"edge {self.mean_data['edge_name']}" / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff"
         spd_tiff = imread(spd_array_path)
         spd_tiff[0] = np.where(spd_tiff[0] < -spd_tiff_lowbound, spd_tiff[0], np.nan)
         spd_tiff[1] = np.where(spd_tiff[1] > spd_tiff_lowbound, spd_tiff[1], np.nan)
