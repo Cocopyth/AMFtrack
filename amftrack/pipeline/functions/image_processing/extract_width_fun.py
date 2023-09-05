@@ -27,9 +27,10 @@ a = 2.3196552
 # QUICKFIX: temporary
 TARGET_LENGTH = 120
 # MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "default_model"))
-MODEL = keras.models.load_model(
-    os.path.join(path_code[:-1], "ml", "models", "default_CNN_model.h5")
-)
+# MODEL = keras.models.load_model(
+#     os.path.join(path_code[:-1], "ml", "models", "default_CNN_model.h5")
+# )
+MODEL = ""
 # TARGET_LENGTH = 80
 # MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "CNN_combine_HB_crop_80_best_model"))
 
