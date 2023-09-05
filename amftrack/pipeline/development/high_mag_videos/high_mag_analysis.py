@@ -728,7 +728,7 @@ class VideoDataset(object):
             return image  # save frame as JPEG file
 
     def plot_speed_arrows(self, ax=None, vid_pos=None, video_txt_size=10, plot_text=True, plot_flux=False,
-                          plot_both=False, plot_mean=False, significance_thresh=0.2, save_im: bool = False):
+                          plot_both=False, plot_mean=False, significance_thresh=0.2, save_im: str = ""):
 
         if ax is None:
             fig, ax = plt.subplots()
@@ -873,7 +873,7 @@ class VideoDataset(object):
             fig.tight_layout()
         if save_im:
             # print(Path(f"{edge_obj.mean_data['analysis_folder']}{edge_obj.mean_data['folder']}")/ "speed_arrows.png")
-            fig.savefig(Path(f"{edge_obj.mean_data['analysis_folder']}{edge_obj.mean_data['folder']}")/ "speed_arrows.png")
+            fig.savefig(Path(f"{edge_obj.mean_data['analysis_folder']}{edge_obj.mean_data['folder']}")/ f"{save_im}.png")
 
 
 class EdgeDataset(object):
