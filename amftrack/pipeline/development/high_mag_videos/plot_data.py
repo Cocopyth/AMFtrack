@@ -34,7 +34,7 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile=99.9):
     data_edge = pd.DataFrame(data=edge_table)
 
     for edge in edge_objs:
-        space_res = edge.video_analysis.space_pixel_size
+        space_res = edge.space_pixel_size
         # time_res = edge.video_analysis.time_pixel_size
         # speed_max = np.nanpercentile(edge.speeds_tot.flatten(), 0.1)
         # flux_max = np.nanpercentile(edge.flux_tot.flatten(), 1)
@@ -56,7 +56,10 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile=99.9):
         vel_adj = np.where(np.isinf(np.divide(spd_tiff[2], kymo_tiff[1])), np.nan, np.divide(spd_tiff[2], kymo_tiff[1]))
         vel_adj = np.where(abs(vel_adj) > 2 * speedmax, np.nan, vel_adj)
         vel_adj_mean = np.nanmean(vel_adj, axis=1)
-        widths = edge.get_widths(img_frame=40, save_im=True, target_length=200)
+        if hasattr(edge, 'video_analysis'):
+            widths = edge.get_widths(img_frame=40, save_im=True, target_length=200)
+            straight_len = np.linalg.norm((edge.segments[0][0] + edge.segments[0][1]) / 2 - (
+                    edge.segments[-1][0] + edge.segments[-1][1]) / 2) * space_res
 
         data_table = {'times': edge.times[0],
                       'speed_right_mean': np.nanmean(edge.speeds_tot[0][1], axis=1),
@@ -74,13 +77,14 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile=99.9):
                       }
         data_out = pd.DataFrame(data=data_table)
         data_out.to_csv(f"{edge.edge_path}/{edge.edge_name}_data.csv")
+        
+        data_fourier = {'speed_range' : edge.angle_plot[0],
+                        'vel_prominence' : edge.angle_plot[1]}
+        data_fourier = pd.DataFrame(data=data_fourier)
+        data_fourier.to_csv(f"{edge.edge_path}/{edge.edge_name}_fourier_data.csv")
 
-        straight_len = np.linalg.norm((edge.segments[0][0] + edge.segments[0][1]) / 2 - (
-                edge.segments[-1][0] + edge.segments[-1][1]) / 2) * space_res
         new_row = pd.DataFrame([{'edge_name': f'{edge.edge_name}',
                                  'edge_length': space_res * edge.kymos[0].shape[1],
-                                 'straight_length': straight_len,
-                                 'edge_width': np.mean(widths),
                                  'speed_max': np.nanpercentile(edge.speeds_tot[0][1], 97),
                                  'speed_min': np.nanpercentile(edge.speeds_tot[0][0], 3),
                                  'speed_left': np.nanmean(np.nanmean(edge.speeds_tot[0][0], axis=1)),
@@ -99,11 +103,14 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile=99.9):
                                          edge.flux_tot[0])),
                                  'coverage_tot': np.mean(
                                      1 - np.count_nonzero(np.isnan(edge.flux_tot), axis=1) / len(edge.flux_tot[0])),
-                                 'edge_xpos_1': edge.video_analysis.pos[edge.edge_name[0]][0],
-                                 'edge_ypos_1': edge.video_analysis.pos[edge.edge_name[0]][1],
-                                 'edge_xpos_2': edge.video_analysis.pos[edge.edge_name[1]][0],
-                                 'edge_ypos_2': edge.video_analysis.pos[edge.edge_name[1]][1]
                                  }])
+        if hasattr(edge, 'video_analysis'):
+            new_row['edge_width']       = np.mean(widths)
+            new_row['straight_length']  = straight_len
+            new_row['edge_xpos_1']      = edge.video_analysis.pos[edge.edge_name[0]][0]
+            new_row['edge_ypos_1']      = edge.video_analysis.pos[edge.edge_name[0]][1]
+            new_row['edge_xpos_2']      = edge.video_analysis.pos[edge.edge_name[1]][0]
+            new_row['edge_ypos_2']      = edge.video_analysis.pos[edge.edge_name[1]][1]
         data_edge = pd.concat([data_edge, new_row])
 
     data_edge.to_csv(f"{img_address}/edges_data.csv")
@@ -111,8 +118,8 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile=99.9):
 
 def plot_summary(edge_objs, spd_max_percentile=99.5):
     for edge in edge_objs:
-        space_res = edge.video_analysis.space_pixel_size
-        time_res = edge.video_analysis.time_pixel_size
+        space_res = edge.space_pixel_size
+        time_res = edge.time_pixel_size
         # speed_max = np.nanpercentile(edge.speeds_tot.flatten(), 0.1)
         # flux_max = np.nanpercentile(edge.flux_tot.flatten(), 1)
 
@@ -228,6 +235,29 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
         #         fig.tight_layout()
         fig.savefig(f"{edge.edge_path}{os.sep}{edge.edge_name}_kymos.png")
         plt.close(fig)
+        
+        # peaks, _ = edge.fourier_peak_data
+        #
+        # fig, ax = plt.subplot_mosaic([['fft', 'polarfft'], ['angle_plot', 'angle_plot']], figsize=(10, 6))
+        #
+        # ax['fft'].imshow(edge.ftabsimage, aspect='auto')
+        # ax['fft'].set_xlabel('u')
+        # ax['fft'].set_ylabel('v')
+        # ax['fft'].set_title("Fourier Transform")
+        #
+        # ax['polarfft'].imshow(edge.ftpolarimage, aspect='auto', extent=[0, 1, 0, np.pi])
+        # ax['polarfft'].set_xlabel("radius")
+        # ax['polarfft'].set_ylabel("orientation (rad)")
+        # ax['polarfft'].set_title("Polar representation")
+        #
+        # ax['angle_plot'].plot(edge.angle_plot[0], edge.angle_plot[1])
+        # ax['angle_plot'].set_xlabel("Velocity $(\mu m / s)$")
+        # ax['angle_plot'].set_ylabel("Prominence")
+        # ax['angle_plot'].plot(angle_plot[0][peaks], angle_plot[1][peaks], "xr")
+        # ax['angle_plot'].set_title(f"Angle intensity with found peaks {[round(speed, 4) for speed in speeds]} $\mu m / s$")
+        # fig.suptitle(f"{edge.edge_name} Fourier analysis")
+        # fig.tight_layout()
+        # fig.savefig(f"{edge.edge_path}{os.sep}{edge.edge_name}_fourier.png")
 
 
 
