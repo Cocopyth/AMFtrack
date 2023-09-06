@@ -95,7 +95,7 @@ def get_tot_surface_area_study(exp, t, args=None):
             for edge in edges
         ]
     )
-    return ("tot_biovolume_study", tot_biovolume)
+    return ("tot_surface_area_study", tot_biovolume)
 
 # def get_length_in_ring_rough(exp, t, args=None):
 #     length = 0
