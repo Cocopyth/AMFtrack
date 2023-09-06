@@ -15,7 +15,6 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 )
 from amftrack.util.geometry import get_section_segment, generate_index_along_sequence
 from amftrack.util.image_analysis import is_in_image, find_image_indexes
-from tensorflow import keras
 
 logger = logging.getLogger(os.path.basename(__file__))
 
@@ -27,9 +26,10 @@ a = 2.3196552
 # QUICKFIX: temporary
 TARGET_LENGTH = 120
 # MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "default_model"))
-MODEL = keras.models.load_model(
-    os.path.join(path_code[:-1], "ml", "models", "default_CNN_model.h5")
-)
+# MODEL = keras.models.load_model(
+#     os.path.join(path_code[:-1], "ml", "models", "default_CNN_model.h5")
+# )
+MODEL = ""
 # TARGET_LENGTH = 80
 # MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "CNN_combine_HB_crop_80_best_model"))
 
@@ -479,41 +479,41 @@ def get_width_info_new(experiment, t, resolution=50, skip=False) -> Dict:
     return edge_width
 
 
-if __name__ == "__main__":
-
-    from amftrack.util.sys import (
-        update_plate_info_local,
-        update_plate_info,
-        get_current_folders,
-        get_current_folders_local,
-        storage_path,
-    )
-    from amftrack.pipeline.functions.image_processing.experiment_util import (
-        get_random_edge,
-    )
-    import os
-    from random import choice
-
-    plate_name = "20220330_2357_Plate19"
-
-    directory = storage_path + "/"
-    ## Set up experiment object
-    update_plate_info_local(directory)
-    # update_plate_info(storage_path)
-    folder_df = get_current_folders_local(directory)
-    selected_df = folder_df.loc[folder_df["folder"] == plate_name]
-    i = 0
-    plate = 19
-    folder_list = list(selected_df["folder"])
-    directory_name = folder_list[i]
-    exp = Experiment(directory)
-    exp.load(selected_df.loc[selected_df["folder"] == directory_name], suffix="")
-
-    ## Select a random Edge at time 0
-    (G, pos) = exp.nx_graph[0], exp.positions[0]
-    edge = choice(list(G.edges))
-    edge_exp = Edge(Node(edge[0], exp), Node(edge[1], exp), exp)
-
-    ## Run the width function
-    edge = get_random_edge(exp, 0)
-    extract_section_profiles_for_edge_exp(exp, 0, edge)
+# if __name__ == "__main__":
+#
+#     from amftrack.util.sys import (
+#         update_plate_info_local,
+#         update_plate_info,
+#         get_current_folders,
+#         get_current_folders_local,
+#         storage_path,
+#     )
+#     from amftrack.pipeline.functions.image_processing.experiment_util import (
+#         get_random_edge,
+#     )
+#     import os
+#     from random import choice
+#
+#     plate_name = "20220330_2357_Plate19"
+#
+#     directory = storage_path + "/"
+#     ## Set up experiment object
+#     update_plate_info_local(directory)
+#     # update_plate_info(storage_path)
+#     folder_df = get_current_folders_local(directory)
+#     selected_df = folder_df.loc[folder_df["folder"] == plate_name]
+#     i = 0
+#     plate = 19
+#     folder_list = list(selected_df["folder"])
+#     directory_name = folder_list[i]
+#     exp = Experiment(directory)
+#     exp.load(selected_df.loc[selected_df["folder"] == directory_name], suffix="")
+#
+#     ## Select a random Edge at time 0
+#     (G, pos) = exp.nx_graph[0], exp.positions[0]
+#     edge = choice(list(G.edges))
+#     edge_exp = Edge(Node(edge[0], exp), Node(edge[1], exp), exp)
+#
+#     ## Run the width function
+#     edge = get_random_edge(exp, 0)
+#     extract_section_profiles_for_edge_exp(exp, 0, edge)

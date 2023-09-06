@@ -79,6 +79,23 @@ def get_tot_biovolume_study(exp, t, args=None):
     )
     return ("tot_biovolume_study", tot_biovolume)
 
+def get_tot_surface_area_study(exp, t, args=None):
+    nodes = [
+        node
+        for node in exp.nodes
+        if node.is_in(t) and np.all(is_in_study_zone(node, t, 1000, 200, is_circle))
+    ]
+    edges = {edge for node in nodes for edge in node.edges(t)}
+    tot_biovolume = np.sum(
+        [
+            2*np.pi
+            * (edge.width(t) / 2)
+            * np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t))
+            * 1.725
+            for edge in edges
+        ]
+    )
+    return ("tot_surface_area_study", tot_biovolume)
 
 # def get_length_in_ring_rough(exp, t, args=None):
 #     length = 0
