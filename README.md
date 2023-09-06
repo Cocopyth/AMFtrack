@@ -151,7 +151,7 @@ Create a text file named `local.env` in the base folder
 (for example: `touch local.env`)
 
 And fill the file with the following lines and adapt them to your situation:
-
+```
 DATA_PATH=C:\Users\coren\Documents\PhD\Code\data_info.json
 FIJI_PATH=C:\Users\coren\Documents\PhD\Code\fiji-win64\Fiji.app/ImageJ-win64.exe
 TEMP_PATH=C:\Users\coren\Documents\PhD\Code\temp

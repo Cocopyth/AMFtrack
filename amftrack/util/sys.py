@@ -297,6 +297,7 @@ def get_data_info(local=False, suffix_data_info=""):
     if len(data_info) > 0:
         data_info.index.name = "total_path"
         data_info.reset_index(inplace=True)
+        data_info["Plate"]=data_info["Plate"].fillna(0)
         data_info["unique_id"] = (
             data_info["Plate"].astype(str).astype(int).astype(str)
             + "_"

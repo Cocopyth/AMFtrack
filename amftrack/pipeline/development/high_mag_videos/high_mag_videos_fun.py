@@ -1,4 +1,4 @@
-import imageio
+import imageio.v2 as imageio
 import matplotlib.pyplot as plt
 import cv2
 from scipy import ndimage as ndi
@@ -157,36 +157,36 @@ def plot_segments_on_image(segments, ax, color="red", bounds=(0, 1), alpha=1, ad
 
 
 # OLD FUNCTION. Use get_kymo_new
-def get_kymo(
-        edge,
-        pos,
-        images_adress,
-        nx_graph_pruned,
-        resolution=1,
-        offset=4,
-        step=15,
-        target_length=10,
-        bound1=0,
-        bound2=1,
-):
-    kymo = []
-    for image_adress in images_adress:
-        image = imageio.imread(image_adress)
-        slices, segments = extract_section_profiles_for_edge(
-            edge,
-            pos,
-            image,
-            nx_graph_pruned,
-            resolution=resolution,
-            offset=offset,
-            step=step,
-            target_length=target_length,
-            bound1=bound1,
-            bound2=bound2,
-        )
-        kymo_line = np.mean(slices, axis=1)
-        kymo.append(kymo_line)
-    return np.array(kymo)
+# def get_kymo(
+#         edge,
+#         pos,
+#         images_adress,
+#         nx_graph_pruned,
+#         resolution=1,
+#         offset=4,
+#         step=15,
+#         target_length=10,
+#         bound1=0,
+#         bound2=1,
+# ):
+#     kymo = []
+#     for image_adress in images_adress:
+#         image = imageio.imread(image_adress)
+#         slices, segments = extract_section_profiles_for_edge(
+#             edge,
+#             pos,
+#             image,
+#             nx_graph_pruned,
+#             resolution=resolution,
+#             offset=offset,
+#             step=step,
+#             target_length=target_length,
+#             bound1=bound1,
+#             bound2=bound2,
+#         )
+#         kymo_line = np.mean(slices, axis=1)
+#         kymo.append(kymo_line)
+#     return np.array(kymo)
 
 
 def filter_kymo_left_old(kymo):
@@ -250,7 +250,14 @@ def filter_kymo_left(kymo, nr_tiles=1, static_offset=1, static_angle=1000, plots
 
     img = kymo.copy()
     for i in range(nr_tiles):
-        img = tile_image(img)
+        A = img[:, :]
+        B = np.flip(A, axis=0)
+        C = np.flip(A, axis=1)
+        D = np.flip(B, axis=1)
+        tiles = [[D, B, D], [C, A, C], [D, B, D]]
+        tiles = [cv2.hconcat(imgs) for imgs in tiles]
+        fourrier = cv2.vconcat(tiles)
+        img = fourrier
     tiling_for_fourrier = img
     shape_v, shape_h = tiling_for_fourrier.shape
 
@@ -415,7 +422,7 @@ def get_width(slices, avearing_window=50, num_std=2):
     return np.median(widths)
 
 
-def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(70, 170, 30), seg_thresh = 11, binning=2):
+def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(70, 170, 30), seg_thresh = 11, binning=2, close_size=None, thresh_adjust=0):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
     image:          Input image
@@ -427,8 +434,14 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(70, 170, 30
     smooth_im_blur = cv2.blur(-image, (11, 11))
     smooth_im = frangi(-smooth_im_blur, frangi_range)
     smooth_im = np.array(smooth_im * (255/np.max(smooth_im)), dtype=np.uint8)
-    _, segmented = cv2.threshold(smooth_im, 0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-    
+    ret, segmented = cv2.threshold(smooth_im, 0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    print(ret)
+    if thresh_adjust != 0:
+        ret, segmented = cv2.threshold(smooth_im, 0,255,int(ret) + thresh_adjust)
+    if close_size is not None:
+        segmented = cv2.morphologyEx(segmented, cv2.MORPH_CLOSE, np.ones((close_size,close_size)))
+
+
 #     seg_shape = smooth_im.shape
 
 #     for i in range(1, 100):
@@ -436,7 +449,7 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(70, 170, 30
 #         coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
 #         if coverage < seg_thresh:
 #             break
-    
+
     skeletonized = skeletonize(segmented > seg_thresh)
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
@@ -473,7 +486,7 @@ def get_kymo_new(
     """
 
     """
-    Following section calculates the section coordinates for the skeleton of the hypha. 
+    Following section calculates the section coordinates for the skeleton of the hypha.
     These coordinates are used for all images in the video. Generally we don't expect hyphae to move.
     """
     pixel_list = orient(nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
@@ -555,7 +568,7 @@ def get_edge_image(edge, pos, images_address,
         return slices_list[0]
     else:
         return np.array(slices_list)
-    
+
 def get_edge_widths(edge, pos, segmented,
                    nx_graph_pruned,
                    resolution=1,
@@ -582,7 +595,7 @@ def get_edge_widths(edge, pos, segmented,
         point1 = np.array([sect[0][0], sect[0][1]])
         point2 = np.array([sect[1][0], sect[1][1]])
         perp_lines.append(extract_perp_lines(point1, point2))
-    
+
     order = validate_interpolation_order(segmented.dtype, order)
     im = segmented
     l = []
@@ -596,9 +609,9 @@ def get_edge_widths(edge, pos, segmented,
     slices_list = [max((sum(1 for _ in group) for value, group in itertools.groupby(pixel_row) if value == 0), default=0) for pixel_row in slices]
         # TODO(FK): Add thickness of the profile here
 #         slices_list.append(max(len(list(y)) for (c,y) in itertools.groupby(np.array(pixels)) if c==1))
-    
+
     return np.array(slices_list)
-    
+
 
 
 def extract_perp_lines(src, dst, linewidth=1):
@@ -662,49 +675,20 @@ def validate_interpolation_order(image_dtype, order):
     return order
 
 
-def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=11, magnif = 50, binning=2, test_plot=False):
+def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=40, magnif = 50, binning=2, test_plot=False):
+    k_size = [30, 15][magnif < 50]
     kernel = np.ones((k_size, k_size), np.uint8)
     kernel_2 = np.ones((10, 10), np.uint8)
     smooth_im = cv2.GaussianBlur(image, (5, 5), 0)
+    smooth_im = cv2.morphologyEx(smooth_im, cv2.MORPH_OPEN, kernel)
     if magnif < 30:
-        smooth_im = cv2.morphologyEx(smooth_im, cv2.MORPH_TOPHAT, kernel)
-    im_canny = cv2.Canny(smooth_im, 0, 20)
-    im_canny_smooth = cv2.GaussianBlur(im_canny, (5, 5), 0)
-    smooth_im_close = cv2.morphologyEx(smooth_im, cv2.MORPH_CLOSE, kernel)
-    std_im = generic_filter(image, np.std, size=10)
-    
-    if magnif < 30:
-        k_data = np.float32(np.array([std_im.reshape(-1), im_canny_smooth.reshape(-1)]).T)
-    else:
-        k_data = np.float32(np.array([std_im.reshape(-1), smooth_im.reshape(-1)]).T)
-
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.85)
-    retval, labels, centers = cv2.kmeans(k_data, [4, 2][magnif<30], None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
-    centers=np.uint8(centers)
-    labels=np.array(labels.T[0])
-    centers = [center[0] for center in centers]
-    segmented_data  = np.array([centers[label] for label in labels])
-    segmented_image = segmented_data.reshape((smooth_im.shape))
-    segmented_image = np.uint8(segmented_image>np.min(centers))
-    segmented = cv2.morphologyEx(segmented_image, cv2.MORPH_CLOSE, kernel_2)
+        im_canny = cv2.Canny(smooth_im, 0, 20)
+        smooth_im = cv2.morphologyEx(im_canny, cv2.MORPH_DILATE, kernel)
+    _, segmented = cv2.threshold(smooth_im, 0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    if magnif > 30:
+        segmented = cv2.morphologyEx(segmented, cv2.MORPH_CLOSE, np.ones((9,9)))
 
     skeletonized = skeletonize(segmented > thresh)
-
-    if test_plot:
-        fig, ax = plt.subplots(7, figsize=(9, 25))
-        ax[0].imshow(im_canny)
-        ax[0].set_title("Smooth")
-        ax[1].imshow(std_im)
-        ax[1].set_title("open")
-        ax[2].imshow(smooth_im)
-        ax[2].set_title("smooth_im")
-        ax[3].imshow(segmented)
-        ax[3].set_title("segmented")
-        ax[4].imshow(skeletonized)
-        ax[5].hist(smooth_im_close.flatten(), log=True, bins=50)
-        ax[6].plot(smooth_im_close[1000])
-        fig.tight_layout()
-
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
     nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
