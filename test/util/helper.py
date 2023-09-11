@@ -96,6 +96,8 @@ def make_experiment_object():
     plate_name = "111111_20600101"  # TODO(FK): find the name automaticaly (can be different based on the person)
     update_plate_info(directory)
     folder_df = get_current_folders(directory)
+    print("fdd",folder_df)
+
     selected_df = folder_df.loc[folder_df["unique_id"] == plate_name]
     if len(selected_df) < 4:
         all_folders_drop = get_dropbox_folders_prince("/DATA/PRINCE", True)
@@ -115,6 +117,7 @@ def make_experiment_object():
 def make_experiment_object_analysis():
     "Build an experiment object using the plate that is in the test repository."
     directory = test_path
+    print(test_path)
     plate_name = "111111_20600101"  # TODO(FK): find the name automaticaly (can be different based on the person)
     update_analysis_info(directory)
 
