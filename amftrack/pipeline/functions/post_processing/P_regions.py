@@ -1,0 +1,15 @@
+from amftrack.pipeline.functions.post_processing.area_hulls_util import *
+from amftrack.notebooks.P_experiment.helper import get_polygons, create_polygon,get_regions
+from shapely import affinity
+
+
+def get_length_density_in_region(exp, t, args):
+    i = args["i"]
+    polygons = get_regions(exp, 0)
+    polygons =[affinity.scale(polygon, xfact=1000, yfact=1000, origin=(0, 0)) for polygon in polygons]
+    if i  <= len(polygons):
+        shape = polygons[i]
+        length = get_length_shape_fast(exp, t,shape)
+        return (f"length_density_region_{i}", length)
+    else:
+        return (f"length_density_region_{i}", None)
