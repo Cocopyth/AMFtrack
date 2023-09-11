@@ -79,6 +79,25 @@ def get_nodes_in_ring(hull1, hull2, t, exp):
     ]
     return nodes
 
+def get_nodes_in_shape_no_study(shape, t, exp):
+    nodes = [
+        node
+        for node in exp.nodes
+        if node.is_in(t)
+        and shape.contains(Point(np.flip(node.pos(t))))
+    ]
+    return nodes
+
+def get_length_shape_fast(exp,t,shape):
+    nodes = get_nodes_in_shape_no_study(shape, t, exp)
+    edges = {edge for node in nodes for edge in node.edges(t)}
+    tot_length = np.sum(
+        [
+            np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725 / 2
+            for edge in edges
+        ]
+    )
+    return tot_length
 
 def get_hyphae_in_ring(hull1, hull2, t, exp):
     hyphae = [

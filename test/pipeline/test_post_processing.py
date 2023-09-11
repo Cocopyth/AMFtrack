@@ -7,6 +7,8 @@ import amftrack.pipeline.functions.post_processing.time_plate as time_plate
 import amftrack.pipeline.functions.post_processing.time_hypha as time_hypha
 import amftrack.pipeline.functions.post_processing.time_edge as time_edge
 import amftrack.pipeline.functions.post_processing.area_hulls as area_hulls
+import amftrack.pipeline.functions.post_processing.P_regions as P_regions
+
 import geopandas as gpd
 from shapely.geometry import Point
 from random import choice
@@ -71,6 +73,27 @@ class TestExperiment(unittest.TestCase):
         ]
         args = {"incr": 10, "i": 0}
         for f in fs:
+            print(f, f(self.exp, t, args))
+
+    def test_P_region_f(self):
+        t = 2
+        load_skel(self.exp, [t])
+
+        skeletons = []
+        for skeleton in self.exp.skeletons:
+            if skeleton is None:
+                skeletons.append({})
+            else:
+                skeletons.append(skeleton)
+        self.exp.multipoints = [
+            gpd.GeoSeries([Point(pixel) for pixel in skeleton.keys()])
+            for skeleton in skeletons
+        ]
+
+        f = P_regions.get_length_density_in_region
+
+        for i in range(9):
+            args = {"i": i}
             print(f, f(self.exp, t, args))
 
     def test_branching_hulls(self):
