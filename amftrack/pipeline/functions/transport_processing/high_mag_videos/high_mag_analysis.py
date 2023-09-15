@@ -2,7 +2,7 @@ import copy
 import pandas as pd
 from IPython.display import clear_output
 import re
-from amftrack.pipeline.development.high_mag_videos.kymo_class import KymoEdgeAnalysis, KymoVideoAnalysis
+from amftrack.pipeline.functions.transport_processing.high_mag_videos.kymo_class import KymoEdgeAnalysis, KymoVideoAnalysis
 from amftrack.pipeline.development.high_mag_videos.plot_data import (
     save_raw_data,
     plot_summary,

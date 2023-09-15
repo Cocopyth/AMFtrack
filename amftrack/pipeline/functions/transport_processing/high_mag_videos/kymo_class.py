@@ -6,7 +6,7 @@ from PIL import Image
 import os
 from tqdm import tqdm
 import re
-# import tensorflow as tf
+import tensorflow as tf
 import matplotlib as mpl
 from scipy.signal import find_peaks
 
@@ -495,7 +495,7 @@ class KymoEdgeAnalysis(object):
                    bounds=(0, 1),
                    img_frame=0,
                    quality=6,
-                   model_path= Path('.').absolute().parents[1] / "ml/models/default_CNN_GT_model.h5"):
+                   model_path=Path('').absolute().parents[1] / "ml/models/default_CNN_GT_model.h5"):
         """
         Returns the width of a selected edge
         :param resolution:      Distance between kymograph perpendicular lines
