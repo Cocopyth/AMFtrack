@@ -130,9 +130,7 @@ def make_experiment_object_analysis():
         exp.load_tile_information(t)
     exp.save_location = "/".join(path_exp.split("/")[:-1])
     load_study_zone(exp)
-
     return exp
-
 
 def make_experiment_object_multi():
     "Build an experiment object using the plate that is in the test repository."

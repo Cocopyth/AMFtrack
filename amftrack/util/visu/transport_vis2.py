@@ -11,18 +11,10 @@ from amftrack.pipeline.development.high_mag_videos.plot_data import (
     plot_summary,
     save_raw_data,
 )
-from amftrack.pipeline.development.high_mag_videos.high_mag_analysis import (
-    HighmagDataset,
-    VideoDataset,
-    EdgeDataset,
-    index_videos_dropbox,
-    analysis_run,
-)
-from amftrack.pipeline.development.high_mag_videos.kymo_class import (
+from amftrack.pipeline.functions.transport_processing.high_mag_videos.kymo_class import (
     KymoVideoAnalysis,
     KymoEdgeAnalysis
 )
-import sys
 import os
 import pandas as pd
 import numpy as np
@@ -38,14 +30,11 @@ from amftrack.pipeline.launching.run import (
     run_transfer,
 )
 from amftrack.pipeline.launching.run_super import run_parallel_transfer
-import dropbox
-from amftrack.util.dbx import upload_folder, download, read_saved_dropbox_state, save_dropbox_state, load_dbx, get_dropbox_folders_prince, get_dropbox_video_folders, download_video_folders_drop, download_analysis_folders_drop
 from subprocess import call
 import logging
 import datetime
 import glob
 import json
-from amftrack.pipeline.launching.run_super import run_parallel_flows
 from PIL import Image
 import os
 from PIL import Image, ImageDraw

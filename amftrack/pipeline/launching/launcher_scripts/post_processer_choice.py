@@ -30,10 +30,10 @@ max_ind = 20
 incr = 100
 
 list_f = [
-    get_length_density_in_region
-]*18
-list_args = [{'i': i} for i in range(18)]
-overwrite = False
+    get_tot_surface_area_study
+]
+list_args = [{}] * len(list_f)
+overwrite = True
 num_parallel = 6
 run_parallel_post(
     "time_plate_post_process.py",
