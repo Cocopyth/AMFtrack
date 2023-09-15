@@ -1,10 +1,5 @@
 import sys
-from amftrack.util.sys import (
-    update_plate_info,
-    get_current_folders,
-)
-from amftrack.pipeline.launching.run_super import run_parallel, run_launcher
-from amftrack.pipeline.development.high_mag_videos.kymo_class import *
+from amftrack.pipeline.functions.transport_processing.high_mag_videos.kymo_class import *
 
 
 # from amftrack.pipeline.functions.image_processing.extract_width_fun import (
@@ -13,14 +8,8 @@ from amftrack.pipeline.development.high_mag_videos.kymo_class import *
 # )
 
 
-from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
-    Experiment,
-)
 from amftrack.util.sys import temp_path
-import pickle
-import networkx as nx
 import pandas as pd
-from time import time_ns
 
 #
 # directory_targ = "E:\\AMOLF_Data\\Plate_videos\\"
