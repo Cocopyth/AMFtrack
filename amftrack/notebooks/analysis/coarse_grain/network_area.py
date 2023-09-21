@@ -98,7 +98,7 @@ def get_density_maps(exp, t, compress, kern_sizes):
     window = compress
     densities = np.zeros(
         (skeletons[t].shape[0] // compress, skeletons[t].shape[1] // compress),
-        dtype=np.float,
+        dtype=float,
     )
     for xx in range(skeletons[t].shape[0] // compress):
         for yy in range(skeletons[t].shape[1] // compress):
