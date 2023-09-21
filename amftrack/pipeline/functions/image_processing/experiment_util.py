@@ -7,6 +7,10 @@ from random import randrange
 from scipy import ndimage
 import logging
 import os
+
+from scipy.optimize import minimize
+from shapely import affinity
+
 from amftrack.util.aliases import coord_int, coord
 from amftrack.util.geometry import (
     distance_point_pixel_line,
@@ -17,7 +21,7 @@ from amftrack.util.geometry import (
     get_overlap,
     get_bounding_box,
     expand_bounding_box,
-    is_in_bounding_box,
+    is_in_bounding_box, create_polygon,
 )
 from amftrack.util.plot import crop_image, make_random_color
 from amftrack.util.image_analysis import extract_inscribed_rotated_image
@@ -1324,3 +1328,52 @@ def make_full_image(
         dilation=dilation,
     )
     return(im,skel_im)
+
+
+def get_ROI(exp,t):
+    downsize = 1000
+    im, skel_im = make_full_image(
+        exp,
+        t,
+        downsizing=downsize,
+        dilation=5,
+        edges=[])
+    image = (im).astype(np.uint8)
+
+    scale_unit = 1 / 1.725
+
+    # Compute overlap
+    def compute_overlap(params):
+        x, y, angle = params
+        polygon, R, t = create_polygon(x, y, angle, scale_unit)
+
+        # Draw the polygon on a black image
+        polygon_img = np.zeros_like(image)
+        cv2.fillPoly(polygon_img, [polygon], 255)
+        # Compute overlap between the image and the polygon
+        overlap = np.sum((image / 255) * (polygon_img / 255))
+        # Return negative overlap as we're using the minimize function
+        return -overlap
+
+    # Initial guess for the parameters
+    deltas = np.array([20, 20, 30])
+    init_params = [10, 30, 270]
+    simplex = [init_params]
+    for i in range(len(init_params)):
+        new_point = np.copy(init_params)
+        new_point[i] += deltas[i]
+        simplex.append(new_point)
+
+    # Convert to numpy array for use in scipy.minimize
+    initial_simplex = np.array(simplex)
+    # Bounds for the parameters ([x_min, x_max], [y_min, y_max], [angle_min, angle_max], [scale_min, scale_max])
+
+    # Perform optimization to minimize overlap
+    result = minimize(compute_overlap, init_params, method='Nelder-Mead', options={'initial_simplex': initial_simplex})
+    optimal_params = result.x
+
+    # Draw the optimized polygon on the image
+    vertices, angle, translation_vector = create_polygon(*optimal_params, scale_unit)
+    polygon = Polygon(vertices)
+    polygon = affinity.scale(polygon, xfact=downsize, yfact=downsize, origin=(0, 0))
+    return(polygon)

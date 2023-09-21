@@ -44,7 +44,8 @@ if load_graphs_bool:
     load_graphs(exp, directory, indexes=[t, tp1], post_process=True)
 # load_skel(exp,[t])
 # print('size after loading',get_size(exp)/10**6)
-
+for timestep in range(exp.ts):
+    exp.load_tile_information(timestep)
 folder_analysis = row["folder_analysis"]
 path_hyph_info_t = f"{directory}{folder_analysis}/time_hypha_info/hyph_info_{t}.json"
 if not os.path.isfile(path_hyph_info_t) or overwrite:

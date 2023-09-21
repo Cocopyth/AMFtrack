@@ -295,7 +295,7 @@ class Experiment:
         Take as input float coordinates `coord` in the general referential
         and convert them into the referential of timestep t.
         """
-        old_coord = np.array(point).astype(dtype=np.float)
+        old_coord = np.array(point).astype(dtype=float)
         if self.image_transformation is None:
             raise Exception("Must load directories first")
         if self.image_transformation[t] is None:
