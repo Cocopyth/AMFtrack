@@ -42,8 +42,11 @@ def get_length_um_node_list(node_list, exp, t):
         total_length += measure_length_um_edge(edge_obj, t)
     return total_length
 
+def is_in_ROI(exp,t,pos):
+    return
 
 def is_in_study_zone_pos(pos, exp, t, radius, dist, is_circle=False):
+    """Obsolete"""
     compress = 25
     if is_circle:
         center = np.array([4700 * 5, 4400 * 5])
@@ -65,6 +68,7 @@ def is_in_study_zone_pos(pos, exp, t, radius, dist, is_circle=False):
 
 
 def is_in_study_zone(node, t, radius, dist, is_circle=False):
+    """Obsolete"""
     exp = node.experiment
     pos = node.pos(t)
     return is_in_study_zone_pos(pos, exp, t, radius, dist, is_circle)

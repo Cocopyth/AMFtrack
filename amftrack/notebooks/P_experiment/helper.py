@@ -1,46 +1,10 @@
 
 from shapely.geometry import Polygon, LineString, MultiPolygon
-from random import randint
 import cv2
 import numpy as np
 from scipy.optimize import minimize
-import matplotlib.pyplot as plt
-from amftrack.pipeline.functions.image_processing.experiment_util import make_full_image,plot_full_video
-
-
-def create_polygon(center_x, center_y, angle,scale):
-    angle_rad = np.radians(angle)
-
-    # Sector parameters
-    radius = 45
-    arc_points = 50
-
-    # Calculate start and end angles for the arc
-    theta1 = np.arccos((radius - 41) / radius)
-    theta2 = -theta1
-    thetas = np.linspace(theta1, theta2, arc_points)
-
-    # Create vertices along the arc
-    arc_x = center_x + radius * np.cos(thetas)
-    arc_y = center_y + radius * np.sin(thetas)
-    arc = np.column_stack((arc_x, arc_y))
-
-    # Create straight edges
-    edge1 = [center_x + radius * np.cos(theta1), center_y + radius * np.sin(theta1)]
-    edge2 = [center_x + radius * np.cos(theta2), center_y + radius * np.sin(theta2)]
-    edges = np.array([edge1, edge2])
-
-    # Combine arc and edges
-    vertices = np.vstack((arc, edges))* scale
-
-    # Rotate the vertices
-    R = np.array([[np.cos(angle_rad), -np.sin(angle_rad)], [np.sin(angle_rad), np.cos(angle_rad)]])
-    rotated_vertices = vertices.dot(R.T)
-
-    # Translate the vertices
-    translated_vertices = rotated_vertices + [center_x, center_y]
-
-    return translated_vertices.astype(int),angle_rad,[center_x, center_y]
+from amftrack.pipeline.functions.image_processing.experiment_util import make_full_image
+from amftrack.util.geometry import create_polygon
 
 
 # Your existing create_polygon function here...
@@ -112,7 +76,7 @@ def line_intersection(line1, line2):
 def get_polygons(center_x,center_y,angle,scale):
     # center_x, center_y = 0, 0
     # angle = 0  # Insert angle in degrees
-    vertices, R,t = create_polygon(center_x, center_y, angle,scale)
+    vertices, R,t = create_polygon(center_x, center_y, angle, scale)
     # Extract the endpoints of the straight edge
     edge1 = vertices[-1]
     edge2 = vertices[-2]
@@ -270,3 +234,4 @@ def get_regions(exp,t):
     #     centroid = polygon.centroid
     #     ax.text(centroid.x, centroid.y, str(i), fontsize=12, ha='center', va='center')
     return(final_sort)
+
