@@ -1,5 +1,7 @@
 import os
 import unittest
+
+from amftrack.pipeline.functions.post_processing.util import is_in_ROI_node
 from test.util import helper
 import matplotlib.pyplot as plt
 import amftrack.pipeline.functions.post_processing.exp_plot as exp_plot
@@ -23,7 +25,8 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     load_graphs,
     load_skel,
 )
-from amftrack.pipeline.functions.image_processing.experiment_util import get_ROI
+from amftrack.pipeline.functions.post_processing.extract_study_zone import save_ROI,load_ROI
+from amftrack.pipeline.functions.image_processing.experiment_util import get_all_nodes
 import numpy as np
 import json
 
@@ -147,10 +150,13 @@ class TestExperiment(unittest.TestCase):
         with open(path_hyph_info, "w") as jsonf:
             json.dump(data_hypha, jsonf, indent=4)
     def test_save_ROI(self):
-        dirName = self.exp.save_location
-        ROI = get_ROI(self.exp, 0)
-        polygon_geojson = ROI.__geo_interface__
+        save_ROI(self.exp)
 
-        # Save the GeoJSON to a file
-        with open(f"{dirName}/ROI.geojson", "w") as geojson_file:
-            json.dump(polygon_geojson, geojson_file)
+    def test_load_ROI(self):
+        load_ROI(self.exp)
+
+    def test_in_ROI(self):
+        t = range(self.exp.ts)[-1]
+        nodes = get_all_nodes(self.exp,t)
+        in_ROIs = [is_in_ROI_node(node,t) for node in nodes]
+        print("prop nodes in ROI=", np.sum(in_ROIs)/len(in_ROIs))
