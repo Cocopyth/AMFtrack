@@ -23,7 +23,9 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     load_graphs,
     load_skel,
 )
+from amftrack.pipeline.functions.image_processing.experiment_util import get_ROI
 import numpy as np
+import json
 
 mpl.use("AGG")
 
@@ -144,3 +146,11 @@ class TestExperiment(unittest.TestCase):
         path_hyph_info = os.path.join(test_path, "time_edge.json")
         with open(path_hyph_info, "w") as jsonf:
             json.dump(data_hypha, jsonf, indent=4)
+    def test_save_ROI(self):
+        dirName = self.exp.save_location
+        ROI = get_ROI(self.exp, 0)
+        polygon_geojson = ROI.__geo_interface__
+
+        # Save the GeoJSON to a file
+        with open(f"{dirName}/ROI.geojson", "w") as geojson_file:
+            json.dump(polygon_geojson, geojson_file)

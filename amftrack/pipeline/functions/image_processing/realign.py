@@ -196,8 +196,8 @@ def reconnect(skeleton):
 
 
 def shift(skeleton1, skeleton2):
-    skeleton1_dilated = dilate(dilate(skeleton1)).astype(np.float)
-    skeleton2_dilated = dilate(dilate(skeleton2)).astype(np.float)
+    skeleton1_dilated = dilate(dilate(skeleton1)).astype(float)
+    skeleton2_dilated = dilate(dilate(skeleton2)).astype(float)
 
     def distance(shift):
         distance = 0
