@@ -69,10 +69,13 @@ app.layout = html.Div([
      Input('suitable-for-coarse-grain-checklist', 'value')]
 )
 def update_video_list(treatment, root, fungus, coarse_grain_values):
+    print(filter_videos_for_list(treatment, root, fungus, coarse_grain_values))
     return filter_videos_for_list(treatment, root, fungus, coarse_grain_values)
 
 def filter_videos_for_list(treatment, root, fungus, coarse_grain_values):
     mask = (df_sum['treatment'] == treatment) & (df_sum['root'] == root) & (df_sum['fungus'] == fungus) & (df_sum['Suitable for coarse grain'].isin(coarse_grain_values))
+    mask = (df_sum['root'] == root)
+
     unique_ids = df_sum[mask]['unique_id'].tolist()
     video_filenames = [uid for uid in unique_ids if
                        os.path.exists(os.path.join(root_dir, analysis_dir, str(uid), f"{uid}_stitched.mp4"))]

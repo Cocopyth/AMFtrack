@@ -99,6 +99,20 @@ def get_length_shape_fast(exp,t,shape):
     )
     return tot_length
 
+def get_surface_area_shape_fast(exp,t,shape):
+    nodes = get_nodes_in_shape_no_study(shape, t, exp)
+    edges = {edge for node in nodes for edge in node.edges(t)}
+    tot_length = np.sum(
+        [
+            2 * np.pi
+            * (edge.width(t) / 2)
+            * np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t))
+            * 1.725
+            for edge in edges
+        ]
+    )
+    return tot_length
+
 def get_hyphae_in_ring(hull1, hull2, t, exp):
     hyphae = [
         hyph
