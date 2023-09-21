@@ -1,3 +1,4 @@
+from amftrack.pipeline.functions.post_processing.util import is_in_ROI_node
 from amftrack.util.dbx import upload
 from scipy import spatial
 
@@ -67,7 +68,7 @@ def plot_get_hull_nodes(exp, args=None):
                     node.pos(t)
                     for node in exp.nodes
                     if node.is_in(t)
-                    and np.all(is_in_study_zone(node, t, 1000, 150))
+                    and is_in_ROI_node(node, t)
                     and (node.label in g.nodes)
                 ]
             )
@@ -76,7 +77,7 @@ def plot_get_hull_nodes(exp, args=None):
                     node.label
                     for node in exp.nodes
                     if node.is_in(t)
-                    and np.all(is_in_study_zone(node, t, 1000, 150))
+                    and is_in_ROI_node(node, t)
                     and (node.label in g.nodes)
                 ]
             )
