@@ -38,6 +38,8 @@ row = [row for index, row in select.iterrows()][0]
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
 exp.save_location = "/".join(path_exp.split("/")[:-1])
+for timestep in range(exp.ts):
+    exp.load_tile_information(timestep)
 t = row["t"]
 try:
     exp.labeled

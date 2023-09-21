@@ -71,6 +71,7 @@ list_f = [
     get_num_spores,
     get_tot_biovolume_study,
     get_tot_biovolume,
+    get_tot_surface_area_study
 ]
 list_args = [{}] * len(list_f)
 overwrite = True

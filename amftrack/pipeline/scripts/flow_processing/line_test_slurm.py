@@ -1,16 +1,6 @@
-from amftrack.pipeline.development.high_mag_videos.kymo_class import *
-import os
-import imageio.v2 as imageio
+from amftrack.pipeline.functions.transport_processing.high_mag_videos.kymo_class import *
 import matplotlib.pyplot as plt
-import cv2
-from matplotlib import cm, colors
 from tqdm import tqdm
-from amftrack.pipeline.functions.image_processing.extract_graph import (
-    from_sparse_to_graph,
-    generate_nx_graph,
-    clean_degree_4,
-)
-import scipy
 import scipy.stats as stats
 # from path import path_code_dir
 import sys
