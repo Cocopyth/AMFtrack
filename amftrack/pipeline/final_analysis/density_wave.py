@@ -55,7 +55,9 @@ def S(t, lamb, C, t0):
     return C * (1 / (1 + np.exp(lamb * (t0 - t))))
 
 
-def get_wave_fit(time_plate_info, plate, timesteps, max_indexes, lamb=-1, C=0.2,suffix = ""):
+def get_wave_fit(
+    time_plate_info, plate, timesteps, max_indexes, lamb=-1, C=0.2, suffix=""
+):
     table = time_plate_info.loc[time_plate_info["Plate"] == plate]
     table = table.replace(np.nan, -1)
     ts = list(table["timestep"])

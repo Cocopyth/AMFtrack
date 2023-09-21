@@ -26,8 +26,8 @@ else:
     folders_drop2 = folders_drop
     folders_drop3 = folders_drop
 k = 0
-while len(folders_drop3) > 0 and k<=3:
-    k+=1
+while len(folders_drop3) > 0 and k <= 3:
+    k += 1
     run_parallel_transfer(
         "from_drop.py",
         [directory_targ],
@@ -55,9 +55,7 @@ while len(folders_drop3) > 0 and k<=3:
         folders_drop3 = folders_drop
 all_folders_drop = get_dropbox_folders_prince("/DATA/PRINCE_ANALYSIS")
 folders_drop = all_folders_drop.loc[all_folders_drop["unique_id"].isin(plates)]
-folders_drop = folders_drop.loc[
-            folders_drop["folder"].str.contains("Analysis")
-        ]
+folders_drop = folders_drop.loc[folders_drop["folder"].str.contains("Analysis")]
 if len(all_folders) > 0:
     run_parallel_transfer(
         "from_drop.py",

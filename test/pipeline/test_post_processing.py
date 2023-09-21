@@ -25,7 +25,10 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     load_graphs,
     load_skel,
 )
-from amftrack.pipeline.functions.post_processing.extract_study_zone import save_ROI,load_ROI
+from amftrack.pipeline.functions.post_processing.extract_study_zone import (
+    save_ROI,
+    load_ROI,
+)
 from amftrack.pipeline.functions.image_processing.experiment_util import get_all_nodes
 import numpy as np
 import json
@@ -149,6 +152,7 @@ class TestExperiment(unittest.TestCase):
         path_hyph_info = os.path.join(test_path, "time_edge.json")
         with open(path_hyph_info, "w") as jsonf:
             json.dump(data_hypha, jsonf, indent=4)
+
     def test_save_ROI(self):
         save_ROI(self.exp)
 
@@ -157,6 +161,6 @@ class TestExperiment(unittest.TestCase):
 
     def test_in_ROI(self):
         t = range(self.exp.ts)[-1]
-        nodes = get_all_nodes(self.exp,t)
-        in_ROIs = [is_in_ROI_node(node,t) for node in nodes]
-        print("prop nodes in ROI=", np.sum(in_ROIs)/len(in_ROIs))
+        nodes = get_all_nodes(self.exp, t)
+        in_ROIs = [is_in_ROI_node(node, t) for node in nodes]
+        print("prop nodes in ROI=", np.sum(in_ROIs) / len(in_ROIs))

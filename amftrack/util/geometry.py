@@ -316,7 +316,7 @@ if __name__ == "__main__":
     print(get_section_segment([-2, 2], [1, 1], 2.82))
 
 
-def create_polygon(center_x, center_y, angle,scale):
+def create_polygon(center_x, center_y, angle, scale):
     angle_rad = np.radians(angle)
 
     # Sector parameters
@@ -339,13 +339,18 @@ def create_polygon(center_x, center_y, angle,scale):
     edges = np.array([edge1, edge2])
 
     # Combine arc and edges
-    vertices = np.vstack((arc, edges))* scale
+    vertices = np.vstack((arc, edges)) * scale
 
     # Rotate the vertices
-    R = np.array([[np.cos(angle_rad), -np.sin(angle_rad)], [np.sin(angle_rad), np.cos(angle_rad)]])
+    R = np.array(
+        [
+            [np.cos(angle_rad), -np.sin(angle_rad)],
+            [np.sin(angle_rad), np.cos(angle_rad)],
+        ]
+    )
     rotated_vertices = vertices.dot(R.T)
 
     # Translate the vertices
     translated_vertices = rotated_vertices + [center_x, center_y]
 
-    return translated_vertices.astype(int),angle_rad,[center_x, center_y]
+    return translated_vertices.astype(int), angle_rad, [center_x, center_y]

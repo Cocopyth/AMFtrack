@@ -1,4 +1,3 @@
-
 from shapely.geometry import Polygon, LineString, MultiPolygon
 import cv2
 import numpy as np
@@ -10,13 +9,14 @@ from amftrack.util.geometry import create_polygon
 # Your existing create_polygon function here...
 # ...
 
+
 def find_intersection(p1, p2, point_on_line, direction):
     x1, y1 = p1
     x2, y2 = p2
     x3, y3 = point_on_line
     dx, dy = direction
 
-    denom = (dx * (y2 - y1) - dy * (x2 - x1))
+    denom = dx * (y2 - y1) - dy * (x2 - x1)
 
     if denom == 0:
         return None
@@ -48,10 +48,12 @@ def slice_polygon(vertices, points_on_lines, direction):
     return np.array(intersections)
 
 
-
 def interpolate_edge_points(edge1, edge2, t_values):
-    interpolated_points = np.array([(1 - t) * np.array(edge1) + t * np.array(edge2) for t in t_values])
+    interpolated_points = np.array(
+        [(1 - t) * np.array(edge1) + t * np.array(edge2) for t in t_values]
+    )
     return interpolated_points
+
 
 def line_intersection(line1, line2):
     x1, y1, x2, y2 = line1
@@ -73,10 +75,10 @@ def line_intersection(line1, line2):
     return None  # No intersection
 
 
-def get_polygons(center_x,center_y,angle,scale):
+def get_polygons(center_x, center_y, angle, scale):
     # center_x, center_y = 0, 0
     # angle = 0  # Insert angle in degrees
-    vertices, R,t = create_polygon(center_x, center_y, angle, scale)
+    vertices, R, t = create_polygon(center_x, center_y, angle, scale)
     # Extract the endpoints of the straight edge
     edge1 = vertices[-1]
     edge2 = vertices[-2]
@@ -102,12 +104,19 @@ def get_polygons(center_x,center_y,angle,scale):
         new_point = point + distance * direction
         points_on_perpendicular_lines.append(new_point)
 
-    line_points, directions = np.concatenate((points_on_lines, points_on_perpendicular_lines)), [direction] * len(
-        points_on_lines) + [perpendicular_direction] * len(points_on_perpendicular_lines)
+    line_points, directions = np.concatenate(
+        (points_on_lines, points_on_perpendicular_lines)
+    ), [direction] * len(points_on_lines) + [perpendicular_direction] * len(
+        points_on_perpendicular_lines
+    )
     extension_length = 80  # Adjust this based on your plot size
     extended_line_segments = [
-        (point[0] - direction[0] * extension_length, point[1] - direction[1] * extension_length,
-         point[0] + direction[0] * extension_length, point[1] + direction[1] * extension_length)
+        (
+            point[0] - direction[0] * extension_length,
+            point[1] - direction[1] * extension_length,
+            point[0] + direction[0] * extension_length,
+            point[1] + direction[1] * extension_length,
+        )
         for point, direction in zip(line_points, directions)
     ]
 
@@ -115,13 +124,17 @@ def get_polygons(center_x,center_y,angle,scale):
     line_intersections = []
     for i in range(len(extended_line_segments)):
         for j in range(i + 1, len(extended_line_segments)):
-            intersection = line_intersection(extended_line_segments[i], extended_line_segments[j])
+            intersection = line_intersection(
+                extended_line_segments[i], extended_line_segments[j]
+            )
             if intersection:
                 line_intersections.append(intersection)
     polygon = Polygon(vertices)
 
     # Create example lines
-    lines = [LineString([segment[:2], segment[2:]]) for segment in extended_line_segments]
+    lines = [
+        LineString([segment[:2], segment[2:]]) for segment in extended_line_segments
+    ]
     polygon = Polygon(vertices)
     x, y = polygon.exterior.xy
     # fig, ax = plt.subplots()
@@ -145,7 +158,9 @@ def get_polygons(center_x,center_y,angle,scale):
                 if intersection.is_empty:
                     continue
                 # Perform the actual splitting
-                split_result = poly.difference(Polygon(intersection.buffer(0.01).exterior))
+                split_result = poly.difference(
+                    Polygon(intersection.buffer(0.01).exterior)
+                )
                 if isinstance(split_result, MultiPolygon):
                     new_polygons.extend(list(split_result))
                 elif isinstance(split_result, Polygon):
@@ -159,15 +174,11 @@ def get_polygons(center_x,center_y,angle,scale):
     #     color = "#{:06x}".format(randint(0, 0xFFFFFF))
     #     x, y = poly.exterior.xy
     #     ax.fill(x, y, alpha=0.5, fc=color)
-    return (result_polygons)
+    return result_polygons
 
-def get_regions(exp,t):
-    im, skel_im = make_full_image(
-        exp,
-        t,
-        downsizing=1000,
-        dilation=5,
-        edges=[])
+
+def get_regions(exp, t):
+    im, skel_im = make_full_image(exp, t, downsizing=1000, dilation=5, edges=[])
     image = (im).astype(np.uint8)
 
     scale_unit = 1 / 1.725
@@ -199,23 +210,39 @@ def get_regions(exp,t):
     # Bounds for the parameters ([x_min, x_max], [y_min, y_max], [angle_min, angle_max], [scale_min, scale_max])
 
     # Perform optimization to minimize overlap
-    result = minimize(compute_overlap, init_params, method='Nelder-Mead', options={'initial_simplex': initial_simplex})
+    result = minimize(
+        compute_overlap,
+        init_params,
+        method="Nelder-Mead",
+        options={"initial_simplex": initial_simplex},
+    )
     optimal_params = result.x
 
     # Draw the optimized polygon on the image
-    optimal_polygon, angle, translation_vector = create_polygon(*optimal_params, scale_unit)
+    optimal_polygon, angle, translation_vector = create_polygon(
+        *optimal_params, scale_unit
+    )
     # cv2.fillPoly(image, [optimal_polygon], 127)
     polygon_img = np.zeros_like(image)
     cv2.fillPoly(polygon_img, [optimal_polygon], 255)
     polygons = get_polygons(*optimal_params, scale_unit)
 
     centroids = [(polygon.centroid.y, polygon.centroid.x) for polygon in polygons]
-    sorted_polygons = [polygon for centroid, polygon in sorted(zip(centroids, polygons))]
-    lists = [sorted_polygons[13:18], sorted_polygons[8:13], sorted_polygons[3:8], sorted_polygons[:3]]
+    sorted_polygons = [
+        polygon for centroid, polygon in sorted(zip(centroids, polygons))
+    ]
+    lists = [
+        sorted_polygons[13:18],
+        sorted_polygons[8:13],
+        sorted_polygons[3:8],
+        sorted_polygons[:3],
+    ]
     final_sort = []
     for pre_sort in lists:
         centroids = [(polygon.centroid.x, polygon.centroid.y) for polygon in pre_sort]
-        sorted_polygons_final = [polygon for centroid, polygon in sorted(zip(centroids, pre_sort))]
+        sorted_polygons_final = [
+            polygon for centroid, polygon in sorted(zip(centroids, pre_sort))
+        ]
         final_sort += sorted_polygons_final
     # fig, ax = plt.subplots()
     #
@@ -233,5 +260,4 @@ def get_regions(exp,t):
     #     # Plot the index at the centroid
     #     centroid = polygon.centroid
     #     ax.text(centroid.x, centroid.y, str(i), fontsize=12, ha='center', va='center')
-    return(final_sort)
-
+    return final_sort

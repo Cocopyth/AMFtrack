@@ -6,7 +6,8 @@ import networkx as nx
 from amftrack.pipeline.functions.post_processing.util import (
     measure_length_um_edge,
     is_in_study_zone,
-    measure_length_um, is_in_ROI_node,
+    measure_length_um,
+    is_in_ROI_node,
 )
 from scipy import sparse
 

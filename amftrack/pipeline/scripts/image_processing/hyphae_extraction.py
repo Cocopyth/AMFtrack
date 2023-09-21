@@ -82,7 +82,7 @@ for index in indexes:
     exp.save_location = dirName
     exp.pickle_save(f"{dirName}/")
     select_folders.to_json(f"{dirName}/folder_info.json")
-    ROI = get_ROI(exp,0)
+    ROI = get_ROI(exp, 0)
     polygon_geojson = ROI.__geo_interface__
 
     # Save the GeoJSON to a file

@@ -34,18 +34,16 @@ print(run_info)
 imgs_address = directory
 img_address = run_info.loc["total_path"]
 print(img_address)
-test_video = KymoVideoAnalysis(img_address, logging=True, vid_type='FLUO')
+test_video = KymoVideoAnalysis(img_address, logging=True, vid_type="FLUO")
 edge_list = test_video.edges
 
 # print('\n To work with individual edges, here is a list of their indices:')
 # for i, edge in enumerate(edge_list):
 #     print('edge {}, {}'.format(i, edge))
-    
+
 # test_video.plot_extraction_img(save_img=True)
 edge_objs = test_video.edge_objects
 
 bin_nr = 2
-bins = np.linspace(0, 1, bin_nr+1)
+bins = np.linspace(0, 1, bin_nr + 1)
 kymo = [edge_obj.extract_kymo(bounds=(0, 1)) for edge_obj in edge_objs]
-
-
