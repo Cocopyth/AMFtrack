@@ -29,7 +29,7 @@ from amftrack.pipeline.functions.post_processing.extract_study_zone import (
     save_ROI,
     load_ROI,
 )
-from amftrack.pipeline.functions.image_processing.experiment_util import get_all_nodes
+from amftrack.pipeline.functions.image_processing.experiment_util import get_all_nodes, get_ROI
 import numpy as np
 import json
 
@@ -164,3 +164,4 @@ class TestExperiment(unittest.TestCase):
         nodes = get_all_nodes(self.exp, t)
         in_ROIs = [is_in_ROI_node(node, t) for node in nodes]
         print("prop nodes in ROI=", np.sum(in_ROIs) / len(in_ROIs))
+
