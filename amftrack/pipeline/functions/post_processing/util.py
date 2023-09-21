@@ -45,17 +45,20 @@ def get_length_um_node_list(node_list, exp, t):
         total_length += measure_length_um_edge(edge_obj, t)
     return total_length
 
-def is_in_ROI(exp,pos):
+
+def is_in_ROI(exp, pos):
     point = Point(*pos)
-    if not hasattr(exp, 'ROI'):
+    if not hasattr(exp, "ROI"):
         load_ROI(exp)
     is_within_polygon = point.within(exp.ROI)
-    return(is_within_polygon)
+    return is_within_polygon
 
-def is_in_ROI_node(node,t):
+
+def is_in_ROI_node(node, t):
     exp = node.experiment
     pos = node.pos(t)
-    return(is_in_ROI(exp,pos))
+    return is_in_ROI(exp, pos)
+
 
 def is_in_study_zone_pos(pos, exp, t, radius, dist, is_circle=False):
     """Obsolete"""

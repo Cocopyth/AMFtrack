@@ -96,7 +96,7 @@ def make_experiment_object():
     plate_name = "111111_20600101"  # TODO(FK): find the name automaticaly (can be different based on the person)
     update_plate_info(directory)
     folder_df = get_current_folders(directory)
-    print("fdd",folder_df)
+    print("fdd", folder_df)
 
     selected_df = folder_df.loc[folder_df["unique_id"] == plate_name]
     if len(selected_df) < 4:
@@ -131,6 +131,7 @@ def make_experiment_object_analysis():
     exp.save_location = "/".join(path_exp.split("/")[:-1])
     load_study_zone(exp)
     return exp
+
 
 def make_experiment_object_multi():
     "Build an experiment object using the plate that is in the test repository."

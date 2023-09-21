@@ -65,9 +65,11 @@ def get_hyph_infos(exp):
                 pass
     return select_hyph
 
+
 def get_time(exp, t, tp1):  # redefined here to avoid loop in import
     seconds = (exp.dates[tp1] - exp.dates[t]).total_seconds()
     return seconds / 3600
+
 
 def get_rh_bas(exp):
     select_hyph = get_hyph_infos(exp)
@@ -86,7 +88,9 @@ def get_rh_bas(exp):
             tp1s = [c[1] for c in select_hyph[hyph]]
             if len(speeds) > 0:
                 node = hyph.end
-                length = np.linalg.norm(node.pos(node.ts()[0]) - node.pos(node.ts()[-1]))
+                length = np.linalg.norm(
+                    node.pos(node.ts()[0]) - node.pos(node.ts()[-1])
+                )
                 nodes = hyph.get_nodes_within(hyph.ts[-1])[0]
                 max_speed = np.max(speeds)
                 total_growth = np.sum(
@@ -95,7 +99,7 @@ def get_rh_bas(exp):
                         for i, speed in enumerate(speeds)
                     ]
                 )
-                if length>=1500:
+                if length >= 1500:
                     RH.append(hyph)
                 else:
                     BAS.append(hyph)
@@ -121,6 +125,8 @@ def get_rh_bas(exp):
         branch_frequ,
         select_hyph,
     )
+
+
 def get_length_um(seg):
     pixel_conversion_factor = 1.725
     pixels = seg
@@ -133,6 +139,7 @@ def get_length_um(seg):
             )
     #         length_edge+=np.linalg.norm(np.array(pixels[len(pixels)//10-1*10-1])-np.array(pixels[-1]))
     return length_edge * pixel_conversion_factor
+
 
 def estimate_angle(exp):
     (
@@ -178,6 +185,7 @@ def estimate_angle(exp):
     angles_bas = [(c[0] + 180) % 360 - 180 for c in angles if c[1][1] in BAS]
     return (angles_rh, angles_bas)
 
+
 def get_orientation(hypha, t, start, length=50):
     nodes, edges = hypha.get_nodes_within(t)
     pixel_list_list = []
@@ -197,6 +205,7 @@ def get_orientation(hypha, t, start, length=50):
         angle = -np.arccos(dot_product) / (2 * np.pi) * 360
     return angle
 
+
 angles_rh, angles_bas = estimate_angle(exp)
-np.save(os.path.join(path,"rh_angle"),angles_rh)
-np.save(os.path.join(path,"bas_angle"),angles_bas)
+np.save(os.path.join(path, "rh_angle"), angles_rh)
+np.save(os.path.join(path, "bas_angle"), angles_bas)

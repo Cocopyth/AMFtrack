@@ -90,7 +90,9 @@ for index, name in enumerate(tileconfig[0]):
     im[bowled2 <= 0.09] = np.maximum(im[bowled2 <= 0.09], 250)
     shape = im.shape
     print("segmenting")
-    segmented = extract_skel_new_prince(im, [hyph_width], perc_low, perc_high, minlow,minhigh)
+    segmented = extract_skel_new_prince(
+        im, [hyph_width], perc_low, perc_high, minlow, minhigh
+    )
     # low = np.percentile(-im+255, perc_low)
     # high = np.percentile(-im+255, perc_high)
     # segmented = filters.apply_hysteresis_threshold(-im+255, low, high)

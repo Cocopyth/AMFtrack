@@ -21,7 +21,8 @@ from amftrack.util.geometry import (
     get_overlap,
     get_bounding_box,
     expand_bounding_box,
-    is_in_bounding_box, create_polygon,
+    is_in_bounding_box,
+    create_polygon,
 )
 from amftrack.util.plot import crop_image, make_random_color
 from amftrack.util.image_analysis import extract_inscribed_rotated_image
@@ -990,7 +991,7 @@ def plot_edge_color_value(
         plt.savefig(save_path, dpi=dpi)
     else:
         plt.show()
-    return fig,ax
+    return fig, ax
 
 
 def reconstruct_image_from_general(
@@ -1116,6 +1117,7 @@ def plot_hulls_skelet(exp, t, hulls, save_path="", close=True):
     if save_path != "":
         plt.savefig(save_path)
 
+
 def plot_full_video(
     exp: Experiment,
     t: int,
@@ -1229,7 +1231,7 @@ def plot_full_video(
         if is_in_bounding_box(c, new_region):
             color = make_random_color(video_num[i])[:3]
             color = tuple(color / 255)
-            plt.text(c[1], c[0], video_num[i], color="black", fontsize =20, alpha=1)
+            plt.text(c[1], c[0], video_num[i], color="black", fontsize=20, alpha=1)
             plt.plot(c[1], c[0], marker="x", color="black", markersize=10, alpha=0.5)
 
             if with_point_label:
@@ -1250,6 +1252,7 @@ def plot_full_video(
     else:
         plt.show()
     return ax
+
 
 def make_full_image(
     exp: Experiment,
@@ -1327,17 +1330,12 @@ def make_full_image(
         downsizing=downsizing,
         dilation=dilation,
     )
-    return(im,skel_im)
+    return (im, skel_im)
 
 
-def get_ROI(exp,t):
+def get_ROI(exp, t):
     downsize = 1000
-    im, skel_im = make_full_image(
-        exp,
-        t,
-        downsizing=downsize,
-        dilation=5,
-        edges=[])
+    im, skel_im = make_full_image(exp, t, downsizing=downsize, dilation=5, edges=[])
     image = (im).astype(np.uint8)
 
     scale_unit = 1 / 1.725
@@ -1369,11 +1367,16 @@ def get_ROI(exp,t):
     # Bounds for the parameters ([x_min, x_max], [y_min, y_max], [angle_min, angle_max], [scale_min, scale_max])
 
     # Perform optimization to minimize overlap
-    result = minimize(compute_overlap, init_params, method='Nelder-Mead', options={'initial_simplex': initial_simplex})
+    result = minimize(
+        compute_overlap,
+        init_params,
+        method="Nelder-Mead",
+        options={"initial_simplex": initial_simplex},
+    )
     optimal_params = result.x
 
     # Draw the optimized polygon on the image
     vertices, angle, translation_vector = create_polygon(*optimal_params, scale_unit)
     polygon = Polygon(vertices)
     polygon = affinity.scale(polygon, xfact=downsize, yfact=downsize, origin=(0, 0))
-    return(polygon)
+    return polygon

@@ -22,9 +22,8 @@ from skimage.measure import profile_line
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
 from skimage.filters import frangi
 from skimage.morphology import skeletonize
-import itertools,operator
+import itertools, operator
 from scipy.ndimage.filters import generic_filter
-
 
 
 def get_length_um_edge(edge, nx_graph, space_pixel_size):
@@ -92,15 +91,15 @@ def segment(images_adress, threshold=10):
 
 
 def extract_section_profiles_for_edge(
-        edge: tuple,
-        pos: dict,
-        raw_im: np.array,
-        nx_graph,
-        resolution=5,
-        offset=4,
-        step=15,
-        target_length=120,
-        bounds=(0, 1),
+    edge: tuple,
+    pos: dict,
+    raw_im: np.array,
+    nx_graph,
+    resolution=5,
+    offset=4,
+    step=15,
+    target_length=120,
+    bounds=(0, 1),
 ) -> np.array:
     """
     Main function to extract section profiles of an edge.
@@ -135,8 +134,8 @@ def extract_section_profiles_for_edge(
         point1 = np.array([sect[0][0], sect[0][1]])
         point2 = np.array([sect[1][0], sect[1][1]])
         profile = profile_line(im, point1, point2, mode="constant")[
-                  int(bounds[0] * target_length): int(bounds[1] * target_length)
-                  ]
+            int(bounds[0] * target_length) : int(bounds[1] * target_length)
+        ]
         profile = profile.reshape((1, len(profile)))
         # TODO(FK): Add thickness of the profile here
         l.append(profile)
@@ -148,8 +147,8 @@ def plot_segments_on_image(segments, ax, color="red", bounds=(0, 1), alpha=1, ad
         point1 = (1 - bounds[0]) * point1_pivot + bounds[0] * point2_pivot
         point2 = (1 - bounds[1]) * point1_pivot + bounds[1] * point2_pivot
         ax.plot(
-            [point1[1]*adj, point2[1]*adj],  # x1, x2
-            [point1[0]*adj, point2[0]*adj],  # y1, y2
+            [point1[1] * adj, point2[1] * adj],  # x1, x2
+            [point1[0] * adj, point2[0] * adj],  # y1, y2
             color=color,
             linewidth=2,
             alpha=alpha,
@@ -200,9 +199,9 @@ def filter_kymo_left_old(kymo):
     dark_image_grey_fourier = np.fft.fftshift(np.fft.fft2(tiling_for_fourrier))
     coordinates_middle = np.array(dark_image_grey_fourier.shape) // 2
     LT_quadrant = np.s_[: coordinates_middle[0], : coordinates_middle[1]]
-    LB_quadrant = np.s_[coordinates_middle[0] + 1:, : coordinates_middle[1]]
-    RB_quadrant = np.s_[coordinates_middle[0] + 1:, coordinates_middle[1]:]
-    RT_quadrant = np.s_[: coordinates_middle[0], coordinates_middle[1]:]
+    LB_quadrant = np.s_[coordinates_middle[0] + 1 :, : coordinates_middle[1]]
+    RB_quadrant = np.s_[coordinates_middle[0] + 1 :, coordinates_middle[1] :]
+    RT_quadrant = np.s_[: coordinates_middle[0], coordinates_middle[1] :]
 
     filtered_fourrier = dark_image_grey_fourier
     filtered_fourrier[LT_quadrant] = 0
@@ -210,7 +209,7 @@ def filter_kymo_left_old(kymo):
     filtered = np.fft.ifft2(filtered_fourrier)
     shape_v, shape_h = filtered.shape
     shape_v, shape_h = shape_v // 3, shape_h // 3
-    middle_slice = np.s_[shape_v: 2 * shape_v, shape_h: 2 * shape_h]
+    middle_slice = np.s_[shape_v : 2 * shape_v, shape_h : 2 * shape_h]
     middle = filtered[middle_slice]
     filtered_left = A - np.abs(middle)
     return filtered_left
@@ -227,7 +226,9 @@ def tile_image(img):
     return tiling_for_fourrier
 
 
-def filter_kymo_left(kymo, nr_tiles=1, static_offset=1, static_angle=1000, plots=False, perc_dim=6):
+def filter_kymo_left(
+    kymo, nr_tiles=1, static_offset=1, static_angle=1000, plots=False, perc_dim=6
+):
     """
     This is a complicated function, with a lot of considerations. The idea is to make a fourier transform of a
     kymograph, then remove certain parts of it to end up with a spectrum where only forward or backward moving
@@ -262,14 +263,16 @@ def filter_kymo_left(kymo, nr_tiles=1, static_offset=1, static_angle=1000, plots
     shape_v, shape_h = tiling_for_fourrier.shape
 
     # We use orthogonal normalization in the fourier transforms to try and get proper intensities back
-    dark_image_grey_fourier = np.fft.fftshift(np.fft.fft2(tiling_for_fourrier, norm='ortho'))
+    dark_image_grey_fourier = np.fft.fftshift(
+        np.fft.fft2(tiling_for_fourrier, norm="ortho")
+    )
     coordinates_middle = np.array(dark_image_grey_fourier.shape) // 2
 
     # Within the fourier transform, we have four quadrants, where we remove two of them. This in addition to the DC term
     LT_quadrant = np.s_[: coordinates_middle[0] + 0, : coordinates_middle[1]]
-    LB_quadrant = np.s_[coordinates_middle[0] - 1:, : coordinates_middle[1]]
-    RB_quadrant = np.s_[coordinates_middle[0] + 1:, coordinates_middle[1] + 1:]
-    RT_quadrant = np.s_[: coordinates_middle[0], coordinates_middle[1]:]
+    LB_quadrant = np.s_[coordinates_middle[0] - 1 :, : coordinates_middle[1]]
+    RB_quadrant = np.s_[coordinates_middle[0] + 1 :, coordinates_middle[1] + 1 :]
+    RT_quadrant = np.s_[: coordinates_middle[0], coordinates_middle[1] :]
 
     filtered_fourrier = dark_image_grey_fourier.copy()
 
@@ -282,17 +285,21 @@ def filter_kymo_left(kymo, nr_tiles=1, static_offset=1, static_angle=1000, plots
 
     filtered_fourrier[LT_quadrant] = 0
     filtered_fourrier[RB_quadrant] = 0
-    filtered_fourrier *= (1 - stat_array)
+    filtered_fourrier *= 1 - stat_array
     # filtered_fourrier[coordinates_middle[0], coordinates_middle[1]] = 0
 
     # stat_array[coordinates_middle[0], coordinates_middle[1]] = 0
-    stat_filt = np.fft.ifft2(np.fft.ifftshift(dark_image_grey_fourier * stat_array), norm='ortho')
-    filtered = np.fft.ifft2(np.fft.ifftshift(filtered_fourrier), norm='ortho')
+    stat_filt = np.fft.ifft2(
+        np.fft.ifftshift(dark_image_grey_fourier * stat_array), norm="ortho"
+    )
+    filtered = np.fft.ifft2(np.fft.ifftshift(filtered_fourrier), norm="ortho")
 
     shape_v, shape_h = shape_v // 3, shape_h // 3
-    middle_slice = np.s_[shape_v: 2 * shape_v, shape_h: 2 * shape_h]
-    middle_square = np.s_[coordinates_middle[0] - 10:coordinates_middle[0] + 50,
-                    coordinates_middle[1] - 50:coordinates_middle[1] + 10]
+    middle_slice = np.s_[shape_v : 2 * shape_v, shape_h : 2 * shape_h]
+    middle_square = np.s_[
+        coordinates_middle[0] - 10 : coordinates_middle[0] + 50,
+        coordinates_middle[1] - 50 : coordinates_middle[1] + 10,
+    ]
     middle = filtered[middle_slice]
     filtered_left = kymo - middle.real
 
@@ -306,7 +313,9 @@ def filter_kymo_left(kymo, nr_tiles=1, static_offset=1, static_angle=1000, plots
         ax[1][0].set_title("forw + stat")
         col[3] = ax[1][1].imshow(filtered_left, vmin=0, vmax=img_max)
         ax[1][1].set_title("back")
-        col[4] = ax[2][0].imshow(filtered[middle_slice].real + filtered_left, vmin=0, vmax=img_max)
+        col[4] = ax[2][0].imshow(
+            filtered[middle_slice].real + filtered_left, vmin=0, vmax=img_max
+        )
         ax[2][0].set_title("forw + back + stat")
         col[5] = ax[2][1].imshow(abs(stat_filt[middle_slice]), vmin=0, vmax=img_max)
         ax[2][1].set_title("stat")
@@ -370,7 +379,7 @@ def get_speeds(kymo, W, C_Thr, fps, binning, magnification):
 
     real_movement = np.where(imgCoherency > C_Thr, imgOrientation, nans)
     speed = (
-            np.tan((real_movement - 90) / 180 * np.pi) * space_pixel_size / time_pixel_size
+        np.tan((real_movement - 90) / 180 * np.pi) * space_pixel_size / time_pixel_size
     )  # um.s-1
 
 
@@ -390,7 +399,7 @@ def get_width_from_graph_im(edge, pos, image, nx_graph_pruned, slice_length=400)
         offset=offset,
         step=step,
         target_length=target_length,
-        bounds=(bound1, bound2)
+        bounds=(bound1, bound2),
     )
     return get_width(slices)
 
@@ -422,7 +431,15 @@ def get_width(slices, avearing_window=50, num_std=2):
     return np.median(widths)
 
 
-def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(70, 170, 30), seg_thresh = 11, binning=2, close_size=None, thresh_adjust=0):
+def segment_brightfield(
+    image,
+    thresh=0.5e-6,
+    frangi_range=np.arange(70, 170, 30),
+    seg_thresh=11,
+    binning=2,
+    close_size=None,
+    thresh_adjust=0,
+):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
     image:          Input image
@@ -433,22 +450,25 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(70, 170, 30
     frangi_range = frangi_range * 2 / binning
     smooth_im_blur = cv2.blur(-image, (11, 11))
     smooth_im = frangi(-smooth_im_blur, frangi_range)
-    smooth_im = np.array(smooth_im * (255/np.max(smooth_im)), dtype=np.uint8)
-    ret, segmented = cv2.threshold(smooth_im, 0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    smooth_im = np.array(smooth_im * (255 / np.max(smooth_im)), dtype=np.uint8)
+    ret, segmented = cv2.threshold(
+        smooth_im, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+    )
     print(ret)
     if thresh_adjust != 0:
-        ret, segmented = cv2.threshold(smooth_im, 0,255,int(ret) + thresh_adjust)
+        ret, segmented = cv2.threshold(smooth_im, 0, 255, int(ret) + thresh_adjust)
     if close_size is not None:
-        segmented = cv2.morphologyEx(segmented, cv2.MORPH_CLOSE, np.ones((close_size,close_size)))
+        segmented = cv2.morphologyEx(
+            segmented, cv2.MORPH_CLOSE, np.ones((close_size, close_size))
+        )
 
+    #     seg_shape = smooth_im.shape
 
-#     seg_shape = smooth_im.shape
-
-#     for i in range(1, 100):
-#         _, segmented = cv2.threshold(smooth_im, i, 255, cv2.THRESH_BINARY)
-#         coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
-#         if coverage < seg_thresh:
-#             break
+    #     for i in range(1, 100):
+    #         _, segmented = cv2.threshold(smooth_im, i, 255, cv2.THRESH_BINARY)
+    #         coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
+    #         if coverage < seg_thresh:
+    #             break
 
     skeletonized = skeletonize(segmented > seg_thresh)
     skeleton = scipy.sparse.dok_matrix(skeletonized)
@@ -458,17 +478,17 @@ def segment_brightfield(image, thresh=0.5e-6, frangi_range=np.arange(70, 170, 30
 
 
 def get_kymo_new(
-        edge,
-        pos,
-        images_adress,
-        nx_graph_pruned,
-        resolution=1,
-        offset=4,
-        step=15,
-        target_length=10,
-        bounds=(0, 1),
-        x_len=10,
-        order=None
+    edge,
+    pos,
+    images_adress,
+    nx_graph_pruned,
+    resolution=1,
+    offset=4,
+    step=15,
+    target_length=10,
+    bounds=(0, 1),
+    x_len=10,
+    order=None,
 ):
     """
     The new get_kymo function. The old one had some inefficiencies that lead to it being much slower than this one.
@@ -489,11 +509,18 @@ def get_kymo_new(
     Following section calculates the section coordinates for the skeleton of the hypha.
     These coordinates are used for all images in the video. Generally we don't expect hyphae to move.
     """
-    pixel_list = orient(nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
-    offset = max(offset, step)  # avoiding index out of range at start and end of pixel_list
-    pixel_indexes = generate_pivot_indexes(len(pixel_list), resolution=resolution, offset=offset)
-    list_of_segments = compute_section_coordinates(pixel_list, pixel_indexes, step=step,
-                                                   target_length=target_length + 1)
+    pixel_list = orient(
+        nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]]
+    )
+    offset = max(
+        offset, step
+    )  # avoiding index out of range at start and end of pixel_list
+    pixel_indexes = generate_pivot_indexes(
+        len(pixel_list), resolution=resolution, offset=offset
+    )
+    list_of_segments = compute_section_coordinates(
+        pixel_list, pixel_indexes, step=step, target_length=target_length + 1
+    )
 
     perp_lines = []
     kymo = []
@@ -507,9 +534,18 @@ def get_kymo_new(
         order = validate_interpolation_order(im.dtype, order)
         l = []
         for perp_line in perp_lines:
-            pixels = ndi.map_coordinates(im, perp_line, prefilter=order > 1, order=order, mode='reflect', cval=0.0)
+            pixels = ndi.map_coordinates(
+                im,
+                perp_line,
+                prefilter=order > 1,
+                order=order,
+                mode="reflect",
+                cval=0.0,
+            )
             pixels = np.flip(pixels, axis=1)
-            pixels = pixels[int(bounds[0] * target_length): int(bounds[1] * target_length)]
+            pixels = pixels[
+                int(bounds[0] * target_length) : int(bounds[1] * target_length)
+            ]
             pixels = pixels.reshape((1, len(pixels)))
             l.append(pixels)
 
@@ -519,18 +555,24 @@ def get_kymo_new(
     return np.array(kymo)
 
 
-def get_edge_image(edge, pos, images_address,
-                   nx_graph_pruned,
-                   resolution=1,
-                   offset=4,
-                   step=30,
-                   target_length=10,
-                   img_frame=0,
-                   bounds=(0, 1),
-                   order=None,
-                   logging=False):
+def get_edge_image(
+    edge,
+    pos,
+    images_address,
+    nx_graph_pruned,
+    resolution=1,
+    offset=4,
+    step=30,
+    target_length=10,
+    img_frame=0,
+    bounds=(0, 1),
+    order=None,
+    logging=False,
+):
     slices_list = []
-    pixel_list = orient(nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
+    pixel_list = orient(
+        nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]]
+    )
     offset = max(
         offset, step
     )  # avoiding index out of range at start and end of pixel_list
@@ -538,7 +580,8 @@ def get_edge_image(edge, pos, images_address,
         len(pixel_list), resolution=resolution, offset=offset
     )
     list_of_segments = compute_section_coordinates(
-        pixel_list, pixel_indexes, step=step, target_length=target_length + 1)
+        pixel_list, pixel_indexes, step=step, target_length=target_length + 1
+    )
     perp_lines = []
 
     for i, sect in enumerate(list_of_segments):
@@ -555,9 +598,18 @@ def get_edge_image(edge, pos, images_address,
     for im in im_list:
         l = []
         for perp_line in perp_lines:
-            pixels = ndi.map_coordinates(im, perp_line, prefilter=order > 1, order=order, mode='reflect', cval=0.0)
+            pixels = ndi.map_coordinates(
+                im,
+                perp_line,
+                prefilter=order > 1,
+                order=order,
+                mode="reflect",
+                cval=0.0,
+            )
             pixels = np.flip(pixels, axis=1)
-            pixels = pixels[int(bounds[0] * target_length): int(bounds[1] * target_length)]
+            pixels = pixels[
+                int(bounds[0] * target_length) : int(bounds[1] * target_length)
+            ]
             pixels = pixels.reshape((1, len(pixels)))
             # TODO(FK): Add thickness of the profile here
             l.append(pixels)
@@ -569,18 +621,25 @@ def get_edge_image(edge, pos, images_address,
     else:
         return np.array(slices_list)
 
-def get_edge_widths(edge, pos, segmented,
-                   nx_graph_pruned,
-                   resolution=1,
-                   offset=4,
-                   step=30,
-                   target_length=10,
-                   bounds=(0, 1),
-                   order=None,
-                   logging=False):
-    target_length = target_length*2
+
+def get_edge_widths(
+    edge,
+    pos,
+    segmented,
+    nx_graph_pruned,
+    resolution=1,
+    offset=4,
+    step=30,
+    target_length=10,
+    bounds=(0, 1),
+    order=None,
+    logging=False,
+):
+    target_length = target_length * 2
     slices_list = []
-    pixel_list = orient(nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]])
+    pixel_list = orient(
+        nx_graph_pruned.get_edge_data(*edge)["pixel_list"], pos[edge[0]]
+    )
     offset = max(
         offset, step
     )  # avoiding index out of range at start and end of pixel_list
@@ -588,7 +647,8 @@ def get_edge_widths(edge, pos, segmented,
         len(pixel_list), resolution=resolution, offset=offset
     )
     list_of_segments = compute_section_coordinates(
-        pixel_list, pixel_indexes, step=step, target_length=target_length + 1)
+        pixel_list, pixel_indexes, step=step, target_length=target_length + 1
+    )
     perp_lines = []
 
     for i, sect in enumerate(list_of_segments):
@@ -600,18 +660,29 @@ def get_edge_widths(edge, pos, segmented,
     im = segmented
     l = []
     for perp_line in perp_lines:
-        pixels = ndi.map_coordinates(im, perp_line, prefilter=order > 1, order=order, mode='reflect', cval=0.0)
+        pixels = ndi.map_coordinates(
+            im, perp_line, prefilter=order > 1, order=order, mode="reflect", cval=0.0
+        )
         pixels = np.flip(pixels, axis=1)
-        pixels = pixels[int(bounds[0] * target_length): int(bounds[1] * target_length)]
+        pixels = pixels[int(bounds[0] * target_length) : int(bounds[1] * target_length)]
         pixels = pixels.reshape((1, len(pixels)))
         l.append(pixels)
     slices = np.concatenate(l, axis=0)
-    slices_list = [max((sum(1 for _ in group) for value, group in itertools.groupby(pixel_row) if value == 0), default=0) for pixel_row in slices]
-        # TODO(FK): Add thickness of the profile here
-#         slices_list.append(max(len(list(y)) for (c,y) in itertools.groupby(np.array(pixels)) if c==1))
+    slices_list = [
+        max(
+            (
+                sum(1 for _ in group)
+                for value, group in itertools.groupby(pixel_row)
+                if value == 0
+            ),
+            default=0,
+        )
+        for pixel_row in slices
+    ]
+    # TODO(FK): Add thickness of the profile here
+    #         slices_list.append(max(len(list(y)) for (c,y) in itertools.groupby(np.array(pixels)) if c==1))
 
     return np.array(slices_list)
-
 
 
 def extract_perp_lines(src, dst, linewidth=1):
@@ -631,10 +702,18 @@ def extract_perp_lines(src, dst, linewidth=1):
     # distance between pixel centers)
     col_width = (linewidth - 1) * np.sin(-theta) / 2
     row_width = (linewidth - 1) * np.cos(theta) / 2
-    perp_rows = np.stack([np.linspace(row_i - row_width, row_i + row_width,
-                                      linewidth) for row_i in line_row])
-    perp_cols = np.stack([np.linspace(col_i - col_width, col_i + col_width,
-                                      linewidth) for col_i in line_col])
+    perp_rows = np.stack(
+        [
+            np.linspace(row_i - row_width, row_i + row_width, linewidth)
+            for row_i in line_row
+        ]
+    )
+    perp_cols = np.stack(
+        [
+            np.linspace(col_i - col_width, col_i + col_width, linewidth)
+            for col_i in line_col
+        ]
+    )
     return np.stack([perp_rows, perp_cols])
 
 
@@ -663,19 +742,27 @@ def validate_interpolation_order(image_dtype, order):
         return 0 if image_dtype == bool else 1
 
     if order < 0 or order > 5:
-        raise ValueError("Spline interpolation order has to be in the "
-                         "range 0-5.")
+        raise ValueError("Spline interpolation order has to be in the " "range 0-5.")
 
     if image_dtype == bool and order != 0:
         raise ValueError(
             "Input image dtype is bool. Interpolation is not defined "
             "with bool data type. Please set order to 0 or explicitely "
-            "cast input image to another data type.")
+            "cast input image to another data type."
+        )
 
     return order
 
 
-def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=40, magnif = 50, binning=2, test_plot=False):
+def segment_fluo(
+    image,
+    thresh=0.5e-7,
+    seg_thresh=4.5,
+    k_size=40,
+    magnif=50,
+    binning=2,
+    test_plot=False,
+):
     k_size = [30, 15][magnif < 50]
     kernel = np.ones((k_size, k_size), np.uint8)
     kernel_2 = np.ones((10, 10), np.uint8)
@@ -684,9 +771,9 @@ def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=40, magnif = 50, b
     if magnif < 30:
         im_canny = cv2.Canny(smooth_im, 0, 20)
         smooth_im = cv2.morphologyEx(im_canny, cv2.MORPH_DILATE, kernel)
-    _, segmented = cv2.threshold(smooth_im, 0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    _, segmented = cv2.threshold(smooth_im, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     if magnif > 30:
-        segmented = cv2.morphologyEx(segmented, cv2.MORPH_CLOSE, np.ones((9,9)))
+        segmented = cv2.morphologyEx(segmented, cv2.MORPH_CLOSE, np.ones((9, 9)))
 
     skeletonized = skeletonize(segmented > thresh)
     skeleton = scipy.sparse.dok_matrix(skeletonized)

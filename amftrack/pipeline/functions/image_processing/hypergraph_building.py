@@ -28,8 +28,11 @@ def relation(v, e1, e2, EExtract, E, positions):
             v_k = E[e][0] if E[e][1] == v else E[e][1]
             vec_k = np.array(positions[v_k]) - np.array(positions[v])
 
-            if abs(angle_between(vec_k, vec_i) - np.pi) < abs(angle_between(vec_i, vec_j) - np.pi) or \
-                    abs(angle_between(vec_k, vec_j) - np.pi) < abs(angle_between(vec_i, vec_j) - np.pi):
+            if abs(angle_between(vec_k, vec_i) - np.pi) < abs(
+                angle_between(vec_i, vec_j) - np.pi
+            ) or abs(angle_between(vec_k, vec_j) - np.pi) < abs(
+                angle_between(vec_i, vec_j) - np.pi
+            ):
                 return False
 
     return True
@@ -65,9 +68,13 @@ def hypergraph_from_graph(G, positions):
                 current = stack.pop()
                 H[current] = CurrentMark
                 # Only add edges to the stack that haven't been assigned to a hyperedge and aren't already on the stack
-                related_edges = [cor for cor in Cor[current] if cor != 0 and H[cor] == 0 and cor not in visited]
+                related_edges = [
+                    cor
+                    for cor in Cor[current]
+                    if cor != 0 and H[cor] == 0 and cor not in visited
+                ]
                 stack.extend(related_edges)
                 visited.update(related_edges)
             CurrentMark += 1
     H = {edge: H[i] for i, edge in enumerate(E)}
-    return (H)
+    return H
