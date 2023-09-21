@@ -32,7 +32,6 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     plot_edge_color_value,
     reconstruct_image_from_general,
     plot_full,
-
 )
 from amftrack.util.sys import test_path
 from test.util import helper
@@ -600,4 +599,3 @@ class TestExperimentHeavy(unittest.TestCase):
             save_path=os.path.join(test_path, "plot_full_with_point_labels"),
             with_point_label=True,
         )
-

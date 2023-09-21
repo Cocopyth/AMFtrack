@@ -22,4 +22,3 @@ for index, row in analysis_folders.iterrows():
     target_drop = f"/{dir_drop}/{id_unique}/{folder}"
     print(dir_drop)
     upload_folder(path, target_drop, delete=False)
-

@@ -240,7 +240,7 @@ def get_study_zone(exp, dist, radius, i=0):
     directory_name = get_dirname(date, exp.folders)
     path_snap = exp.directory + directory_name
     im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
-    shape_compressed = im.shape[1]*15//25, im.shape[0]*15//25
+    shape_compressed = im.shape[1] * 15 // 25, im.shape[0] * 15 // 25
     im_comp = cv2.resize(im, shape_compressed)
     dr_orth, dr_center = place_study_zone(im_comp, dist, radius)
     return (dr_orth, dr_center)
@@ -287,6 +287,7 @@ def save_study_zone(exp):
     # exp.reach_out = np.load(f"{exp.save_location}/reach_out.npy")
     # exp.num_trunk = np.load(f"{exp.save_location}/num_trunk.npy")
 
+
 def save_ROI(exp):
     dirName = exp.save_location
     ROI = get_ROI(exp, 0)
@@ -295,6 +296,7 @@ def save_ROI(exp):
     # Save the GeoJSON to a file
     with open(path_ROI, "w") as geojson_file:
         json.dump(polygon_geojson, geojson_file)
+
 
 def load_ROI(exp):
     dirName = exp.save_location
@@ -307,4 +309,4 @@ def load_ROI(exp):
         polygon_geojson = json.load(geojson_file)
     polygon = shape(polygon_geojson)
     exp.ROI = polygon
-    return(polygon)
+    return polygon

@@ -3,7 +3,8 @@ from amftrack.pipeline.functions.image_processing.hyphae_id_surf import (
 )
 from amftrack.pipeline.functions.post_processing.util import (
     measure_length_um_edge,
-    is_in_study_zone, is_in_ROI_node,
+    is_in_study_zone,
+    is_in_ROI_node,
 )
 import numpy as np
 from amftrack.notebooks.analysis.util import *
@@ -111,7 +112,7 @@ def get_stop_track(hyph, args):
 
 def gets_out_of_ROI(hyph, args):
     for t in hyph.end.ts():
-        if not is_in_ROI_node(hyph.end,t):
+        if not is_in_ROI_node(hyph.end, t):
             return ("out_of_ROI", t)
     return ("out_of_ROI", None)
 

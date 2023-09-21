@@ -296,7 +296,7 @@ def resolve_anastomosis_crossing_by_root(exp, lim_considered=1):
     exp.hyphaes = hyphaes
 
 
-def get_hyphae(experiment, lim_considered=1,rh_only=True):
+def get_hyphae(experiment, lim_considered=1, rh_only=True):
     tips = [
         node
         for node in experiment.nodes

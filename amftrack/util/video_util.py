@@ -87,7 +87,9 @@ def make_video(
         if save_path is None:
             time = time_ns()
             save_path_temp = os.path.join(temp_path, f"{time}.mp4")
-            imageio.mimsave(save_path_temp, imgs,codec='libx264', quality=3, pixelformat='yuv420p')
+            imageio.mimsave(
+                save_path_temp, imgs, codec="libx264", quality=3, pixelformat="yuv420p"
+            )
         else:
             save_path_temp = save_path
         upload(save_path_temp, upload_path)
@@ -232,9 +234,7 @@ def make_images_track(exp, is_circle=False):
         # for t in [0]:
 
         to_plot_nodes = [
-            node
-            for node in get_all_nodes(exp, t)
-            if is_in_ROI_node(node, t)
+            node for node in get_all_nodes(exp, t) if is_in_ROI_node(node, t)
         ]
         path = f"plot_nodes_{time_ns()}"
         path = os.path.join(temp_path, path)
@@ -244,10 +244,7 @@ def make_images_track(exp, is_circle=False):
         edges_center = [
             edge
             for edge in edges
-            if (
-                is_in_ROI_node(edge.end, t)
-                or is_in_ROI_node(edge.begin, t)
-            )
+            if (is_in_ROI_node(edge.end, t) or is_in_ROI_node(edge.begin, t))
         ]
         fig = plot_full(
             exp,
@@ -609,11 +606,7 @@ def make_anastomosis_images(exp, t0):
     """
     paths_list = []
 
-    nodes = [
-        node
-        for node in exp.nodes
-        if node.is_in(t0) and is_in_ROI_node(node, t0)
-    ]
+    nodes = [node for node in exp.nodes if node.is_in(t0) and is_in_ROI_node(node, t0)]
     tips = [
         node
         for node in nodes

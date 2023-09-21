@@ -4,7 +4,8 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 )
 from amftrack.pipeline.functions.post_processing.util import (
     measure_length_um_edge,
-    is_in_study_zone, is_in_ROI_node,
+    is_in_study_zone,
+    is_in_ROI_node,
 )
 import numpy as np
 from scipy import spatial
@@ -62,11 +63,7 @@ def get_tot_biovolume(exp, t, args=None):
 
 
 def get_tot_biovolume_study(exp, t, args=None):
-    nodes = [
-        node
-        for node in exp.nodes
-        if node.is_in(t) and is_in_ROI_node(node, t)
-    ]
+    nodes = [node for node in exp.nodes if node.is_in(t) and is_in_ROI_node(node, t)]
     edges = {edge for node in nodes for edge in node.edges(t)}
     tot_biovolume = np.sum(
         [
@@ -79,16 +76,14 @@ def get_tot_biovolume_study(exp, t, args=None):
     )
     return ("tot_biovolume_study", tot_biovolume)
 
+
 def get_tot_surface_area_study(exp, t, args=None):
-    nodes = [
-        node
-        for node in exp.nodes
-        if node.is_in(t) and is_in_ROI_node(node, t)
-    ]
+    nodes = [node for node in exp.nodes if node.is_in(t) and is_in_ROI_node(node, t)]
     edges = {edge for node in nodes for edge in node.edges(t)}
     tot_biovolume = np.sum(
         [
-            2*np.pi
+            2
+            * np.pi
             * (edge.width(t) / 2)
             * np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t))
             * 1.725
@@ -96,6 +91,7 @@ def get_tot_surface_area_study(exp, t, args=None):
         ]
     )
     return ("tot_surface_area_study", tot_biovolume)
+
 
 # def get_length_in_ring_rough(exp, t, args=None):
 #     length = 0
@@ -121,11 +117,7 @@ def get_area(exp, t, args=None):
 
 def get_area_study_zone(exp, t, args=None):
     nodes = np.array(
-        [
-            node.pos(t)
-            for node in exp.nodes
-            if node.is_in(t) and is_in_ROI_node(node, t)
-        ]
+        [node.pos(t) for node in exp.nodes if node.is_in(t) and is_in_ROI_node(node, t)]
     )
     if len(nodes) > 3:
         hull = spatial.ConvexHull(nodes)
@@ -149,9 +141,7 @@ def get_area_separate_connected_components(exp, t, args=None):
             [
                 node.pos(t)
                 for node in exp.nodes
-                if node.is_in(t)
-                and is_in_ROI_node(node, t)
-                and (node.label in g.nodes)
+                if node.is_in(t) and is_in_ROI_node(node, t) and (node.label in g.nodes)
             ]
         )
         if len(nodes) > 3:
@@ -175,9 +165,7 @@ def get_num_tips_study_zone(exp, t, args=None):
             [
                 node
                 for node in exp.nodes
-                if node.is_in(t)
-                and node.degree(t) == 1
-                and is_in_ROI_node(node, t)
+                if node.is_in(t) and node.degree(t) == 1 and is_in_ROI_node(node, t)
             ]
         ),
     )
@@ -192,16 +180,8 @@ def get_num_BAS_tips(exp, t, args=None):
         return boolean
 
     edges = get_all_edges(exp, t)
-    edges = [
-        edge
-        for edge in edges
-        if is_in_ROI_node(edge.begin, t)
-    ]
-    edges = [
-        edge
-        for edge in edges
-        if is_in_ROI_node(edge.end, t)
-    ]
+    edges = [edge for edge in edges if is_in_ROI_node(edge.begin, t)]
+    edges = [edge for edge in edges if is_in_ROI_node(edge.end, t)]
     edge_tip = [edge for edge in edges if h(edge, t)]
     return ("num_tips_BAS_study", len(edge_tip))
 
@@ -217,9 +197,7 @@ def get_num_nodes_study_zone(exp, t, args=None):
             [
                 node
                 for node in exp.nodes
-                if node.is_in(t)
-                and node.degree(t) > 0
-                and is_in_ROI_node(node, t)
+                if node.is_in(t) and node.degree(t) > 0 and is_in_ROI_node(node, t)
             ]
         ),
     )
@@ -232,9 +210,7 @@ def get_num_edges(exp, t, args=None):
             [
                 node.degree(t)
                 for node in exp.nodes
-                if node.is_in(t)
-                and node.degree(t) > 0
-                and is_in_ROI_node(node, t)
+                if node.is_in(t) and node.degree(t) > 0 and is_in_ROI_node(node, t)
             ]
         )
         / 2,

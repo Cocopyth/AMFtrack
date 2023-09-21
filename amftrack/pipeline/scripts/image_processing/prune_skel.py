@@ -37,10 +37,10 @@ skel = read_mat(path_snap + "/Analysis/skeleton_masked.mat")["skeleton"]
 if not skip:
     skeleton = scipy.sparse.dok_matrix(skel)
 
-# nx_graph_poss=[generate_nx_graph(from_sparse_to_graph(skeleton)) for skeleton in skels_aligned]
-# nx_graphs_aligned=[nx_graph_pos[0] for nx_graph_pos in nx_graph_poss]
-# poss_aligned=[nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
-# nx_graph_pruned=[clean_degree_4(prune_graph(nx_graph),poss_aligned[i])[0] for i,nx_graph in enumerate(nx_graphs_aligned)]
+    # nx_graph_poss=[generate_nx_graph(from_sparse_to_graph(skeleton)) for skeleton in skels_aligned]
+    # nx_graphs_aligned=[nx_graph_pos[0] for nx_graph_pos in nx_graph_poss]
+    # poss_aligned=[nx_graph_pos[1] for nx_graph_pos in nx_graph_poss]
+    # nx_graph_pruned=[clean_degree_4(prune_graph(nx_graph),poss_aligned[i])[0] for i,nx_graph in enumerate(nx_graphs_aligned)]
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
     nx_graph, pos = remove_spurs(nx_graph, pos)
 

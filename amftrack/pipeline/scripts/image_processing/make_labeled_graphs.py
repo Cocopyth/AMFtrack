@@ -4,7 +4,9 @@ import pandas as pd
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
 )
-from amftrack.pipeline.functions.image_processing.node_id import create_labeled_graph_local
+from amftrack.pipeline.functions.image_processing.node_id import (
+    create_labeled_graph_local,
+)
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_nx_to_tab,
 )
@@ -23,7 +25,7 @@ unique_ids = list(set(run_info["unique_id"].values))
 unique_ids.sort()
 select = run_info.loc[run_info["unique_id"] == unique_ids[i]]
 exp = Experiment(directory)
-exp.load_light(select,suffix="_width")
+exp.load_light(select, suffix="_width")
 print("loaded")
 create_labeled_graph_local(exp)
 print("labeled")

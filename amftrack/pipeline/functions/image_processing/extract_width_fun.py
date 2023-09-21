@@ -461,7 +461,7 @@ def get_width_info_new(experiment, t, resolution=50, skip=False) -> Dict:
             edge_exp = Edge(
                 Node(edge[0], experiment), Node(edge[1], experiment), experiment
             )
-            if len(edge_exp.pixel_list(t)) > 2*resolution:
+            if len(edge_exp.pixel_list(t)) > 2 * resolution:
                 prediction = compute_edge_width_profile(
                     experiment,
                     t,
