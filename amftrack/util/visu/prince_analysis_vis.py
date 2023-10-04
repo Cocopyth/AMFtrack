@@ -12,6 +12,12 @@ import plotly.express as px
 root_dir = r"C:\Users\coren\AMOLF-SHIMIZU Dropbox\DATA"
 analysis_dir = "PRINCE_ANALYSIS"
 df_sum = pd.read_excel(os.path.join(root_dir, analysis_dir, "plate_summary2.xlsx"))
+df_sum['treatment']=df_sum['treatment'].replace('1P 100N','001P100N')
+df_sum['treatment']=df_sum['treatment'].replace('001P100N','1P/100N/100C')
+df_sum['treatment']=df_sum['treatment'].replace('1P100N100C','1P/100N/100C')
+
+df_sum['root']=df_sum['root'].replace('Carrot','carrot')
+df_sum['root']=df_sum['root'].replace('Carrot Toby','carrot')
 
 
 # Dash app
@@ -124,10 +130,8 @@ def filter_videos_for_list(treatment, root, fungus, coarse_grain_values):
         (df_sum["treatment"] == treatment)
         & (df_sum["root"] == root)
         & (df_sum["fungus"] == fungus)
-        & (df_sum["Suitable for coarse grain"].isin(coarse_grain_values))
+        # & (df_sum["Suitable for coarse grain"].isin(coarse_grain_values))
     )
-    mask = df_sum["root"] == root
-
     unique_ids = df_sum[mask]["unique_id"].tolist()
     video_filenames = [
         uid

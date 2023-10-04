@@ -501,7 +501,7 @@ def get_time_plate_info_from_analysis(analysis_folders, use_saved=True):
         folders = pd.concat(
             [folders.copy(), folders_plate.copy()], axis=0, ignore_index=True
         )
-    time_plate_info.to_json(path_save_info)
+    # time_plate_info.to_json(path_save_info)
     folders.to_json(path_save_folders)
     return (folders, time_plate_info)
 
@@ -539,12 +539,12 @@ def get_global_hypha_info_from_analysis(analysis_folders, use_saved=True):
             folders = pd.concat(
                 [folders.copy(), folders_plate.copy()], axis=0, ignore_index=True
             )
-    global_hypha_info.to_json(path_save_info)
+    # global_hypha_info.to_json(path_save_info)
     folders.to_json(path_save_folders)
     return (folders, global_hypha_info)
 
 
-def get_time_hypha_info_from_analysis(analysis_folders, use_saved=True):
+def get_time_hypha_info_from_analysis(analysis_folders, use_saved=False):
     plates_in = analysis_folders["unique_id"].unique()
     plates_in.sort()
     ide = hashlib.sha256(np.sum(plates_in).encode("utf-8")).hexdigest()
@@ -594,7 +594,7 @@ def get_time_hypha_info_from_analysis(analysis_folders, use_saved=True):
             time_hypha_infos.append(time_hypha_info_plate)
             folders = pd.concat([folders, folders_plate], axis=0, ignore_index=True)
     time_hypha_info = pd.concat(time_hypha_infos, axis=0, ignore_index=True)
-    time_hypha_info.to_json(path_save_info)
+    # time_hypha_info.to_json(path_save_info)
     folders.to_json(path_save_folders)
     return (folders, time_hypha_info)
 
@@ -651,7 +651,7 @@ def get_time_edge_info_from_analysis(analysis_folders, use_saved=True):
             time_edge_infos.append(time_edge_info_plate)
             folders = pd.concat([folders, folders_plate], axis=0, ignore_index=True)
     time_edge_info = pd.concat(time_edge_infos, axis=0, ignore_index=True)
-    time_edge_info.to_json(path_save_info)
+    # time_edge_info.to_json(path_save_info)
     folders.to_json(path_save_folders)
     return (folders, time_edge_info)
 
@@ -713,7 +713,7 @@ def get_time_plate_info_long_from_analysis(analysis_folders, use_saved=True):
             time_plate_infos.append(time_plate_info_plate)
             folders = pd.concat([folders, folders_plate], axis=0, ignore_index=True)
     time_plate_info = pd.concat(time_plate_infos, axis=0, ignore_index=True)
-    time_plate_info.to_json(path_save_info)
+    # time_plate_info.to_json(path_save_info)
     folders.to_json(path_save_folders)
     return (folders, time_plate_info)
 
