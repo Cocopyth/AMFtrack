@@ -1,6 +1,5 @@
 from pathlib import Path
 import imageio.v2 as imageio
-from amftrack.pipeline.development.high_mag_videos.high_mag_videos_fun import *
 import pandas as pd
 from PIL import Image
 import os
@@ -10,6 +9,7 @@ import tensorflow as tf
 import matplotlib as mpl
 from scipy.signal import find_peaks
 
+from amftrack.pipeline.functions.transport_processing.high_mag_videos.high_mag_videos_fun import *
 
 mpl.rcParams["figure.dpi"] = 300
 
