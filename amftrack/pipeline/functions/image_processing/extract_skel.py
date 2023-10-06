@@ -304,6 +304,6 @@ def run_back_sub(directory, folder):
         "--ij2",
         "--console",
         "-macro",
-        f'{os.getenv("TEMP")}/stitching_loops/background_substract{op_id}.ijm',
+        f'{temp_path}/stitching_loops/background_substract{op_id}.ijm',
     ]
     subprocess.run(command, stdout=subprocess.DEVNULL)
