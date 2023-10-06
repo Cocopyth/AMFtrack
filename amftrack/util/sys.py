@@ -651,7 +651,7 @@ def get_time_edge_info_from_analysis(analysis_folders, use_saved=True):
             time_edge_infos.append(time_edge_info_plate)
             folders = pd.concat([folders, folders_plate], axis=0, ignore_index=True)
     time_edge_info = pd.concat(time_edge_infos, axis=0, ignore_index=True)
-    # time_edge_info.to_json(path_save_info)
+    # time_edge_info.to_json( )
     folders.to_json(path_save_folders)
     return (folders, time_edge_info)
 
