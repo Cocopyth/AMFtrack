@@ -48,7 +48,7 @@ class TestImageAnalysis(unittest.TestCase):
         cls.directory = helper.test_path
     def test_create_script(self):
         helper.create_script_function("extract_skel_2.py")
-    def test_skeletonizer(self):
+    def test_skeletonize(self):
         hyph_width = 30
         perc_low = 85
         perc_high = 99.5

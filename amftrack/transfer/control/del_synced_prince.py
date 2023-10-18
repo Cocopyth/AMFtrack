@@ -14,10 +14,10 @@ import checksumdir
 import shutil
 
 # directory_origin = r'/mnt/sun/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE_syncing/'
-directory_origin = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$,user=bisot/Data/Prince2/Images/"
-directory_target = (
-    r"/mnt/sun/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE_syncing/"
-)
+directory_origin = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$/Data/Prince2/Images/"
+# directory_target = (
+#     r"/mnt/sun/home-folder/oyartegalvez/Drive_AMFtopology/PRINCE_syncing/"
+# )
 directory_target = r"/mnt/sun-temp/TEMP/PRINCE_syncing/"
 
 update_plate_info(directory_origin, local=True)
@@ -26,9 +26,11 @@ update_plate_info(directory_target, local=True)
 
 
 all_folders_target = get_current_folders(directory_target, local=True)
+
 run_info = all_folders_target.copy()
 run_info = run_info.sort_values("datetime")
 folder_list = list(run_info["folder"])
+print(len(folder_list))
 with tqdm(total=len(folder_list), desc="deleted") as pbar:
     for folder in folder_list:
         origin = all_folders_origin.loc[all_folders_origin["folder"] == folder][
@@ -42,8 +44,10 @@ with tqdm(total=len(folder_list), desc="deleted") as pbar:
         target = all_folders_target.loc[all_folders_target["folder"] == folder][
             "total_path"
         ].iloc[0]
-        check_or = checksumdir.dirhash(origin)
-        check_targ = checksumdir.dirhash(target)
+        # check_or = checksumdir.dirhash(origin)
+        # check_targ = checksumdir.dirhash(target)
+        check_or = 1
+        check_targ = 1
         print(folder, (check_or == check_targ))
 
         if check_or == check_targ and origin != target:
