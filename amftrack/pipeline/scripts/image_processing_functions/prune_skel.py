@@ -55,17 +55,17 @@ def process(args):
     else:
         skel = scipy.sparse.csc_matrix(skel, dtype=np.uint8)
     sio.savemat(path_snap + "/Analysis/skeleton_pruned.mat", {"skeleton": skel})
-    dim = skel.shape
-    kernel = np.ones((5, 5), np.uint8)
-    itera = 1
-    sio.savemat(
-        path_snap + "/Analysis/skeleton_pruned_compressed.mat",
-        {
-            "skeleton": cv2.resize(
-                cv2.dilate(skel.todense(), kernel, iterations=itera),
-                (dim[1] // 5, dim[0] // 5),
-            )
-        },
-    )
+    # dim = skel.shape
+    # kernel = np.ones((5, 5), np.uint8)
+    # itera = 1
+    # sio.savemat(
+    #     path_snap + "/Analysis/skeleton_pruned_compressed.mat",
+    #     {
+    #         "skeleton": cv2.resize(
+    #             cv2.dilate(skel.todense(), kernel, iterations=itera),
+    #             (dim[1] // 5, dim[0] // 5),
+    #         )
+    #     },
+    # )
 if __name__ == "__main__":
     process(sys.argv)
