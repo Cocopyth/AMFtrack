@@ -33,7 +33,7 @@ from amftrack.util.dbx import (
     save_dropbox_state,
     get_dropbox_folders_general_recursive,
 )
-from amftrack.pipeline.scripts.image_processing_functions import (
+from amftrack.pipeline.scripts.image_processing import (
     mask_skel,
     extract_skel_2,
     detect_blob,
