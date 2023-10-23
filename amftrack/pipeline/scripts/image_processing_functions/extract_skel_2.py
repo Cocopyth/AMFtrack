@@ -17,6 +17,7 @@ from amftrack.pipeline.functions.image_processing.extract_skel import (
     run_back_sub,
     bowler_hat,
 )
+from amftrack.sparse_util import zhang_suen_thinning
 
 from amftrack.util.sys import get_dates_datetime, get_dirname
 import shutil
@@ -78,7 +79,7 @@ def process(args):
         int(np.max(xs) - np.min(xs)) + max(im.shape),
     )
     ims = []
-    skel = np.zeros(dim, dtype=np.uint8)
+    skel = np.zeros(dim, dtype=bool)
     params = [30]
     for index, name in enumerate(tileconfig[0]):
         # for index, name in enumerate(list_debug):
@@ -103,16 +104,14 @@ def process(args):
         skel[
             boundaries[1] : boundaries[1] + shape[0],
             boundaries[0] : boundaries[0] + shape[1],
-        ] += segmented
+        ] += segmented.astype(bool)
     print("number to reduce : ", np.sum(skel > 0), np.sum(skel <= 0))
-    skeletonized = cv2.ximgproc.thinning(np.array(255 * (skel > 0), dtype=np.uint8))
+    skel = zhang_suen_thinning(skel)
     # skel_sparse = sparse.lil_matrix(skel)
     sio.savemat(
         path_snap + "/Analysis/skeleton.mat",
-        {"skeleton": scipy.sparse.csc_matrix(skeletonized)},
+        {"skeleton": scipy.sparse.csc_matrix(skel)},
     )
-    compressed = cv2.resize(skeletonized, (dim[1] // 5, dim[0] // 5))
-    sio.savemat(path_snap + "/Analysis/skeleton_compressed.mat", {"skeleton": compressed})
     print("time=", time() - t)
     im_fold = "/Img3"
     to_delete = directory + directory_name + im_fold
