@@ -127,6 +127,23 @@ def extract_skel_new_prince(im, params, perc_low, perc_high, minlow=20, minhigh=
     # os.remove(imtransformed_path)
     return connected
 
+def extract_skel_no_external(im, params, perc_low, perc_high, minlow=20, minhigh=90):
+    bowled = bowler_hat(-im.astype(np.uint8), 32, params)
+    filename = time_ns()
+    place_save = temp_path
+    to_smooth = np.minimum(bowled * 255, 255 - im)
+    # to_smooth = 255-im
+    imtransformed_path = f"{place_save}/{filename}.tif"
+    im2 = to_smooth.astype(np.uint8)
+    low = max(minlow, np.percentile(im2, perc_low))
+    high = max(minhigh, np.percentile(im2, perc_high))
+    transformed = im2
+    hyst = filters.apply_hysteresis_threshold(transformed, low, high)
+    dilated = remove_holes(hyst)
+    dilated = dilated.astype(np.uint8)
+    connected = remove_component(dilated)
+    # os.remove(imtransformed_path)
+    return connected
 
 def extend_tip(skeletonized, dilated, dist):
     img2 = np.zeros((dilated.shape))
@@ -304,6 +321,7 @@ def run_back_sub(directory, folder):
         "--ij2",
         "--console",
         "-macro",
-        f'{os.getenv("TEMP")}/stitching_loops/background_substract{op_id}.ijm',
+        f'{temp_path}/stitching_loops/background_substract{op_id}.ijm',
     ]
+    print(" ".join(command))
     subprocess.run(command, stdout=subprocess.DEVNULL)
