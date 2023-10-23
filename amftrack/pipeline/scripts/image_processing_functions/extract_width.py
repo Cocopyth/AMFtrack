@@ -13,6 +13,8 @@ from amftrack.util.sys import temp_path
 import pickle
 import networkx as nx
 import pandas as pd
+
+
 def process(args):
     directory = str(args[1])
     skip = eval(args[2])
@@ -39,6 +41,7 @@ def process(args):
     nx.set_edge_attributes(G, edge_test, "width")
     print(i, f"saving {path_snap}")
     pickle.dump((G, pos), open(f"{path_snap}/Analysis/nx_graph_pruned_width.p", "wb"))
+
 
 if __name__ == "__main__":
     process(sys.argv)

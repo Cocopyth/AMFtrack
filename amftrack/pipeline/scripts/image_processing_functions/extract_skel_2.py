@@ -21,6 +21,8 @@ from amftrack.sparse_util import zhang_suen_thinning
 
 from amftrack.util.sys import get_dates_datetime, get_dirname
 import shutil
+
+
 def process(args):
 
     i = int(args[-1])
@@ -32,7 +34,6 @@ def process(args):
     minhigh = float(args[5])
 
     directory = str(args[6])
-
 
     run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
     folder_list = list(run_info["folder"])
@@ -116,6 +117,7 @@ def process(args):
     im_fold = "/Img3"
     to_delete = directory + directory_name + im_fold
     shutil.rmtree(to_delete)
+
 
 if __name__ == "__main__":
     process(sys.argv)

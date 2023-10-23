@@ -127,6 +127,7 @@ def extract_skel_new_prince(im, params, perc_low, perc_high, minlow=20, minhigh=
     # os.remove(imtransformed_path)
     return connected
 
+
 def extract_skel_no_external(im, params, perc_low, perc_high, minlow=20, minhigh=90):
     bowled = bowler_hat(-im.astype(np.uint8), 32, params)
     filename = time_ns()
@@ -144,6 +145,7 @@ def extract_skel_no_external(im, params, perc_low, perc_high, minlow=20, minhigh
     connected = remove_component(dilated)
     # os.remove(imtransformed_path)
     return connected
+
 
 def extend_tip(skeletonized, dilated, dist):
     img2 = np.zeros((dilated.shape))
@@ -321,7 +323,7 @@ def run_back_sub(directory, folder):
         "--ij2",
         "--console",
         "-macro",
-        f'{temp_path}/stitching_loops/background_substract{op_id}.ijm',
+        f"{temp_path}/stitching_loops/background_substract{op_id}.ijm",
     ]
     print(" ".join(command))
     subprocess.run(command, stdout=subprocess.DEVNULL)

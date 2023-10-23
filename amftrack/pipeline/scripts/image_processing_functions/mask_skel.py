@@ -99,5 +99,6 @@ def process(args):
     mask_compressed = cv2.resize(output, (dim[1] // 5, dim[0] // 5))
     sio.savemat(path_snap + "/Analysis/mask.mat", {"mask": mask_compressed})
 
+
 if __name__ == "__main__":
     process(sys.argv)

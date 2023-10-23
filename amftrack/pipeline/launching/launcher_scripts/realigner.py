@@ -5,6 +5,7 @@ from amftrack.util.sys import (
 )
 from amftrack.pipeline.launching.run_super import run_parallel, run_launcher
 from time import time_ns
+
 directory_targ = str(sys.argv[1])
 name_job = str(sys.argv[2])
 stage = int(sys.argv[3])
