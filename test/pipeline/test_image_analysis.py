@@ -36,8 +36,7 @@ from amftrack.util.dbx import (
     get_dropbox_folders_general_recursive,
 )
 from amftrack.pipeline.scripts.image_processing_functions import mask_skel, extract_skel_2, detect_blob, prune_skel,\
-    extract_nx_graph, extract_width,track_nodes, make_labeled_graphs
-
+    extract_nx_graph, extract_width,track_nodes, make_labeled_graphs,extract_skel_no_external
 
 class TestImageAnalysis(unittest.TestCase):
     """Tests that need only a static plate with one timestep"""
@@ -58,6 +57,19 @@ class TestImageAnalysis(unittest.TestCase):
         args = [None,hyph_width, perc_low, perc_high, minlow, minhigh, self.directory]
         run_function(
             extract_skel_2.process,
+            args,
+            self.folders
+        )
+    def test_skeletonize_no_exeternal(self):
+        hyph_width = 30
+        perc_low = 85
+        perc_high = 99.5
+        minlow = 10
+        minhigh = 70
+
+        args = [None,hyph_width, perc_low, perc_high, minlow, minhigh, self.directory]
+        run_function(
+            extract_skel_no_external.process,
             args,
             self.folders
         )

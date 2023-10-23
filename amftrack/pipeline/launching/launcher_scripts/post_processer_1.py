@@ -158,7 +158,7 @@ list_f = [plot_get_hull_nodes]
 
 list_args = [[]] * len(list_f)
 overwrite = True
-num_parallel = 30
+num_parallel = 15
 run_parallel_post(
     "exp_plot.py",
     list_f,
@@ -168,7 +168,7 @@ run_parallel_post(
     num_parallel,
     time,
     "global_plate_post_process",
-    cpus=128,
+    cpus=32,
     name_job=name_job,
     node="fat",
 )
