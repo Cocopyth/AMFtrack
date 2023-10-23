@@ -13,6 +13,7 @@ from amftrack.util.sys import (
 from datetime import datetime, timedelta
 from amftrack.util.dbx import upload_folders
 from time import time_ns
+import concurrent.futures
 
 directory_origin = r"/mnt/sun-temp/TEMP/PRINCE_syncing/"
 dir_drop = "DATA/PRINCE"
@@ -44,4 +45,15 @@ old_folders = old_folders.loc[old_folders["Plate"].isin(plates_in_prince) == Fal
 
 old_folders = old_folders.sort_values(by=["datetime"], ignore_index=True)
 print(len(old_folders), plates_in_prince)
-upload_folders(old_folders, dir_drop=dir_drop, delete=True)
+NUM_THREADS = 4
+
+def task(i):
+    upload_folders(old_folders[i:i + 1], dir_drop=dir_drop, delete=True)
+
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+    executor.map(task, range(len(old_folders)))
+
+
+
+
