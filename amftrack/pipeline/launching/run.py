@@ -102,11 +102,9 @@ def run(
             process = subprocess.run(command, stdout=subprocess.DEVNULL)
             pbar.update(1)
 
+
 def run_function(
-    process,
-    args: List,
-    folders: pd.DataFrame,
-    per_unique_id = False
+    process, args: List, folders: pd.DataFrame, per_unique_id=False
 ) -> None:
     """
     Run the chosen script `code` localy.
@@ -117,7 +115,7 @@ def run_function(
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     folder_list = list(folders["folder"])
     folder_list.sort()
-    args += [op_id,0]
+    args += [op_id, 0]
     if per_unique_id:
         unique_ids = list(set(folders["unique_id"].values))
         with tqdm(total=len(unique_ids), desc="plates_treated") as pbar:
@@ -131,6 +129,7 @@ def run_function(
                 args[-1] = index
                 process(args)
                 pbar.update(1)
+
 
 def run_post_process(
     code: str,

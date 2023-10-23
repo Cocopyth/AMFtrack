@@ -2,9 +2,7 @@ import os
 import unittest
 from test.util import helper
 
-from amftrack.pipeline.launching.run import (
-    run_function
-)
+from amftrack.pipeline.launching.run import run_function
 import os
 from amftrack.util.sys import (
     get_dates_datetime,
@@ -35,8 +33,18 @@ from amftrack.util.dbx import (
     save_dropbox_state,
     get_dropbox_folders_general_recursive,
 )
-from amftrack.pipeline.scripts.image_processing_functions import mask_skel, extract_skel_2, detect_blob, prune_skel,\
-    extract_nx_graph, extract_width,track_nodes, make_labeled_graphs,extract_skel_no_external
+from amftrack.pipeline.scripts.image_processing_functions import (
+    mask_skel,
+    extract_skel_2,
+    detect_blob,
+    prune_skel,
+    extract_nx_graph,
+    extract_width,
+    track_nodes,
+    make_labeled_graphs,
+    extract_skel_no_external,
+)
+
 
 class TestImageAnalysis(unittest.TestCase):
     """Tests that need only a static plate with one timestep"""
@@ -45,8 +53,10 @@ class TestImageAnalysis(unittest.TestCase):
     def setUpClass(cls):
         cls.folders = helper.make_folders()
         cls.directory = helper.test_path
+
     def test_create_script(self):
         helper.create_script_function("extract_skel_2.py")
+
     def test_skeletonize(self):
         hyph_width = 30
         perc_low = 85
@@ -54,12 +64,9 @@ class TestImageAnalysis(unittest.TestCase):
         minlow = 10
         minhigh = 70
 
-        args = [None,hyph_width, perc_low, perc_high, minlow, minhigh, self.directory]
-        run_function(
-            extract_skel_2.process,
-            args,
-            self.folders
-        )
+        args = [None, hyph_width, perc_low, perc_high, minlow, minhigh, self.directory]
+        run_function(extract_skel_2.process, args, self.folders)
+
     def test_skeletonize_no_exeternal(self):
         hyph_width = 30
         perc_low = 85
@@ -67,36 +74,23 @@ class TestImageAnalysis(unittest.TestCase):
         minlow = 10
         minhigh = 70
 
-        args = [None,hyph_width, perc_low, perc_high, minlow, minhigh, self.directory]
-        run_function(
-            extract_skel_no_external.process,
-            args,
-            self.folders
-        )
+        args = [None, hyph_width, perc_low, perc_high, minlow, minhigh, self.directory]
+        run_function(extract_skel_no_external.process, args, self.folders)
+
     def test_spore(self):
         args = [None, self.directory]
-        run_function(
-            detect_blob.process,
-            args,
-            self.folders
-        )
+        run_function(detect_blob.process, args, self.folders)
+
     def test_mask(self):
         thresh = 40
-        args = [None,thresh, self.directory]
-        run_function(
-            mask_skel.process,
-            args,
-            self.folders
-        )
+        args = [None, thresh, self.directory]
+        run_function(mask_skel.process, args, self.folders)
+
     def test_prune(self):
         threshold = 0.01 / 1.725
         skip = False
-        args = [None,threshold, skip, self.directory]
-        run_function(
-            prune_skel.process,
-            args,
-            self.folders[:1]
-        )
+        args = [None, threshold, skip, self.directory]
+        run_function(prune_skel.process, args, self.folders[:1])
 
     # def test_realign(self):
     #     thresh = 10000  # For R. irregularis, thresh 10000 is good. For Aggregatum, higher may be necessary
@@ -117,34 +111,20 @@ class TestImageAnalysis(unittest.TestCase):
     #     )
     def test_graph_extract(self):
         args = [None, self.directory]
-        run_function(
-            extract_nx_graph.process,
-            args,
-            self.folders[:1]
-        )
+        run_function(extract_nx_graph.process, args, self.folders[:1])
+
     def test_width_extract(self):
         skip = "False"
         resolution = "10"
-        args = [None,self.directory, skip, resolution]
-        run_function(
-            extract_width.process,
-            args,
-            self.folders[:1]
-        )
+        args = [None, self.directory, skip, resolution]
+        run_function(extract_width.process, args, self.folders[:1])
 
     def test_node_id(self):
         args = [None, self.directory]
-        run_function(
-            track_nodes.process,
-            args,
-            self.folders
-        )
+        run_function(track_nodes.process, args, self.folders)
+
     def test_make_labeled(self):
         args = [None, self.directory]
         run_function(
-            make_labeled_graphs.process,
-            args,
-            self.folders,
-            per_unique_id = True
+            make_labeled_graphs.process, args, self.folders, per_unique_id=True
         )
-
