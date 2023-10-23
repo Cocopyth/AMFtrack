@@ -154,22 +154,26 @@ def make_experiment_object_multi():
         exp.load_tile_information(t)
     return exp
 
+
 def make_folders():
     directory = test_path
     update_plate_info(directory)
     folder_df = get_current_folders(directory)
-    return (folder_df)
+    return folder_df
+
+
 import inspect
 import sys
 
+
 def create_script_function(script_file):
     # Read the script contents
-    with open(script_file, 'r') as f:
+    with open(script_file, "r") as f:
         script_content = f.read()
 
     # Extract function arguments
     try:
-        code = compile(script_content, script_file, 'exec')
+        code = compile(script_content, script_file, "exec")
         global_vars = {}
         local_vars = {}
         exec(code, global_vars, local_vars)
@@ -184,6 +188,7 @@ def create_script_function(script_file):
 
         # Define the new function with the same arguments
         args = inspect.getargspec(script_function).args
+
         def new_script_function(*args):
             # Call the original script function with the provided arguments
             script_function(*args)
@@ -192,6 +197,7 @@ def create_script_function(script_file):
 
     except Exception as e:
         raise ValueError(f"Error inspecting the script: {str(e)}")
+
 
 class EdgeMock:
     """

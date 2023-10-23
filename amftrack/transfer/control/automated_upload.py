@@ -43,5 +43,5 @@ old_folders["Plate"] = (
 old_folders = old_folders.loc[old_folders["Plate"].isin(plates_in_prince) == False]
 
 old_folders = old_folders.sort_values(by=["datetime"], ignore_index=True)
-print(len(old_folders),plates_in_prince)
+print(len(old_folders), plates_in_prince)
 upload_folders(old_folders, dir_drop=dir_drop, delete=True)

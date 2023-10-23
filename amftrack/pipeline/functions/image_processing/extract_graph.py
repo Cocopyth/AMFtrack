@@ -11,7 +11,9 @@ import pandas as pd
 import csv
 import ast
 from collections import Counter
+
 # from numba import jit
+
 
 def orient(pixel_list, root_pos):
     if np.all(root_pos == pixel_list[0]):
@@ -34,8 +36,9 @@ def sparse_to_doc(sparse_mat):
         doc_mat[x, nonzeros[1][i]] = 1
     return doc_mat
 
+
 # @jit(nopython=True)
-def get_neighbours2(pixel,xs,ys):
+def get_neighbours2(pixel, xs, ys):
     x = pixel[0]
     y = pixel[1]
     primary_neighbours = {(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)}
@@ -45,7 +48,7 @@ def get_neighbours2(pixel,xs,ys):
         (x - 1, y + 1),
         (x - 1, y - 1),
     }
-    pixel_list = [(x,ys[i]) for i,x in enumerate(xs)]
+    pixel_list = [(x, ys[i]) for i, x in enumerate(xs)]
     num_neighbours = 0
     actual_neighbours = set()
     for neighbour in primary_neighbours:
@@ -85,8 +88,8 @@ def get_neighbours2(pixel,xs,ys):
 #
 #     return actual_primary_neighbours | actual_secondary_neighbours
 
-def order_pixel(pixel_begin, pixel_end, pixel_list):
 
+def order_pixel(pixel_begin, pixel_end, pixel_list):
 
     ordered_list = [pixel_begin]
     current_pixel = pixel_begin
@@ -95,7 +98,7 @@ def order_pixel(pixel_begin, pixel_end, pixel_list):
     ys = [pixel[1] for pixel in pixel_list]
 
     while current_pixel != pixel_end:
-        neighbours = get_neighbours2(current_pixel,np.array(xs),np.array(ys))
+        neighbours = get_neighbours2(current_pixel, np.array(xs), np.array(ys))
         neighbours.discard(precedent_pixel)
         precedent_pixel = current_pixel
         current_pixel = neighbours.pop()
@@ -171,6 +174,7 @@ def extract_branches(doc_skel):
                     pixel_branch_dic[pixel]
                 )
     return (pixel_branch_dic, is_node, new_index)
+
 
 def from_sparse_to_graph(doc_skel):
     column_names = ["origin", "end", "pixel_list"]

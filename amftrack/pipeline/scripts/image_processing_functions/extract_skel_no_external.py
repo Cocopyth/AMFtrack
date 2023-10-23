@@ -21,6 +21,8 @@ from amftrack.sparse_util import zhang_suen_thinning
 
 from amftrack.util.sys import get_dates_datetime, get_dirname
 import shutil
+
+
 def process(args):
 
     i = int(args[-1])
@@ -32,7 +34,6 @@ def process(args):
     minhigh = float(args[5])
 
     directory = str(args[6])
-
 
     run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
     folder_list = list(run_info["folder"])
@@ -104,7 +105,7 @@ def process(args):
             boundaries[1] : boundaries[1] + shape[0],
             boundaries[0] : boundaries[0] + shape[1],
         ] += segmented.astype(bool)
-    print("number to reduce : ", np.sum(skel ==1), np.sum(skel == 0))
+    print("number to reduce : ", np.sum(skel == 1), np.sum(skel == 0))
     skel = zhang_suen_thinning(skel)
     # skel_sparse = sparse.lil_matrix(skel)
     sio.savemat(
@@ -112,6 +113,7 @@ def process(args):
         {"skeleton": sparse.csc_matrix(skel)},
     )
     print("time=", time() - t)
+
 
 if __name__ == "__main__":
     process(sys.argv)

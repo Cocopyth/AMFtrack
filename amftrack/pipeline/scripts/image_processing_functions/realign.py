@@ -15,12 +15,12 @@ from amftrack.pipeline.functions.image_processing.realign import (
 )
 import pandas as pd
 
+
 def process(args):
     j = int(args[-1])
     op_id = int(args[-2])
 
     directory = str(args[1])
-
 
     run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
     folder_list = list(run_info["folder"])
@@ -83,6 +83,7 @@ def process(args):
                 path_snap + "/Analysis/skeleton_realigned_compressed.mat",
                 {"skeleton": compressed},
             )
+
 
 if __name__ == "__main__":
     process(sys.argv)

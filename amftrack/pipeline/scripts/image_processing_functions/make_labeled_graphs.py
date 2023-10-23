@@ -13,11 +13,12 @@ from amftrack.pipeline.functions.image_processing.extract_graph import (
 from amftrack.util.sys import get_dirname
 import os
 import scipy.io as sio
+
+
 def process(args):
     directory = str(args[1])
     i = int(args[-1])
     op_id = int(args[-2])
-
 
     run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 
@@ -37,5 +38,7 @@ def process(args):
     #     path_snap = os.path.join(exp.directory, directory_name)
     #     path_save = path_snap + "/Analysis/graph_full_labeled.mat"
     #     sio.savemat(path_save, {name: col.values for name, col in tab.items()})
+
+
 if __name__ == "__main__":
     process(sys.argv)

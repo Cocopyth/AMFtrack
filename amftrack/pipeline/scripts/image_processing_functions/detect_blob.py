@@ -20,6 +20,7 @@ from random import choice
 from amftrack.util.sys import get_dates_datetime, get_dirname
 import shutil
 
+
 def process(args):
     i = int(args[-1])
     op_id = int(args[-2])
@@ -81,13 +82,16 @@ def process(args):
     # removing duplicate due to image overlap
     to_remove = set()
     for i in range(len(complete_spores)):
-        distances = np.linalg.norm(complete_spores[i][:2] - complete_spores[:, :2], axis=1)
+        distances = np.linalg.norm(
+            complete_spores[i][:2] - complete_spores[:, :2], axis=1
+        )
         if len(distances) > 1:
             index = np.argpartition(distances, 1)[1]
             if distances[index] < 10 and index < i:
                 to_remove.add((i))
     spore_filtered = np.delete(complete_spores, list(to_remove), axis=0)
     sio.savemat(path_snap + "/Analysis/spores.mat", {"spores": spore_filtered})
+
 
 if __name__ == "__main__":
     process(sys.argv)

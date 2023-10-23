@@ -13,13 +13,13 @@ from cycpd import rigid_registration
 import pandas as pd
 import os
 
+
 def process(args):
 
     i = int(args[-1])
     op_id = int(args[-2])
     thresh = int(args[1])
     directory = str(args[2])
-
 
     run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
     folder_list = list(run_info["folder"])
@@ -67,7 +67,9 @@ def process(args):
             t_init = -tfound
             Rot_init = Rfound
         else:
-            Rot_init, t_init = np.linalg.inv(Rfound), np.dot(np.linalg.inv(Rfound), tfound)
+            Rot_init, t_init = np.linalg.inv(Rfound), np.dot(
+                np.linalg.inv(Rfound), tfound
+            )
         sigma2 = reg.sigma2
         if sigma2 >= thresh:
             print("========")
@@ -124,6 +126,7 @@ def process(args):
             path_snap + "/Analysis/transform_corrupt.mat",
             {"R": np.array([[1, 0], [0, 1]]), "t": np.array([0, 0])},
         )
+
 
 if __name__ == "__main__":
     process(sys.argv)

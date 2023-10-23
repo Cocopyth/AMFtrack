@@ -20,6 +20,7 @@ import scipy.io as sio
 import pandas as pd
 from amftrack.pipeline.functions.image_processing.node_id import remove_spurs
 
+
 def process(args):
 
     i = int(args[-1])
@@ -28,7 +29,6 @@ def process(args):
     skip = bool(args[2])
 
     directory = str(args[3])
-
 
     run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
     folder_list = list(run_info["folder"])
@@ -67,5 +67,7 @@ def process(args):
     #         )
     #     },
     # )
+
+
 if __name__ == "__main__":
     process(sys.argv)
