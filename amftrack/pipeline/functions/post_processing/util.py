@@ -47,7 +47,7 @@ def get_length_um_node_list(node_list, exp, t):
 
 
 def is_in_ROI(exp, pos):
-    point = Point(*pos)
+    point = Point(pos[1],pos[0])
     if not hasattr(exp, "ROI"):
         load_ROI(exp)
     is_within_polygon = point.within(exp.ROI)
