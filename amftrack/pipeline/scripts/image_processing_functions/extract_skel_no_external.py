@@ -9,14 +9,15 @@ import scipy.io as sio
 import cv2
 import imageio.v2 as imageio
 import numpy as np
-import scipy.sparse
 import os
 from time import time
 from amftrack.pipeline.functions.image_processing.extract_skel import (
-    extract_skel_new_prince,
+    extract_skel_no_external,
     run_back_sub,
     bowler_hat,
 )
+from amftrack.sparse_util import zhang_suen_thinning
+
 
 from amftrack.util.sys import get_dates_datetime, get_dirname
 import shutil
@@ -38,7 +39,6 @@ def process(args):
     folder_list.sort()
     directory_name = folder_list[i]
     print(directory_name)
-    run_back_sub(directory, directory_name)
     path_snap = os.path.join(directory, directory_name)
     path_tile = os.path.join(path_snap, "Img/TileConfiguration.txt.registered")
     try:
@@ -71,19 +71,19 @@ def process(args):
     xs = [c[0] for c in tileconfig[2]]
     ys = [c[1] for c in tileconfig[2]]
     name = tileconfig[0][0]
-    imname = "/Img3/" + name.split("/")[-1]
+    imname = "/Img/" + name.split("/")[-1]
     im = imageio.imread(directory + directory_name + imname)
     dim = (
         int(np.max(ys) - np.min(ys)) + max(im.shape),
         int(np.max(xs) - np.min(xs)) + max(im.shape),
     )
     ims = []
-    skel = np.zeros(dim, dtype=np.uint8)
+    skel = np.zeros(dim, dtype=bool)
     params = [30]
     for index, name in enumerate(tileconfig[0]):
         # for index, name in enumerate(list_debug):
         print(name)
-        imname = "/Img3/" + name.split("/")[-1]
+        imname = "/Img/" + name.split("/")[-1]
         im = imageio.imread(directory + directory_name + imname)
         imname2 = "/Img/" + name.split("/")[-1]
         im2 = imageio.imread(directory + directory_name + imname2)
@@ -91,7 +91,7 @@ def process(args):
         im[bowled2 <= 0.09] = np.maximum(im[bowled2 <= 0.09], 250)
         shape = im.shape
         print("segmenting")
-        segmented = extract_skel_new_prince(
+        segmented = extract_skel_no_external(
             im, [hyph_width], perc_low, perc_high, minlow, minhigh
         )
         # low = np.percentile(-im+255, perc_low)
@@ -103,20 +103,15 @@ def process(args):
         skel[
             boundaries[1] : boundaries[1] + shape[0],
             boundaries[0] : boundaries[0] + shape[1],
-        ] += segmented
-    print("number to reduce : ", np.sum(skel > 0), np.sum(skel <= 0))
-    skeletonized = cv2.ximgproc.thinning(np.array(255 * (skel > 0), dtype=np.uint8))
+        ] += segmented.astype(bool)
+    print("number to reduce : ", np.sum(skel ==1), np.sum(skel == 0))
+    skel = zhang_suen_thinning(skel)
     # skel_sparse = sparse.lil_matrix(skel)
     sio.savemat(
         path_snap + "/Analysis/skeleton.mat",
-        {"skeleton": scipy.sparse.csc_matrix(skeletonized)},
+        {"skeleton": sparse.csc_matrix(skel)},
     )
-    compressed = cv2.resize(skeletonized, (dim[1] // 5, dim[0] // 5))
-    sio.savemat(path_snap + "/Analysis/skeleton_compressed.mat", {"skeleton": compressed})
     print("time=", time() - t)
-    im_fold = "/Img3"
-    to_delete = directory + directory_name + im_fold
-    shutil.rmtree(to_delete)
 
 if __name__ == "__main__":
     process(sys.argv)
