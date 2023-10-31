@@ -555,8 +555,7 @@ def read_saved_dropbox_state(dir_drop: str):
 
 
 def upload_folders(
-    folders: pd.DataFrame, dir_drop="DATA", catch_exception=True, delete=False
-):
+    folders: pd.DataFrame, dir_drop="DATA", catch_exception=True, delete=False):
     """
     Upload all the folders in the dataframe to a location on dropbox
     """
