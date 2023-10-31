@@ -176,7 +176,7 @@ def get_param(
         # exec(line.split(';')[0],globals(),ldict)
     files = [
         "/Img/TileConfiguration.txt.registered",
-        "/Analysis/skeleton_compressed.mat",
+        "/Analysis/skeleton.mat",
         "/Analysis/skeleton_masked_compressed.mat",
         "/Analysis/skeleton_pruned_compressed.mat",
         "/Analysis/transform.mat",

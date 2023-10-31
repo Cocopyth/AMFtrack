@@ -26,17 +26,14 @@ folders = all_folders
 run_info = folders.copy()
 target = directory2
 folder_list = list(run_info["total_path"])
+NUM_THREADS = 4
+
 with tqdm(total=len(folder_list), desc="transferred") as pbar:
-    for folder in folder_list:
-        origin = folder
-        NUM_THREADS = 4
-
-        with tqdm(total=len(folder_list), desc="transferred") as pbar:
-            def task(folder):
-                sync_fold(folder, target)
-                pbar.update(1)
-
-
-            with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-                executor.map(task, folder_list)
+    def task(folder):
+        sync_fold(folder, target)
         pbar.update(1)
+
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+        executor.map(task, folder_list)
+pbar.update(1)
