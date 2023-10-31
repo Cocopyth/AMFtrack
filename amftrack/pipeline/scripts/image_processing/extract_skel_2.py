@@ -106,6 +106,8 @@ def process(args):
             boundaries[1] : boundaries[1] + shape[0],
             boundaries[0] : boundaries[0] + shape[1],
         ] += segmented.astype(bool)
+    print("time_individual=", time() - t)
+    t = time()
     print("number to reduce : ", np.sum(skel > 0), np.sum(skel <= 0))
     skel = zhang_suen_thinning(skel)
     # skel_sparse = sparse.lil_matrix(skel)
@@ -113,7 +115,7 @@ def process(args):
         path_snap + "/Analysis/skeleton.mat",
         {"skeleton": scipy.sparse.csc_matrix(skel)},
     )
-    print("time=", time() - t)
+    print("time_skelet=", time() - t)
     im_fold = "/Img3"
     to_delete = directory + directory_name + im_fold
     shutil.rmtree(to_delete)

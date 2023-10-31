@@ -44,10 +44,10 @@ with tqdm(total=len(folder_list), desc="deleted") as pbar:
         target = all_folders_target.loc[all_folders_target["folder"] == folder][
             "total_path"
         ].iloc[0]
-        # check_or = checksumdir.dirhash(origin)
-        # check_targ = checksumdir.dirhash(target)
-        check_or = 1
-        check_targ = 1
+        check_or = checksumdir.dirhash(origin)
+        check_targ = checksumdir.dirhash(target)
+        # check_or = 1
+        # check_targ = 1
         print(folder, (check_or == check_targ))
 
         if check_or == check_targ and origin != target:
