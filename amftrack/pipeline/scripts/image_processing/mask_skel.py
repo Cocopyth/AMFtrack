@@ -92,12 +92,12 @@ def process(args):
         path_snap + "/Analysis/skeleton_masked.mat",
         {"skeleton": scipy.sparse.csc_matrix(result)},
     )
-    compressed = cv2.resize(result, (dim[1] // 5, dim[0] // 5))
-    sio.savemat(
-        path_snap + "/Analysis/skeleton_masked_compressed.mat", {"skeleton": compressed}
-    )
-    mask_compressed = cv2.resize(output, (dim[1] // 5, dim[0] // 5))
-    sio.savemat(path_snap + "/Analysis/mask.mat", {"mask": mask_compressed})
+    # compressed = cv2.resize(result, (dim[1] // 5, dim[0] // 5))
+    # sio.savemat(
+    #     path_snap + "/Analysis/skeleton_masked.mat", {"skeleton": compressed}
+    # )
+    # mask_compressed = cv2.resize(output, (dim[1] // 5, dim[0] // 5))
+    # sio.savemat(path_snap + "/Analysis/mask.mat", {"mask": mask_compressed})
 
 
 if __name__ == "__main__":

@@ -177,8 +177,8 @@ def get_param(
     files = [
         "/Img/TileConfiguration.txt.registered",
         "/Analysis/skeleton.mat",
-        "/Analysis/skeleton_masked_compressed.mat",
-        "/Analysis/skeleton_pruned_compressed.mat",
+        "/Analysis/skeleton_masked.mat",
+        "/Analysis/skeleton_pruned.mat",
         "/Analysis/transform.mat",
         "/Analysis/transform_corrupt.mat",
         "/Analysis/skeleton_realigned_compressed.mat",
