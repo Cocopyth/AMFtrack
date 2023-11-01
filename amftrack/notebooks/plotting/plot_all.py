@@ -74,7 +74,7 @@ for treatment in treatments.keys():
         for date in dates:
             directory_name = f'{date}_Plate{0 if plate<10 else ""}{plate}'
             path_snap = directory + directory_name
-            skel_info = read_mat(path_snap + "/Analysis/skeleton_pruned_compressed.mat")
+            skel_info = read_mat(path_snap + "/Analysis/skeleton_pruned.mat")
             skel = skel_info["skeleton"]
             skels.append(cv2.dilate(skel.astype(np.uint8), kernel, iterations=itera))
             im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
