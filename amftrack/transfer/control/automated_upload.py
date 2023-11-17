@@ -47,13 +47,10 @@ old_folders = old_folders.sort_values(by=["datetime"], ignore_index=True)
 print(len(old_folders), plates_in_prince)
 NUM_THREADS = 4
 
+
 def task(i):
-    upload_folders(old_folders[i:i + 1], dir_drop=dir_drop, delete=True)
+    upload_folders(old_folders[i : i + 1], dir_drop=dir_drop, delete=True)
 
 
 with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
     executor.map(task, range(len(old_folders)))
-
-
-
-
