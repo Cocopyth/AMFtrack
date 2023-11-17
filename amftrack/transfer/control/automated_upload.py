@@ -41,8 +41,8 @@ old_folders = all_folders_origin.loc[
 old_folders["Plate"] = (
     old_folders["Plate"].str.replace("R", "66666").str.replace("[^0-9]", "")
 )
-old_folders = old_folders.loc[old_folders["Plate"].isin(plates_in_prince) == False]
-
+# old_folders = old_folders.loc[old_folders["Plate"].isin(plates_in_prince) == False]
+old_folders = all_folders_origin
 old_folders = old_folders.sort_values(by=["datetime"], ignore_index=True)
 print(len(old_folders), plates_in_prince)
 NUM_THREADS = 4

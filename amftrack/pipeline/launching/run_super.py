@@ -56,7 +56,7 @@ def run_parallel(
     time,
     name,
     cpus=128,
-    node="thin",
+    node="rome",
     dependency=None,
     name_job="job.sh",
 ):
@@ -103,7 +103,7 @@ def run_parallel_flows(
     time,
     name,
     cpus=128,
-    node="thin",
+    node="rome",
     dependency=None,
     name_job="job.sh",
 ):
@@ -155,7 +155,7 @@ def run_parallel_all_time(
     time,
     name,
     cpus=128,
-    node="thin",
+    node="rome",
     dependency=None,
     name_job="job.sh",
 ):
@@ -202,7 +202,7 @@ def run_parallel_post(
     time,
     name,
     cpus=128,
-    node="thin",
+    node="rome",
     name_job="post",
     dependency=False,
 ):
@@ -268,7 +268,7 @@ def run_parallel_stitch(
     num_parallel,
     time,
     cpus=128,
-    node="thin",
+    node="rome",
     name_job="stitch",
     dependency=False,
     is_mini_PRINCE=False,
@@ -415,11 +415,12 @@ def run_parallel_transfer_to_archive(
     time,
     name,
     cpus=1,
+    plates = None,
     node="staging",
     dependency="transfer_archive.sh",
 ):
     path_job = f"{path_bash}{dependency}"
-    plates = set(folders["Plate"].values)
+    unique_ids = folders["unique_id"].unique() if plates == None else plates
     length = len(plates)
     folders = folders.copy()
     folders["unique_id"] = (
@@ -432,8 +433,7 @@ def run_parallel_transfer_to_archive(
         line = folders.loc[folders["folder"] == directory_name]
         line.to_json(path_info)
 
-    for plate in plates:
-        id_unique = folders.loc[folders["Plate"] == plate]["unique_id"].iloc[0]
+    for id_unique in unique_ids:
         folder = f"{directory}{id_unique}"
         ide = time_ns()
         my_file = open(path_job, "w")
@@ -448,4 +448,7 @@ def run_parallel_transfer_to_archive(
         )
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch --dependency=singleton {path_job}", shell=True)
+        if dependency:
+            call(f"sbatch --dependency=singleton {path_job}", shell=True)
+        else:
+            call(f"sbatch {path_job}", shell=True)

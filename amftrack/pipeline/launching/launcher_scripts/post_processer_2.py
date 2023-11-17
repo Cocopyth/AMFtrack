@@ -68,7 +68,7 @@ for index, row in analysis_folders.iterrows():
             "time_hypha_post_process",
             cpus=num_cpus,
             name_job=name_job,
-            node="fat",
+            node="fat_rome",
         )
 
 if stage >= 0:
