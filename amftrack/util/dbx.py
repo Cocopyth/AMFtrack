@@ -595,7 +595,7 @@ def download_folders_old(folders_drop: pd.DataFrame, directory_target):
         download(path, os.path.join(directory_target, f"{folder}.zip"), unzip=True)
 
 
-def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
+def download_folders_drop(folders_drop: pd.DataFrame, directory_target,unzip =True):
     dbx = load_dbx()
     for index, row in folders_drop.iterrows():
         path = "/" + row["tot_path_drop"]
@@ -624,7 +624,7 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
                 "Img.zip",
                 "param.m",
             ]:  # to fix!
-                download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
+                download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip")&unzip)
 
 
 def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
@@ -704,3 +704,4 @@ def compute_dropbox_hash(filename):
 
 
 DROPBOX_HASH_CHUNK_SIZE = 4 * 1024 * 1024
+

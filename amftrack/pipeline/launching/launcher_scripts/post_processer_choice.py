@@ -63,7 +63,7 @@ run_parallel_post(
     "time_plate_post_process",
     cpus=32,
     name_job=name_job,
-    node="fat",
+    node="fat_rome",
 )
 
 time = "24:00:00"
@@ -101,7 +101,7 @@ run_parallel_post(
     "time_plate_post_process",
     cpus=32,
     name_job=name_job,
-    node="fat",
+    node="fat_rome",
     dependency=True,
 )
 
