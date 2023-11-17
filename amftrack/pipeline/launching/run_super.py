@@ -415,7 +415,7 @@ def run_parallel_transfer_to_archive(
     time,
     name,
     cpus=1,
-    plates = None,
+    plates=None,
     node="staging",
     dependency="transfer_archive.sh",
 ):

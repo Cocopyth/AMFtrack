@@ -76,4 +76,3 @@ if stage > 0:
         dependency=True,
         name_job=name_job,
     )
-

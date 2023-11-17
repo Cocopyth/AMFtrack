@@ -186,7 +186,6 @@ def get_param(
         "/Analysis/nx_graph_pruned_width.p",
         "/Analysis/nx_graph_pruned_labeled.p",
         "/Analysis/nx_graph_pruned_labeled2.p",
-
     ]
     for file in files:
         ldict[file] = os.path.isfile(path_snap + file)  # TODO(FK) change here
