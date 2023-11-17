@@ -16,6 +16,6 @@ op_id = int(sys.argv[-2])
 run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
 run_info = run_info.sort_values("folder")
 folders = run_info.iloc[i : i + 1]
-unique_id = folders['unique_id'].iloc[0]
+unique_id = folders["unique_id"].iloc[0]
 
-download_folders_drop(folders, os.path.join(directory,unique_id),unzip=False)
+download_folders_drop(folders, os.path.join(directory, unique_id), unzip=False)

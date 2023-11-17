@@ -555,7 +555,8 @@ def read_saved_dropbox_state(dir_drop: str):
 
 
 def upload_folders(
-    folders: pd.DataFrame, dir_drop="DATA", catch_exception=True, delete=False):
+    folders: pd.DataFrame, dir_drop="DATA", catch_exception=True, delete=False
+):
     """
     Upload all the folders in the dataframe to a location on dropbox
     """
@@ -595,7 +596,7 @@ def download_folders_old(folders_drop: pd.DataFrame, directory_target):
         download(path, os.path.join(directory_target, f"{folder}.zip"), unzip=True)
 
 
-def download_folders_drop(folders_drop: pd.DataFrame, directory_target,unzip =True):
+def download_folders_drop(folders_drop: pd.DataFrame, directory_target, unzip=True):
     dbx = load_dbx()
     for index, row in folders_drop.iterrows():
         path = "/" + row["tot_path_drop"]
@@ -624,7 +625,9 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target,unzip =Tr
                 "Img.zip",
                 "param.m",
             ]:  # to fix!
-                download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip")&unzip)
+                download(
+                    path_drop, path_local, unzip=(path_drop[-4:] == ".zip") & unzip
+                )
 
 
 def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
@@ -704,4 +707,3 @@ def compute_dropbox_hash(filename):
 
 
 DROPBOX_HASH_CHUNK_SIZE = 4 * 1024 * 1024
-

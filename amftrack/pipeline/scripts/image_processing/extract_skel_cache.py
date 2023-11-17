@@ -19,10 +19,13 @@ from amftrack.pipeline.functions.image_processing.extract_skel import (
 )
 import concurrent.futures
 import logging
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    handlers=[logging.FileHandler("debug.log"),
-                              logging.StreamHandler(sys.stdout)])
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("debug.log"), logging.StreamHandler(sys.stdout)],
+)
+
 
 def process(args):
 
@@ -92,8 +95,9 @@ def process(args):
             logging.info(f"Image processed: {name}")
         except Exception as e:
             logging.error(f"Error processing image {name}: {e}", exc_info=True)
-        return(None)
-    print('processing')
+        return None
+
+    print("processing")
     t = time()
     with concurrent.futures.ThreadPoolExecutor(max_workers=64) as executor:
         # Adjust the max_workers parameter as needed
@@ -102,9 +106,9 @@ def process(args):
         # futures = [executor.submit(process_image, name) for _, name in enumerate(tileconfig[0][begin:begin+num])]
         # print(len(futures))
         # concurrent.futures.wait(futures)
-        logging.info('End processing')
-    print("time to run",time()-t)
-    return(None)
+        logging.info("End processing")
+    print("time to run", time() - t)
+    return None
 
 
 if __name__ == "__main__":
