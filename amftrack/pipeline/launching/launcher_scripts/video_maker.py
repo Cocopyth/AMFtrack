@@ -30,7 +30,7 @@ run_parallel_all_time(
     time,
     "make_video",
     cpus=32,
-    node="fat",
+    node="fat_rome",
     dependency=False,
     name_job=name_job,
 )
@@ -43,7 +43,7 @@ run_parallel_all_time(
     time,
     "make_video",
     cpus=32,
-    node="fat",
+    node="fat_rome",
     dependency=False,
     name_job=name_job,
 )
@@ -53,7 +53,7 @@ if stage > 0:
         "skeletonizer_agg.py",
         [directory_targ, name_job, stage - 1],
         plates,
-        "3:00:00",
+        "12:00:00",
         dependency=True,
         name_job=name_job,
     )

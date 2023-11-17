@@ -45,7 +45,7 @@ print(len(analysis_folders))
 #     "global_plate_post_process",
 #     cpus=32,
 #     name_job=name_job,
-#     node="fat",
+#     node="fat_rome",
 # )
 
 time = "6:40:00"
@@ -87,7 +87,7 @@ run_parallel_post(
     "time_plate_post_process",
     cpus=32,
     name_job=name_job,
-    node="fat",
+    node="fat_rome",
 )
 
 time = "24:00:00"
@@ -125,7 +125,7 @@ run_parallel_post(
     "time_plate_post_process",
     cpus=32,
     name_job=name_job,
-    node="fat",
+    node="fat_rome",
     dependency=True,
 )
 
@@ -150,7 +150,7 @@ run_parallel_post(
     "global_plate_post_process",
     cpus=128,
     name_job=name_job,
-    node="fat",
+    node="fat_rome",
 )
 #
 time = "12:00:00"
@@ -170,7 +170,7 @@ run_parallel_post(
     "global_plate_post_process",
     cpus=32,
     name_job=name_job,
-    node="fat",
+    node="fat_rome",
 )
 time = "3:40:00"
 directory = directory
@@ -207,7 +207,7 @@ run_parallel_post(
     "global_hypha_post_process",
     cpus=32,
     name_job=name_job,
-    node="fat",
+    node="fat_rome",
 )
 
 if stage > 0:
