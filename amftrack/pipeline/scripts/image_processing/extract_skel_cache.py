@@ -44,7 +44,6 @@ def process(args):
     folder_list.sort()
     directory_name = folder_list[i]
     print(directory_name)
-    # run_back_sub(directory, directory_name)
     path_snap = os.path.join(directory, directory_name)
     path_tile = os.path.join(path_snap, "Img/TileConfiguration.txt.registered")
     try:
