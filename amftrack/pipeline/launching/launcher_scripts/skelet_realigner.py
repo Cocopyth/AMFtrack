@@ -31,7 +31,7 @@ for plate in plates:
         time,
         "create_realign",
         cpus=128,
-        node="fat",
+        node="fat_rome",
         name_job=name_job,
     )
 
