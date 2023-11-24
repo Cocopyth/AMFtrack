@@ -11,7 +11,7 @@ import matplotlib as mpl
 from scipy.signal import find_peaks
 
 
-mpl.rcParams['figure.dpi'] = 300
+mpl.rcParams['figure.dpi'] = 200
 
 
 # TODO: Go through these functions to streamline them, and remove deprecated values. Outputting plots is also no longer necessary, as all outputs are created when called for.
@@ -138,6 +138,7 @@ class KymoVideoAnalysis(object):
             self.binning = input_frame['binning']
             self.kymos_path = input_frame['analysis_folder']
             self.imgs_address = Path(input_frame['videos_folder'])
+#             print("this is the address for kymo_class: ", self.imgs_address)
             vid_dic = {'F': 'FLUO',
                        'BF': 'BRIGHT'}
             self.vid_type = vid_dic[input_frame['mode']]
@@ -145,12 +146,13 @@ class KymoVideoAnalysis(object):
 
         self.time_pixel_size = 1 / self.fps
         self.space_pixel_size = 2 * 1.725 / (self.magnification) * self.binning  # um.pixel
-        self.pos = []
+        self.pos = [input_frame['xpos'],input_frame['ypos'],input_frame['zpos']]
         if not os.path.exists(self.kymos_path):
             os.makedirs(self.kymos_path)
             if self.logging:
                 print('Kymos file created, address is at {}'.format(self.kymos_path))
         self.images_total_path = [str(adr) for adr in self.imgs_address.glob('*_*.ti*')]
+        print("the amount of tif(f) images in videos_folder: ", len(self.images_total_path))
         self.images_total_path.sort()
         self.selection_file = self.images_total_path
         self.selection_file.sort()
@@ -164,16 +166,31 @@ class KymoVideoAnalysis(object):
         if self.vid_type == 'BRIGHT':
             if frangi_range is None:
                 frangi_range = [np.arange(5, 20, 3), np.arange(20, 160, 20)][self.magnification == 50]
+            #print(len(self.selection_file))
             self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
                 imageio.imread(self.selection_file[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
                 seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
         elif self.vid_type == 'FLUO':
+#             for i, pos in enumerate(input_frame['xpos']):
+#                 if self.pos[0]==pos and self.pos[1]==input_frame['ypos'][i] and self.pos[2]==input_frame['zpos'][i] and input_frame['mode'][i]=='BF':
+#                     if frangi_range is None:
+#                         frangi_range = [np.arange(5, 20, 3), np.arange(20, 160, 20)][self.magnification == 50]
+#                     #print(len(self.selection_file))
+#                     self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
+#                         imageio.imread(self.selection_file[i]), frangi_range=frangi_range, thresh=thresh,
+#                         seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
+            
             self.frame_max = imageio.imread(self.selection_file[self.im_range[0]])
-            for address in self.im_range:
+            frames = []
+            for i, address in enumerate(self.im_range):
                 frame2 = imageio.imread(self.selection_file[address])
                 self.frame_max = np.maximum(self.frame_max, frame2)
+                if i < 60:
+                    frames.append(frame2)
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
                 self.frame_max, thresh=thresh,
+#             self.segmented, self.nx_graph_pruned, self.pos = segment_std(
+#                 frames, thresh=thresh,
                 seg_thresh=seg_thresh, magnif=self.magnification)
         else:
             print("I don't have a valid flow_processing type!!! Using fluo thresholding.")
@@ -750,20 +767,23 @@ class KymoEdgeAnalysis(object):
         
     def fourier_analysis(self, R_thresh=50, prominence=0.5):
         for k, img in enumerate(self.kymos):
+            img = self.filtered_left[k] + self.filtered_right[k]
             img_dims = np.array(img.shape)
             ftimage = np.fft.fft2(img)
             ftimage = np.fft.fftshift(ftimage)
             self.ftabsimage = np.log(abs(ftimage.real))
             self.ftpolarimage = cv2.warpPolar(self.ftabsimage, (-1,-1), (img_dims[1]/2, img_dims[0]/2), img_dims[1], cv2.WARP_POLAR_LINEAR + cv2.WARP_FILL_OUTLIERS)
             polardims = self.ftpolarimage.shape
-            self.ftpolarimage = self.ftpolarimage[0:polardims[0]//2, R_thresh:polardims[1]]
+#             print(polardims)
+            self.ftpolarimage = self.ftpolarimage[0:polardims[0]//2, R_thresh:polardims[1] // 4]
             self.ftpolarimage = np.where(self.ftpolarimage == 0, np.nan, self.ftpolarimage)
             angle_plot = [np.linspace(0, np.pi, len(self.ftpolarimage)), np.nanmean(self.ftpolarimage, axis=1)]
+#             print(angle_plot[1])
+
             self.angle_plot = [np.tan((angle_plot[0] - 0.5*np.pi)) * self.space_pixel_size / self.time_pixel_size, angle_plot[1]]
             self.fourier_peak_data = find_peaks(angle_plot[1], prominence=prominence)
             peaks, _ = self.fourier_peak_data
             speeds = np.tan((angle_plot[0][peaks] - 0.5*np.pi)) * self.space_pixel_size / self.time_pixel_size
-            print(angle_plot[0][peaks])
             print(speeds)
             self.fourier_speeds = speeds
         return self.fourier_peak_data

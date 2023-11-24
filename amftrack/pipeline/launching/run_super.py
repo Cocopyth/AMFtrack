@@ -96,7 +96,7 @@ def run_parallel_flows(
     time,
     name,
     cpus=128,
-    node="thin",
+    node="rome",
     dependency=None,
     name_job="job.sh",
 ):

@@ -694,6 +694,33 @@ def segment_fluo(image, thresh=0.5e-7, seg_thresh=4.5, k_size=40, magnif = 50, b
     nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
     return (segmented > thresh, nx_graph, pos)
 
+def segment_std(frames, thresh=0.5e-7, seg_thresh=4.5, k_size=40, magnif = 50, binning=2, test_plot=False):
+#     imgs = sorted([path for path in img_address.glob("*/*.ti*")])
+#     frames = []
+#     for i, address in enumerate(img_address):
+#     for i, frame in enumerate(imgs):
+#         if i<framenr:
+#             frame = imageio.imread(self.selection_file[address])
+#             frames.append(frame)
+    video_matrix = np.stack(frames, axis=0)
+    smooth_im = np.std(video_matrix, axis=0)
+    #it seems to be a 64bit image but it has to be 8 or 16 for thresholding (maybe it is in color, but Simon didnt do something with that either)
+    smooth_im = cv2.cvtColor(smooth_im, cv2.COLOR_BGR2GRAY)
+    smooth_im = cv2.normalize(smooth_im, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_16U)
+#     print(magnif)
+    if magnif < 30:
+        im_canny = cv2.Canny(smooth_im, 0, 20)
+        smooth_im = cv2.morphologyEx(im_canny, cv2.MORPH_DILATE, kernel)
+    _, segmented = cv2.threshold(smooth_im, 0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    if magnif > 30:
+        segmented = cv2.morphologyEx(segmented, cv2.MORPH_CLOSE, np.ones((9,9)))
+
+    skeletonized = skeletonize(segmented > thresh)
+    skeleton = scipy.sparse.dok_matrix(skeletonized)
+    nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
+    nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
+    return (segmented > thresh, nx_graph, pos)
+
 
 def find_thresh_fluo(blurred_image, thresh_guess=40, fold_thresh=0.005):
     histr = cv2.calcHist([blurred_image], [0], None, [256], [0, 256])
