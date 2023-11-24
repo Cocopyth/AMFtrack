@@ -587,7 +587,13 @@ def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
     dbx = load_dbx()
     directory_target = Path(directory_target)
     for index, row in folders_drop.iterrows():
+#         path = row["tot_path_drop"]
         path = "/" + row["tot_path_drop"]
+        if not os.path.exists(path):
+            print("oh no, this path is not correct!")
+            if path=="//DATA/FLUORESCENCE/DATA_NileRed/20221109_Plate462/DATA/20221109_plate462_17":
+                path="/DATA/FLUORESCENCE/DATA_NileRed/20221109_Plate462/DATA/20221109_Plate462_017"
+        print(path)
         response = dbx.files_list_folder(path, recursive=True)
         listfiles = []
         while response.has_more:
