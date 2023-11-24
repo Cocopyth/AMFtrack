@@ -18,8 +18,7 @@ from tifffile import imwrite, imread
 from tqdm import tqdm
 import matplotlib as mpl
 from amftrack.util.dbx import upload_folder, download, read_saved_dropbox_state, save_dropbox_state, load_dbx, \
-    download, get_dropbox_folders, get_dropbox_video_folders, get_dropbox_video_folders_new
-
+    download, get_dropbox_video_folders, get_dropbox_video_folders_new
 import logging
 import datetime
 import numpy as np
@@ -120,18 +119,21 @@ def index_videos_dropbox_new(analysis_folder, videos_folder, dropbox_folder,
             if not (analysis_folder / address_local).exists():
                 download(address, (analysis_folder / address_local))
         info_addresses.append(analysis_folder / address_local)
-    clear_output(wait=False)
+#     clear_output(wait=False)
     print("All files downloaded! Merging files...")
 
     # The downloaded information is then read and merged into one dataframe containing all relevant information.
-
+#     print(info_addresses)
     merge_frame = read_video_data_new(info_addresses, analysis_folder)
+#     print("en nu dan? ", merge_frame['tot_path_drop'].iloc[0])
     merge_frame = merge_frame.rename(columns={'tot_path': 'folder'})  # This is for the dropbox download functions
+    print("en nu dan?2 ", merge_frame['unique_id'])
     merge_frame = merge_frame.sort_values('unique_id')
     merge_frame = merge_frame.reset_index(drop=True)
     merge_frame = merge_frame.loc[:, ~merge_frame.columns.duplicated()].copy()
     merge_frame['analysis_folder'] = [np.nan for i in range(len(merge_frame))]
     merge_frame['videos_folder'] = [np.nan for i in range(len(merge_frame))]
+#     print("en nu dan?3 ", merge_frame['tot_path_drop'].iloc[0])
 
     for index, row in merge_frame.iterrows():
         target_anals_file = analysis_folder / row['folder'][:-4]
@@ -169,25 +171,42 @@ def read_video_data_new(address_array, analysis_folder):
         suffix = address.suffix
         if suffix == '.xlsx':
             raw_data = pd.read_excel(address)
+#             print("xlsx file has lenght: ", len(raw_data))
             # Earliest .xlsx files did not contain binning information. Assume 1x1 binning
             if 'Binned (Y/N)' not in raw_data:
-                raw_data['Binned (Y/N)'] = ['N' for entry in raw_data['Unnamed: 0']]
+#                 print("we will use N for binning in raw data: ",raw_data['Unnamed: 0'])
+                raw_data['Binned (Y/N)'] = ['N' for entry in raw_data['video']]
             raw_data["Binned (Y/N)"] = raw_data["Binned (Y/N)"].astype(str)
             # Filter on excel rows that actually contain data
             raw_data = raw_data[raw_data['Treatment'] == raw_data['Treatment']].reset_index(drop=True)
             # 'Plate[nr] can be both upper case and lower case'
             raw_data['Unnamed: 0'] = [entry.lower() for entry in raw_data['Unnamed: 0']]
+            #Changed this and line 193 from: 'video' -> 'Unnamed: 0', for analysis of rachaels data, their excel is weird
+#             raw_data['unique_id'] = [str(row['Unnamed: 0'])for index, row in
+#                                      raw_data.iterrows()]
+#             raw_data['unique_id'] = [f"{address.parent.parts[-1]}_{str(row['Unnamed: 0'])[-3:].zfill(3)}" for index, row in
+#                                      raw_data.iterrows()]
             raw_data['plate_id'] = [f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}" for entry in
-                                    raw_data['Unnamed: 0']]
-            raw_data['imaging_day'] = [f"{entry.split('_')[-3]}" for entry in raw_data['Unnamed: 0']]
+                                    raw_data['unique_id']]
+            raw_data['imaging_day'] = [f"{entry.split('_')[-3]}" for entry in raw_data['unique_id']]
             raw_data['Position mm'] = [float(entry) / 1000.0 for entry in raw_data['Position mm']]
             raw_data['Unnamed: 6'] = [float(entry) / 1000.0 for entry in raw_data['Unnamed: 6']]
             raw_data['tot_path_drop'] = [
-                f"/DATA/{address.relative_to(analysis_folder).parent.as_posix()}/DATA/{row['Unnamed: 0']}" for
+                f"/DATA/{address.relative_to(analysis_folder).parent.as_posix()}/{str(row['Unnamed: 0'])[-3:].zfill(3)}/Img" for
                 index, row in raw_data.iterrows()]
+            raw_data['tot_path'] = [entry[6:] for entry in raw_data['tot_path_drop']]
+#             raw_data['plate_id_xl'] = [f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}" for entry in
+#                                        raw_data['Unnamed: 0']]
+#             folders_plate_frame = folders_frame[
+#                 folders_frame['plate_id_xl'].str.lower().isin(raw_data['plate_id_xl'].str.lower())]
+#             raw_data = raw_data.join(folders_plate_frame.set_index('unique_id_xl'), lsuffix='', rsuffix='_folder',
+#                                      on='Unnamed: 0')
+            
+            raw_data = raw_data.reset_index()
             excel_frame = pd.concat([excel_frame, raw_data])
 
         elif suffix == '.csv':
+#             print("this is where stuff comes from", address)
             # Different OS languages create different CSV's. Below checks for comma, or semicolon separation
             df_comma = pd.read_csv(address, nrows=1, sep=",")
             df_semi = pd.read_csv(address, nrows=1, sep=";")
@@ -203,8 +222,11 @@ def read_video_data_new(address_array, analysis_folder):
                                     raw_data['unique_id']]
             raw_data['tot_path_drop'] = [
                 f"/DATA/{address.relative_to(analysis_folder).parent.as_posix()}/{str(row['video']).zfill(3)}/Img" for
+#                 '/DATA/' + (address.relative_to(analysis_folder).parent / "Img").as_posix() for
                 index, row in raw_data.iterrows()]
+            
             raw_data['tot_path'] = [entry[6:] for entry in raw_data['tot_path_drop']]
+#             print("tot_path_drop = ", raw_data['tot_path_drop'].iloc[0])
             raw_data = raw_data.reset_index()
             csv_frame = pd.concat([csv_frame, raw_data], axis=0, ignore_index=True)
 
@@ -234,11 +256,14 @@ def read_video_data_new(address_array, analysis_folder):
     # Now that three different kinds of data have been recorded, it's time to merge all of them.
     # A definite final product is not standardized, but below you can see the renaming schemes.
     # These new names will be used in the bulk analysis.
-
+#     print("is txt nan? ",txt_frame['tot_path_drop'].iloc[0])
+#     print("or is csv nan? ",csv_frame['tot_path_drop'])
+#     print("or xlsx? ",excel_frame['tot_path_drop'].iloc[0])
+    
     if len(excel_frame) > 0:
         excel_frame['Binned (Y/N)'] = [np.where(entry == 'Y', 2, 1) for entry in excel_frame['Binned (Y/N)']]
         excel_frame["Binned (Y/N)"] = excel_frame["Binned (Y/N)"].astype(int)
-        excel_frame['Time after crossing'] = [int(entry.split(' ')[-2]) for entry in excel_frame['Time after crossing']]
+#         excel_frame['Time after crossing'] = [int(entry.split(' ')[-2]) for entry in excel_frame['Time after crossing']]
         excel_frame = excel_frame.rename(columns={
             'Unnamed: 0': 'unique_id',
             'Treatment': 'treatment',
@@ -287,7 +312,8 @@ def read_video_data_new(address_array, analysis_folder):
         txt_frame['Run'] = [int(entry) for entry in txt_frame['Run']]
         txt_frame['Gain'] = [float(entry) for entry in txt_frame['Gain']]
         txt_frame['Gamma'] = [float(entry) for entry in txt_frame['Gamma']]
-        txt_frame['Root'] = [entry.split(' ')[-1] for entry in txt_frame['Root']]
+#         print(address)
+#         txt_frame['Root'] = [entry.split(' ')[-1] for entry in txt_frame['Root']]
         txt_frame['Strain'] = [entry.split(' ')[-1] for entry in txt_frame['Strain']]
         txt_frame['StoragePath'] = [entry.split(' ')[-1] for entry in txt_frame['StoragePath']]
         txt_frame['Treatment'] = [entry.split(' ')[-1] for entry in txt_frame['Treatment']]
@@ -313,6 +339,7 @@ def read_video_data_new(address_array, analysis_folder):
         })
 
     if len(csv_frame) > 0:
+#         print("does it happen here? ",csv_frame['tot_path_drop'])
         csv_frame['video_id'] = [entry.split('_')[-1] for entry in csv_frame['unique_id']]
         csv_frame['plate_nr'] = [int(entry.split('_')[-2][5:]) for entry in csv_frame['unique_id']]
         csv_frame['Lens'] = csv_frame["Lens"].astype(float)
@@ -331,8 +358,12 @@ def read_video_data_new(address_array, analysis_folder):
             'time': 'time_(s)',
         })
         csv_frame = csv_frame.drop(columns=['index', 'file_name'], axis=1)
+#         print("does it happen here? ",csv_frame['tot_path_drop'])
     if len(csv_frame) > 0 and len(txt_frame) > 0:
+        print("txt merge?")
+#         print("does it happen here? ",csv_frame['tot_path_drop'].iloc[1])
         merge_frame = pd.merge(txt_frame, csv_frame, how='outer', on='unique_id', suffixes=("", "_csv"))
+#         print("did 016 not get copied? ", merge_frame['tot_path_drop'])
         merge_frame = merge_frame.drop(columns=['plate_id'], axis=1)
         merge_frame = merge_frame.rename(columns={'plate_id_xl': 'plate_id'})
         merge_frame['imaging_day'] = merge_frame['imaging_day'].fillna(merge_frame['imaging_day_csv'])
@@ -347,12 +378,15 @@ def read_video_data_new(address_array, analysis_folder):
         merge_frame['ypos'] = merge_frame['ypos'].fillna(merge_frame['ypos_csv'])
         merge_frame['magnification'] = merge_frame['magnification'].fillna(merge_frame['magnification_csv'])
         merge_frame['tot_path'] = merge_frame['tot_path'].fillna(merge_frame['tot_path_csv'])
+        merge_frame['tot_path_drop'] = merge_frame['tot_path_drop'].fillna(merge_frame['tot_path_drop_csv'])
+#         print("did 016 not get copied? ", merge_frame['tot_path_drop'].iloc[306])
         merge_frame['days_after_crossing'] = merge_frame['days_after_crossing'].fillna(
             merge_frame['days_after_crossing_csv'])
         merge_frame = merge_frame.drop(
             columns=['video_int_csv', 'treatment_csv', 'strain_csv', 'days_after_crossing_csv', 'xpos_csv', 'ypos_csv',
                      'mode_csv', 'binning_csv', 'magnification_csv', 'fps_csv', 'plate_id_csv',
                      'tot_path_csv', 'time_(s)_csv', 'imaging_day_csv', 'tot_path_drop_csv'], axis=1)
+#         print("did 016 not get copied?2 ", merge_frame['tot_path_drop'].iloc[293])
 
     elif len(excel_frame) > 0 and len(txt_frame) > 0:
         merge_frame = pd.merge(excel_frame, csv_frame, how='left', on='unique_id', suffixes=("", "_csv"))
@@ -361,6 +395,7 @@ def read_video_data_new(address_array, analysis_folder):
         merge_frame['plate_id'] = [f"{row['imaging_day']}_Plate{int(row['plate_id'])}" for index, row in
                                    merge_frame.iterrows()]
     elif len(excel_frame) > 0:
+#         print("tot_path_drop", merge_frame['tot_path_drop'])
         merge_frame = excel_frame.reset_index(drop=True)
         merge_frame = merge_frame[merge_frame['tot_path_drop'] == merge_frame['tot_path_drop']]
         merge_frame['tot_path'] = [(Path(entry[6:]) / 'Img').as_posix() for entry in merge_frame['tot_path_drop']]
@@ -374,6 +409,7 @@ def read_video_data_new(address_array, analysis_folder):
         merge_frame = csv_frame
     else:
         raise "Could not find enough data!"
+    print("is it nan now?", merge_frame['unique_id'])
     return merge_frame
 
 
@@ -408,6 +444,7 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
         db_address = f"{dropbox_address}Analysis/{drop_targ.as_posix()}"
         row['analysis_folder'] = str(Path(f"{analysis_folder}{row['folder'][:-4]}"))
         row['videos_folder'] = str(Path(f"{videos_folder}{row['folder']}"))
+        print("this is row videos folder: ", row['videos_folder'])
         video_analysis = KymoVideoAnalysis(input_frame=row, logging=logging,
                                            show_seg=False, filter_step=edge_len_min,
                                            close_size=close_size, thresh_adjust=thresh_adjust,
@@ -436,7 +473,7 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
                 edge.view_edge(img_frame=img_seq, save_im=True, quality=6, target_length=target_length)
 
             ### Create kymograph of edge, do fourier filtering, extract speeds, extract transport ###
-            kymos = edge.extract_multi_kymo(1, target_length=target_length, kymo_adj=False,
+            edge.extract_multi_kymo(1, target_length=target_length, kymo_adj=False,
                                             kymo_normalize=kymo_normalize)
             edge.fourier_kymo(return_self=False)
             edge.extract_speeds(w_size=speed_ext_window_number,
@@ -640,7 +677,7 @@ class HighmagDataset(object):
         if labels is not None:
             labels.append((mpatches.Patch(color=c), column))
 
-        return fig, ax
+        return fig, ax, violin_means
 
     def return_video_frame(self):
         return self.video_frame
@@ -666,6 +703,7 @@ class VideoDataset(object):
         self.time_res = 1 / self.dataset['fps']
         self.vid_analysis_folder = Path(f"{analysis_folder}{self.dataset['folder']}").parent
         edge_adr = Path(f"{analysis_folder}{self.dataset['folder']}").parent / "edges_data.csv"
+        print(edge_adr)
         self.imshow_extent = [0, self.space_res * self.img_dim[0],
                               self.space_res * self.img_dim[1], 0]
         if edge_adr.exists():
