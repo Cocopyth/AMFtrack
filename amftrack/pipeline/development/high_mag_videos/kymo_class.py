@@ -40,7 +40,8 @@ class KymoVideoAnalysis(object):
                  logging=False,
                  show_seg=False,
                  input_frame=None,
-                 close_size=None
+                 close_size=None,
+                 samepos_frame=None
                  ):
         """
         Master class for video processing. Will use nearby video parameters (from csv's, xslx's or the input frame)
@@ -137,16 +138,22 @@ class KymoVideoAnalysis(object):
             self.magnification = input_frame['magnification']
             self.binning = input_frame['binning']
             self.kymos_path = input_frame['analysis_folder']
-            self.imgs_address = Path(input_frame['videos_folder'])
-#             print("this is the address for kymo_class: ", self.imgs_address)
             vid_dic = {'F': 'FLUO',
                        'BF': 'BRIGHT'}
             self.vid_type = vid_dic[input_frame['mode']]
+#             if self.vid_type == 'BRIGHT':
+            self.imgs_address = Path(input_frame['videos_folder'])
+#             elif self.vid_type == 'FLUO':
+#                 self.imgs_address = Path(samepos_frame['videos_folder'].iloc[0])
+#             print("this is the address for kymo_class: ", self.imgs_address)
+#             else:
+#                 print('I dont have a valid video type')
+           
             self.video_nr = input_frame['unique_id']
 
         self.time_pixel_size = 1 / self.fps
         self.space_pixel_size = 2 * 1.725 / (self.magnification) * self.binning  # um.pixel
-        self.pos = [input_frame['xpos'],input_frame['ypos'],input_frame['zpos']]
+#         self.pos = [input_frame['xpos'],input_frame['ypos'],input_frame['zpos']]
         if not os.path.exists(self.kymos_path):
             os.makedirs(self.kymos_path)
             if self.logging:
@@ -157,7 +164,8 @@ class KymoVideoAnalysis(object):
         self.selection_file = self.images_total_path
         self.selection_file.sort()
         self.selection_file = self.selection_file[self.im_range[0]:self.im_range[1]]
-
+        
+        
 
         if self.logging:
             print('Data input succesful! Starting edge extraction...')
@@ -171,6 +179,20 @@ class KymoVideoAnalysis(object):
                 imageio.imread(self.selection_file[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
                 seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
         elif self.vid_type == 'FLUO':
+            if not samepos_frame.empty:
+                bfimage_address=Path(samepos_frame['videos_folder'].iloc[0])
+    #             print(bfimage_address)
+                alltiffs = [str(adr) for adr in bfimage_address.glob('*_*.ti*')]
+    #             print("the amount of tif(f) images in videos_folder: ", len(self.images_total_path))
+                alltiffs.sort()
+                sortedtiffs = alltiffs[self.im_range[0]:self.im_range[1]]
+    #             print("this is one tiff: ", onetiff)
+                if frangi_range is None:
+                    frangi_range = [np.arange(5, 20, 3), np.arange(20, 160, 20)][self.magnification == 50]
+                #print(len(self.selection_file))
+                self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
+                    imageio.imread(sortedtiffs[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
+                    seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
 #             for i, pos in enumerate(input_frame['xpos']):
 #                 if self.pos[0]==pos and self.pos[1]==input_frame['ypos'][i] and self.pos[2]==input_frame['zpos'][i] and input_frame['mode'][i]=='BF':
 #                     if frangi_range is None:
@@ -179,19 +201,19 @@ class KymoVideoAnalysis(object):
 #                     self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
 #                         imageio.imread(self.selection_file[i]), frangi_range=frangi_range, thresh=thresh,
 #                         seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
-            
-            self.frame_max = imageio.imread(self.selection_file[self.im_range[0]])
-            frames = []
-            for i, address in enumerate(self.im_range):
-                frame2 = imageio.imread(self.selection_file[address])
-                self.frame_max = np.maximum(self.frame_max, frame2)
-                if i < 60:
-                    frames.append(frame2)
-            self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
-                self.frame_max, thresh=thresh,
+            else:
+                self.frame_max = imageio.imread(self.selection_file[self.im_range[0]])
+                frames = []
+                for i, address in enumerate(self.im_range):
+                    frame2 = imageio.imread(self.selection_file[address])
+                    self.frame_max = np.maximum(self.frame_max, frame2)
+                    if i < 60:
+                        frames.append(frame2)
+                self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
+                    self.frame_max, thresh=thresh,
 #             self.segmented, self.nx_graph_pruned, self.pos = segment_std(
 #                 frames, thresh=thresh,
-                seg_thresh=seg_thresh, magnif=self.magnification)
+                    seg_thresh=seg_thresh, magnif=self.magnification)
         else:
             print("I don't have a valid flow_processing type!!! Using fluo thresholding.")
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
