@@ -6,6 +6,7 @@ from amftrack.pipeline.development.high_mag_videos.kymo_class import *
 from amftrack.pipeline.development.high_mag_videos.plot_data import (
     save_raw_data,
     plot_summary,
+    delete_dropbox_folders,
 )
 import matplotlib.patches as mpatches
 from pathlib import Path, PurePath
@@ -441,11 +442,13 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
     for index, row in input_frame.iterrows():
         ### Below code starts the whole address management. ###
         drop_targ = Path(f"/{row['tot_path_drop']}").relative_to(dropbox_address).parent
-        db_address = f"{dropbox_address}Analysis/{drop_targ.as_posix()}"
+        db_address = f"{dropbox_address}KymoSpeeDExtract/{drop_targ.as_posix()}"
         row['analysis_folder'] = str(Path(f"{analysis_folder}{row['folder'][:-4]}"))
         row['videos_folder'] = str(Path(f"{videos_folder}{row['folder']}"))
         print("this is row videos folder: ", row['videos_folder'])
-        video_analysis = KymoVideoAnalysis(input_frame=row, logging=logging,
+        selection_frame = input_frame[input_frame['xpos']==row['xpos']]
+        selection_frame = selection_frame[selection_frame['mode']=='BF']
+        video_analysis = KymoVideoAnalysis(input_frame=row, samepos_frame=selection_frame, logging=logging,
                                            show_seg=False, filter_step=edge_len_min,
                                            close_size=close_size, thresh_adjust=thresh_adjust,
                                            frangi_range=frangi_range)
@@ -489,7 +492,8 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
         plot_summary(edge_objs)
         save_raw_data(edge_objs, row['analysis_folder'])
         if dropbox_upload:
-            upload_folder(row['analysis_folder'], db_address)
+            dataplot.delete_dropbox_folders(db_address)
+            upload_folder(row['analysis_folder'], db_address, delete=True)
     return all_edge_objs
 
 

@@ -17,12 +17,14 @@ print(f"This is iteration {i}, with parameters {GST_params}")
 print(upl_targ)
 
 dataframe = pd.read_json(f"{temp_path}/{op_id}.json")
+selection_frame = dataframe[dataframe['xpos']==dataframe['xpos'].iloc[i]]
+selection_frame = selection_frame[selection_frame['mode']=='BF']
 dataframe = dataframe.iloc[i]
 
 if 'unique_id' in dataframe:
     drop_targ = os.path.relpath(f"/{dataframe['tot_path_drop']}", upl_targ)
     
-    test_video = KymoVideoAnalysis(input_frame = dataframe, logging=True)
+    test_video = KymoVideoAnalysis(input_frame = dataframe, samepos_frame = selection_frame, logging=True)
     img_address = dataframe['analysis_folder']
     db_address = f"{upl_targ}KymoSpeeDExtract/{drop_targ}"
     print(f"HELLLO!!! {db_address}")
@@ -30,7 +32,7 @@ if 'unique_id' in dataframe:
 else:
     img_address = dataframe["address_total"]
     magnif = dataframe['magnification']
-    test_video = KymoVideoAnalysis(img_address, logging=True, vid_type=None,
+    test_video = KymoVideoAnalysis(img_address, samepos_frame = selection_frame, logging=True, vid_type=None,
                                    fps=None, binning=None,
                                    filter_step=[20, 50][magnif > 10],seg_thresh=12,
                                    show_seg=False,
@@ -69,9 +71,11 @@ print(db_address)
 # for folder in img_address:
 #     delete folder
 # print(f"Folder deleted: {db_address}")
+# if os.path.exists(f"{db_address}/"):
+#     print("it does exist, why did it not delete them?")
 dataplot.delete_dropbox_folders(db_address)
 
 print(f"Iteration {i}: {db_address}")
 print(f"Iteration {i}: {img_address}")
 
-upload_folder(img_address, db_address)
+upload_folder(img_address, db_address, delete=True)
