@@ -113,7 +113,8 @@ def find_similarity(old_coord_list: List, new_coord_list: List):
 
     # Is it a negative similarity?
     if is_negative_similarity(old_coord_list, new_coord_list):
-        f2 = lambda c: c[::-1]
+        ####To fix, something wrong here
+        f2 = lambda c: c
         print(f"Similarity is a negative similarity")
     else:
         f2 = lambda c: c

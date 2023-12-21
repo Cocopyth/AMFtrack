@@ -285,7 +285,7 @@ def filter_kymo_left(
 
     filtered_fourrier[LT_quadrant] = 0
     filtered_fourrier[RB_quadrant] = 0
-    filtered_fourrier *= 1 - stat_array
+    filtered_fourrier *= (1 - stat_array)
     # filtered_fourrier[coordinates_middle[0], coordinates_middle[1]] = 0
 
     # stat_array[coordinates_middle[0], coordinates_middle[1]] = 0
@@ -333,12 +333,12 @@ def filter_kymo_left(
 
     # Here the intensity of the image is restored by setting equal the 3 percentile dimmest particles in the image.
     # This works best when there is a decent chunk of video where no particles are present.
-    img_out = middle.real
-    out_dim_pixls = img_out < np.percentile(img_out, perc_dim)
-    out_dim_value = np.mean(img_out[out_dim_pixls].flatten())
-    DC_value = dim_val - out_dim_value
+    img_out = middle
+    # out_dim_pixls = img_out < np.percentile(img_out, perc_dim)
+    # out_dim_value = np.mean(img_out[out_dim_pixls].flatten())
+    # DC_value = dim_val - out_dim_value
 
-    return (img_out + DC_value).real
+    return (np.abs(img_out))
 
     """
     Simple function that filters the kymograph and outputs the forward and backward filters.
@@ -430,6 +430,47 @@ def get_width(slices, avearing_window=50, num_std=2):
             continue
     return np.median(widths)
 
+def segment_brightfield_std(
+    images,
+    seg_thresh=0,
+):
+    """
+    Segmentation method for brightfield video, uses vesselness filters to get result.
+    image:          Input image
+    thresh:         Value close to zero such that the function will output a boolean array
+    frangi_range:   Range of values to use a frangi filter with. Frangi filter is very good for brightfield vessel segmentation
+
+    """
+    std_image = np.std(images,axis=0)/np.mean(images,axis=0)
+    smooth_im_blur = cv2.blur(std_image, (100, 100))
+
+    print("shape",images[0].shape,std_image.shape)
+    std_image_8bit = cv2.convertScaleAbs(std_image)
+    segmented = (smooth_im_blur>=0.03).astype(np.uint8)*255
+    # ret, segmented = cv2.threshold(
+    #     std_image_8bit, 0, 255, 2
+    # )
+    # print(ret)
+
+    #     seg_shape = smooth_im.shape
+
+    #     for i in range(1, 100):
+    #         _, segmented = cv2.threshold(smooth_im, i, 255, cv2.THRESH_BINARY)
+    #         coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
+    #         if coverage < seg_thresh:
+    #             break
+    segmented = cv2.morphologyEx(
+        segmented, cv2.MORPH_CLOSE, np.ones((51, 51))
+    )
+    skeletonized = skeletonize(segmented > 0)
+
+    # skeletonized = skeletonize(segmented*0)
+
+    skeleton = scipy.sparse.dok_matrix(skeletonized)
+    nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
+    nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
+
+    return (segmented, nx_graph_pruned, pos)
 
 def segment_brightfield(
     image,
