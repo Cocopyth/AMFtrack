@@ -6,7 +6,7 @@ from amftrack.pipeline.functions.transport_processing.high_mag_videos.kymo_class
     KymoEdgeAnalysis,
     KymoVideoAnalysis,
 )
-from amftrack.pipeline.development.high_mag_videos.plot_data import (
+from amftrack.pipeline.functions.transport_processing.high_mag_videos.plot_data import (
     save_raw_data,
     plot_summary,
 )
@@ -135,7 +135,7 @@ def index_videos_dropbox_new(
                 for entry in excel_drop
             ]
         )
-        print(excel_addresses)
+        print("adresses",excel_addresses)
         if len(excel_addresses) > 0:
             excel_addresses = [i for i in excel_addresses if i is not None]
             print(excel_addresses)
@@ -154,7 +154,7 @@ def index_videos_dropbox_new(
             if not (analysis_folder / address_local).exists():
                 download(address, (analysis_folder / address_local))
         info_addresses.append(analysis_folder / address_local)
-    clear_output(wait=False)
+    # clear_output(wait=False)
     print("All files downloaded! Merging files...")
 
     # The downloaded information is then read and merged into one dataframe containing all relevant information.
@@ -535,7 +535,7 @@ def read_video_data_new(address_array, analysis_folder):
         )
         merge_frame = csv_frame
     else:
-        raise "Could not find enough data!"
+        raise Exception("Could not find enough data!")
     return merge_frame
 
 

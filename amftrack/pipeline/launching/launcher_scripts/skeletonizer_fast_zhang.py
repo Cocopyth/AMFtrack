@@ -18,7 +18,7 @@ all_folders = get_current_folders(
 )
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Img/TileConfiguration.txt.registered"] == True]
-num_parallel = 70
+num_parallel = 40
 time = "6:00:00"
 hyph_width = 30
 perc_low = 85
@@ -35,7 +35,7 @@ run_parallel(
     time,
     "skeletonization",
     cpus=128,
-    node="fat_rome",
+    node="fat",
     name_job=name_job,
 )
 if stage > 0:

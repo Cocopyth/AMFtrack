@@ -27,11 +27,6 @@ def process(args):
 
     i = int(args[-1])
     op_id = int(args[-2])
-    hyph_width = int(args[1])
-    perc_low = float(args[2])
-    perc_high = float(args[3])
-    minlow = float(args[4])
-    minhigh = float(args[5])
 
     directory = str(args[6])
 
