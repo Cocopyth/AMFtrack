@@ -128,7 +128,7 @@ def index_videos_dropbox_new(analysis_folder, videos_folder, dropbox_folder,
     merge_frame = read_video_data_new(info_addresses, analysis_folder)
 #     print("en nu dan? ", merge_frame['tot_path_drop'].iloc[0])
     merge_frame = merge_frame.rename(columns={'tot_path': 'folder'})  # This is for the dropbox download functions
-    print("en nu dan?2 ", merge_frame['unique_id'])
+#     print("en nu dan?2 ", merge_frame['unique_id'])
     merge_frame = merge_frame.sort_values('unique_id')
     merge_frame = merge_frame.reset_index(drop=True)
     merge_frame = merge_frame.loc[:, ~merge_frame.columns.duplicated()].copy()
@@ -176,24 +176,28 @@ def read_video_data_new(address_array, analysis_folder):
             # Earliest .xlsx files did not contain binning information. Assume 1x1 binning
             if 'Binned (Y/N)' not in raw_data:
 #                 print("we will use N for binning in raw data: ",raw_data['Unnamed: 0'])
-                raw_data['Binned (Y/N)'] = ['N' for entry in raw_data['video']]
+            #for Rachael this is Unnamed: 0, for the rest it is video
+                raw_data['Binned (Y/N)'] = ['N' for entry in raw_data['Unnamed: 0']]
             raw_data["Binned (Y/N)"] = raw_data["Binned (Y/N)"].astype(str)
             # Filter on excel rows that actually contain data
             raw_data = raw_data[raw_data['Treatment'] == raw_data['Treatment']].reset_index(drop=True)
             # 'Plate[nr] can be both upper case and lower case'
-            raw_data['Unnamed: 0'] = [entry.lower() for entry in raw_data['Unnamed: 0']]
+            # if analysing hannahs data there is no Unnamed: 0, so comment it out everywhere and change it to video in line tot_path_drop
+#             raw_data['Unnamed: 0'] = [entry.lower() for entry in raw_data['Unnamed: 0']]
             #Changed this and line 193 from: 'video' -> 'Unnamed: 0', for analysis of rachaels data, their excel is weird
 #             raw_data['unique_id'] = [str(row['Unnamed: 0'])for index, row in
 #                                      raw_data.iterrows()]
 #             raw_data['unique_id'] = [f"{address.parent.parts[-1]}_{str(row['Unnamed: 0'])[-3:].zfill(3)}" for index, row in
 #                                      raw_data.iterrows()]
             raw_data['plate_id'] = [f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}" for entry in
-                                    raw_data['unique_id']]
-            raw_data['imaging_day'] = [f"{entry.split('_')[-3]}" for entry in raw_data['unique_id']]
-            raw_data['Position mm'] = [float(entry) / 1000.0 for entry in raw_data['Position mm']]
-            raw_data['Unnamed: 6'] = [float(entry) / 1000.0 for entry in raw_data['Unnamed: 6']]
+                                    raw_data['Unnamed: 0']]
+            raw_data['imaging_day'] = [f"{entry.split('_')[-3]}" for entry in raw_data['Unnamed: 0']]
+#             raw_data['Position mm'] = [float(entry) / 1000.0 for entry in raw_data['Position mm']]
+#             raw_data['Unnamed: 6'] = [float(entry) / 1000.0 for entry in raw_data['Unnamed: 6']]
+
+            #for Rachaels data
             raw_data['tot_path_drop'] = [
-                f"/DATA/{address.relative_to(analysis_folder).parent.as_posix()}/{str(row['Unnamed: 0'])[-3:].zfill(3)}/Img" for
+                f"/DATA/{address.relative_to(analysis_folder).parent.as_posix()}/DATA/{str(row['Unnamed: 0']).split('_')[-1].zfill(3)}/Img" for
                 index, row in raw_data.iterrows()]
             raw_data['tot_path'] = [entry[6:] for entry in raw_data['tot_path_drop']]
 #             raw_data['plate_id_xl'] = [f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}" for entry in
@@ -410,7 +414,7 @@ def read_video_data_new(address_array, analysis_folder):
         merge_frame = csv_frame
     else:
         raise "Could not find enough data!"
-    print("is it nan now?", merge_frame['unique_id'])
+#     print("is it nan now?", merge_frame['unique_id'])
     return merge_frame
 
 
@@ -492,8 +496,8 @@ def analysis_run(input_frame, analysis_folder, videos_folder, dropbox_address,
         plot_summary(edge_objs)
         save_raw_data(edge_objs, row['analysis_folder'])
         if dropbox_upload:
-            dataplot.delete_dropbox_folders(db_address)
-            upload_folder(row['analysis_folder'], db_address, delete=True)
+            delete_dropbox_folders(db_address)
+            upload_folder(row['analysis_folder'], db_address, delete=False)
     return all_edge_objs
 
 
@@ -902,7 +906,15 @@ class VideoDataset(object):
                                 fontsize=txt_size,
                                 path_effects=[pe.withStroke(linewidth=[0.2, 2][vid_pos is None], foreground="black")])
                 if plot_flux:
-                    ax.annotate(f"{speed_f / 100:.3}", edge_starts + edge_offset,
+                    #changed this to average intensity just out of curiosity, it was: (speed_f/100)
+#                     print(edge_obj.mean_data)
+                    kymo_path = (
+                        Path(edge_obj.mean_data["analysis_folder"])
+                        / f"edge {edge_obj.mean_data['edge_name']}"
+                        / f"{edge_obj.mean_data['edge_name']}_kymos_array.tiff"
+                    )
+                    kymo_img = imageio.imread(kymo_path)
+                    ax.annotate(f"{np.mean(kymo_img[0])/100:.3}", edge_starts + edge_offset,
                                 xytext=edge_starts + edge_offset + plate_offset - 10 * edge_normal * space_factor + 20 * edge_tangent * space_factor,
                                 rotation=edge_rot,
                                 color='white',
