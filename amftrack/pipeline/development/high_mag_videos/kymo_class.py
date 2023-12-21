@@ -180,7 +180,10 @@ class KymoVideoAnalysis(object):
                 seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
         elif self.vid_type == 'FLUO':
             if not samepos_frame.empty:
-                bfimage_address=Path(samepos_frame['videos_folder'].iloc[0])
+                if isinstance(samepos_frame['videos_folder'],str):
+                    bfimage_address=Path(samepos_frame['videos_folder'])
+                else:
+                    bfimage_address=Path(samepos_frame['videos_folder'].iloc[0])
     #             print(bfimage_address)
                 alltiffs = [str(adr) for adr in bfimage_address.glob('*_*.ti*')]
     #             print("the amount of tif(f) images in videos_folder: ", len(self.images_total_path))
@@ -287,15 +290,18 @@ class KymoVideoAnalysis(object):
             offset = int(np.linalg.norm(self.pos[edge.edge_name[0]] - self.pos[edge.edge_name[1]])) // 4
             segments = edge.create_segments(self.pos, image, self.nx_graph_pruned, resolution, offset,
                                             self.target_length, bounds, step=step)
+            #this plots the white regions onto the snapshot
             plot_segments_on_image(
                 segments, ax1, bounds=bounds, color="white", alpha=0.1, adj=self.space_pixel_size
             )
+            #this creates colored lines along the edges
             ax1.plot(
                 [self.pos[edge.edge_name[0]][1] * self.space_pixel_size,
                  self.pos[edge.edge_name[1]][1] * self.space_pixel_size],
                 [self.pos[edge.edge_name[0]][0] * self.space_pixel_size,
                  self.pos[edge.edge_name[1]][0] * self.space_pixel_size]
             )
+            #this puts white text along the edge at the start and finish
             ax1.text(
                 *np.flip((1 - weight) * self.pos[edge.edge_name[0]] + weight * self.pos[
                     edge.edge_name[1]]) * self.space_pixel_size,
@@ -319,6 +325,66 @@ class KymoVideoAnalysis(object):
             save_path_temp = os.path.join(self.kymos_path, f"Detected edges.png")
             fig1.savefig(save_path_temp)
             print("Saved the extracted edges")
+        plt.close(fig1)
+        #this didn't work because edge.kymo is still empty, but moving it down in flux_extract solved that
+        fig3, ax3 = plt.subplots(figsize=(8, 8))
+        ax3.imshow(image, extent=[0, self.space_pixel_size * image.shape[1],
+                                  self.space_pixel_size * image.shape[0], 0])
+#         plt.set_fontsize('large')
+        for edge in self.edge_objects:
+#             print(edge.kymo)
+#             ax3.plot(
+#                 [self.pos[edge.edge_name[0]][1] * self.space_pixel_size,
+#                  self.pos[edge.edge_name[1]][1] * self.space_pixel_size],
+#                 [self.pos[edge.edge_name[0]][0] * self.space_pixel_size,
+#                  self.pos[edge.edge_name[1]][0] * self.space_pixel_size]
+#             )
+            ax3.text(
+                *np.flip((1 - weight) * self.pos[edge.edge_name[0]] + weight * self.pos[
+                    edge.edge_name[1]]) * self.space_pixel_size,
+                f"{np.mean(edge.kymo)/100:.3}",
+                color="white",
+            )
+        ax3.set_aspect('equal')
+        fig3.tight_layout()
+        plt.show()
+        
+        if save_img:
+            save_path_temp = os.path.join(self.kymos_path, f"Flux.png")
+            fig3.savefig(save_path_temp)
+        plt.close(fig3)
+        
+        fig4, ax4 = plt.subplots(figsize=(8, 8))
+        ax4.imshow(image, extent=[0, self.space_pixel_size * image.shape[1],
+                                  self.space_pixel_size * image.shape[0], 0])
+        for edge in self.edge_objects:
+            if logging:
+                print('Working on edge {}, sir!'.format(edge.edge_name))
+            offset = int(np.linalg.norm(self.pos[edge.edge_name[0]] - self.pos[edge.edge_name[1]])) // 4
+            segments = edge.create_segments(self.pos, image, self.nx_graph_pruned, resolution, offset,
+                                            self.target_length, bounds, step=step)
+            plot_segments_on_image(
+                segments, ax4, bounds=bounds, color="white", alpha=0.1, adj=self.space_pixel_size
+            )
+#             ax4.plot(
+#                 [self.pos[edge.edge_name[0]][1] * self.space_pixel_size,
+#                  self.pos[edge.edge_name[1]][1] * self.space_pixel_size],
+#                 [self.pos[edge.edge_name[0]][0] * self.space_pixel_size,
+#                  self.pos[edge.edge_name[1]][0] * self.space_pixel_size]
+#             )
+            
+            ax4.set_title("Extracted Edges")
+        print(f"To work with individual edges of {self.video_nr}, here is a list of their indices:")
+        for i, edge in enumerate(self.edge_objects):
+            print('edge {}, {}'.format(i, edge.edge_name))
+        ax4.set_aspect('equal')
+        fig4.tight_layout()
+        plt.show()
+        if save_img:
+            save_path_temp = os.path.join(self.kymos_path, f"Detected edges Mask.png")
+            fig4.savefig(save_path_temp)
+            print("Saved the extracted edges")
+        plt.close(fig4)
         return None
 
     def makeVideo(self, resize_ratio=4):
