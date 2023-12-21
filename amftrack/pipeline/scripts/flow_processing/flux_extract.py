@@ -41,6 +41,8 @@ else:
         show_seg=False,
         close_size=200,
         thresh_adjust=-2,
+        # frangi_range=[1000,1500],
+
     )
     db_address = f"{upl_targ}Analysis/{dataframe['parent_folder']}/"
 

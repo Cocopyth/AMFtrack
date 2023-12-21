@@ -72,7 +72,7 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile=99.9):
         vel_adj = np.where(abs(vel_adj) > 2 * speedmax, np.nan, vel_adj)
         vel_adj_mean = np.nanmean(vel_adj, axis=1)
         if hasattr(edge, "video_analysis"):
-            widths = edge.get_widths(img_frame=40, save_im=True, target_length=200)
+            # widths = edge.get_widths(img_frame=40, save_im=True, target_length=200)
             straight_len = (
                 np.linalg.norm(
                     (edge.segments[0][0] + edge.segments[0][1]) / 2
@@ -102,12 +102,12 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile=99.9):
         data_out = pd.DataFrame(data=data_table)
         data_out.to_csv(f"{edge.edge_path}/{edge.edge_name}_data.csv")
 
-        data_fourier = {
-            "speed_range": edge.angle_plot[0],
-            "vel_prominence": edge.angle_plot[1],
-        }
-        data_fourier = pd.DataFrame(data=data_fourier)
-        data_fourier.to_csv(f"{edge.edge_path}/{edge.edge_name}_fourier_data.csv")
+        # data_fourier = {
+        #     "speed_range": edge.angle_plot[0],
+        #     "vel_prominence": edge.angle_plot[1],
+        # }
+        # data_fourier = pd.DataFrame(data=data_fourier)
+        # data_fourier.to_csv(f"{edge.edge_path}/{edge.edge_name}_fourier_data.csv")
 
         new_row = pd.DataFrame(
             [
@@ -149,7 +149,7 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile=99.9):
             ]
         )
         if hasattr(edge, "video_analysis"):
-            new_row["edge_width"] = np.mean(widths)
+            # new_row["edge_width"] = np.mean(widths)
             new_row["straight_length"] = straight_len
             new_row["edge_xpos_1"] = edge.video_analysis.pos[edge.edge_name[0]][0]
             new_row["edge_ypos_1"] = edge.video_analysis.pos[edge.edge_name[0]][1]
