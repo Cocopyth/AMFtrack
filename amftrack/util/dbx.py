@@ -358,7 +358,8 @@ def dropbox_videos_iter(
             continue_bool = response.has_more
             if response.has_more:
                 response = dbx.files_list_folder_continue(response.cursor)
-
+    print("plate_list",plate_list)
+    # raise "cd"
     return plate_list, excel_list, txt_list, other_folder_list
 
 
@@ -394,7 +395,7 @@ def get_dropbox_video_folders_new(
             if int(plate_date) < date_start:
                 continue
         if date_end is not None:
-            if int(plate_end) > date_start:
+            if int(plate_date) > date_end:
                 continue
         if plate_names is not None:
             if int(plate_id[5:]) not in plate_names:
