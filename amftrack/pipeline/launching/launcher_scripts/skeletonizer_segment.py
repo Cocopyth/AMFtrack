@@ -67,12 +67,12 @@ run_parallel(
     name_job=name_job,
 )
 
-if stage > 0:
-    run_launcher(
-        "skeletonizer_fast_zhang.py",
-        [directory_targ, name_job, stage],
-        plates,
-        "3:00:00",
-        dependency=True,
-        name_job=name_job,
-    )
+
+run_launcher(
+    "skeletonizer_fast_zhang.py",
+    [directory_targ, name_job, stage],
+    plates,
+    "3:00:00",
+    dependency=True,
+    name_job=name_job,
+)

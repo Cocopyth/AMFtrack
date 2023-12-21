@@ -254,6 +254,7 @@ def update_plate_info(
         plate_info = json.load(open(target, "r"))
     with tqdm(total=len(listdir), desc="analysed") as pbar:
         for folder in listdir:
+            # print(folder)
             path_snap = os.path.join(directory, folder)
             if os.path.exists(os.path.join(path_snap, "Img")):
                 sub_list_files = os.listdir(os.path.join(path_snap, "Img"))
