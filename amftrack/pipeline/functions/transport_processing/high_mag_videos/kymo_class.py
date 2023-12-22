@@ -191,7 +191,6 @@ class KymoVideoAnalysis(object):
                 self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
                     [imageio.imread(addresses) for addresses in alltiffs],
                 )
-                # #TODO
                 # self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
                 #     imageio.imread(sortedtiffs[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
                 #     seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
