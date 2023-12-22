@@ -2,6 +2,7 @@ import imageio.v2 as imageio
 import matplotlib.pyplot as plt
 import cv2
 from scipy import ndimage as ndi
+from scipy.ndimage import convolve
 
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_sparse_to_graph,
@@ -430,6 +431,41 @@ def get_width(slices, avearing_window=50, num_std=2):
             continue
     return np.median(widths)
 
+def find_histogram_edge(image,plot=False):
+    # Calculate the histogram
+    hist, bins = np.histogram(image.flatten(), 40)
+    hist = hist.astype(float) / hist.max()  # Normalize the histogram
+
+    # Sobel Kernel
+    sobel_kernel = np.array([-1, 0, 1])
+
+    # Apply Sobel edge detection to the histogram
+    sobel_hist = convolve(hist, sobel_kernel)
+
+    # Find the point with the highest gradient change
+    threshold = np.argmax(sobel_hist)
+
+    # Optional: Plot the results
+    if plot:
+        plt.figure(figsize=(10, 5))
+
+        # Plot the original histogram
+        plt.subplot(1, 2, 1)
+        plt.plot(hist)
+        plt.axvline(x=threshold, color='r', linestyle='--')
+
+        plt.title("Histogram")
+
+        # Plot the Sobel histogram
+        plt.subplot(1, 2, 2)
+        plt.plot(sobel_hist)
+        plt.title("Sobel Histogram")
+        plt.axvline(x=threshold, color='r', linestyle='--')
+
+        plt.show()
+
+    return bins[threshold]
+
 def segment_brightfield_std(
     images,
     seg_thresh=0,
@@ -443,28 +479,10 @@ def segment_brightfield_std(
     """
     std_image = np.std(images,axis=0)/np.mean(images,axis=0)
     smooth_im_blur = cv2.blur(std_image, (100, 100))
+    thresh = find_histogram_edge(smooth_im_blur)
+    segmented = (smooth_im_blur >= thresh * 1.01).astype(np.uint8) * 255
 
-    print("shape",images[0].shape,std_image.shape)
-    std_image_8bit = cv2.convertScaleAbs(std_image)
-    segmented = (smooth_im_blur>=0.03).astype(np.uint8)*255
-    # ret, segmented = cv2.threshold(
-    #     std_image_8bit, 0, 255, 2
-    # )
-    # print(ret)
-
-    #     seg_shape = smooth_im.shape
-
-    #     for i in range(1, 100):
-    #         _, segmented = cv2.threshold(smooth_im, i, 255, cv2.THRESH_BINARY)
-    #         coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
-    #         if coverage < seg_thresh:
-    #             break
-    segmented = cv2.morphologyEx(
-        segmented, cv2.MORPH_CLOSE, np.ones((51, 51))
-    )
     skeletonized = skeletonize(segmented > 0)
-
-    # skeletonized = skeletonize(segmented*0)
 
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
