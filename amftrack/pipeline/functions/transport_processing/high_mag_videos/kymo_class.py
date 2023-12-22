@@ -158,7 +158,8 @@ class KymoVideoAnalysis(object):
         self.images_total_path.sort()
         self.selection_file = self.images_total_path
         self.selection_file.sort()
-        self.selection_file = self.selection_file[self.im_range[0] : self.im_range[1]]
+        #the line below was commented out in order to get all frames for std seg
+        # self.selection_file = self.selection_file[self.im_range[0] : self.im_range[1]]
 
         if self.logging:
             print('Data input succesful! Starting edge extraction...')
@@ -169,13 +170,7 @@ class KymoVideoAnalysis(object):
                 frangi_range = [np.arange(5, 20, 3), np.arange(20, 160, 20)][self.magnification == 50]
             #print(len(self.selection_file))
             self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
-                [imageio.imread(self.selection_file[self.im_range[i]]) for i in range(len(self.im_range))],
-                # frangi_range=frangi_range,
-                # thresh=thresh,
-                # seg_thresh=seg_thresh,
-                # thresh_adjust=thresh_adjust,
-                # binning=self.binning,
-                # close_size=close_size,
+                [imageio.imread(addresses) for addresses in self.selection_file],
             )
         elif self.vid_type == 'FLUO':
             if not samepos_frame.empty:
@@ -191,20 +186,15 @@ class KymoVideoAnalysis(object):
     #             print("this is one tiff: ", onetiff)
                 if frangi_range is None:
                     frangi_range = [np.arange(5, 20, 3), np.arange(20, 160, 20)][self.magnification == 50]
-                #print(len(self.selection_file))
+                #print(len(self.selection_file))4
+                #DOING THE std segmentation
                 self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
-                    [imageio.imread(self.selection_file[self.im_range[i]]) for i in range(len(self.im_range))],
-                    # frangi_range=frangi_range,
-                    # thresh=thresh,
-                    # seg_thresh=seg_thresh,
-                    # thresh_adjust=thresh_adjust,
-                    # binning=self.binning,
-                    # close_size=close_size,
+                    [imageio.imread(addresses) for addresses in alltiffs],
                 )
-                #TODO
-                self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
-                    imageio.imread(sortedtiffs[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
-                    seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
+                # #TODO
+                # self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
+                #     imageio.imread(sortedtiffs[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
+                #     seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
 #             for i, pos in enumerate(input_frame['xpos']):
 #                 if self.pos[0]==pos and self.pos[1]==input_frame['ypos'][i] and self.pos[2]==input_frame['zpos'][i] and input_frame['mode'][i]=='BF':
 #                     if frangi_range is None:

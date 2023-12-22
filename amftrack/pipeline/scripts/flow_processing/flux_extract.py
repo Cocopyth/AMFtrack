@@ -1,5 +1,5 @@
-from amftrack.pipeline.development.high_mag_videos.kymo_class import *
-import amftrack.pipeline.development.high_mag_videos.plot_data as dataplot
+from amftrack.pipeline.functions.transport_processing.high_mag_videos.kymo_class import *
+import amftrack.pipeline.functions.transport_processing.high_mag_videos.plot_data as dataplot
 import sys
 import pandas as pd
 from amftrack.util.sys import temp_path
@@ -17,6 +17,7 @@ print(f"This is iteration {i}, with parameters {GST_params}")
 print(upl_targ)
 
 dataframe = pd.read_json(f"{temp_path}/{op_id}.json")
+selection_frame = dataframe.copy()
 dataframe = dataframe.iloc[i]
 
 if 'unique_id' in dataframe:
