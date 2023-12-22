@@ -1,6 +1,6 @@
 from pathlib import Path
 import imageio.v2 as imageio
-from amftrack.pipeline.development.high_mag_videos.high_mag_videos_fun import *
+from amftrack.pipeline.functions.transport_processing.high_mag_videos.high_mag_videos_fun import *
 import pandas as pd
 from PIL import Image
 import os
@@ -172,6 +172,7 @@ class KymoVideoAnalysis(object):
             self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
                 [imageio.imread(addresses) for addresses in self.selection_file],
             )
+            print("lenvideo",len(self.selection_file))
         elif self.vid_type == 'FLUO':
             if not samepos_frame.empty:
                 if isinstance(samepos_frame['videos_folder'],str):
