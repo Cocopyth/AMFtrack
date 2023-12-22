@@ -26,7 +26,7 @@ perc_high = 99.5
 minlow = 15
 minhigh = 50
 
-args = [hyph_width, perc_low, perc_high, minlow,minhigh, directory_targ]
+args = [hyph_width, perc_low, perc_high, minlow, minhigh, directory_targ]
 run_parallel(
     "extract_skel_2.py",
     args,
@@ -35,7 +35,7 @@ run_parallel(
     time,
     "skeletonization",
     cpus=128,
-    node="fat",
+    node="fat_rome",
     name_job=name_job,
 )
 num_parallel = 100
@@ -49,7 +49,7 @@ run_parallel(
     time,
     "compress",
     cpus=128,
-    node="fat",
+    node="fat_rome",
     name_job=name_job,
 )
 num_parallel = 100
@@ -63,7 +63,7 @@ run_parallel(
     time,
     "detect_blob",
     cpus=128,
-    node="fat",
+    node="fat_rome",
     name_job=name_job,
 )
 

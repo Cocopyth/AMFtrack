@@ -56,5 +56,5 @@ for index, row in analysis_folders.iterrows():
             "edge_post_process",
             cpus=num_cpus,
             name_job=name_job,
-            node="fat",
+            node="fat_rome",
         )

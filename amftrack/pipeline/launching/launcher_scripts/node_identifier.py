@@ -36,7 +36,7 @@ for unique_id in plates:
         time,
         "track_node",
         cpus=128,
-        node="fat",
+        node="fat_rome",
         name_job=name_job,
     )
 
@@ -49,7 +49,7 @@ run_parallel_all_time(
     time,
     "make_graphs",
     cpus=32,
-    node="thin",
+    node="rome",
     dependency=True,
     name_job=name_job,
 )

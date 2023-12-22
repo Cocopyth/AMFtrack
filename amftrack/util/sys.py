@@ -176,15 +176,16 @@ def get_param(
         # exec(line.split(';')[0],globals(),ldict)
     files = [
         "/Img/TileConfiguration.txt.registered",
-        "/Analysis/skeleton_compressed.mat",
-        "/Analysis/skeleton_masked_compressed.mat",
-        "/Analysis/skeleton_pruned_compressed.mat",
+        "/Analysis/skeleton.mat",
+        "/Analysis/skeleton_masked.mat",
+        "/Analysis/skeleton_pruned.mat",
         "/Analysis/transform.mat",
         "/Analysis/transform_corrupt.mat",
         "/Analysis/skeleton_realigned_compressed.mat",
         "/Analysis/nx_graph_pruned.p",
         "/Analysis/nx_graph_pruned_width.p",
         "/Analysis/nx_graph_pruned_labeled.p",
+        "/Analysis/nx_graph_pruned_labeled2.p",
     ]
     for file in files:
         ldict[file] = os.path.isfile(path_snap + file)  # TODO(FK) change here
@@ -253,6 +254,7 @@ def update_plate_info(
         plate_info = json.load(open(target, "r"))
     with tqdm(total=len(listdir), desc="analysed") as pbar:
         for folder in listdir:
+            # print(folder)
             path_snap = os.path.join(directory, folder)
             if os.path.exists(os.path.join(path_snap, "Img")):
                 sub_list_files = os.listdir(os.path.join(path_snap, "Img"))
@@ -297,7 +299,7 @@ def get_data_info(local=False, suffix_data_info=""):
     if len(data_info) > 0:
         data_info.index.name = "total_path"
         data_info.reset_index(inplace=True)
-        data_info["Plate"]=data_info["Plate"].fillna(0)
+        data_info["Plate"] = data_info["Plate"].fillna(0)
         data_info["unique_id"] = (
             data_info["Plate"].astype(str).astype(int).astype(str)
             + "_"
@@ -501,7 +503,7 @@ def get_time_plate_info_from_analysis(analysis_folders, use_saved=True):
         folders = pd.concat(
             [folders.copy(), folders_plate.copy()], axis=0, ignore_index=True
         )
-    time_plate_info.to_json(path_save_info)
+    # time_plate_info.to_json(path_save_info)
     folders.to_json(path_save_folders)
     return (folders, time_plate_info)
 
@@ -539,12 +541,12 @@ def get_global_hypha_info_from_analysis(analysis_folders, use_saved=True):
             folders = pd.concat(
                 [folders.copy(), folders_plate.copy()], axis=0, ignore_index=True
             )
-    global_hypha_info.to_json(path_save_info)
+    # global_hypha_info.to_json(path_save_info)
     folders.to_json(path_save_folders)
     return (folders, global_hypha_info)
 
 
-def get_time_hypha_info_from_analysis(analysis_folders, use_saved=True):
+def get_time_hypha_info_from_analysis(analysis_folders, use_saved=False):
     plates_in = analysis_folders["unique_id"].unique()
     plates_in.sort()
     ide = hashlib.sha256(np.sum(plates_in).encode("utf-8")).hexdigest()
@@ -594,7 +596,7 @@ def get_time_hypha_info_from_analysis(analysis_folders, use_saved=True):
             time_hypha_infos.append(time_hypha_info_plate)
             folders = pd.concat([folders, folders_plate], axis=0, ignore_index=True)
     time_hypha_info = pd.concat(time_hypha_infos, axis=0, ignore_index=True)
-    time_hypha_info.to_json(path_save_info)
+    # time_hypha_info.to_json(path_save_info)
     folders.to_json(path_save_folders)
     return (folders, time_hypha_info)
 
@@ -651,7 +653,7 @@ def get_time_edge_info_from_analysis(analysis_folders, use_saved=True):
             time_edge_infos.append(time_edge_info_plate)
             folders = pd.concat([folders, folders_plate], axis=0, ignore_index=True)
     time_edge_info = pd.concat(time_edge_infos, axis=0, ignore_index=True)
-    time_edge_info.to_json(path_save_info)
+    # time_edge_info.to_json( )
     folders.to_json(path_save_folders)
     return (folders, time_edge_info)
 
@@ -713,7 +715,7 @@ def get_time_plate_info_long_from_analysis(analysis_folders, use_saved=True):
             time_plate_infos.append(time_plate_info_plate)
             folders = pd.concat([folders, folders_plate], axis=0, ignore_index=True)
     time_plate_info = pd.concat(time_plate_infos, axis=0, ignore_index=True)
-    time_plate_info.to_json(path_save_info)
+    # time_plate_info.to_json(path_save_info)
     folders.to_json(path_save_folders)
     return (folders, time_plate_info)
 

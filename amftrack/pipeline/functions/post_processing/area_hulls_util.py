@@ -7,7 +7,10 @@ from scipy import spatial, stats
 from shapely.geometry import Polygon, Point
 
 from amftrack.notebooks.analysis.util import splitPolygon, get_time
-from amftrack.pipeline.functions.post_processing.util import is_in_study_zone
+from amftrack.pipeline.functions.post_processing.util import (
+    is_in_study_zone,
+    is_in_ROI_node,
+)
 from amftrack.util.sys import temp_path
 import os
 
@@ -38,7 +41,7 @@ def get_hulls(exp, ts):
                         node.pos(t)
                         for node in exp.nodes
                         if node.is_in(t)
-                        and np.all(is_in_study_zone(node, t, 1000, 150))
+                        and is_in_ROI_node(node, t)
                         and (node.label in g.nodes)
                     ]
                 )
@@ -63,7 +66,7 @@ def get_nodes_in_shape(shape, t, exp):
         for node in exp.nodes
         if node.is_in(t)
         and shape.contains(Point(node.pos(t)))
-        and np.all(is_in_study_zone(node, t, 1000, 200))
+        and is_in_ROI_node(node, t)
     ]
     return nodes
 
@@ -75,9 +78,46 @@ def get_nodes_in_ring(hull1, hull2, t, exp):
         if node.is_in(t)
         and hull2.contains(Point(node.pos(t)))
         and not hull1.contains(Point(node.pos(t)))
-        and np.all(is_in_study_zone(node, t, 1000, 200))
+        and is_in_ROI_node(node, t)
     ]
     return nodes
+
+
+def get_nodes_in_shape_no_study(shape, t, exp):
+    nodes = [
+        node
+        for node in exp.nodes
+        if node.is_in(t) and shape.contains(Point(np.flip(node.pos(t))))
+    ]
+    return nodes
+
+
+def get_length_shape_fast(exp, t, shape):
+    nodes = get_nodes_in_shape_no_study(shape, t, exp)
+    edges = {edge for node in nodes for edge in node.edges(t)}
+    tot_length = np.sum(
+        [
+            np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t)) * 1.725 / 2
+            for edge in edges
+        ]
+    )
+    return tot_length
+
+
+def get_surface_area_shape_fast(exp, t, shape):
+    nodes = get_nodes_in_shape_no_study(shape, t, exp)
+    edges = {edge for node in nodes for edge in node.edges(t)}
+    tot_length = np.sum(
+        [
+            2
+            * np.pi
+            * (edge.width(t) / 2)
+            * np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t))
+            * 1.725
+            for edge in edges
+        ]
+    )
+    return tot_length
 
 
 def get_hyphae_in_ring(hull1, hull2, t, exp):
@@ -87,7 +127,7 @@ def get_hyphae_in_ring(hull1, hull2, t, exp):
         if hyph.end.is_in(t)
         and hull2.contains(Point(hyph.end.pos(t)))
         and not hull1.contains(Point(hyph.end.pos(t)))
-        and np.all(is_in_study_zone(hyph.end, t, 1000, 200))
+        and is_in_ROI_node(hyph.end, t)
     ]
     return hyphae
 
@@ -110,8 +150,10 @@ def get_length_in_ring_new(hull1, hull2, t, exp):
     print(tot_length)
     return tot_length
 
+
 def get_length_fast(edge, t):
     return np.linalg.norm(edge.begin.pos(t) - edge.end.pos(t))
+
 
 f = lambda edge: np.log(
     edge.width(edge.ts()[-1])
@@ -139,6 +181,7 @@ def get_BAS_length_in_ring(hull1, hull2, t, exp):
         ]
     )
     return tot_length
+
 
 def get_density_in_ring_bootstrap(hull1, hull2, t, exp, n_resamples=100):
     shape = hull2.difference(hull1)
@@ -207,7 +250,7 @@ def get_growing_tips_shape(shape, t, exp, rh_only, max_t=np.inf):
         for node in nodes
         if node.degree(t) == 1 and node.is_in(t + 1) and len(node.ts()) > 2
     ]
-    tips = [tip for tip in tips if np.all(is_in_study_zone(tip, t, 1000, 150, False))]
+    tips = [tip for tip in tips if is_in_ROI_node(tip, t)]
     growing_tips = []
     for tip in tips:
         timesteps = [tim for tim in tip.ts() if tim <= max_t]
@@ -232,7 +275,7 @@ def get_growing_tips(hull1, hull2, t, exp, rh_only, max_t=np.inf):
         for node in nodes
         if node.degree(t) == 1 and node.is_in(t + 1) and len(node.ts()) > 2
     ]
-    tips = [tip for tip in tips if np.all(is_in_study_zone(tip, t, 1000, 150, False))]
+    tips = [tip for tip in tips if is_in_ROI_node(tip, t)]
     growing_tips = []
     for tip in tips:
         timesteps = [tim for tim in tip.ts() if tim <= max_t]
@@ -283,6 +326,7 @@ def get_rate_stop_in_ring(hull1, hull2, t, exp, rh_only, max_t=np.inf):
             stop_tips.append(tip)
     timedelta = get_time(exp, t, t + 1)
     return len(stop_tips) / timedelta
+
 
 def get_rate_lost_track_in_ring(hull1, hull2, t, exp, rh_only, max_t=np.inf):
     growing_tips = get_growing_tips(hull1, hull2, t, exp, rh_only, max_t)

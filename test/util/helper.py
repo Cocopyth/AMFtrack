@@ -96,6 +96,8 @@ def make_experiment_object():
     plate_name = "111111_20600101"  # TODO(FK): find the name automaticaly (can be different based on the person)
     update_plate_info(directory)
     folder_df = get_current_folders(directory)
+    print("fdd", folder_df)
+
     selected_df = folder_df.loc[folder_df["unique_id"] == plate_name]
     if len(selected_df) < 4:
         all_folders_drop = get_dropbox_folders_prince("/DATA/PRINCE", True)
@@ -115,6 +117,7 @@ def make_experiment_object():
 def make_experiment_object_analysis():
     "Build an experiment object using the plate that is in the test repository."
     directory = test_path
+    print(test_path)
     plate_name = "111111_20600101"  # TODO(FK): find the name automaticaly (can be different based on the person)
     update_analysis_info(directory)
 
@@ -127,7 +130,6 @@ def make_experiment_object_analysis():
         exp.load_tile_information(t)
     exp.save_location = "/".join(path_exp.split("/")[:-1])
     load_study_zone(exp)
-
     return exp
 
 
@@ -151,6 +153,50 @@ def make_experiment_object_multi():
     for t in range(len(exp.folders)):
         exp.load_tile_information(t)
     return exp
+
+
+def make_folders():
+    directory = test_path
+    update_plate_info(directory)
+    folder_df = get_current_folders(directory)
+    return folder_df
+
+
+import inspect
+import sys
+
+
+def create_script_function(script_file):
+    # Read the script contents
+    with open(script_file, "r") as f:
+        script_content = f.read()
+
+    # Extract function arguments
+    try:
+        code = compile(script_content, script_file, "exec")
+        global_vars = {}
+        local_vars = {}
+        exec(code, global_vars, local_vars)
+        script_function = None
+        for item in local_vars.values():
+            if inspect.isfunction(item):
+                script_function = item
+                break
+
+        if script_function is None:
+            raise ValueError("No function found in the script.")
+
+        # Define the new function with the same arguments
+        args = inspect.getargspec(script_function).args
+
+        def new_script_function(*args):
+            # Call the original script function with the provided arguments
+            script_function(*args)
+
+        return new_script_function
+
+    except Exception as e:
+        raise ValueError(f"Error inspecting the script: {str(e)}")
 
 
 class EdgeMock:

@@ -12,6 +12,8 @@ import csv
 import ast
 from collections import Counter
 
+# from numba import jit
+
 
 def orient(pixel_list, root_pos):
     if np.all(root_pos == pixel_list[0]):
@@ -35,42 +37,68 @@ def sparse_to_doc(sparse_mat):
     return doc_mat
 
 
+# @jit(nopython=True)
+def get_neighbours2(pixel, xs, ys):
+    x = pixel[0]
+    y = pixel[1]
+    primary_neighbours = {(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)}
+    secondary_neighbours = {
+        (x + 1, y - 1),
+        (x + 1, y + 1),
+        (x - 1, y + 1),
+        (x - 1, y - 1),
+    }
+    pixel_list = [(x, ys[i]) for i, x in enumerate(xs)]
+    num_neighbours = 0
+    actual_neighbours = set()
+    for neighbour in primary_neighbours:
+        if neighbour in pixel_list:
+            xp = neighbour[0]
+            yp = neighbour[1]
+            primary_neighboursp = {
+                (xp + 1, yp),
+                (xp - 1, yp),
+                (xp, yp + 1),
+                (xp, yp - 1),
+            }
+            for neighbourp in primary_neighboursp:
+                secondary_neighbours.discard(neighbourp)
+            actual_neighbours.add(neighbour)
+    for neighbour in secondary_neighbours:
+        if neighbour in pixel_list:
+            actual_neighbours.add(neighbour)
+    return actual_neighbours
+
+
+# def get_neighbours2(pixel, pixel_list):
+#     x, y = pixel
+#
+#     # Define primary and secondary neighbours
+#     primary_neighbours = {(x + dx, y + dy) for dx in [-1, 1] for dy in [-1, 1, 0] if not (dx == 0 and dy == 0)}
+#     secondary_neighbours = {(x + dx, y + dy) for dx in [-1, 1] for dy in [-1, 1]}
+#
+#     actual_primary_neighbours = {neigh for neigh in primary_neighbours if neigh in pixel_list}
+#
+#     # Remove primary neighbours from secondary neighbours list
+#     for neigh in actual_primary_neighbours:
+#         xp, yp = neigh
+#         secondary_neighbours -= {(xp + dx, yp + dy) for dx in [-1, 1] for dy in [-1, 1, 0] if not (dx == 0 and dy == 0)}
+#
+#     actual_secondary_neighbours = {neigh for neigh in secondary_neighbours if neigh in pixel_list}
+#
+#     return actual_primary_neighbours | actual_secondary_neighbours
+
+
 def order_pixel(pixel_begin, pixel_end, pixel_list):
-    def get_neighbours(pixel):
-        x = pixel[0]
-        y = pixel[1]
-        primary_neighbours = {(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)}
-        secondary_neighbours = {
-            (x + 1, y - 1),
-            (x + 1, y + 1),
-            (x - 1, y + 1),
-            (x - 1, y - 1),
-        }
-        num_neighbours = 0
-        actual_neighbours = set()
-        for neighbour in primary_neighbours:
-            if neighbour in pixel_list:
-                xp = neighbour[0]
-                yp = neighbour[1]
-                primary_neighboursp = {
-                    (xp + 1, yp),
-                    (xp - 1, yp),
-                    (xp, yp + 1),
-                    (xp, yp - 1),
-                }
-                for neighbourp in primary_neighboursp:
-                    secondary_neighbours.discard(neighbourp)
-                actual_neighbours.add(neighbour)
-        for neighbour in secondary_neighbours:
-            if neighbour in pixel_list:
-                actual_neighbours.add(neighbour)
-        return actual_neighbours
 
     ordered_list = [pixel_begin]
     current_pixel = pixel_begin
     precedent_pixel = pixel_begin
+    xs = [pixel[0] for pixel in pixel_list]
+    ys = [pixel[1] for pixel in pixel_list]
+
     while current_pixel != pixel_end:
-        neighbours = get_neighbours(current_pixel)
+        neighbours = get_neighbours2(current_pixel, np.array(xs), np.array(ys))
         neighbours.discard(precedent_pixel)
         precedent_pixel = current_pixel
         current_pixel = neighbours.pop()
