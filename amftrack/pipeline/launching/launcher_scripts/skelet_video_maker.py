@@ -17,7 +17,7 @@ all_folders = get_current_folders(
     directory_targ, local=True, suffix_data_info=suffix_data_info
 )
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
-folders = folders.loc[folders["/Analysis/skeleton_compressed.mat"] == True]
+folders = folders.loc[folders["/Analysis/skeleton.mat"] == True]
 num_parallel = 30
 time = "1:00:00"
 args = []
@@ -29,7 +29,7 @@ run_parallel_all_time(
     time,
     "make_video",
     cpus=32,
-    node="fat",
+    node="fat_rome",
     dependency=False,
     name_job=name_job,
 )

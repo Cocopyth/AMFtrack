@@ -42,6 +42,9 @@ row = [row for index, row in select.iterrows()][0]
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
 exp.save_location = "/".join(path_exp.split("/")[:-1])
+exp.directory = directory
+for timestep in range(exp.ts):
+    exp.load_tile_information(timestep)
 t = row["t"]
 try:
     exp.labeled
@@ -56,17 +59,17 @@ folder_analysis = row["folder_analysis"]
 path_edge_info_t = (
     f"{directory}{folder_analysis}/time_plate_info_long/plate_info_{t}.json"
 )
-load_skel(exp, [t])
-
-skeletons = []
-for skeleton in exp.skeletons:
-    if skeleton is None:
-        skeletons.append({})
-    else:
-        skeletons.append(skeleton)
-exp.multipoints = [
-    gpd.GeoSeries([Point(pixel) for pixel in skeleton.keys()]) for skeleton in skeletons
-]
+# load_skel(exp, [t])
+#
+# skeletons = []
+# for skeleton in exp.skeletons:
+#     if skeleton is None:
+#         skeletons.append({})
+#     else:
+#         skeletons.append(skeleton)
+# exp.multipoints = [
+#     gpd.GeoSeries([Point(pixel) for pixel in skeleton.keys()]) for skeleton in skeletons
+# ]
 
 if not os.path.isfile(path_edge_info_t) or overwrite:
     time_plate_info_t = {}

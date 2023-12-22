@@ -17,9 +17,9 @@ all_folders = get_current_folders(
     directory_targ, local=True, suffix_data_info=suffix_data_info
 )
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
-folders = folders.loc[folders["/Analysis/skeleton_compressed.mat"] == True]
+folders = folders.loc[folders["/Analysis/skeleton.mat"] == True]
 
-num_parallel = 120
+num_parallel = 40
 time = "10:00"
 thresh = 40
 args = [thresh, directory_targ]
@@ -31,7 +31,7 @@ run_parallel(
     time,
     "mask",
     cpus=128,
-    node="fat",
+    node="fat_rome",
     name_job=name_job,
 )
 if stage > 0:

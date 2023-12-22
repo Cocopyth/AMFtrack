@@ -314,3 +314,43 @@ if __name__ == "__main__":
     assert compute_factor([1, 0], [10, 0], 4.5) == 0.5
 
     print(get_section_segment([-2, 2], [1, 1], 2.82))
+
+
+def create_polygon(center_x, center_y, angle, scale):
+    angle_rad = np.radians(angle)
+
+    # Sector parameters
+    radius = 45
+    arc_points = 50
+
+    # Calculate start and end angles for the arc
+    theta1 = np.arccos((radius - 41) / radius)
+    theta2 = -theta1
+    thetas = np.linspace(theta1, theta2, arc_points)
+
+    # Create vertices along the arc
+    arc_x = center_x + radius * np.cos(thetas)
+    arc_y = center_y + radius * np.sin(thetas)
+    arc = np.column_stack((arc_x, arc_y))
+
+    # Create straight edges
+    edge1 = [center_x + radius * np.cos(theta1), center_y + radius * np.sin(theta1)]
+    edge2 = [center_x + radius * np.cos(theta2), center_y + radius * np.sin(theta2)]
+    edges = np.array([edge1, edge2])
+
+    # Combine arc and edges
+    vertices = np.vstack((arc, edges)) * scale
+
+    # Rotate the vertices
+    R = np.array(
+        [
+            [np.cos(angle_rad), -np.sin(angle_rad)],
+            [np.sin(angle_rad), np.cos(angle_rad)],
+        ]
+    )
+    rotated_vertices = vertices.dot(R.T)
+
+    # Translate the vertices
+    translated_vertices = rotated_vertices + [center_x, center_y]
+
+    return translated_vertices.astype(int), angle_rad, [center_x, center_y]

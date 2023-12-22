@@ -30,7 +30,7 @@ folders = folders.loc[folders["/Analysis/nx_graph_pruned_labeled.p"] == True]
 #     time,
 #     "make_video_full",
 #     cpus=32,
-#     node="fat",
+#     node="fat_rome",
 #     dependency=False,
 #     name_job=name_job,
 # )

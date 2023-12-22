@@ -5,6 +5,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 from amftrack.pipeline.functions.post_processing.util import (
     measure_length_um_edge,
     is_in_study_zone,
+    is_in_ROI_node,
 )
 import numpy as np
 from scipy import spatial
@@ -31,8 +32,8 @@ def get_length_study_zone(exp, t, args=None):
     length = 0
     for edge in exp.nx_graph[t].edges:
         edge_obj = Edge(Node(edge[0], exp), Node(edge[1], exp), exp)
-        is_in_end = np.all(is_in_study_zone(edge_obj.end, t, 1000, 150, is_circle))
-        is_in_begin = np.all(is_in_study_zone(edge_obj.begin, t, 1000, 150, is_circle))
+        is_in_end = is_in_ROI_node(edge_obj.end, t)
+        is_in_begin = is_in_ROI_node(edge_obj.begin, t)
         if is_in_end and is_in_begin:
             length += measure_length_um_edge(edge_obj, t)
     return ("tot_length_study", length)
@@ -62,11 +63,7 @@ def get_tot_biovolume(exp, t, args=None):
 
 
 def get_tot_biovolume_study(exp, t, args=None):
-    nodes = [
-        node
-        for node in exp.nodes
-        if node.is_in(t) and np.all(is_in_study_zone(node, t, 1000, 200, is_circle))
-    ]
+    nodes = [node for node in exp.nodes if node.is_in(t) and is_in_ROI_node(node, t)]
     edges = {edge for node in nodes for edge in node.edges(t)}
     tot_biovolume = np.sum(
         [
@@ -78,6 +75,22 @@ def get_tot_biovolume_study(exp, t, args=None):
         ]
     )
     return ("tot_biovolume_study", tot_biovolume)
+
+
+def get_tot_surface_area_study(exp, t, args=None):
+    nodes = [node for node in exp.nodes if node.is_in(t) and is_in_ROI_node(node, t)]
+    edges = {edge for node in nodes for edge in node.edges(t)}
+    tot_biovolume = np.sum(
+        [
+            2
+            * np.pi
+            * (edge.width(t) / 2)
+            * np.linalg.norm(edge.end.pos(t) - edge.begin.pos(t))
+            * 1.725
+            for edge in edges
+        ]
+    )
+    return ("tot_surface_area_study", tot_biovolume)
 
 
 # def get_length_in_ring_rough(exp, t, args=None):
@@ -104,11 +117,7 @@ def get_area(exp, t, args=None):
 
 def get_area_study_zone(exp, t, args=None):
     nodes = np.array(
-        [
-            node.pos(t)
-            for node in exp.nodes
-            if node.is_in(t) and np.all(is_in_study_zone(node, t, 1000, 150, is_circle))
-        ]
+        [node.pos(t) for node in exp.nodes if node.is_in(t) and is_in_ROI_node(node, t)]
     )
     if len(nodes) > 3:
         hull = spatial.ConvexHull(nodes)
@@ -132,9 +141,7 @@ def get_area_separate_connected_components(exp, t, args=None):
             [
                 node.pos(t)
                 for node in exp.nodes
-                if node.is_in(t)
-                and np.all(is_in_study_zone(node, t, 1000, 150, is_circle))
-                and (node.label in g.nodes)
+                if node.is_in(t) and is_in_ROI_node(node, t) and (node.label in g.nodes)
             ]
         )
         if len(nodes) > 3:
@@ -158,9 +165,7 @@ def get_num_tips_study_zone(exp, t, args=None):
             [
                 node
                 for node in exp.nodes
-                if node.is_in(t)
-                and node.degree(t) == 1
-                and np.all(is_in_study_zone(node, t, 1000, 150, is_circle))
+                if node.is_in(t) and node.degree(t) == 1 and is_in_ROI_node(node, t)
             ]
         ),
     )
@@ -175,16 +180,8 @@ def get_num_BAS_tips(exp, t, args=None):
         return boolean
 
     edges = get_all_edges(exp, t)
-    edges = [
-        edge
-        for edge in edges
-        if np.all(is_in_study_zone(edge.begin, t, 1000, 150, is_circle))
-    ]
-    edges = [
-        edge
-        for edge in edges
-        if np.all(is_in_study_zone(edge.end, t, 1000, 150, is_circle))
-    ]
+    edges = [edge for edge in edges if is_in_ROI_node(edge.begin, t)]
+    edges = [edge for edge in edges if is_in_ROI_node(edge.end, t)]
     edge_tip = [edge for edge in edges if h(edge, t)]
     return ("num_tips_BAS_study", len(edge_tip))
 
@@ -200,9 +197,7 @@ def get_num_nodes_study_zone(exp, t, args=None):
             [
                 node
                 for node in exp.nodes
-                if node.is_in(t)
-                and node.degree(t) > 0
-                and np.all(is_in_study_zone(node, t, 1000, 150, is_circle))
+                if node.is_in(t) and node.degree(t) > 0 and is_in_ROI_node(node, t)
             ]
         ),
     )
@@ -215,9 +210,7 @@ def get_num_edges(exp, t, args=None):
             [
                 node.degree(t)
                 for node in exp.nodes
-                if node.is_in(t)
-                and node.degree(t) > 0
-                and np.all(is_in_study_zone(node, t, 1000, 150, is_circle))
+                if node.is_in(t) and node.degree(t) > 0 and is_in_ROI_node(node, t)
             ]
         )
         / 2,
@@ -274,8 +267,8 @@ def get_mean_edge_straight(exp, t, args=None):
     ]
     straightnesses = []
     for edge in edges:
-        is_in_end = np.all(is_in_study_zone(edge.end, t, 1000, 150, is_circle))
-        is_in_begin = np.all(is_in_study_zone(edge.begin, t, 1000, 150, is_circle))
+        is_in_end = is_in_ROI_node(edge.end, t)
+        is_in_begin = is_in_ROI_node(edge.begin, t)
         if is_in_end and is_in_begin:
             length = measure_length_um_edge(edge, t)
             straight_distance = (

@@ -41,6 +41,8 @@ try:
     exp.labeled
 except AttributeError:
     exp.labeled = True
+for timestep in range(exp.ts):
+    exp.load_tile_information(timestep)
 load_graphs(exp, directory, post_process=True)
 
 load_study_zone(exp)

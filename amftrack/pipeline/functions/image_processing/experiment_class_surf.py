@@ -295,7 +295,7 @@ class Experiment:
         Take as input float coordinates `coord` in the general referential
         and convert them into the referential of timestep t.
         """
-        old_coord = np.array(point).astype(dtype=np.float)
+        old_coord = np.array(point).astype(dtype=float)
         if self.image_transformation is None:
             raise Exception("Must load directories first")
         if self.image_transformation[t] is None:
@@ -527,7 +527,9 @@ def save_graphs(exp, suf=2, ts=None):
                 pickle.dump((g, pos), open(path_save, "wb"))
 
 
-def load_graphs(exp, directory, indexes=None, reload=True, post_process=False,suffix=""):
+def load_graphs(
+    exp, directory, indexes=None, reload=True, post_process=False, suffix=""
+):
     # TODO : add as a class method
     exp.directory = directory
     nx_graph_poss = []

@@ -39,7 +39,7 @@ run_parallel_all_time(
     time,
     "hyphae",
     cpus=32,
-    node="fat",
+    node="fat_rome",
     name_job=name_job,
 )
 

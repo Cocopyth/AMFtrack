@@ -1,7 +1,13 @@
 from datetime import datetime
 from subprocess import call, DEVNULL, check_output
 from typing import List
-from amftrack.util.sys import path_code, temp_path, slurm_path, slurm_path_transfer,conda_path
+from amftrack.util.sys import (
+    path_code,
+    temp_path,
+    slurm_path,
+    slurm_path_transfer,
+    conda_path,
+)
 import os
 from copy import copy
 from time import time_ns
@@ -9,6 +15,7 @@ import pickle
 import imageio
 import sys
 from time import sleep
+
 directory_scratch = "/scratch-shared/amftrack/"
 directory_project = "/projects/0/einf914/data/"
 directory_archive = "/archive/cbisot/"
@@ -49,7 +56,7 @@ def run_parallel(
     time,
     name,
     cpus=128,
-    node="thin",
+    node="rome",
     dependency=None,
     name_job="job.sh",
 ):
@@ -103,13 +110,13 @@ def run_parallel_flows(
     path_job = f"{path_bash}{name_job}"
     print(f"{path_job}")
     op_id = time_ns()
-    print(f'Sending jobs with id {op_id}')
+    print(f"Sending jobs with id {op_id}")
     folders.to_json(f"{temp_path}/{op_id}.json")  # temporary file
     length = len(folders)
     if length >= num_parallel:
-      num_jobs = length // num_parallel
+        num_jobs = length // num_parallel
     else:
-      num_jobs = length
+        num_jobs = length
     print(length)
     args_str = [str(arg) for arg in args]
     arg_str = " ".join(args_str)
@@ -128,8 +135,10 @@ def run_parallel_flows(
         my_file.write(
             f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        my_file.write(f"module load 2021 \n")
-        my_file.write(f"module load Python/3.9.5-GCCcore-10.3.0 \n")
+        # my_file.write(f"module load 2021 \n")
+        # my_file.write(f"module load Python/3.9.5-GCCcore-10.3.0 \n")
+        my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
+        my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
             f"\t python {path_code}pipeline/scripts/flow_processing/{code} {arg_str} {op_id} $i &\n"
@@ -148,7 +157,7 @@ def run_parallel_all_time(
     time,
     name,
     cpus=128,
-    node="thin",
+    node="rome",
     dependency=None,
     name_job="job.sh",
 ):
@@ -195,7 +204,7 @@ def run_parallel_post(
     time,
     name,
     cpus=128,
-    node="thin",
+    node="rome",
     name_job="post",
     dependency=False,
 ):
@@ -261,7 +270,7 @@ def run_parallel_stitch(
     num_parallel,
     time,
     cpus=128,
-    node="thin",
+    node="rome",
     name_job="stitch",
     dependency=False,
     is_mini_PRINCE=False,
@@ -350,12 +359,14 @@ def run_parallel_transfer(
         my_file.write(
             f'#SBATCH -o "{slurm_path_transfer}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        if os.path.exists(os.path.join(conda_path,'envs','amftrack')):
-          my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
-          my_file.write(f"conda activate amftrack\n")
+        if os.path.exists(os.path.join(conda_path, "envs", "amftrack")):
+            my_file.write(
+                f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n"
+            )
+            my_file.write(f"conda activate amftrack\n")
         else:
-          my_file.write(f"module load 2021 \n")
-          my_file.write(f"module load Python/3.9.5-GCCcore-10.3.0 \n")
+            my_file.write(f"module load 2021 \n")
+            my_file.write(f"module load Python/3.9.5-GCCcore-10.3.0 \n")
 
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
@@ -406,11 +417,12 @@ def run_parallel_transfer_to_archive(
     time,
     name,
     cpus=1,
+    plates=None,
     node="staging",
     dependency="transfer_archive.sh",
 ):
     path_job = f"{path_bash}{dependency}"
-    plates = set(folders["Plate"].values)
+    unique_ids = folders["unique_id"].unique() if plates == None else plates
     length = len(plates)
     folders = folders.copy()
     folders["unique_id"] = (
@@ -423,8 +435,7 @@ def run_parallel_transfer_to_archive(
         line = folders.loc[folders["folder"] == directory_name]
         line.to_json(path_info)
 
-    for plate in plates:
-        id_unique = folders.loc[folders["Plate"] == plate]["unique_id"].iloc[0]
+    for id_unique in unique_ids:
         folder = f"{directory}{id_unique}"
         ide = time_ns()
         my_file = open(path_job, "w")
@@ -439,5 +450,7 @@ def run_parallel_transfer_to_archive(
         )
         my_file.write("wait\n")
         my_file.close()
-        call(f"sbatch --dependency=singleton {path_job}", shell=True)
-
+        if dependency:
+            call(f"sbatch --dependency=singleton {path_job}", shell=True)
+        else:
+            call(f"sbatch {path_job}", shell=True)

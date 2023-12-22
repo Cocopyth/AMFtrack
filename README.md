@@ -83,6 +83,11 @@ AMF segmentation
 useful jupyterlab extensions:
 https://github.com/jpmorganchase/jupyter-fs
 
+Use nbstripout to avoid uploading nb output and simplify merge
+https://github.com/kynan/nbstripout
+
+Also avoid trying to merge notebooks
+
 ## Setup for Linux
 
 ### Setting up environment
