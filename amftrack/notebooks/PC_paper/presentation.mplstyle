@@ -1,0 +1,19 @@
+axes.titlesize : 24
+axes.labelsize : 21
+xtick.major.size : 4.5
+ytick.major.size : 4.5
+xtick.minor.size : 4.5
+ytick.minor.size : 4.5
+lines.linewidth : 3
+lines.markersize : 10
+xtick.labelsize : 18
+xtick.direction : in
+ytick.direction : in
+ytick.right : True
+xtick.top : True
+
+ytick.labelsize : 18
+pdf.fonttype : 42
+ps.fonttype : 42
+font.family : "sans-serif"
+font.sans-serif :"Arial"
