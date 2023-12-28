@@ -151,8 +151,8 @@ def index_videos_dropbox_new(
         if REDO_SCROUNGING:
             if not (analysis_folder / address_local.parent).exists():
                 (analysis_folder / address_local.parent).mkdir(parents=True)
-            if not (analysis_folder / address_local).exists():
-                download(address, (analysis_folder / address_local))
+            # if not (analysis_folder / address_local).exists():
+            download(address, (analysis_folder / address_local))
         info_addresses.append(analysis_folder / address_local)
     # clear_output(wait=False)
     print("All files downloaded! Merging files...")
@@ -215,13 +215,16 @@ def read_video_data_new(address_array, analysis_folder):
             ].reset_index(drop=True)
             # 'Plate[nr] can be both upper case and lower case'
             raw_data["Unnamed: 0"] = [entry.lower() for entry in raw_data["Unnamed: 0"]]
-            raw_data["plate_id"] = [
-                f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}"
-                for entry in raw_data["Unnamed: 0"]
-            ]
-            raw_data["imaging_day"] = [
-                f"{entry.split('_')[-3]}" for entry in raw_data["Unnamed: 0"]
-            ]
+            try:
+                raw_data["plate_id"] = [
+                    f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}"
+                    for entry in raw_data["Unnamed: 0"]
+                ]
+                raw_data["imaging_day"] = [
+                    f"{entry.split('_')[-3]}" for entry in raw_data["Unnamed: 0"]
+                ]
+            except:
+                pass
             raw_data["Position mm"] = [
                 float(entry) / 1000.0 for entry in raw_data["Position mm"]
             ]

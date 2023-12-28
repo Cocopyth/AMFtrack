@@ -468,7 +468,7 @@ def find_histogram_edge(image,plot=False):
 
 def segment_brightfield_std(
     images,
-    seg_thresh=0,
+    seg_thresh=1.2,
 ):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
@@ -480,7 +480,7 @@ def segment_brightfield_std(
     std_image = np.std(images,axis=0)/np.mean(images,axis=0)
     smooth_im_blur = cv2.blur(std_image, (100, 100))
     thresh = find_histogram_edge(smooth_im_blur)
-    segmented = (smooth_im_blur >= thresh * 1.01).astype(np.uint8) * 255
+    segmented = (smooth_im_blur >= thresh * seg_thresh).astype(np.uint8) * 255
 
     skeletonized = skeletonize(segmented > 0)
 
