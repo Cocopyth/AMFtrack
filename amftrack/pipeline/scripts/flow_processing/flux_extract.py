@@ -19,11 +19,14 @@ print(upl_targ)
 dataframe = pd.read_json(f"{temp_path}/{op_id}.json")
 selection_frame = dataframe.copy()
 dataframe = dataframe.iloc[i]
+sameframe = selection_frame[(selection_frame['xpos']==dataframe['xpos'])]
+sameframe = sameframe[(sameframe['ypos']==dataframe['ypos'])]
+sameframe = sameframe[(sameframe['mode']=='BF')]
 
 if 'unique_id' in dataframe:
     drop_targ = os.path.relpath(f"/{dataframe['tot_path_drop']}", upl_targ)
     
-    test_video = KymoVideoAnalysis(input_frame = dataframe, samepos_frame = selection_frame, logging=True)
+    test_video = KymoVideoAnalysis(input_frame = dataframe, samepos_frame = sameframe, logging=True)
     img_address = dataframe['analysis_folder']
     db_address = f"{upl_targ}KymoSpeeDExtract/{drop_targ}"
     print(f"HELLLO!!! {db_address}")
