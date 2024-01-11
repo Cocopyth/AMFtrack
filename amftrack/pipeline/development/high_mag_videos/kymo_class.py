@@ -309,7 +309,7 @@ class KymoVideoAnalysis(object):
                 color="white",
             )
             ax1.text(
-                *np.flip((1 - weight) * self.pos[edge.edge_name[1]] + weight * self.pos[
+                *((1 - weight) * self.pos[edge.edge_name[1]] + weight * self.pos[
                     edge.edge_name[0]]) * self.space_pixel_size,
                 str(edge.edge_name[1]),
                 color="white",
@@ -344,6 +344,14 @@ class KymoVideoAnalysis(object):
                     edge.edge_name[1]]) * self.space_pixel_size,
                 f"{np.mean(edge.kymo)/100:.3}",
                 color="white",
+                fontsize= 'large'
+            )
+            ax3.text(
+                *np.flip((1 - weight) * self.pos[edge.edge_name[0]] + weight * self.pos[
+                    edge.edge_name[1]]) * self.space_pixel_size,
+                f"{np.mean(edge.flux_tot)/100:.3}",
+                color="white",
+                fontsize= 'large'
             )
         ax3.set_aspect('equal')
         fig3.tight_layout()
@@ -353,7 +361,8 @@ class KymoVideoAnalysis(object):
             save_path_temp = os.path.join(self.kymos_path, f"Flux.png")
             fig3.savefig(save_path_temp)
         plt.close(fig3)
-        
+        #this is for Loreto. She wanted some mask images of the edges
+#         """
         fig4, ax4 = plt.subplots(figsize=(8, 8))
         ax4.imshow(image, extent=[0, self.space_pixel_size * image.shape[1],
                                   self.space_pixel_size * image.shape[0], 0])
@@ -385,6 +394,7 @@ class KymoVideoAnalysis(object):
             fig4.savefig(save_path_temp)
             print("Saved the extracted edges")
         plt.close(fig4)
+#         """
         return None
 
     def makeVideo(self, resize_ratio=4):
