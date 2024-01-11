@@ -20,8 +20,9 @@ dataframe = pd.read_json(f"{temp_path}/{op_id}.json")
 # print(i)
 # print(dataframe[dataframe['xpos']==dataframe['xpos']])
 #the selection frame is used to segment fluorescence videos based on a brightfield image of the same position
-# selection_frame = dataframe[dataframe['xpos']==dataframe['xpos'].iloc[i]]
-# selection_frame = selection_frame[selection_frame['mode']=='BF'].iloc[0]
+# selection_frame = dataframe[dataframe['ypos']==dataframe['ypos'].iloc[i]]
+# selection_frame = selection_frame[selection_frame['xpos']==dataframe['xpos'].iloc[i]]
+# selection_frame = selection_frame[selection_frame['mode']=='BF']
 #when analysing older data (Hannah or Rachael) we don't need to give BF segmentation for fluorescence videos
 selection_frame = pd.DataFrame()
 
@@ -66,7 +67,7 @@ for edge in edge_objs:
     edge.fourier_kymo(return_self=False)
     edge.extract_speeds(int(GST_params[0]), w_start=3, C_thresh=float(GST_params[1]), C_thresh_falloff=float(GST_params[2]), blur_size=3, preblur=True, speed_thresh=int(GST_params[3]))
     edge.extract_transport()
-#     edge.video_analysis.plot_speed_arrows(plot_flux=True, save_im=True, video_txt_size=40)
+    edge.video_analysis.plot_speed_arrows(plot_flux=True, save_im=True, video_txt_size=40)
 
 test_video.plot_extraction_img(target_length=target_length, save_img=True)
     
@@ -81,7 +82,7 @@ print(db_address)
 # print(f"Folder deleted: {db_address}")
 # if os.path.exists(f"{db_address}/"):
 #     print("it does exist, why did it not delete them?")
-# dataplot.delete_dropbox_folders(db_address)
+dataplot.delete_dropbox_folders(db_address)
 
 print(f"Iteration {i}: {db_address}")
 print(f"Iteration {i}: {img_address}")

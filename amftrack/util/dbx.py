@@ -613,23 +613,26 @@ def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
 
 def download_analysis_folders_drop(analysis_folder, dropbox_folder):
     """
-    Get all analysis files from a dropbox folder. Dropbox folder must contain /Analysis/ directory. Downloads the
+    Get all analysis files from a dropbox folder. Dropbox folder must contain /KymoSpeeDExtract/ directory. Downloads the
     files to analysis_folder.
     :param analysis_folder:     Folder where files will be downloaded to.
-    :param dropbox_folder:      Dropbox folder containing /Analysis/ directory with analysis files to be downloaded
+    :param dropbox_folder:      Dropbox folder containing /KymoSpeeDExtract/ directory with analysis files to be downloaded
     :return:                    Nothing
     """
     dbx = load_dbx()
     listfiles = []
-    response = dbx.files_list_folder(dropbox_folder + 'Analysis/', recursive=True)
+    response = dbx.files_list_folder(dropbox_folder + 'KymoSpeeDExtract/', recursive=True)
     while response.has_more:
         listfiles += [Path(file.path_display) for file in response.entries if Path(file.path_display).suffix != '']
         response = dbx.files_list_folder_continue(response.cursor)
     listfiles += [Path(file.path_display) for file in response.entries]
+    
+    print(listfiles[:5])
+    print(f"we will try to download {len(listfiles)} files! w0w that is a lot!")
 
     for file in listfiles:
         local_path = analysis_folder / Path(dropbox_folder).relative_to('/DATA/') / file.relative_to(
-            Path(dropbox_folder) / 'Analysis')
+            Path(dropbox_folder) / 'KymoSpeeDExtract')
         if not local_path.parent.exists():
             local_path.parent.mkdir(parents=True)
         download(file.as_posix(), local_path)
