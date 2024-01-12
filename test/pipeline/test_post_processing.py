@@ -1,5 +1,7 @@
 import os
 import unittest
+
+from amftrack.pipeline.functions.post_processing.util import is_in_ROI_node
 from test.util import helper
 import matplotlib.pyplot as plt
 import amftrack.pipeline.functions.post_processing.exp_plot as exp_plot
@@ -7,6 +9,8 @@ import amftrack.pipeline.functions.post_processing.time_plate as time_plate
 import amftrack.pipeline.functions.post_processing.time_hypha as time_hypha
 import amftrack.pipeline.functions.post_processing.time_edge as time_edge
 import amftrack.pipeline.functions.post_processing.area_hulls as area_hulls
+import amftrack.pipeline.functions.post_processing.P_regions as P_regions
+
 import geopandas as gpd
 from shapely.geometry import Point
 from random import choice
@@ -21,7 +25,16 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     load_graphs,
     load_skel,
 )
+from amftrack.pipeline.functions.post_processing.extract_study_zone import (
+    save_ROI,
+    load_ROI,
+)
+from amftrack.pipeline.functions.image_processing.experiment_util import (
+    get_all_nodes,
+    get_ROI,
+)
 import numpy as np
+import json
 
 mpl.use("AGG")
 
@@ -73,6 +86,27 @@ class TestExperiment(unittest.TestCase):
         for f in fs:
             print(f, f(self.exp, t, args))
 
+    def test_P_region_f(self):
+        t = 2
+        load_skel(self.exp, [t])
+
+        skeletons = []
+        for skeleton in self.exp.skeletons:
+            if skeleton is None:
+                skeletons.append({})
+            else:
+                skeletons.append(skeleton)
+        self.exp.multipoints = [
+            gpd.GeoSeries([Point(pixel) for pixel in skeleton.keys()])
+            for skeleton in skeletons
+        ]
+
+        f = P_regions.get_length_density_in_region
+
+        for i in range(9):
+            args = {"i": i}
+            print(f, f(self.exp, t, args))
+
     def test_branching_hulls(self):
         """Tests the function get_density_branch_rate_in_ring"""
         t = 2
@@ -121,3 +155,15 @@ class TestExperiment(unittest.TestCase):
         path_hyph_info = os.path.join(test_path, "time_edge.json")
         with open(path_hyph_info, "w") as jsonf:
             json.dump(data_hypha, jsonf, indent=4)
+
+    def test_save_ROI(self):
+        save_ROI(self.exp)
+
+    def test_load_ROI(self):
+        load_ROI(self.exp)
+
+    def test_in_ROI(self):
+        t = range(self.exp.ts)[-1]
+        nodes = get_all_nodes(self.exp, t)
+        in_ROIs = [is_in_ROI_node(node, t) for node in nodes]
+        print("prop nodes in ROI=", np.sum(in_ROIs) / len(in_ROIs))

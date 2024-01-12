@@ -7,6 +7,7 @@ from amftrack.pipeline.functions.post_processing.util import (
     measure_length_um_edge,
     is_in_study_zone,
     measure_length_um,
+    is_in_ROI_node,
 )
 from scipy import sparse
 
@@ -182,4 +183,4 @@ def get_pos_y(hypha, t, tp1, args=None):
 
 
 def get_in_ROI(hypha, t, tp1, args=None):
-    return ("in_ROI", str(np.all(is_in_study_zone(hypha.end, t, 1000, 150, is_circle))))
+    return ("in_ROI", str(is_in_ROI_node(hypha.end, t)))

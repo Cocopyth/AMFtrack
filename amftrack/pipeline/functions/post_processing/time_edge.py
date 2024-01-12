@@ -2,6 +2,7 @@ import numpy as np
 from amftrack.pipeline.functions.post_processing.util import (
     measure_length_um_edge,
     is_in_study_zone,
+    is_in_ROI_node,
 )
 import networkx as nx
 
@@ -49,10 +50,7 @@ def get_pos_y(edge, t, args=None):
 def get_in_ROI(edge, t, args=None):
     return (
         "in_ROI",
-        str(
-            is_in_study_zone(edge.end, t, 1000, 150, is_circle)
-            or is_in_study_zone(edge.begin, t, 1000, 150, is_circle)
-        ),
+        str(is_in_ROI_node(edge.end, t) or is_in_ROI_node(edge.begin, t)),
     )
 
 

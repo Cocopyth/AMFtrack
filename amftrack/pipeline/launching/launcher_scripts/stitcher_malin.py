@@ -28,7 +28,7 @@ if len(folders) > 0:
         num_parallel,
         time,
         cpus=128,
-        node="fat",
+        node="fat_rome",
         name_job=name_job,
         is_mini_PRINCE=True,
     )

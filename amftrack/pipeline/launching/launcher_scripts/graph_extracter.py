@@ -29,7 +29,7 @@ run_parallel(
     time,
     "extract_nx",
     cpus=128,
-    node="fat",
+    node="fat_rome",
     name_job=name_job,
 )
 if stage > 0:
