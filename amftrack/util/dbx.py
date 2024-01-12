@@ -20,8 +20,8 @@ import numpy as np
 from pathlib import Path
 
 DOTENV_FILE = (
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        + "/local.env"
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    + "/local.env"
 )
 env_config = Config(RepositoryEnv(DOTENV_FILE))
 
@@ -113,8 +113,8 @@ def upload(file_path, target_path, chunk_size=4 * 1024 * 1024, catch_exception=T
                                 cursor.offset = f.tell()
                             pbar.update(chunk_size)
             except (
-                    requests.exceptions.RequestException,
-                    dropbox.exceptions.ApiError,
+                requests.exceptions.RequestException,
+                dropbox.exceptions.ApiError,
             ) as e:
                 if catch_exception:
                     print("error")
@@ -157,7 +157,7 @@ def get_size_dbx(path):
         response = dbx.files_list_folder_continue(response.cursor)
     listfiles += [file for file in response.entries]
     size = sum(file.size for file in listfiles)
-    return size / 10 ** 9
+    return size / 10**9
 
 
 def download(file_path, target_path, end="", catch_exception=True, unzip=False):
@@ -255,18 +255,22 @@ def get_dropbox_folders_general(dir_drop: str):
 
     return entries
 
-def get_dropbox_folders_general_recursive(dir_drop: str,level):
+
+def get_dropbox_folders_general_recursive(dir_drop: str, level):
     if level == 0:
-        return(get_dropbox_folders_general(dir_drop))
+        return get_dropbox_folders_general(dir_drop)
     else:
         response = []
         entries = get_dropbox_folders_general(dir_drop)
         with tqdm(total=len(entries), desc="sizes") as pbar:
             for entry in entries:
                 if type(entry) != dropbox.files.FileMetadata:
-                    response += get_dropbox_folders_general_recursive(entry.path_display,level-1)
+                    response += get_dropbox_folders_general_recursive(
+                        entry.path_display, level - 1
+                    )
                     pbar.update(1)
-        return(response)
+        return response
+
 
 def get_dropbox_folders_prince(dir_drop: str, skip_size: bool = True) -> pd.DataFrame:
     # for fil in response.entries:
@@ -318,19 +322,22 @@ def get_dropbox_folders_prince(dir_drop: str, skip_size: bool = True) -> pd.Data
     )
     return df
 
-def dropbox_videos_iter(dbx, plate_list, excel_list, txt_list, other_folder_list, folder_address):
-    check_plate = re.search(r"\d{8}_Plate\d{2,6}$", folder_address.split('/')[-1])
+
+def dropbox_videos_iter(
+    dbx, plate_list, excel_list, txt_list, other_folder_list, folder_address
+):
+    check_plate = re.search(r"\d{8}_Plate\d{2,6}$", folder_address.split("/")[-1])
     print(folder_address)
     if check_plate:
         plate_list.append(folder_address)
     else:
         response = dbx.files_list_folder(folder_address, recursive=False)
-        continue_bool=True
+        continue_bool = True
         while continue_bool:
             for entry in response.entries:
                 check_plate = re.search(r"\d{8}_Plate\d{2,6}$", entry.name)
                 check_txt = re.search(r"videoInfo\.txt$", entry.name)
-                check_sheet = re.search(r'(.*\.(csv))|(xls[xb])$', entry.name)
+                check_sheet = re.search(r"(.*\.(csv))|(xls[xb])$", entry.name)
                 if check_plate:
                     plate_list.append(entry.path_display)
                 elif check_txt:
@@ -338,16 +345,31 @@ def dropbox_videos_iter(dbx, plate_list, excel_list, txt_list, other_folder_list
                 elif check_sheet:
                     excel_list.append(entry.path_display)
                 elif isinstance(entry, dropbox.files.FolderMetadata):
-                    if entry.name not in ["Analysis", "analysis", "Img", "img", "Analysis_old", "kymograph", "Kymographs"]:
+                    if entry.name not in [
+                        "Analysis",
+                        "analysis",
+                        "Img",
+                        "img",
+                        "Analysis_old",
+                        "kymograph",
+                        "Kymographs",
+                    ]:
                         other_folder_list.append(entry.path_display)
             continue_bool = response.has_more
             if response.has_more:
                 response = dbx.files_list_folder_continue(response.cursor)
-
+    print("plate_list",plate_list)
+    # raise "cd"
     return plate_list, excel_list, txt_list, other_folder_list
 
 
-def get_dropbox_video_folders_new(dir_drop, date_start: int=None, date_end:int=None, plate_names: np.array=None, max_depth = 3) -> pd.DataFrame:
+def get_dropbox_video_folders_new(
+    dir_drop,
+    date_start: int = None,
+    date_end: int = None,
+    plate_names: np.array = None,
+    max_depth=3,
+) -> pd.DataFrame:
     dbx = load_dbx()
 
     folder_list = [dir_drop.as_posix()]
@@ -358,43 +380,44 @@ def get_dropbox_video_folders_new(dir_drop, date_start: int=None, date_end:int=N
     for i in range(max_depth):
         other_folder_list = []
         for i, address in enumerate(folder_list):
-            plate_list, excel_list, txt_list, other_folder_list = dropbox_videos_iter(dbx, plate_list, excel_list, txt_list, other_folder_list, address)
+            plate_list, excel_list, txt_list, other_folder_list = dropbox_videos_iter(
+                dbx, plate_list, excel_list, txt_list, other_folder_list, address
+            )
         folder_list = other_folder_list
 
     for plate_addr in plate_list:
-        
+
         plate_name = Path(plate_addr).parts[-1]
-        if len(plate_name.split('_')) == 2:
-            plate_date, plate_id = plate_name.split('_')
+        if len(plate_name.split("_")) == 2:
+            plate_date, plate_id = plate_name.split("_")
         print(plate_date, plate_id)
         if date_start is not None:
             if int(plate_date) < date_start:
                 continue
         if date_end is not None:
-            if int(plate_end) > date_start:
+            if int(plate_date) > date_end:
                 continue
         if plate_names is not None:
             if int(plate_id[5:]) not in plate_names:
                 continue
-        
+
         print(plate_addr)
         plate_response = dbx.files_list_folder(plate_addr, recursive=False)
-        has_more_bool=True
+        has_more_bool = True
         while has_more_bool:
             for entry in plate_response.entries:
-                check_sheet = re.search(r'(.*\.(csv))|(xls[xb])$', entry.name)
+                check_sheet = re.search(r"(.*\.(csv))|(xls[xb])$", entry.name)
                 if check_sheet:
                     print("Hello!!")
                     excel_list.append(entry.path_display)
                 try:
-                    dbx.files_get_metadata(entry.path_display + '/videoInfo.txt')
+                    dbx.files_get_metadata(entry.path_display + "/videoInfo.txt")
                 except:
                     continue
-                txt_list.append(entry.path_display + '/videoInfo.txt')
+                txt_list.append(entry.path_display + "/videoInfo.txt")
             has_more_bool = plate_response.has_more
             if has_more_bool:
                 plate_response = dbx.files_list_folder_continue(plate_response.cursor)
-
 
     print(f"Other folders: {other_folder_list}")
     print(f"txt files: {txt_list}")
@@ -411,7 +434,7 @@ def get_dropbox_video_folders(dir_drop) -> pd.DataFrame:
     :return: Pandas dataframe with video info, list of .xslx and .csv files, list of .txt files.
     """
 
-    dir_drop_analysis = dir_drop / 'Analysis'
+    dir_drop_analysis = dir_drop / "Analysis"
 
     dbx = load_dbx()
     response = dbx.files_list_folder(dir_drop.as_posix(), recursive=True)
@@ -419,10 +442,14 @@ def get_dropbox_video_folders(dir_drop) -> pd.DataFrame:
     excel_list = []
     txt_list = []
     image_list = []
-    re_video = re.compile(r'\/\d*\/Img$')
-    re_excel = re.compile(r'(\d{8}.*\.(csv))|(xls[xb])$')
-    re_rachael_video = re.compile(r'^.*\/DATA\/\d{8}_Plate\d{1,6}_\d{1,4}(\/|)$', re.IGNORECASE)
-    re_video_info = re.compile(r'\/\d{8}_Plate\d{1,6}\/.*\/videoInfo\.txt$', re.IGNORECASE)
+    re_video = re.compile(r"\/\d*\/Img$")
+    re_excel = re.compile(r"(\d{8}.*\.(csv))|(xls[xb])$")
+    re_rachael_video = re.compile(
+        r"^.*\/DATA\/\d{8}_Plate\d{1,6}_\d{1,4}(\/|)$", re.IGNORECASE
+    )
+    re_video_info = re.compile(
+        r"\/\d{8}_Plate\d{1,6}\/.*\/videoInfo\.txt$", re.IGNORECASE
+    )
     is_rachael_video = True
     re_seq = [re_video, re_excel, re_rachael_video, re_video_info]
 
@@ -430,7 +457,11 @@ def get_dropbox_video_folders(dir_drop) -> pd.DataFrame:
     for x in response.entries:
         for regex in re_seq:
             test = regex.search(x.path_display)
-            if test and not x.path_display[:len(dir_drop_analysis.as_posix())] == dir_drop_analysis.as_posix():
+            if (
+                test
+                and not x.path_display[: len(dir_drop_analysis.as_posix())]
+                == dir_drop_analysis.as_posix()
+            ):
                 files_list.append(x.path_display)
 
     while response.has_more:
@@ -438,39 +469,54 @@ def get_dropbox_video_folders(dir_drop) -> pd.DataFrame:
         for x in response.entries:
             for regex in re_seq:
                 test = regex.search(x.path_display)
-                if test and not x.path_display[:len(dir_drop_analysis.as_posix())] == dir_drop_analysis.as_posix():
+                if (
+                    test
+                    and not x.path_display[: len(dir_drop_analysis.as_posix())]
+                    == dir_drop_analysis.as_posix()
+                ):
                     files_list.append(x.path_display)
 
     for i, xc_file in enumerate(files_list):
-        suffix = xc_file.split('/')[-1].split('.')[-1]
-        if suffix.endswith(('xlsx', 'xlsb')):
+        suffix = xc_file.split("/")[-1].split(".")[-1]
+        if suffix.endswith(("xlsx", "xlsb")):
             print("I found an excel sheet to use!")
             excel_list.append(files_list[i])
             is_rachael_video = True
-        elif suffix.endswith(('csv')):
+        elif suffix.endswith(("csv")):
             print("I found a csv sheet to use!")
             excel_list.append(files_list[i])
             is_rachael_video = False
-        elif suffix.endswith(('txt')):
+        elif suffix.endswith(("txt")):
             print("I found many txts!")
             txt_list.append(files_list[i])
         else:
             image_list.append(files_list[i])
 
     if is_rachael_video:
-        names = [file.split('/')[-1] for file in image_list]
+        names = [file.split("/")[-1] for file in image_list]
     else:
-        names = [f"{file.split('/')[-3]}_{file.split('/')[-2]}{'/'}Img{'/'}" for file in image_list]
+        names = [
+            f"{file.split('/')[-3]}_{file.split('/')[-2]}{'/'}Img{'/'}"
+            for file in image_list
+        ]
     path_drop = [Path(file).as_posix() for file in image_list]
-    print(path_drop, ['_' in Path(path).parts[-3] for path in path_drop])
-    plate_nr = [Path(path).parts[-3].split('_')[1][5:] for path in path_drop if '_' in Path(path).parts[-3]]
-    plate_nr = [Path(path).parts[-3] for path in path_drop if '_' not in Path(path).parts[-3]]
-    date_img = [Path(path).parts[-3].split('_')[0] for path in path_drop if '_' in Path(path).parts[-3]]
+    print(path_drop, ["_" in Path(path).parts[-3] for path in path_drop])
+    plate_nr = [
+        Path(path).parts[-3].split("_")[1][5:]
+        for path in path_drop
+        if "_" in Path(path).parts[-3]
+    ]
+    plate_nr = [
+        Path(path).parts[-3] for path in path_drop if "_" not in Path(path).parts[-3]
+    ]
+    date_img = [
+        Path(path).parts[-3].split("_")[0]
+        for path in path_drop
+        if "_" in Path(path).parts[-3]
+    ]
 
-    video = [name.split('_')[-1] for name in names]
-    df = pd.DataFrame(
-        (names, plate_nr, date_img, path_drop, video)
-    ).transpose()
+    video = [name.split("_")[-1] for name in names]
+    df = pd.DataFrame((names, plate_nr, date_img, path_drop, video)).transpose()
     df = df.rename(
         columns={
             0: "folder",
@@ -488,7 +534,7 @@ def save_dropbox_state(dir_drop: str, skip_size: bool = True, is_video: bool = F
         df = get_dropbox_video_folders(dir_drop, skip_size)
     else:
         df = get_dropbox_folders_prince(dir_drop, skip_size)
-    source = os.path.join(f'{temp_path}', f"dropbox_info.json")
+    source = os.path.join(f"{temp_path}", f"dropbox_info.json")
     df.to_json(source)
     target = f"{dir_drop}/folder_info.json"
     upload(
@@ -510,7 +556,7 @@ def read_saved_dropbox_state(dir_drop: str):
 
 
 def upload_folders(
-        folders: pd.DataFrame, dir_drop="DATA", catch_exception=True, delete=False
+    folders: pd.DataFrame, dir_drop="DATA", catch_exception=True, delete=False
 ):
     """
     Upload all the folders in the dataframe to a location on dropbox
@@ -523,9 +569,9 @@ def upload_folders(
             line = run_info.loc[run_info["folder"] == directory_name]
             try:
                 id_unique = (
-                        str(int(line["Plate"].iloc[0]))
-                        + "_"
-                        + str(int(str(line["CrossDate"].iloc[0]).replace("'", "")))
+                    str(int(line["Plate"].iloc[0]))
+                    + "_"
+                    + str(int(str(line["CrossDate"].iloc[0]).replace("'", "")))
                 )
             except:
                 id_unique = "faulty_param_files"
@@ -551,7 +597,7 @@ def download_folders_old(folders_drop: pd.DataFrame, directory_target):
         download(path, os.path.join(directory_target, f"{folder}.zip"), unzip=True)
 
 
-def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
+def download_folders_drop(folders_drop: pd.DataFrame, directory_target, unzip=True):
     dbx = load_dbx()
     for index, row in folders_drop.iterrows():
         path = "/" + row["tot_path_drop"]
@@ -580,7 +626,9 @@ def download_folders_drop(folders_drop: pd.DataFrame, directory_target):
                 "Img.zip",
                 "param.m",
             ]:  # to fix!
-                download(path_drop, path_local, unzip=(path_drop[-4:] == ".zip"))
+                download(
+                    path_drop, path_local, unzip=(path_drop[-4:] == ".zip") & unzip
+                )
 
 
 def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
@@ -597,9 +645,15 @@ def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
         response = dbx.files_list_folder(path, recursive=True)
         listfiles = []
         while response.has_more:
-            listfiles += [file for file in response.entries if Path(file.path_display).suffix != '']
+            listfiles += [
+                file
+                for file in response.entries
+                if Path(file.path_display).suffix != ""
+            ]
             response = dbx.files_list_folder_continue(response.cursor)
-        listfiles += [file for file in response.entries if Path(file.path_display).suffix != '']
+        listfiles += [
+            file for file in response.entries if Path(file.path_display).suffix != ""
+        ]
         folder = Path(row["folder"])
         path_folder = directory_target / folder
         if not path_folder.exists():
@@ -608,7 +662,11 @@ def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
             path_drop = Path(file.path_display)
             path_local = path_folder / path_drop.parts[-1]
             print(path_drop.as_posix(), path_local)
-            download(path_drop.as_posix(), str(path_local), unzip=(path_drop.suffix == ".zip"))
+            download(
+                path_drop.as_posix(),
+                str(path_local),
+                unzip=(path_drop.suffix == ".zip"),
+            )
 
 
 def download_analysis_folders_drop(analysis_folder, dropbox_folder):
@@ -621,9 +679,15 @@ def download_analysis_folders_drop(analysis_folder, dropbox_folder):
     """
     dbx = load_dbx()
     listfiles = []
+
     response = dbx.files_list_folder(dropbox_folder + 'KymoSpeeDExtract/', recursive=True)
+
     while response.has_more:
-        listfiles += [Path(file.path_display) for file in response.entries if Path(file.path_display).suffix != '']
+        listfiles += [
+            Path(file.path_display)
+            for file in response.entries
+            if Path(file.path_display).suffix != ""
+        ]
         response = dbx.files_list_folder_continue(response.cursor)
     listfiles += [Path(file.path_display) for file in response.entries]
     
@@ -633,10 +697,12 @@ def download_analysis_folders_drop(analysis_folder, dropbox_folder):
     for file in listfiles:
         local_path = analysis_folder / Path(dropbox_folder).relative_to('/DATA/') / file.relative_to(
             Path(dropbox_folder) / 'KymoSpeeDExtract')
+
         if not local_path.parent.exists():
             local_path.parent.mkdir(parents=True)
         download(file.as_posix(), local_path)
     return None
+
 
 def compute_dropbox_hash(filename):
     file_size = os.stat(filename).st_size

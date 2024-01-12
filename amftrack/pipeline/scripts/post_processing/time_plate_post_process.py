@@ -33,6 +33,9 @@ else:
 path_exp = f'{directory}{row["path_exp"]}'
 exp = pickle.load(open(path_exp, "rb"))
 exp.save_location = "/".join(path_exp.split("/")[:-1])
+exp.directory = directory
+for timestep in range(exp.ts):
+    exp.load_tile_information(timestep)
 try:
     exp.labeled
 except AttributeError:

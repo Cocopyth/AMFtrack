@@ -27,12 +27,16 @@ def first_identification(nx_graph_tm1, nx_graph_t, pos_tm1, pos_t, tolerance):
     degree_3sup_nodes_t = [
         node for node in nx_graph_t.nodes if nx_graph_t.degree(node) >= 3
     ]
-    xs = [pos_tm1[node][0] for node in degree_3sup_nodes_tm1] + [
-        pos_t[node][0] for node in degree_3sup_nodes_t
-    ]+[0]
-    ys = [pos_tm1[node][1] for node in degree_3sup_nodes_tm1] + [
-        pos_t[node][1] for node in degree_3sup_nodes_t
-    ]+[0]
+    xs = (
+        [pos_tm1[node][0] for node in degree_3sup_nodes_tm1]
+        + [pos_t[node][0] for node in degree_3sup_nodes_t]
+        + [0]
+    )
+    ys = (
+        [pos_tm1[node][1] for node in degree_3sup_nodes_tm1]
+        + [pos_t[node][1] for node in degree_3sup_nodes_t]
+        + [0]
+    )
     bounds = (np.max(xs) + 10000, np.max(ys) + 10000)
     Stm1 = sparse.csr_matrix(bounds, dtype=int)
     St = sparse.csr_matrix(bounds, dtype=int)
@@ -347,6 +351,7 @@ def create_labeled_graph(exp):
     # mappings = []
     for t in range(exp.ts):
         print("relabel1 ", t)
+
         def mapping(node, t=t):
             return recursive_mapping(corresp_list, t, node)
 
@@ -360,11 +365,11 @@ def create_labeled_graph(exp):
     #     return(corresp_list,new_poss_list,mappings)
 
     all_nodes = set()
-    for k,graph in enumerate(new_graph_list):
+    for k, graph in enumerate(new_graph_list):
         print(k)
         all_nodes = all_nodes.union(set(graph.nodes))
     all_node_labels = sorted(all_nodes)
-    dico = {node: j for j,node in enumerate(all_node_labels)}
+    dico = {node: j for j, node in enumerate(all_node_labels)}
     reduced_label_graph_list = []
     mapping_final = lambda node: dico[node] if node in dico.keys() else -1
     reduced_poss_list = []
@@ -379,6 +384,7 @@ def create_labeled_graph(exp):
     exp.positions = reduced_poss_list
     exp.labeled = True
     return (reduced_label_graph_list, reduced_poss_list)
+
 
 def create_labeled_graph_local(exp):
     all_nodes = set()
@@ -396,7 +402,8 @@ def create_labeled_graph_local(exp):
     for t in range(exp.ts):
         exp2 = Experiment(exp.directory)
 
-        exp2.load(exp.folders.iloc[t:t + 1], suffix="_width")
+        exp2.load(exp.folders.iloc[t : t + 1], suffix="_width")
+
         def mapping(node, t=t):
             return recursive_mapping(corresp_list, t, node)
 
@@ -408,18 +415,19 @@ def create_labeled_graph_local(exp):
 
         all_nodes = all_nodes.union(set(new_graph.nodes))
     all_node_labels = sorted(all_nodes)
-    dico = {node: j for j,node in enumerate(all_node_labels)}
+    dico = {node: j for j, node in enumerate(all_node_labels)}
     mapping_final = lambda node: dico[node] if node in dico.keys() else -1
     for t in range(exp.ts):
         exp2 = Experiment(exp.directory)
 
-        exp2.load(exp.folders.iloc[t:t + 1], suffix="_labeled")
+        exp2.load(exp.folders.iloc[t : t + 1], suffix="_labeled")
         new_graph = nx.relabel_nodes(exp2.nx_graph[0], mapping_final, copy=True)
         new_poss = relabel_pos(exp2.positions[0], mapping_final)
         exp2.positions[0] = new_poss
         exp2.nx_graph[0] = new_graph
         exp2.save_graphs(suffix="_labeled")
     exp.labeled = True
+
 
 def recursive_mapping(corresp_list, t, node):
     if t == 0:
@@ -464,7 +472,7 @@ def reconnect_degree_2(nx_graph, pos, has_width=True):
                     nx_graph.remove_edge(right_n, left_n)
                 nx_graph.add_edges_from([(right_n, left_n, info)])
         nx_graph.remove_node(node)
-        degree_2_nodes = [node for node in nx_graph.nodes if nx_graph.degree(node) == 2]
+        degree_2_nodes = [node for node, degree in nx_graph.degree() if degree == 2]
     degree_0_nodes = [node for node in nx_graph.nodes if nx_graph.degree(node) == 2]
     for node in degree_0_nodes:
         nx_graph.remove_node(node)

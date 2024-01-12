@@ -17,7 +17,7 @@ all_folders = get_current_folders(
     directory_targ, local=True, suffix_data_info=suffix_data_info
 )
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
-folders = folders.loc[folders["/Analysis/skeleton_pruned_compressed.mat"] == True]
+folders = folders.loc[folders["/Analysis/skeleton_pruned.mat"] == True]
 for plate in plates:
     select = folders.loc[folders["unique_id"] == plate]
     num_parallel = 128
@@ -31,7 +31,7 @@ for plate in plates:
         time,
         "create_realign",
         cpus=128,
-        node="fat",
+        node="fat_rome",
         name_job=name_job,
     )
 

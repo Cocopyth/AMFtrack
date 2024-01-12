@@ -29,8 +29,6 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 )
 
 
-
-
 # def get_speed_in_ring(hull1, hull2, t, exp, rh_only, op_id):
 #     hyphae_ring = get_hyphae_in_ring(hull1, hull2, t, exp)
 #     hyphae_ring = [hyph.end.label for hyph in hyphae_ring]
@@ -258,6 +256,7 @@ def get_density_stop_rate_in_ring(exp, t, args):
     else:
         return (f"ring_stop_density_incr-{incr}_index-{i}", None)
 
+
 def get_density_lost_track_in_ring(exp, t, args):
     incr = args["incr"]
     i = args["i"]
@@ -271,6 +270,7 @@ def get_density_lost_track_in_ring(exp, t, args):
         return (f"ring_stop_density_incr-{incr}_index-{i}", rate / area)
     else:
         return (f"ring_stop_density_incr-{incr}_index-{i}", None)
+
 
 def get_density_active_tips_in_ring(exp, t, args):
     incr = args["incr"]
