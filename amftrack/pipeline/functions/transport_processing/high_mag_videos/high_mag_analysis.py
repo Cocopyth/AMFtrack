@@ -1327,6 +1327,16 @@ class EdgeDataset(object):
             / f"{self.mean_data['edge_name']}_data.csv"
         )
         self.time_data = pd.read_csv(edge_dat_adr)
+        edge_dat_adr2 = (
+                Path(f"{analysis_folder}{self.mean_data['folder']}")
+                / f"edges_data.csv"
+        )
+        edges_data = pd.read_csv(edge_dat_adr2)
+        self.edge_infos = edges_data[edges_data['edge_name'] == self.edge_name].iloc[0]
+        self.xpos1 = edges_data['edge_xpos_1']
+        self.xpos2 = edges_data['edge_xpos_2']
+        self.ypos1 = edges_data['edge_ypos_1']
+        self.ypos2 = edges_data['edge_ypos_2']
         self.space_res = (
             2 * 1.725 / self.mean_data["magnification"] * self.mean_data["binning"]
         )
@@ -1345,7 +1355,7 @@ class EdgeDataset(object):
 
     def show_summary(self):
         summ_path = (
-            Path(self.mean_data["analysis_folder"])
+            Path(f"{self.mean_data['analysis_folder']}{self.mean_data['folder']}")
             / f"edge {self.mean_data['edge_name']}"
             / f"{self.mean_data['edge_name']}_summary.png"
         )
@@ -1358,7 +1368,7 @@ class EdgeDataset(object):
 
     def show_kymos(self):
         summ_path = (
-            Path(self.mean_data["analysis_folder"])
+            Path(f"{self.mean_data['analysis_folder']}{self.mean_data['folder']}")
             / f"edge {self.mean_data['edge_name']}"
             / f"{self.mean_data['edge_name']}_kymos.png"
         )
@@ -1392,12 +1402,12 @@ class EdgeDataset(object):
 
     def direction_filter(self):
         kymo_tiff = imread(
-            Path(self.mean_data["analysis_folder"])
+            Path(f"{self.mean_data['analysis_folder']}{self.mean_data['folder']}")
             / f"edge {self.mean_data['edge_name']}"
             / f"{self.mean_data['edge_name']}_kymos_array.tiff"
         )[0]
         flux_tiff = imread(
-            Path(self.mean_data["analysis_folder"])
+            Path(f"{self.mean_data['analysis_folder']}{self.mean_data['folder']}")
             / f"edge {self.mean_data['edge_name']}"
             / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff"
         )[2]
@@ -1483,7 +1493,7 @@ class EdgeDataset(object):
         plot_fig=True,
     ):
         spd_array_path = (
-            Path(self.mean_data["analysis_folder"])
+            Path(f"{self.mean_data['analysis_folder']}{self.mean_data['folder']}")
             / f"edge {self.mean_data['edge_name']}"
             / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff"
         )
