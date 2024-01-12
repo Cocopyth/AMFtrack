@@ -468,7 +468,7 @@ def find_histogram_edge(image,plot=False):
 
 def segment_brightfield_std(
     images,
-    seg_thresh=1.2,
+    seg_thresh=1.05,
 ):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
