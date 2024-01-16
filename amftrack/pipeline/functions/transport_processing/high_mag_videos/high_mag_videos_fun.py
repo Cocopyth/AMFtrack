@@ -21,7 +21,8 @@ from amftrack.pipeline.functions.image_processing.extract_width_fun import (
 )
 from skimage.measure import profile_line
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
-from skimage.filters import frangi
+from skimage.filters import frangi, threshold_yen
+from scipy.optimize import minimize_scalar
 from skimage.morphology import skeletonize
 import itertools, operator
 from scipy.ndimage.filters import generic_filter
@@ -466,9 +467,35 @@ def find_histogram_edge(image,plot=False):
 
     return bins[threshold]
 
+def calculate_renyi_entropy(threshold, pixels):
+    # Calculate probabilities and entropies
+    Ps = np.mean(pixels <= threshold)
+    Hs = -np.sum(pixels[pixels <= threshold] * np.log(pixels[pixels <= threshold] + 1e-10))
+    Hn = -np.sum(pixels * np.log(pixels + 1e-10))
+
+    # Calculate phi(s)
+    phi_s = np.log(Ps * (1 - Ps)) + Hs / Ps + (Hn - Hs) / (1 - Ps)
+
+    return -phi_s
+
+def RenyiEntropy_thresholding(image):
+    # Flatten the image
+    pixels = image.flatten()
+
+    # Find the optimal threshold
+    initial_threshold = np.mean(pixels)
+    result = minimize_scalar(calculate_renyi_entropy, bounds=(0, 255), args=(pixels,), method='bounded')
+    
+    #The image is rescaled to [0,255] and thresholded
+    optimal_threshold = result.x
+    _, thresholded = cv2.threshold(image/np.max(image)*255, optimal_threshold, 255, cv2.THRESH_BINARY)
+
+    return thresholded
+
 def segment_brightfield_std(
     images,
     seg_thresh=1.05,
+    threshtype='hist_edge'
 ):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
@@ -479,8 +506,22 @@ def segment_brightfield_std(
     """
     std_image = np.std(images,axis=0)/np.mean(images,axis=0)
     smooth_im_blur = cv2.blur(std_image, (100, 100))
-    thresh = find_histogram_edge(smooth_im_blur)
-    segmented = (smooth_im_blur >= thresh * seg_thresh).astype(np.uint8) * 255
+    if threshtype == 'hist_edge':
+        #the biggest derivative in the hist is calculated and we multiply with a small number to sit just right of that.
+        thresh = find_histogram_edge(smooth_im_blur)
+        segmented = (smooth_im_blur >= thresh * seg_thresh).astype(np.uint8) * 255
+    
+    elif threshtype == 'Renyi':
+        #this version minimizes a secific entropy (phi)
+        segmented = RenyiEntropy_thresholding(smooth_im_blur)
+    
+    elif threshtype == 'Yen':
+        #This maximizes the distance between the two means and probabilities, sigma^2 = p(1-p)(mu1-mu2)^2 
+        thresh = threshold_yen(smppth_im_blur)
+        segmented = (smooth_im_blur >= thresh).astype(np.uint8) * 255
+        
+    else:
+        print("threshold type has a typo! rito pls fix.")
 
     skeletonized = skeletonize(segmented > 0)
 

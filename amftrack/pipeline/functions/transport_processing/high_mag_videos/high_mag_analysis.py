@@ -170,7 +170,8 @@ def index_videos_dropbox_new(
     merge_frame["videos_folder"] = [np.nan for i in range(len(merge_frame))]
 
     for index, row in merge_frame.iterrows():
-        target_anals_file = analysis_folder / row["folder"][:-4]
+        #the Img part at the end was taken out, but running bulk analysis prefers them in an Img folder
+        target_anals_file = analysis_folder / row["folder"]#[:-4]
         target_video_file = videos_folder / row["folder"]
 
         row.loc["analysis_folder"] = target_anals_file.as_posix()
@@ -394,7 +395,8 @@ def read_video_data_new(address_array, analysis_folder):
         txt_frame["Run"] = [int(entry) for entry in txt_frame["Run"]]
         txt_frame["Gain"] = [float(entry) for entry in txt_frame["Gain"]]
         txt_frame["Gamma"] = [float(entry) for entry in txt_frame["Gamma"]]
-        txt_frame["Root"] = [entry.split(" ")[-1] for entry in txt_frame["Root"]]
+        # if there is no root this doesn't work. Needs to be updated
+#         txt_frame["Root"] = [entry.split(" ")[-1] for entry in txt_frame["Root"]]
         txt_frame["Strain"] = [entry.split(" ")[-1] for entry in txt_frame["Strain"]]
         txt_frame["StoragePath"] = [
             entry.split(" ")[-1] for entry in txt_frame["StoragePath"]

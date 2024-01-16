@@ -358,7 +358,7 @@ def dropbox_videos_iter(
             continue_bool = response.has_more
             if response.has_more:
                 response = dbx.files_list_folder_continue(response.cursor)
-    print("plate_list",plate_list)
+#     print("plate_list",plate_list)
     # raise "cd"
     return plate_list, excel_list, txt_list, other_folder_list
 
