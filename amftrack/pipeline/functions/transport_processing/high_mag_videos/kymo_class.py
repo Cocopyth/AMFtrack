@@ -171,6 +171,7 @@ class KymoVideoAnalysis(object):
             #print(len(self.selection_file))
             self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
                 [imageio.imread(addresses) for addresses in self.selection_file],
+                threshtype = 'hist_edge',
             )
             print("lenvideo",len(self.selection_file))
         elif self.vid_type == 'FLUO':
@@ -191,6 +192,7 @@ class KymoVideoAnalysis(object):
                 #DOING THE std segmentation
                 self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
                     [imageio.imread(addresses) for addresses in alltiffs],
+                    threshtype = 'Yen',
                 )
                 # self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
                 #     imageio.imread(sortedtiffs[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
@@ -293,12 +295,14 @@ class KymoVideoAnalysis(object):
             plot_segments_on_image(
                 segments, ax1, bounds=bounds, color="white", alpha=0.1, adj=self.space_pixel_size
             )
+            #this creates colored lines along the edges
             ax1.plot(
                 [self.pos[edge.edge_name[0]][1] * self.space_pixel_size,
                  self.pos[edge.edge_name[1]][1] * self.space_pixel_size],
                 [self.pos[edge.edge_name[0]][0] * self.space_pixel_size,
                  self.pos[edge.edge_name[1]][0] * self.space_pixel_size]
             )
+            #this puts white text along the strat and end
             ax1.text(
                 *np.flip((1 - weight) * self.pos[edge.edge_name[0]] + weight * self.pos[
                     edge.edge_name[1]]) * self.space_pixel_size,
@@ -306,7 +310,7 @@ class KymoVideoAnalysis(object):
                 color="white",
             )
             ax1.text(
-                *((1 - weight) * self.pos[edge.edge_name[1]] + weight * self.pos[
+                *np.flip((1 - weight) * self.pos[edge.edge_name[1]] + weight * self.pos[
                     edge.edge_name[0]]) * self.space_pixel_size,
                 str(edge.edge_name[1]),
                 color="white",
@@ -328,15 +332,9 @@ class KymoVideoAnalysis(object):
         fig3, ax3 = plt.subplots(figsize=(8, 8))
         ax3.imshow(image, extent=[0, self.space_pixel_size * image.shape[1],
                                   self.space_pixel_size * image.shape[0], 0])
-#         plt.set_fontsize('large')
+
         for edge in self.edge_objects:
-#             print(edge.kymo)
-#             ax3.plot(
-#                 [self.pos[edge.edge_name[0]][1] * self.space_pixel_size,
-#                  self.pos[edge.edge_name[1]][1] * self.space_pixel_size],
-#                 [self.pos[edge.edge_name[0]][0] * self.space_pixel_size,
-#                  self.pos[edge.edge_name[1]][0] * self.space_pixel_size]
-#             )
+#           
             ax3.text(
                 *np.flip((1 - weight) * self.pos[edge.edge_name[0]] + weight * self.pos[
                     edge.edge_name[1]]) * self.space_pixel_size,
@@ -360,7 +358,7 @@ class KymoVideoAnalysis(object):
             fig3.savefig(save_path_temp)
         plt.close(fig3)
         #this is for Loreto. She wanted some mask images of the edges
-#         """
+        """
         fig4, ax4 = plt.subplots(figsize=(8, 8))
         ax4.imshow(image, extent=[0, self.space_pixel_size * image.shape[1],
                                   self.space_pixel_size * image.shape[0], 0])
@@ -373,12 +371,6 @@ class KymoVideoAnalysis(object):
             plot_segments_on_image(
                 segments, ax4, bounds=bounds, color="white", alpha=0.1, adj=self.space_pixel_size
             )
-#             ax4.plot(
-#                 [self.pos[edge.edge_name[0]][1] * self.space_pixel_size,
-#                  self.pos[edge.edge_name[1]][1] * self.space_pixel_size],
-#                 [self.pos[edge.edge_name[0]][0] * self.space_pixel_size,
-#                  self.pos[edge.edge_name[1]][0] * self.space_pixel_size]
-#             )
             
             ax4.set_title("Extracted Edges")
         print(f"To work with individual edges of {self.video_nr}, here is a list of their indices:")
@@ -392,7 +384,7 @@ class KymoVideoAnalysis(object):
             fig4.savefig(save_path_temp)
             print("Saved the extracted edges")
         plt.close(fig4)
-#         """
+         """
 
 
         return None
