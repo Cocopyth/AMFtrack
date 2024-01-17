@@ -285,7 +285,7 @@ class KymoVideoAnalysis(object):
         fig1, ax1 = plt.subplots(figsize=(8, 8))
         ax1.imshow(image, extent=[0, self.space_pixel_size * image.shape[1],
                                   self.space_pixel_size * image.shape[0], 0])
-        for i, edge in enumerate(self.edge_objects):
+        for edge in self.edge_objects:
             if logging:
                 print('Working on edge {}, sir!'.format(edge.edge_name))
             offset = int(np.linalg.norm(self.pos[edge.edge_name[0]] - self.pos[edge.edge_name[1]])) // 4
@@ -293,9 +293,9 @@ class KymoVideoAnalysis(object):
                                             self.target_length, bounds, step=step)
             #the segments are stored in a csv file
 #             print(type(segments))
-#             print(segments)
+#             print(edge.edge_name)
             segment_frame=pd.DataFrame(segments)
-            output_path_seg_csv = os.path.join(self.kymos_path, f"segment{i}.csv")
+            output_path_seg_csv = os.path.join(self.kymos_path, f"segment{edge.edge_name}.csv")
 
             segment_frame.to_csv(output_path_seg_csv, index=False)
             
