@@ -285,12 +285,20 @@ class KymoVideoAnalysis(object):
         fig1, ax1 = plt.subplots(figsize=(8, 8))
         ax1.imshow(image, extent=[0, self.space_pixel_size * image.shape[1],
                                   self.space_pixel_size * image.shape[0], 0])
-        for edge in self.edge_objects:
+        for i, edge in enumerate(self.edge_objects):
             if logging:
                 print('Working on edge {}, sir!'.format(edge.edge_name))
             offset = int(np.linalg.norm(self.pos[edge.edge_name[0]] - self.pos[edge.edge_name[1]])) // 4
             segments = edge.create_segments(self.pos, image, self.nx_graph_pruned, resolution, offset,
                                             self.target_length, bounds, step=step)
+            #the segments are stored in a csv file
+#             print(type(segments))
+#             print(segments)
+            segment_frame=pd.DataFrame(segments)
+            output_path_seg_csv = os.path.join(self.kymos_path, f"segment{i}.csv")
+
+            segment_frame.to_csv(output_path_seg_csv, index=False)
+            
             #this plots the white regions onto the snapshot
             plot_segments_on_image(
                 segments, ax1, bounds=bounds, color="white", alpha=0.1, adj=self.space_pixel_size
@@ -343,8 +351,8 @@ class KymoVideoAnalysis(object):
                 fontsize= 'large'
             )
             ax3.text(
-                *np.flip((1 - weight) * self.pos[edge.edge_name[0]] + weight * self.pos[
-                    edge.edge_name[1]]) * self.space_pixel_size,
+                *np.flip((1 - weight) * self.pos[edge.edge_name[1]] + weight * self.pos[
+                    edge.edge_name[0]]) * self.space_pixel_size,
                 f"{np.mean(edge.flux_tot)/100:.3}",
                 color="white",
                 fontsize= 'large'
@@ -357,36 +365,6 @@ class KymoVideoAnalysis(object):
             save_path_temp = os.path.join(self.kymos_path, f"Flux.png")
             fig3.savefig(save_path_temp)
         plt.close(fig3)
-        #this is for Loreto. She wanted some mask images of the edges
-        """
-        fig4, ax4 = plt.subplots(figsize=(8, 8))
-        ax4.imshow(image, extent=[0, self.space_pixel_size * image.shape[1],
-                                  self.space_pixel_size * image.shape[0], 0])
-        for edge in self.edge_objects:
-            if logging:
-                print('Working on edge {}, sir!'.format(edge.edge_name))
-            offset = int(np.linalg.norm(self.pos[edge.edge_name[0]] - self.pos[edge.edge_name[1]])) // 4
-            segments = edge.create_segments(self.pos, image, self.nx_graph_pruned, resolution, offset,
-                                            self.target_length, bounds, step=step)
-            plot_segments_on_image(
-                segments, ax4, bounds=bounds, color="white", alpha=0.1, adj=self.space_pixel_size
-            )
-            
-            ax4.set_title("Extracted Edges")
-        print(f"To work with individual edges of {self.video_nr}, here is a list of their indices:")
-        for i, edge in enumerate(self.edge_objects):
-            print('edge {}, {}'.format(i, edge.edge_name))
-        ax4.set_aspect('equal')
-        fig4.tight_layout()
-        plt.show()
-        if save_img:
-            save_path_temp = os.path.join(self.kymos_path, f"Detected edges Mask.png")
-            fig4.savefig(save_path_temp)
-            print("Saved the extracted edges")
-        plt.close(fig4)
-         """
-
-
         return None
 
     def makeVideo(self, resize_ratio=4):
