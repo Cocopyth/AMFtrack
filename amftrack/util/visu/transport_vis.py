@@ -127,6 +127,7 @@ def generate_dash_leaflet_app(vid_frame):
 
     @app.server.route("/videos/<plate_id>/<video_name>")
     def serve_video(plate_id, video_name):
+        print(video_name)
         video_path = os.path.join(
             analysis_folder, plate_id, video_name.split("_")[-2], "Img", video_name
         )

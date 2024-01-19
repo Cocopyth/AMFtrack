@@ -19,7 +19,7 @@ all_folders = get_current_folders(
 )
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 dir_drop = "DATA/PRINCE"
-delete = True
+delete = False
 run_parallel_transfer(
     "toward_drop.py",
     [dir_drop, delete],
