@@ -171,6 +171,7 @@ class KymoVideoAnalysis(object):
             #print(len(self.selection_file))
             self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
                 [imageio.imread(addresses) for addresses in self.selection_file],
+                threshtype = 'hist_edge',
             )
             print("lenvideo",len(self.selection_file))
         elif self.vid_type == 'FLUO':
@@ -191,6 +192,7 @@ class KymoVideoAnalysis(object):
                 #DOING THE std segmentation
                 self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
                     [imageio.imread(addresses) for addresses in alltiffs],
+                    threshtype = 'Yen',
                 )
                 # self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
                 #     imageio.imread(sortedtiffs[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
@@ -289,16 +291,26 @@ class KymoVideoAnalysis(object):
             offset = int(np.linalg.norm(self.pos[edge.edge_name[0]] - self.pos[edge.edge_name[1]])) // 4
             segments = edge.create_segments(self.pos, image, self.nx_graph_pruned, resolution, offset,
                                             self.target_length, bounds, step=step)
+            #the segments are stored in a csv file
+#             print(type(segments))
+#             print(edge.edge_name)
+            segment_frame=pd.DataFrame(segments)
+            output_path_seg_csv = os.path.join(self.kymos_path, f"segment{edge.edge_name}.csv")
+
+            segment_frame.to_csv(output_path_seg_csv, index=False)
+            
             #this plots the white regions onto the snapshot
             plot_segments_on_image(
                 segments, ax1, bounds=bounds, color="white", alpha=0.1, adj=self.space_pixel_size
             )
+            #this creates colored lines along the edges
             ax1.plot(
                 [self.pos[edge.edge_name[0]][1] * self.space_pixel_size,
                  self.pos[edge.edge_name[1]][1] * self.space_pixel_size],
                 [self.pos[edge.edge_name[0]][0] * self.space_pixel_size,
                  self.pos[edge.edge_name[1]][0] * self.space_pixel_size]
             )
+            #this puts white text along the strat and end
             ax1.text(
                 *np.flip((1 - weight) * self.pos[edge.edge_name[0]] + weight * self.pos[
                     edge.edge_name[1]]) * self.space_pixel_size,
@@ -322,6 +334,37 @@ class KymoVideoAnalysis(object):
             save_path_temp = os.path.join(self.kymos_path, f"Detected edges.png")
             fig1.savefig(save_path_temp)
             print("Saved the extracted edges")
+
+        plt.close(fig1)
+        #this didn't work because edge.kymo is still empty, but moving it down in flux_extract solved that
+        fig3, ax3 = plt.subplots(figsize=(8, 8))
+        ax3.imshow(image, extent=[0, self.space_pixel_size * image.shape[1],
+                                  self.space_pixel_size * image.shape[0], 0])
+
+        for edge in self.edge_objects:
+#           
+            ax3.text(
+                *np.flip((1 - weight) * self.pos[edge.edge_name[0]] + weight * self.pos[
+                    edge.edge_name[1]]) * self.space_pixel_size,
+                f"{np.mean(edge.kymo)/100:.3}",
+                color="white",
+                fontsize= 'large'
+            )
+            ax3.text(
+                *np.flip((1 - weight) * self.pos[edge.edge_name[1]] + weight * self.pos[
+                    edge.edge_name[0]]) * self.space_pixel_size,
+                f"{np.mean(edge.flux_tot)/100:.3}",
+                color="white",
+                fontsize= 'large'
+            )
+        ax3.set_aspect('equal')
+        fig3.tight_layout()
+        plt.show()
+        
+        if save_img:
+            save_path_temp = os.path.join(self.kymos_path, f"Flux.png")
+            fig3.savefig(save_path_temp)
+        plt.close(fig3)
         return None
 
     def makeVideo(self, resize_ratio=4):
