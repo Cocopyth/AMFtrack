@@ -8,7 +8,8 @@ from amftrack.util.dbx import upload_folders
 from amftrack.util.sys import temp_path
 
 dir_drop = str(sys.argv[1])
-delete = bool(sys.argv[2])
+delete = eval(sys.argv[2])
+# print(sys.argv[2],delete)
 
 i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
