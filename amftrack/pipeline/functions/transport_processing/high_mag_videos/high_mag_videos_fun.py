@@ -517,7 +517,7 @@ def segment_brightfield_std(
     
     elif threshtype == 'Yen':
         #This maximizes the distance between the two means and probabilities, sigma^2 = p(1-p)(mu1-mu2)^2 
-        thresh = threshold_yen(smppth_im_blur)
+        thresh = threshold_yen(smooth_im_blur)
         segmented = (smooth_im_blur >= thresh).astype(np.uint8) * 255
         
     else:
