@@ -435,7 +435,7 @@ def get_analysis_folders(path=dropbox_path_analysis):
             path_save = os.path.join(analysis_dir, "folder_info.json")
             if os.path.exists(path_save):
                 folders_plate = pd.read_json(path_save)
-                infos = folders_plate.iloc[0][1:10]
+                infos = folders_plate.iloc[0][1:]
                 infos["total_path"] = analysis_dir
                 infos["time_plate"] = os.path.isfile(
                     os.path.join(analysis_dir, "time_plate_info.json")
