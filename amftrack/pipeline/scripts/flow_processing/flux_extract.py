@@ -93,7 +93,7 @@ print(db_address)
 # print(f"Folder deleted: {db_address}")
 # if os.path.exists(f"{db_address}/"):
 #     print("it does exist, why did it not delete them?")
-dataplot.delete_dropbox_folders(db_address)
+# dataplot.delete_dropbox_folders(db_address)
 
 
 
