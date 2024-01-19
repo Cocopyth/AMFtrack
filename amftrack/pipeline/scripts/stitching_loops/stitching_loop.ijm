@@ -8,7 +8,7 @@ list = getFileList(mainDirectory);
 //Stitching parameters
 fileNames       = "Img_r{yy}_c{xx}.tif";
 
-overlap         = "20";  
+overlap         = "5";  
 
 gridSizeX       = "15"
 gridSizeY       = "10"
