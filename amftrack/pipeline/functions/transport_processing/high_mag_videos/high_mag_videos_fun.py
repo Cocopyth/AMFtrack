@@ -494,7 +494,7 @@ def RenyiEntropy_thresholding(image):
 
 def segment_brightfield_std(
     images,
-    seg_thresh=1.05,
+    seg_thresh=1.2,
     threshtype='hist_edge'
 ):
     """
