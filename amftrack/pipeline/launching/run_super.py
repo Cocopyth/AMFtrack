@@ -241,20 +241,18 @@ def run_parallel_post(
         call_code(path_job, dependency)
 
 
-def make_stitching_loop(directory, dirname, op_id, is_mini_PRINCE=False):
-    if is_mini_PRINCE:
-        a_file = open(
-            f"{path_code}pipeline/scripts/stitching_loops/stitching_loop_miniPRINCE.ijm",
-            "r",
-        )
-    else:
-        a_file = open(
-            f"{path_code}pipeline/scripts/stitching_loops/stitching_loop.ijm", "r"
-        )
+def make_stitching_loop(directory, dirname, op_id, size_x,size_y):
+
+    a_file = open(
+        f"{path_code}pipeline/scripts/stitching_loops/stitching_loop.ijm", "r"
+    )
 
     list_of_lines = a_file.readlines()
 
     list_of_lines[4] = f"mainDirectory = \u0022{directory}\u0022 ;\n"
+    list_of_lines[14] = f"gridSizeX = \u0022{size_x}\u0022 ;\n"
+    list_of_lines[15] = f"gridSizeX = \u0022{size_y}\u0022 ;\n"
+
     list_of_lines[29] = f"\t if(startsWith(list[i],\u0022{dirname}\u0022)) \u007b\n"
     file_name = f"{temp_path}/stitching_loops/stitching_loop{op_id}.ijm"
     a_file = open(file_name, "w")
@@ -273,7 +271,8 @@ def run_parallel_stitch(
     node="rome",
     name_job="stitch",
     dependency=False,
-    is_mini_PRINCE=False,
+    size_x = 15,
+    size_y = 10
 ):
     folder_list = list(folders["folder"])
     folder_list.sort()
@@ -283,8 +282,6 @@ def run_parallel_stitch(
     folder_list = list(folders["folder"])
     folder_list.sort()
     path_job = f"{path_bash}{name_job}"
-    size_x = 14 if is_mini_PRINCE else 11
-    size_y = 10 if is_mini_PRINCE else 16
 
     for folder in folder_list:
         path_im_copy = f"{directory}/{folder}/Img/Img_r03_c05.tif"
@@ -307,7 +304,7 @@ def run_parallel_stitch(
         stop = num_parallel * j + num_parallel
         for k in range(start, min(stop, len(folder_list))):
             op_id = time_ns()
-            make_stitching_loop(directory, folder_list[k], op_id, is_mini_PRINCE)
+            make_stitching_loop(directory, folder_list[k], op_id, size_x,size_y)
             op_ids.append(op_id)
         ide = time_ns()
         my_file = open(path_job, "w")
