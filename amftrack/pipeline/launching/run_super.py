@@ -251,7 +251,7 @@ def make_stitching_loop(directory, dirname, op_id, size_x,size_y):
 
     list_of_lines[4] = f"mainDirectory = \u0022{directory}\u0022 ;\n"
     list_of_lines[14] = f"gridSizeX = \u0022{size_x}\u0022 ;\n"
-    list_of_lines[15] = f"gridSizeX = \u0022{size_y}\u0022 ;\n"
+    list_of_lines[15] = f"gridSizeY = \u0022{size_y}\u0022 ;\n"
 
     list_of_lines[29] = f"\t if(startsWith(list[i],\u0022{dirname}\u0022)) \u007b\n"
     file_name = f"{temp_path}/stitching_loops/stitching_loop{op_id}.ijm"
