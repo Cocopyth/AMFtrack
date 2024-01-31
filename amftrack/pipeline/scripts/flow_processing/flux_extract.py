@@ -64,7 +64,8 @@ target_length = int(2.4 * test_video.magnification)
 
 
 edge_objs = test_video.edge_objects
-test_video.makeVideo()
+#this doesn't work for videos with too many frames(>1000)
+# test_video.makeVideo()
 
 bin_nr = 1
 img_seq = np.arange(len(edge_objs[0].video_analysis.selection_file))
@@ -100,5 +101,6 @@ print(db_address)
 print(f"Iteration {i}: {db_address}")
 print(f"Iteration {i}: {img_address}")
 
-upload_folder(img_address, db_address, delete=False)
+#uploading to dropbox is severely limiting the throughput, so I will scip it this week. Also dropbox is alomst full
+# upload_folder(img_address, db_address, delete=True)
 # print(f"{img_address} should be empty now!")
