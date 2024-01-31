@@ -287,8 +287,8 @@ def run_parallel_stitch(
         path_im_copy = f"{directory}/{folder}/Img/Img_r03_c05.tif"
         if os.path.isfile(path_im_copy) and os.path.getsize(path_im_copy) >= 1e6:
             # im = imageio.imread(path_im_copy)
-            for x in range(1, size_x+1):
-                for y in range(1, size_y+1):
+            for x in range(1, size_y+1):
+                for y in range(1, size_x+1):
                     strix = str(x) if x >= 10 else f"0{x}"
                     striy = str(y) if y >= 10 else f"0{y}"
                     path = f"{directory}/{folder}/Img/Img_r{strix}_c{striy}.tif"
