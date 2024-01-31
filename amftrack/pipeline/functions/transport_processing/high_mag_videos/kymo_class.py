@@ -168,11 +168,16 @@ class KymoVideoAnalysis(object):
         if self.vid_type == 'BRIGHT':
             if frangi_range is None:
                 frangi_range = [np.arange(5, 20, 3), np.arange(20, 160, 20)][self.magnification == 50]
-            #print(len(self.selection_file))
-            self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
-                [imageio.imread(addresses) for addresses in self.selection_file],
-                threshtype = 'hist_edge',
-            )
+            if len(self.selection_file)<301:
+                self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
+                    [imageio.imread(addresses) for addresses in self.selection_file],
+                    threshtype = 'hist_edge',
+                )
+            else:
+                self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
+                    [imageio.imread(addresses) for addresses in self.selection_file[:300]],
+                    threshtype = 'hist_edge',
+                )
             print("lenvideo",len(self.selection_file))
         elif self.vid_type == 'FLUO':
             if not samepos_frame.empty:
@@ -190,10 +195,17 @@ class KymoVideoAnalysis(object):
                     frangi_range = [np.arange(5, 20, 3), np.arange(20, 160, 20)][self.magnification == 50]
                 #print(len(self.selection_file))4
                 #DOING THE std segmentation
-                self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
-                    [imageio.imread(addresses) for addresses in alltiffs],
-                    threshtype = 'hist_edge',
-                )
+                if len(alltiffs)<301:
+                
+                    self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
+                        [imageio.imread(addresses) for addresses in alltiffs],
+                        threshtype = 'hist_edge',
+                    )
+                else:
+                    self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
+                        [imageio.imread(addresses) for addresses in alltiffs[:300]],
+                        threshtype = 'hist_edge',
+                    )
                 # self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
                 #     imageio.imread(sortedtiffs[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
                 #     seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
