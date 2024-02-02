@@ -494,14 +494,14 @@ def RenyiEntropy_thresholding(image):
 
 def segment_brightfield_std(
     images,
-    seg_thresh=1.05,
+    seg_thresh=1.2,
     threshtype='hist_edge'
 ):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
     image:          Input image
     thresh:         Value close to zero such that the function will output a boolean array
-    frangi_range:   Range of values to use a frangi filter with. Frangi filter is very good for brightfield vessel segmentation
+    threshtype:     Type of threshold to apply to segmentation. Can be hist_edge, Renyi or Yen
 
     """
     std_image = np.std(images,axis=0)/np.mean(images,axis=0)
@@ -629,29 +629,54 @@ def get_kymo_new(
         point2 = np.array([sect[1][0], sect[1][1]])
         perp_lines.append(extract_perp_lines(point1, point2))
 
-    for image_adress in images_adress:
-        im = imageio.imread(image_adress)
-        order = validate_interpolation_order(im.dtype, order)
-        l = []
-        for perp_line in perp_lines:
-            pixels = ndi.map_coordinates(
-                im,
-                perp_line,
-                prefilter=order > 1,
-                order=order,
-                mode="reflect",
-                cval=0.0,
-            )
-            pixels = np.flip(pixels, axis=1)
-            pixels = pixels[
-                int(bounds[0] * target_length) : int(bounds[1] * target_length)
-            ]
-            pixels = pixels.reshape((1, len(pixels)))
-            l.append(pixels)
+    if len(images_adress)<500:
+        for image_adress in images_adress:
+            im = imageio.imread(image_adress)
+            order = validate_interpolation_order(im.dtype, order)
+            l = []
+            for perp_line in perp_lines:
+                pixels = ndi.map_coordinates(
+                    im,
+                    perp_line,
+                    prefilter=order > 1,
+                    order=order,
+                    mode="reflect",
+                    cval=0.0,
+                )
+                pixels = np.flip(pixels, axis=1)
+                pixels = pixels[
+                    int(bounds[0] * target_length) : int(bounds[1] * target_length)
+                ]
+                pixels = pixels.reshape((1, len(pixels)))
+                l.append(pixels)
 
-        slices = np.concatenate(l, axis=0)
-        kymo_line = np.sum(slices, axis=1) / (target_length)
-        kymo.append(kymo_line)
+            slices = np.concatenate(l, axis=0)
+            kymo_line = np.sum(slices, axis=1) / (target_length)
+            kymo.append(kymo_line)
+    else:
+        for image_adress in images_adress[:499]:
+            im = imageio.imread(image_adress)
+            order = validate_interpolation_order(im.dtype, order)
+            l = []
+            for perp_line in perp_lines:
+                pixels = ndi.map_coordinates(
+                    im,
+                    perp_line,
+                    prefilter=order > 1,
+                    order=order,
+                    mode="reflect",
+                    cval=0.0,
+                )
+                pixels = np.flip(pixels, axis=1)
+                pixels = pixels[
+                    int(bounds[0] * target_length) : int(bounds[1] * target_length)
+                ]
+                pixels = pixels.reshape((1, len(pixels)))
+                l.append(pixels)
+
+            slices = np.concatenate(l, axis=0)
+            kymo_line = np.sum(slices, axis=1) / (target_length)
+            kymo.append(kymo_line)
     return np.array(kymo)
 
 

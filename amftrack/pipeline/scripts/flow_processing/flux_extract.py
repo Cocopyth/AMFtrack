@@ -18,20 +18,17 @@ print(upl_targ)
 
 dataframe = pd.read_json(f"{temp_path}/{op_id}.json")
 
-# print(i)
-# print(dataframe[dataframe['xpos']==dataframe['xpos']])
 #the selection frame is used to segment fluorescence videos based on a brightfield image of the same position
 selection_frame = dataframe[dataframe['ypos']==dataframe['ypos'].iloc[i]]
 selection_frame = selection_frame[selection_frame['xpos']==dataframe['xpos'].iloc[i]]
 selection_frame = selection_frame[selection_frame['mode']=='BF']
+selection_frame = selection_frame[selection_frame['binning']==dataframe['binning'].iloc[i]]
+
 #when analysing older data (Hannah or Rachael) we don't need to give BF segmentation for fluorescence videos
 # selection_frame = pd.DataFrame()
 
-
 dataframe = dataframe.iloc[i]
-# sameframe = selection_frame[(selection_frame['xpos']==dataframe['xpos'])]
-# sameframe = sameframe[(sameframe['ypos']==dataframe['ypos'])]
-# sameframe = sameframe[(sameframe['mode']=='BF')]
+
 
 if 'unique_id' in dataframe:
     drop_targ = os.path.relpath(f"/{dataframe['tot_path_drop']}", upl_targ)
@@ -64,11 +61,13 @@ target_length = int(2.4 * test_video.magnification)
 
 
 edge_objs = test_video.edge_objects
-#this doesn't work for videos with too many frames(>1000)
-# test_video.makeVideo()
+    #these two lines don't work for videos with too many frames(>1000)
+    #that is why one is commented out and the other capped at 300
+test_video.makeVideo()
+img_seq = np.arange(len(edge_objs[0].video_analysis.selection_file))
 
 bin_nr = 1
-img_seq = np.arange(len(edge_objs[0].video_analysis.selection_file))
+
 
 for edge in edge_objs:
     edge.view_edge(img_frame=0, save_im=True, target_length=target_length)
@@ -101,6 +100,6 @@ print(db_address)
 print(f"Iteration {i}: {db_address}")
 print(f"Iteration {i}: {img_address}")
 
-#uploading to dropbox is severely limiting the throughput, so I will scip it this week. Also dropbox is alomst full
-# upload_folder(img_address, db_address, delete=True)
+#uploading to dropbox is severely limiting the throughput, so I will skip it this week. Also dropbox is alomst full
+# upload_folder(img_address, db_address, delete=False)
 # print(f"{img_address} should be empty now!")
