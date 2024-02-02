@@ -2,6 +2,7 @@ import imageio.v2 as imageio
 import matplotlib.pyplot as plt
 import cv2
 from scipy import ndimage as ndi
+from scipy.ndimage import convolve
 
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     from_sparse_to_graph,
@@ -20,7 +21,8 @@ from amftrack.pipeline.functions.image_processing.extract_width_fun import (
 )
 from skimage.measure import profile_line
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import orient
-from skimage.filters import frangi
+from skimage.filters import frangi, threshold_yen
+from scipy.optimize import minimize_scalar
 from skimage.morphology import skeletonize
 import itertools, operator
 from scipy.ndimage.filters import generic_filter
@@ -430,41 +432,98 @@ def get_width(slices, avearing_window=50, num_std=2):
             continue
     return np.median(widths)
 
+def find_histogram_edge(image,plot=False):
+    # Calculate the histogram
+    hist, bins = np.histogram(image.flatten(), 40)
+    hist = hist.astype(float) / hist.max()  # Normalize the histogram
+
+    # Sobel Kernel
+    sobel_kernel = np.array([-1, 0, 1])
+
+    # Apply Sobel edge detection to the histogram
+    sobel_hist = convolve(hist, sobel_kernel)
+
+    # Find the point with the highest gradient change
+    threshold = np.argmax(sobel_hist)
+
+    # Optional: Plot the results
+    if plot:
+        plt.figure(figsize=(10, 5))
+
+        # Plot the original histogram
+        plt.subplot(1, 2, 1)
+        plt.plot(hist)
+        plt.axvline(x=threshold, color='r', linestyle='--')
+
+        plt.title("Histogram")
+
+        # Plot the Sobel histogram
+        plt.subplot(1, 2, 2)
+        plt.plot(sobel_hist)
+        plt.title("Sobel Histogram")
+        plt.axvline(x=threshold, color='r', linestyle='--')
+
+        plt.show()
+
+    return bins[threshold]
+
+def calculate_renyi_entropy(threshold, pixels):
+    # Calculate probabilities and entropies
+    Ps = np.mean(pixels <= threshold)
+    Hs = -np.sum(pixels[pixels <= threshold] * np.log(pixels[pixels <= threshold] + 1e-10))
+    Hn = -np.sum(pixels * np.log(pixels + 1e-10))
+
+    # Calculate phi(s)
+    phi_s = np.log(Ps * (1 - Ps)) + Hs / Ps + (Hn - Hs) / (1 - Ps)
+
+    return -phi_s
+
+def RenyiEntropy_thresholding(image):
+    # Flatten the image
+    pixels = image.flatten()
+
+    # Find the optimal threshold
+    initial_threshold = np.mean(pixels)
+    result = minimize_scalar(calculate_renyi_entropy, bounds=(0, 255), args=(pixels,), method='bounded')
+    
+    #The image is rescaled to [0,255] and thresholded
+    optimal_threshold = result.x
+    _, thresholded = cv2.threshold(image/np.max(image)*255, optimal_threshold, 255, cv2.THRESH_BINARY)
+
+    return thresholded
+
 def segment_brightfield_std(
     images,
-    seg_thresh=0,
+    seg_thresh=1.2,
+    threshtype='hist_edge'
 ):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
     image:          Input image
     thresh:         Value close to zero such that the function will output a boolean array
-    frangi_range:   Range of values to use a frangi filter with. Frangi filter is very good for brightfield vessel segmentation
+    threshtype:     Type of threshold to apply to segmentation. Can be hist_edge, Renyi or Yen
 
     """
     std_image = np.std(images,axis=0)/np.mean(images,axis=0)
     smooth_im_blur = cv2.blur(std_image, (100, 100))
+    if threshtype == 'hist_edge':
+        #the biggest derivative in the hist is calculated and we multiply with a small number to sit just right of that.
+        thresh = find_histogram_edge(smooth_im_blur)
+        segmented = (smooth_im_blur >= thresh * seg_thresh).astype(np.uint8) * 255
+    
+    elif threshtype == 'Renyi':
+        #this version minimizes a secific entropy (phi)
+        segmented = RenyiEntropy_thresholding(smooth_im_blur)
+    
+    elif threshtype == 'Yen':
+        #This maximizes the distance between the two means and probabilities, sigma^2 = p(1-p)(mu1-mu2)^2 
+        thresh = threshold_yen(smooth_im_blur)
+        segmented = (smooth_im_blur >= thresh).astype(np.uint8) * 255
+        
+    else:
+        print("threshold type has a typo! rito pls fix.")
 
-    print("shape",images[0].shape,std_image.shape)
-    std_image_8bit = cv2.convertScaleAbs(std_image)
-    segmented = (smooth_im_blur>=0.03).astype(np.uint8)*255
-    # ret, segmented = cv2.threshold(
-    #     std_image_8bit, 0, 255, 2
-    # )
-    # print(ret)
-
-    #     seg_shape = smooth_im.shape
-
-    #     for i in range(1, 100):
-    #         _, segmented = cv2.threshold(smooth_im, i, 255, cv2.THRESH_BINARY)
-    #         coverage = 100 * np.sum(1 * segmented.flatten()) / (255 * seg_shape[0] * seg_shape[1])
-    #         if coverage < seg_thresh:
-    #             break
-    segmented = cv2.morphologyEx(
-        segmented, cv2.MORPH_CLOSE, np.ones((51, 51))
-    )
     skeletonized = skeletonize(segmented > 0)
-
-    # skeletonized = skeletonize(segmented*0)
 
     skeleton = scipy.sparse.dok_matrix(skeletonized)
     nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
@@ -570,29 +629,54 @@ def get_kymo_new(
         point2 = np.array([sect[1][0], sect[1][1]])
         perp_lines.append(extract_perp_lines(point1, point2))
 
-    for image_adress in images_adress:
-        im = imageio.imread(image_adress)
-        order = validate_interpolation_order(im.dtype, order)
-        l = []
-        for perp_line in perp_lines:
-            pixels = ndi.map_coordinates(
-                im,
-                perp_line,
-                prefilter=order > 1,
-                order=order,
-                mode="reflect",
-                cval=0.0,
-            )
-            pixels = np.flip(pixels, axis=1)
-            pixels = pixels[
-                int(bounds[0] * target_length) : int(bounds[1] * target_length)
-            ]
-            pixels = pixels.reshape((1, len(pixels)))
-            l.append(pixels)
+    if len(images_adress)<500:
+        for image_adress in images_adress:
+            im = imageio.imread(image_adress)
+            order = validate_interpolation_order(im.dtype, order)
+            l = []
+            for perp_line in perp_lines:
+                pixels = ndi.map_coordinates(
+                    im,
+                    perp_line,
+                    prefilter=order > 1,
+                    order=order,
+                    mode="reflect",
+                    cval=0.0,
+                )
+                pixels = np.flip(pixels, axis=1)
+                pixels = pixels[
+                    int(bounds[0] * target_length) : int(bounds[1] * target_length)
+                ]
+                pixels = pixels.reshape((1, len(pixels)))
+                l.append(pixels)
 
-        slices = np.concatenate(l, axis=0)
-        kymo_line = np.sum(slices, axis=1) / (target_length)
-        kymo.append(kymo_line)
+            slices = np.concatenate(l, axis=0)
+            kymo_line = np.sum(slices, axis=1) / (target_length)
+            kymo.append(kymo_line)
+    else:
+        for image_adress in images_adress[:499]:
+            im = imageio.imread(image_adress)
+            order = validate_interpolation_order(im.dtype, order)
+            l = []
+            for perp_line in perp_lines:
+                pixels = ndi.map_coordinates(
+                    im,
+                    perp_line,
+                    prefilter=order > 1,
+                    order=order,
+                    mode="reflect",
+                    cval=0.0,
+                )
+                pixels = np.flip(pixels, axis=1)
+                pixels = pixels[
+                    int(bounds[0] * target_length) : int(bounds[1] * target_length)
+                ]
+                pixels = pixels.reshape((1, len(pixels)))
+                l.append(pixels)
+
+            slices = np.concatenate(l, axis=0)
+            kymo_line = np.sum(slices, axis=1) / (target_length)
+            kymo.append(kymo_line)
     return np.array(kymo)
 
 
@@ -815,6 +899,33 @@ def segment_fluo(
     _, segmented = cv2.threshold(smooth_im, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     if magnif > 30:
         segmented = cv2.morphologyEx(segmented, cv2.MORPH_CLOSE, np.ones((9, 9)))
+
+    skeletonized = skeletonize(segmented > thresh)
+    skeleton = scipy.sparse.dok_matrix(skeletonized)
+    nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
+    nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
+    return (segmented > thresh, nx_graph, pos)
+
+def segment_std(frames, thresh=0.5e-7, seg_thresh=4.5, k_size=40, magnif = 50, binning=2, test_plot=False):
+#     imgs = sorted([path for path in img_address.glob("*/*.ti*")])
+#     frames = []
+#     for i, address in enumerate(img_address):
+#     for i, frame in enumerate(imgs):
+#         if i<framenr:
+#             frame = imageio.imread(self.selection_file[address])
+#             frames.append(frame)
+    video_matrix = np.stack(frames, axis=0)
+    smooth_im = np.std(video_matrix, axis=0)
+    #it seems to be a 64bit image but it has to be 8 or 16 for thresholding (maybe it is in color, but Simon didnt do something with that either)
+    smooth_im = cv2.cvtColor(smooth_im, cv2.COLOR_BGR2GRAY)
+    smooth_im = cv2.normalize(smooth_im, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_16U)
+#     print(magnif)
+    if magnif < 30:
+        im_canny = cv2.Canny(smooth_im, 0, 20)
+        smooth_im = cv2.morphologyEx(im_canny, cv2.MORPH_DILATE, kernel)
+    _, segmented = cv2.threshold(smooth_im, 0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    if magnif > 30:
+        segmented = cv2.morphologyEx(segmented, cv2.MORPH_CLOSE, np.ones((9,9)))
 
     skeletonized = skeletonize(segmented > thresh)
     skeleton = scipy.sparse.dok_matrix(skeletonized)
