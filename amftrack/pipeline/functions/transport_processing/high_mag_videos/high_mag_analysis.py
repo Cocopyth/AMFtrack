@@ -151,8 +151,8 @@ def index_videos_dropbox_new(
         if REDO_SCROUNGING:
             if not (analysis_folder / address_local.parent).exists():
                 (analysis_folder / address_local.parent).mkdir(parents=True)
-            if not (analysis_folder / address_local).exists():
-                download(address, (analysis_folder / address_local))
+            # if not (analysis_folder / address_local).exists():
+            download(address, (analysis_folder / address_local))
         info_addresses.append(analysis_folder / address_local)
     # clear_output(wait=False)
     print("All files downloaded! Merging files...")
@@ -170,7 +170,8 @@ def index_videos_dropbox_new(
     merge_frame["videos_folder"] = [np.nan for i in range(len(merge_frame))]
 
     for index, row in merge_frame.iterrows():
-        target_anals_file = analysis_folder / row["folder"][:-4]
+        #the Img part at the end was taken out, but running bulk analysis prefers them in an Img folder
+        target_anals_file = analysis_folder / row["folder"]#[:-4]
         target_video_file = videos_folder / row["folder"]
 
         row.loc["analysis_folder"] = target_anals_file.as_posix()
@@ -215,13 +216,16 @@ def read_video_data_new(address_array, analysis_folder):
             ].reset_index(drop=True)
             # 'Plate[nr] can be both upper case and lower case'
             raw_data["Unnamed: 0"] = [entry.lower() for entry in raw_data["Unnamed: 0"]]
-            raw_data["plate_id"] = [
-                f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}"
-                for entry in raw_data["Unnamed: 0"]
-            ]
-            raw_data["imaging_day"] = [
-                f"{entry.split('_')[-3]}" for entry in raw_data["Unnamed: 0"]
-            ]
+            try:
+                raw_data["plate_id"] = [
+                    f"{entry.split('_')[-3]}_Plate{entry.split('_')[-2][5:]}"
+                    for entry in raw_data["Unnamed: 0"]
+                ]
+                raw_data["imaging_day"] = [
+                    f"{entry.split('_')[-3]}" for entry in raw_data["Unnamed: 0"]
+                ]
+            except:
+                pass
             raw_data["Position mm"] = [
                 float(entry) / 1000.0 for entry in raw_data["Position mm"]
             ]
@@ -391,7 +395,8 @@ def read_video_data_new(address_array, analysis_folder):
         txt_frame["Run"] = [int(entry) for entry in txt_frame["Run"]]
         txt_frame["Gain"] = [float(entry) for entry in txt_frame["Gain"]]
         txt_frame["Gamma"] = [float(entry) for entry in txt_frame["Gamma"]]
-        txt_frame["Root"] = [entry.split(" ")[-1] for entry in txt_frame["Root"]]
+        # if there is no root this doesn't work. Needs to be updated
+#         txt_frame["Root"] = [entry.split(" ")[-1] for entry in txt_frame["Root"]]
         txt_frame["Strain"] = [entry.split(" ")[-1] for entry in txt_frame["Strain"]]
         txt_frame["StoragePath"] = [
             entry.split(" ")[-1] for entry in txt_frame["StoragePath"]
@@ -1324,6 +1329,16 @@ class EdgeDataset(object):
             / f"{self.mean_data['edge_name']}_data.csv"
         )
         self.time_data = pd.read_csv(edge_dat_adr)
+        edge_dat_adr2 = (
+                Path(f"{analysis_folder}{self.mean_data['folder']}")
+                / f"edges_data.csv"
+        )
+        edges_data = pd.read_csv(edge_dat_adr2)
+        self.edge_infos = edges_data[edges_data['edge_name'] == self.edge_name].iloc[0]
+        self.xpos1 = edges_data['edge_xpos_1']
+        self.xpos2 = edges_data['edge_xpos_2']
+        self.ypos1 = edges_data['edge_ypos_1']
+        self.ypos2 = edges_data['edge_ypos_2']
         self.space_res = (
             2 * 1.725 / self.mean_data["magnification"] * self.mean_data["binning"]
         )
@@ -1342,7 +1357,7 @@ class EdgeDataset(object):
 
     def show_summary(self):
         summ_path = (
-            Path(self.mean_data["analysis_folder"])
+            Path(f"{self.mean_data['analysis_folder']}{self.mean_data['folder']}")
             / f"edge {self.mean_data['edge_name']}"
             / f"{self.mean_data['edge_name']}_summary.png"
         )
@@ -1355,7 +1370,7 @@ class EdgeDataset(object):
 
     def show_kymos(self):
         summ_path = (
-            Path(self.mean_data["analysis_folder"])
+            Path(f"{self.mean_data['analysis_folder']}{self.mean_data['folder']}")
             / f"edge {self.mean_data['edge_name']}"
             / f"{self.mean_data['edge_name']}_kymos.png"
         )
@@ -1389,12 +1404,12 @@ class EdgeDataset(object):
 
     def direction_filter(self):
         kymo_tiff = imread(
-            Path(self.mean_data["analysis_folder"])
+            Path(f"{self.mean_data['analysis_folder']}{self.mean_data['folder']}")
             / f"edge {self.mean_data['edge_name']}"
             / f"{self.mean_data['edge_name']}_kymos_array.tiff"
         )[0]
         flux_tiff = imread(
-            Path(self.mean_data["analysis_folder"])
+            Path(f"{self.mean_data['analysis_folder']}{self.mean_data['folder']}")
             / f"edge {self.mean_data['edge_name']}"
             / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff"
         )[2]
@@ -1480,7 +1495,7 @@ class EdgeDataset(object):
         plot_fig=True,
     ):
         spd_array_path = (
-            Path(self.mean_data["analysis_folder"])
+            Path(f"{self.mean_data['analysis_folder']}{self.mean_data['folder']}")
             / f"edge {self.mean_data['edge_name']}"
             / f"{self.mean_data['edge_name']}_speeds_flux_array.tiff"
         )

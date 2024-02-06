@@ -15,7 +15,9 @@ from amftrack.util.dbx import upload_folders
 from time import time_ns
 import concurrent.futures
 
-directory_origin = r"/mnt/sun-temp/TEMP/PRINCE_syncing/"
+# directory_origin = r"/mnt/sun-temp/TEMP/PRINCE_syncing/"
+directory_origin = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$/Data/Prince2/Images/"
+
 dir_drop = "DATA/PRINCE"
 suffix_data_info = str(time_ns())
 update_plate_info(
