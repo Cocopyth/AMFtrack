@@ -10,6 +10,8 @@ import numpy as np
 import matplotlib as mpl
 import datetime
 import re
+import dropbox
+from amftrack.util.dbx import load_dbx
 
 mpl.rcParams["figure.dpi"] = 150
 
@@ -389,3 +391,18 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
         # fig.suptitle(f"{edge.edge_name} Fourier analysis")
         # fig.tight_layout()
         # fig.savefig(f"{edge.edge_path}{os.sep}{edge.edge_name}_fourier.png")
+        
+        
+def delete_dropbox_folders(path):
+    dbx=load_dbx()
+    print(path)
+    for entry in dbx.files_list_folder(path, recursive=False).entries:
+#         metadata=entry.get_metadata
+        if isinstance(entry, dropbox.files.FolderMetadata) and "edge" in entry.name:
+            try:
+                dbx.files_delete_v2(entry.path_display)
+                print(f"Deleted folder: {entry.name}")
+            except dropbox.exceptions.ApiError as e:
+                print(f"Error deleting folder {entry.name}: {e}")
+                
+                

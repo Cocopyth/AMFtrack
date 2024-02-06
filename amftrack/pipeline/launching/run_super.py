@@ -135,10 +135,16 @@ def run_parallel_flows(
         my_file.write(
             f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
-        # my_file.write(f"module load 2021 \n")
-        # my_file.write(f"module load Python/3.9.5-GCCcore-10.3.0 \n")
-        my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
-        my_file.write(f"conda activate amftrack\n")
+        if os.path.exists(os.path.join(conda_path, "envs", "amftrack")):
+            my_file.write(
+                f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n"
+            )
+            my_file.write(f"conda activate amftrack\n")
+        else:
+            my_file.write(f"module load 2021 \n")
+            my_file.write(f"module load Python/3.9.5-GCCcore-10.3.0 \n")
+
+
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
             f"\t python {path_code}pipeline/scripts/flow_processing/{code} {arg_str} {op_id} $i &\n"
@@ -250,8 +256,8 @@ def make_stitching_loop(directory, dirname, op_id, size_x,size_y):
     list_of_lines = a_file.readlines()
 
     list_of_lines[4] = f"mainDirectory = \u0022{directory}\u0022 ;\n"
-    list_of_lines[14] = f"gridSizeX = \u0022{size_x}\u0022 ;\n"
-    list_of_lines[15] = f"gridSizeX = \u0022{size_y}\u0022 ;\n"
+    list_of_lines[12] = f"gridSizeX = \u0022{size_x}\u0022 \n"
+    list_of_lines[13] = f"gridSizeY = \u0022{size_y}\u0022 \n"
 
     list_of_lines[29] = f"\t if(startsWith(list[i],\u0022{dirname}\u0022)) \u007b\n"
     file_name = f"{temp_path}/stitching_loops/stitching_loop{op_id}.ijm"
@@ -287,8 +293,8 @@ def run_parallel_stitch(
         path_im_copy = f"{directory}/{folder}/Img/Img_r03_c05.tif"
         if os.path.isfile(path_im_copy) and os.path.getsize(path_im_copy) >= 1e6:
             # im = imageio.imread(path_im_copy)
-            for x in range(1, size_x):
-                for y in range(1, size_y):
+            for x in range(1, size_y+1):
+                for y in range(1, size_x+1):
                     strix = str(x) if x >= 10 else f"0{x}"
                     striy = str(y) if y >= 10 else f"0{y}"
                     path = f"{directory}/{folder}/Img/Img_r{strix}_c{striy}.tif"

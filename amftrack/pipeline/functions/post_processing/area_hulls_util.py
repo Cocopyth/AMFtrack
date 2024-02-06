@@ -51,7 +51,7 @@ def get_hulls(exp, ts):
                     poly = Polygon([nodes[vertice] for vertice in hull.vertices])
                     area_hull = poly.area * 1.725**2 / (1000**2)
                     polys = polys.union(poly)
-        print(t, len(selected), polys.area)
+        # print(t, len(selected), polys.area)
         hulls.append(polys)
     return hulls
 
