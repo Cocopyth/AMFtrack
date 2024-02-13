@@ -208,7 +208,12 @@ def read_video_data_new(address_array, analysis_folder):
             raw_data = pd.read_excel(address)
             # Earliest .xlsx files did not contain binning information. Assume 1x1 binning
             if "Binned (Y/N)" not in raw_data:
-                raw_data["Binned (Y/N)"] = ["N" for entry in raw_data["Unnamed: 0"]]
+                if "Unnamed: 0" in raw_data:
+                    raw_data["Binned (Y/N)"] = ["N" for entry in raw_data["Unnamed: 0"]]
+                elif "Binned" in raw_data:
+                    raw_data["Binned (Y/N)"] = ["Y" if entry == 2 else "N" for entry in raw_data["Binned"]]
+                else:
+                    raw_data["Binned (Y/N)"] = "N"
             raw_data["Binned (Y/N)"] = raw_data["Binned (Y/N)"].astype(str)
             # Filter on excel rows that actually contain data
             raw_data = raw_data[
@@ -1015,7 +1020,7 @@ class VideoDataset(object):
         if summ_path.exists():
             extraction_img = imageio.imread(summ_path)
             fig, ax = plt.subplots()
-            ax.imshow(extraction_img)
+            ax.imshow(extraction_img)F
             ax.set_axis_off()
             ax.set_title(f"{self.dataset['unique_id']}")
             fig.tight_layout()

@@ -370,7 +370,7 @@ def generate_dash_leaflet_app(vid_frame):
 
 if __name__ == "__main__":
     analysis_folder = (
-        r"C:\Users\coren\AMOLF-SHIMIZU Dropbox\DATA\CocoTransport\Analysis"
+        r"C:\Users\coren\AMOLF-SHIMIZU Dropbox\DATA\CocoTransport\KymoSpeeDExtract"
     )
     vid_frame = read_video_data(analysis_folder)
     app = generate_dash_leaflet_app(vid_frame)

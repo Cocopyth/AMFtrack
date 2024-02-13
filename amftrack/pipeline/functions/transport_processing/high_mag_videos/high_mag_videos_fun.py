@@ -494,7 +494,7 @@ def RenyiEntropy_thresholding(image):
 
 def segment_brightfield_std(
     images,
-    seg_thresh=1.2,
+    seg_thresh=1.25,
     threshtype='hist_edge'
 ):
     """
@@ -520,6 +520,46 @@ def segment_brightfield_std(
         thresh = threshold_yen(smooth_im_blur)
         segmented = (smooth_im_blur >= thresh).astype(np.uint8) * 255
         
+    else:
+        print("threshold type has a typo! rito pls fix.")
+
+    skeletonized = skeletonize(segmented > 0)
+
+    skeleton = scipy.sparse.dok_matrix(skeletonized)
+    nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
+    nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
+
+    return (segmented, nx_graph_pruned, pos)
+
+
+def segment_fluo_new(
+        images,
+        seg_thresh=1.10,
+        threshtype='hist_edge'
+):
+    """
+    Segmentation method for brightfield video, uses vesselness filters to get result.
+    image:          Input image
+    thresh:         Value close to zero such that the function will output a boolean array
+    threshtype:     Type of threshold to apply to segmentation. Can be hist_edge, Renyi or Yen
+
+    """
+    std_image = np.mean(images, axis=0)
+    smooth_im_blur = cv2.blur(std_image, (20, 20))
+    if threshtype == 'hist_edge':
+        # the biggest derivative in the hist is calculated and we multiply with a small number to sit just right of that.
+        thresh = find_histogram_edge(smooth_im_blur)
+        segmented = (smooth_im_blur >= thresh * seg_thresh).astype(np.uint8) * 255
+
+    elif threshtype == 'Renyi':
+        # this version minimizes a secific entropy (phi)
+        segmented = RenyiEntropy_thresholding(smooth_im_blur)
+
+    elif threshtype == 'Yen':
+        # This maximizes the distance between the two means and probabilities, sigma^2 = p(1-p)(mu1-mu2)^2
+        thresh = threshold_yen(smooth_im_blur)
+        segmented = (smooth_im_blur >= thresh).astype(np.uint8) * 255
+
     else:
         print("threshold type has a typo! rito pls fix.")
 

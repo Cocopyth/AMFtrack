@@ -150,6 +150,15 @@ def get_area_separate_connected_components(exp, t, args=None):
             area += poly.area * 1.725**2 / (1000**2)
     return ("area_sep_comp", area)
 
+def get_num_connected_components(exp, t, args=None):
+    nx_graph = exp.nx_graph[t]
+    threshold = 0.1
+    S = [nx_graph.subgraph(c).copy() for c in nx.connected_components(nx_graph)]
+    selected = [
+        g for g in S if g.size(weight="weight") * len(g.nodes) / 10**6 >= threshold
+    ]
+    return ("num connected", len(selected))
+
 
 def get_num_tips(exp, t, args=None):
     return (

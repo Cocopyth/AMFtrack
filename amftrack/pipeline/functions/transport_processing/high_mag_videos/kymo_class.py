@@ -1,6 +1,5 @@
 from pathlib import Path
 import imageio.v2 as imageio
-from amftrack.pipeline.functions.transport_processing.high_mag_videos.high_mag_videos_fun import *
 import pandas as pd
 from PIL import Image
 import os
@@ -9,6 +8,7 @@ import re
 import tensorflow as tf
 import matplotlib as mpl
 from scipy.signal import find_peaks
+import tifffile
 
 from amftrack.pipeline.functions.transport_processing.high_mag_videos.high_mag_videos_fun import *
 mpl.rcParams["figure.dpi"] = 200
@@ -166,18 +166,10 @@ class KymoVideoAnalysis(object):
 
         ### Skeleton creation, we segment the image using either brightfield or fluo segmentation methods.
         if self.vid_type == 'BRIGHT':
-            if frangi_range is None:
-                frangi_range = [np.arange(5, 20, 3), np.arange(20, 160, 20)][self.magnification == 50]
-            if len(self.selection_file)<301:
-                self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
-                    [imageio.imread(addresses) for addresses in self.selection_file],
-                    threshtype = 'hist_edge',
-                )
-            else:
-                self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
-                    [imageio.imread(addresses) for addresses in self.selection_file[:300]],
-                    threshtype = 'hist_edge',
-                )
+            self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
+                [imageio.imread(addresses) for addresses in self.selection_file[:300]],
+                threshtype = 'hist_edge',
+            )
             print("lenvideo",len(self.selection_file))
         elif self.vid_type == 'FLUO':
             if not samepos_frame.empty:
@@ -191,21 +183,13 @@ class KymoVideoAnalysis(object):
                 alltiffs.sort()
                 sortedtiffs = alltiffs[self.im_range[0]:self.im_range[1]]
     #             print("this is one tiff: ", onetiff)
-                if frangi_range is None:
-                    frangi_range = [np.arange(5, 20, 3), np.arange(20, 160, 20)][self.magnification == 50]
                 #print(len(self.selection_file))4
                 #DOING THE std segmentation
-                if len(alltiffs)<301:
-                
-                    self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
-                        [imageio.imread(addresses) for addresses in alltiffs],
-                        threshtype = 'hist_edge',
-                    )
-                else:
-                    self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
-                        [imageio.imread(addresses) for addresses in alltiffs[:300]],
-                        threshtype = 'hist_edge',
-                    )
+
+                self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
+                    [imageio.imread(addresses) for addresses in alltiffs[:300]],
+                    threshtype = 'hist_edge',
+                )
                 # self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
                 #     imageio.imread(sortedtiffs[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
                 #     seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
@@ -218,22 +202,13 @@ class KymoVideoAnalysis(object):
 #                         imageio.imread(self.selection_file[i]), frangi_range=frangi_range, thresh=thresh,
 #                         seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
             else:
-                self.frame_max = imageio.imread(self.selection_file[self.im_range[0]])
-                frames = []
-                for i, address in enumerate(self.im_range):
-                    frame2 = imageio.imread(self.selection_file[address])
-                    self.frame_max = np.maximum(self.frame_max, frame2)
-                    if i < 60:
-                        frames.append(frame2)
-                self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
-                    self.frame_max, thresh=thresh,
-#             self.segmented, self.nx_graph_pruned, self.pos = segment_std(
-#                 frames, thresh=thresh,
-                    seg_thresh=seg_thresh, magnif=self.magnification)
+                self.segmented, self.nx_graph_pruned, self.pos = segment_fluo_new([imageio.imread(addresses) for
+                                                                                          addresses in self.selection_file[:30]],
+                                                                                  threshtype='hist_edge')
         else:
             print("I don't have a valid flow_processing type!!! Using fluo thresholding.")
-            self.segmented, self.nx_graph_pruned, self.pos = segment_fluo(
-                imageio.imread(self.selection_file[self.im_range[0]]), thresh=thresh, seg_thresh=seg_thresh)
+            self.segmented, self.nx_graph_pruned, self.pos = segment_fluo_new([imageio.imread(addresses) for
+                                                                                          addresses in self.selection_file[:300]])
         self.edges = list(self.nx_graph_pruned.edges)
         for i, edge in enumerate(self.edges):
             if self.pos[edge[0]][0] > self.pos[edge[1]][0]:
@@ -391,6 +366,7 @@ class KymoVideoAnalysis(object):
             os.remove(vid_out)
         with imageio.get_writer(vid_out, mode='I', fps=self.fps, quality=6) as writer:
             for img_path in self.selection_file:
+                print(img_path)
                 img = imageio.imread(img_path)
                 image_resize = img[::resize_ratio, ::resize_ratio]
                 assert img.dtype == np.uint8, "Must be uint8 array!"
