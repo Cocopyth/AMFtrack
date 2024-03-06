@@ -39,7 +39,7 @@ plates_in_prince = current_prince["unique_id"].unique()
 # old_folders = all_folders_origin.loc[
 #     all_folders_origin["unique_id"].isin(plates_in_prince) == False
 # ]
-old_folders = all_folders_origin #Upload all
+old_folders = current_prince #Upload all
 # old_folders = old_folders.loc[old_folders['PrincePos'].astype(int)%4==mod]
 old_folders["Plate"] = (
     old_folders["Plate"].str.replace("R", "66666").str.replace("[^0-9]", "")

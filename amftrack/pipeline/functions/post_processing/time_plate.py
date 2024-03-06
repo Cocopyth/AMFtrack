@@ -152,7 +152,7 @@ def get_area_separate_connected_components(exp, t, args=None):
 
 def get_num_connected_components(exp, t, args=None):
     nx_graph = exp.nx_graph[t]
-    threshold = 0.1
+    threshold = 10
     S = [nx_graph.subgraph(c).copy() for c in nx.connected_components(nx_graph)]
     selected = [
         g for g in S if g.size(weight="weight") * len(g.nodes) / 10**6 >= threshold
