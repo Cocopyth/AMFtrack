@@ -33,7 +33,7 @@ all_folders_origin = get_current_folders(
 all_folders_origin["date_datetime"] = pd.to_datetime(
     all_folders_origin["date"].astype(str), format="%d.%m.%Y, %H:%M:"
 )
-selection = (datetime.now() - all_folders_origin["date_datetime"]) <= timedelta(days=1)
+selection = (datetime.now() - all_folders_origin["date_datetime"]) >= timedelta(days=1)
 current_prince = all_folders_origin.loc[selection]
 plates_in_prince = current_prince["unique_id"].unique()
 # old_folders = all_folders_origin.loc[
