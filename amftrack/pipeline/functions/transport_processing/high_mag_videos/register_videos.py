@@ -314,3 +314,57 @@ def make_full_image(
         dilation=dilation,
     )
     return (im, skel_im)
+
+def euclidean_distance(p1, p2):
+    return np.linalg.norm(p1-p2)
+
+def average_min_distance_to_set(A, B_set):
+    """Calculate the average minimum distance from each point in A to the closest point in a B set."""
+    total_distance = 0
+    for a in A:
+        min_distance = min([euclidean_distance(a, b) for b in B_set])
+        total_distance += min_distance
+    return total_distance / len(A)
+
+def transform(pos,R,t):
+    return(R @ pos + t)
+
+def find_index_min(A, B):
+    avg_distances = [average_min_distance_to_set(A, B_set) for B_set in B]
+    return (np.argmin(avg_distances))
+
+def find_mapping(transport_edge_segment,network_edge_names,network_edge_segments):
+    index = find_index_min(transport_edge_segment,network_edge_segments)
+    return(network_edge_names[index])
+
+def make_whole_mapping(vid_obj,exp,t,dist = 100):
+    Rfound,tfound = register_rot_trans(vid_obj,exp,t,dist= dist)
+    segments_final = []
+    edge_names = []
+    for i in range(len(vid_obj.edge_objs)):
+        edge = vid_obj.edge_objs[i]
+        x_pos_video = edge.mean_data['xpos_network']
+        y_pos_video = edge.mean_data['ypos_network']
+
+        x_pos1 = edge.edge_infos['edge_xpos_1']*edge.space_res/1.725+x_pos_video-shiftx
+        x_pos2 = edge.edge_infos['edge_xpos_2']*edge.space_res/1.725+x_pos_video-shiftx
+        y_pos1 = edge.edge_infos['edge_ypos_1']*edge.space_res/1.725+y_pos_video-shifty
+        y_pos2 = edge.edge_infos['edge_ypos_2']*edge.space_res/1.725+y_pos_video-shifty
+        begin = transform(np.array([x_pos1,y_pos1]),Rfound,tfound).tolist()
+        end = transform(np.array([x_pos2,y_pos2]),Rfound,tfound).tolist()
+        segments_final.append([begin,end])
+        edge_names.append(edge.edge_name)
+    segments_final_interp = []
+    for begin, end in segments_final:
+        # Include the start point, interpolated points, and the end point
+        interpolated_points = interpolate_points(begin, end)
+        segments_final_interp.append(interpolated_points)
+    edges = get_all_edges(exp, t)
+
+    edges = [edge for edge in edges if dist_edge(edge,transform(positions,Rfound,tfound),t)<=100]
+    network_edge_segments = [edge.pixel_list(t) for edge in edges]
+    network_edge_names = edges
+    mapping = {}
+    for transport_edge_name,transport_edge_segment in  zip(edge_names,segments_final_interp):
+        mapping[transport_edge_name] = find_mapping(transport_edge_segment,network_edge_names,network_edge_segments)
+    return(mapping)
