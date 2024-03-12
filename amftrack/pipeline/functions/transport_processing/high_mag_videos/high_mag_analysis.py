@@ -1020,7 +1020,7 @@ class VideoDataset(object):
         if summ_path.exists():
             extraction_img = imageio.imread(summ_path)
             fig, ax = plt.subplots()
-            ax.imshow(extraction_img)F
+            ax.imshow(extraction_img)
             ax.set_axis_off()
             ax.set_title(f"{self.dataset['unique_id']}")
             fig.tight_layout()
@@ -1333,11 +1333,13 @@ class EdgeDataset(object):
             / f"edge {self.mean_data['edge_name']}"
             / f"{self.mean_data['edge_name']}_data.csv"
         )
+        self.edge_dat_adr = edge_dat_adr
         self.time_data = pd.read_csv(edge_dat_adr)
         edge_dat_adr2 = (
                 Path(f"{analysis_folder}{self.mean_data['folder']}")
                 / f"edges_data.csv"
         )
+        self.edges_dat_adr = edge_dat_adr2
         edges_data = pd.read_csv(edge_dat_adr2)
         self.edge_infos = edges_data[edges_data['edge_name'] == self.edge_name].iloc[0]
         self.xpos1 = edges_data['edge_xpos_1']

@@ -309,25 +309,27 @@ def run_parallel_stitch(
         start = num_parallel * j
         stop = num_parallel * j + num_parallel
         for k in range(start, min(stop, len(folder_list))):
+            print(k,start)
             op_id = time_ns()
             make_stitching_loop(directory, folder_list[k], op_id, size_x,size_y)
             op_ids.append(op_id)
         ide = time_ns()
-        my_file = open(path_job, "w")
-        my_file.write(
-            f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
-        )
-        my_file.write(
-            f'#SBATCH -o "{slurm_path}/stitching__{folder_list[start]}_{ide}.out" \n'
-        )
-        for k in range(0, min(stop, len(folder_list)) - start):
-            op_id = op_ids[k]
+        if start<min(stop, len(folder_list)):
+            my_file = open(path_job, "w")
             my_file.write(
-                f"~/Fiji.app/ImageJ-linux64 --headless -macro  {temp_path}/stitching_loops/stitching_loop{op_id}.ijm &\n"
+                f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"
             )
-        my_file.write("wait\n")
-        my_file.close()
-        call_code(path_job, dependency)
+            my_file.write(
+                f'#SBATCH -o "{slurm_path}/stitching__{folder_list[start]}_{ide}.out" \n'
+            )
+            for k in range(0, min(stop, len(folder_list)) - start):
+                op_id = op_ids[k]
+                my_file.write(
+                    f"~/Fiji.app/ImageJ-linux64 --headless -macro  {temp_path}/stitching_loops/stitching_loop{op_id}.ijm &\n"
+                )
+            my_file.write("wait\n")
+            my_file.close()
+            call_code(path_job, dependency)
 
 
 def run_parallel_transfer(

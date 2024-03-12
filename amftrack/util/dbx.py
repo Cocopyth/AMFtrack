@@ -556,7 +556,7 @@ def read_saved_dropbox_state(dir_drop: str):
 
 
 def upload_folders(
-    folders: pd.DataFrame, dir_drop="DATA", catch_exception=True, delete=False
+    folders: pd.DataFrame, dir_drop="DATA", catch_exception=True, delete=False, upload_imgs = True,
 ):
     """
     Upload all the folders in the dataframe to a location on dropbox
@@ -577,12 +577,13 @@ def upload_folders(
                 id_unique = "faulty_param_files"
             path_snap = line["total_path"].iloc[0]
             for subfolder in os.listdir(path_snap):
-                path_total = os.path.join(path_snap, subfolder)
-                suffix = ".zip" if os.path.isdir(path_total) else ""
-                target = f"/{dir_drop}/{id_unique}/{directory_name}/{subfolder}{suffix}"
-                upload_zip(
-                    path_total, target, catch_exception=catch_exception, delete=delete
-                )
+                if upload_imgs or subfolder!="Img":
+                    path_total = os.path.join(path_snap, subfolder)
+                    suffix = ".zip" if os.path.isdir(path_total) else ""
+                    target = f"/{dir_drop}/{id_unique}/{directory_name}/{subfolder}{suffix}"
+                    upload_zip(
+                        path_total, target, catch_exception=catch_exception, delete=delete
+                    )
             pbar.update(1)
             if delete:
                 if len(os.listdir(path_snap)) == 1:

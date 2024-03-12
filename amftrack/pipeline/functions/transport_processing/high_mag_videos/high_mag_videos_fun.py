@@ -494,7 +494,7 @@ def RenyiEntropy_thresholding(image):
 
 def segment_brightfield_std(
     images,
-    seg_thresh=1.25,
+    seg_thresh=1.10,
     threshtype='hist_edge'
 ):
     """
@@ -506,6 +506,8 @@ def segment_brightfield_std(
     """
     std_image = np.std(images,axis=0)/np.mean(images,axis=0)
     smooth_im_blur = cv2.blur(std_image, (100, 100))
+    mean_image = np.mean(images, axis=0)
+    smooth_im_blur_mean = cv2.blur(mean_image, (20, 20))
     if threshtype == 'hist_edge':
         #the biggest derivative in the hist is calculated and we multiply with a small number to sit just right of that.
         thresh = find_histogram_edge(smooth_im_blur)
@@ -522,7 +524,8 @@ def segment_brightfield_std(
         
     else:
         print("threshold type has a typo! rito pls fix.")
-
+    thresh_mean = threshold_yen(smooth_im_blur_mean)
+    segmented2 = (smooth_im_blur_mean <= thresh_mean).astype(np.uint8) * 255
     skeletonized = skeletonize(segmented > 0)
 
     skeleton = scipy.sparse.dok_matrix(skeletonized)
