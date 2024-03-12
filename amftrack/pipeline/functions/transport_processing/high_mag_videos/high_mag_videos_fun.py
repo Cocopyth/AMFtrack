@@ -506,8 +506,6 @@ def segment_brightfield_std(
     """
     std_image = np.std(images,axis=0)/np.mean(images,axis=0)
     smooth_im_blur = cv2.blur(std_image, (100, 100))
-    mean_image = np.mean(images, axis=0)
-    smooth_im_blur_mean = cv2.blur(mean_image, (20, 20))
     if threshtype == 'hist_edge':
         #the biggest derivative in the hist is calculated and we multiply with a small number to sit just right of that.
         thresh = find_histogram_edge(smooth_im_blur)
@@ -524,8 +522,6 @@ def segment_brightfield_std(
         
     else:
         print("threshold type has a typo! rito pls fix.")
-    thresh_mean = threshold_yen(smooth_im_blur_mean)
-    segmented2 = (smooth_im_blur_mean <= thresh_mean).astype(np.uint8) * 255
     skeletonized = skeletonize(segmented > 0)
 
     skeleton = scipy.sparse.dok_matrix(skeletonized)
@@ -534,6 +530,35 @@ def segment_brightfield_std(
 
     return (segmented, nx_graph_pruned, pos)
 
+
+def segment_brightfield_ultimate(
+        images,
+        seg_thresh=1.05,
+):
+    """
+    Segmentation method for brightfield video, uses vesselness filters to get result.
+    image:          Input image
+    thresh:         Value close to zero such that the function will output a boolean array
+    threshtype:     Type of threshold to apply to segmentation. Can be hist_edge, Renyi or Yen
+
+    """
+    std_image = np.std(images, axis=0)
+    smooth_im_blur = cv2.blur(std_image, (20, 20))
+    mean_image = np.mean(images, axis=0)
+    smooth_im_blur_mean = cv2.blur(mean_image, (20, 20))
+
+    CVs = smooth_im_blur / smooth_im_blur_mean
+    CVs_blurr = cv2.blur(CVs, (20, 20))
+    thresh = find_histogram_edge(CVs_blurr)
+
+    segmented = (CVs_blurr >= thresh * seg_thresh).astype(np.uint8) * 255
+    skeletonized = skeletonize(segmented > 0)
+
+    skeleton = scipy.sparse.dok_matrix(skeletonized)
+    nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
+    nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
+
+    return (segmented, nx_graph_pruned, pos)
 
 def segment_fluo_new(
         images,
