@@ -166,9 +166,8 @@ class KymoVideoAnalysis(object):
 
         ### Skeleton creation, we segment the image using either brightfield or fluo segmentation methods.
         if self.vid_type == 'BRIGHT':
-            self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_std(
+            self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield_ultimate(
                 [imageio.imread(addresses) for addresses in self.selection_file[:300]],
-                threshtype = 'hist_edge',
             )
             print("lenvideo",len(self.selection_file))
         elif self.vid_type == 'FLUO':

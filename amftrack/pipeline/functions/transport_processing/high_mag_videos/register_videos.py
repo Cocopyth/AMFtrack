@@ -11,7 +11,6 @@ def register_rot_trans(vid_obj,exp,t,dist= 100):
     """Finds the rotation and translation to better align videos' edges on
     network edges"""
     positions = np.array(vid_obj.dataset[["xpos_network", "ypos_network"]])
-    window = np.array([dist,dist])
     shiftx = vid_obj.img_dim[0]*vid_obj.space_res/1.725/2
     shifty = vid_obj.img_dim[1]*vid_obj.space_res/1.725/2
     segments = []
@@ -23,7 +22,11 @@ def register_rot_trans(vid_obj,exp,t,dist= 100):
         x_pos2 = edge.edge_infos['edge_xpos_2']*edge.space_res/1.725+x_pos_video-shiftx
         y_pos1 = edge.edge_infos['edge_ypos_1']*edge.space_res/1.725+y_pos_video-shifty
         y_pos2 = edge.edge_infos['edge_ypos_2']*edge.space_res/1.725+y_pos_video-shifty
-        segments.append([[x_pos1,y_pos1],[x_pos2,y_pos2]])
+        length = np.linalg.norm(np.array([x_pos1, y_pos1]) - np.array([x_pos2, y_pos2]))
+
+        if length > 40:
+            print(length)
+            segments.append([[x_pos1,y_pos1],[x_pos2,y_pos2]])
     edges = get_all_edges(exp, t)
 
     edges = [edge for edge in edges if dist_edge(edge,positions,t)<=dist]
