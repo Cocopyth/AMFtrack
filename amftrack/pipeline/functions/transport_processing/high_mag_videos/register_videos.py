@@ -5,30 +5,32 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_all_edges,
 )
 from pathlib import Path
-
-
-def register_rot_trans(vid_obj,exp,t,dist= 100):
-    """Finds the rotation and translation to better align videos' edges on
-    network edges"""
-    positions = np.array(vid_obj.dataset[["xpos_network", "ypos_network"]])
-    shiftx = vid_obj.img_dim[0]*vid_obj.space_res/1.725/2
-    shifty = vid_obj.img_dim[1]*vid_obj.space_res/1.725/2
+def get_segments_ends(vid_obj,shiftx,shifty,thresh_length = 0,R = np.array([[1,0],[0,1]]),t=0):
     segments = []
     for i in range(len(vid_obj.edge_objs)):
         edge = vid_obj.edge_objs[i]
         x_pos_video = edge.mean_data['xpos_network']
         y_pos_video = edge.mean_data['ypos_network']
+
         x_pos1 = edge.edge_infos['edge_xpos_1']*edge.space_res/1.725+x_pos_video-shiftx
         x_pos2 = edge.edge_infos['edge_xpos_2']*edge.space_res/1.725+x_pos_video-shiftx
         y_pos1 = edge.edge_infos['edge_ypos_1']*edge.space_res/1.725+y_pos_video-shifty
         y_pos2 = edge.edge_infos['edge_ypos_2']*edge.space_res/1.725+y_pos_video-shifty
-        length = np.linalg.norm(np.array([x_pos1, y_pos1]) - np.array([x_pos2, y_pos2]))
+        begin = transform(np.array([x_pos1,y_pos1]),R,t).tolist()
+        end = transform(np.array([x_pos2,y_pos2]),R,t).tolist()
+        length = np.linalg.norm(np.array([x_pos1,y_pos1])-np.array([x_pos2,y_pos2]))
+        if length>thresh_length:
+            segments.append([begin,end])
+        return(segments)
 
-        if length > 40:
-            print(length)
-            segments.append([[x_pos1,y_pos1],[x_pos2,y_pos2]])
+def register_rot_trans(vid_obj,exp,t,dist= 100,R = np.array([[1,0],[0,1]]),trans = 0):
+    """Finds the rotation and translation to better align videos' edges on
+    network edges"""
+    positions = np.array(vid_obj.dataset[["xpos_network", "ypos_network"]])
+    shiftx = vid_obj.img_dim[0]*vid_obj.space_res/1.725/2
+    shifty = vid_obj.img_dim[1]*vid_obj.space_res/1.725/2
+    segments = get_segments_ends(vid_obj,shiftx,shifty,40,R,trans)
     edges = get_all_edges(exp, t)
-
     edges = [edge for edge in edges if dist_edge(edge,positions,t)<=dist]
     pixels = [pixel for edge in edges for pixel in edge.pixel_list(t)]
     pixels = [pixel for pixel in pixels if np.linalg.norm(pixel-positions)<=dist]
@@ -331,29 +333,19 @@ def transform(pos,R,t):
 
 def find_index_min(A, B):
     avg_distances = [average_min_distance_to_set(A, B_set) for B_set in B]
-    return (np.argmin(avg_distances))
+    return (np.argmin(avg_distances),np.min(avg_distances))
 
 def find_mapping(transport_edge_segment,network_edge_names,network_edge_segments):
-    index = find_index_min(transport_edge_segment,network_edge_segments)
-    return(network_edge_names[index])
+    index,avg_distances = find_index_min(transport_edge_segment,network_edge_segments)
+    return(network_edge_names[index],avg_distances)
 
-def make_whole_mapping(vid_obj,exp,t,dist = 100):
-    Rfound,tfound = register_rot_trans(vid_obj,exp,t,dist= dist)
-    segments_final = []
-    edge_names = []
-    for i in range(len(vid_obj.edge_objs)):
-        edge = vid_obj.edge_objs[i]
-        x_pos_video = edge.mean_data['xpos_network']
-        y_pos_video = edge.mean_data['ypos_network']
-
-        x_pos1 = edge.edge_infos['edge_xpos_1']*edge.space_res/1.725+x_pos_video-shiftx
-        x_pos2 = edge.edge_infos['edge_xpos_2']*edge.space_res/1.725+x_pos_video-shiftx
-        y_pos1 = edge.edge_infos['edge_ypos_1']*edge.space_res/1.725+y_pos_video-shifty
-        y_pos2 = edge.edge_infos['edge_ypos_2']*edge.space_res/1.725+y_pos_video-shifty
-        begin = transform(np.array([x_pos1,y_pos1]),Rfound,tfound).tolist()
-        end = transform(np.array([x_pos2,y_pos2]),Rfound,tfound).tolist()
-        segments_final.append([begin,end])
-        edge_names.append(edge.edge_name)
+def make_whole_mapping(vid_obj,exp,t,dist = 100,R = np.array([[1,0],[0,1]]),trans = 0):
+    positions = np.array(vid_obj.dataset[["xpos_network", "ypos_network"]])
+    shiftx = vid_obj.img_dim[0]*vid_obj.space_res/1.725/2
+    shifty = vid_obj.img_dim[1]*vid_obj.space_res/1.725/2
+    Rfound,tfound = register_rot_trans(vid_obj,exp,t,dist= dist,R=R,trans=trans)
+    segments_final = get_segments_ends(vid_obj,shiftx,shifty,0,R,trans)
+    edge_names = [edge.edge_name for edge in vid_obj.edge_objs]
     segments_final_interp = []
     for begin, end in segments_final:
         # Include the start point, interpolated points, and the end point
@@ -365,6 +357,13 @@ def make_whole_mapping(vid_obj,exp,t,dist = 100):
     network_edge_segments = [edge.pixel_list(t) for edge in edges]
     network_edge_names = edges
     mapping = {}
+    avg_distances = []
     for transport_edge_name,transport_edge_segment in  zip(edge_names,segments_final_interp):
-        mapping[transport_edge_name] = find_mapping(transport_edge_segment,network_edge_names,network_edge_segments)
-    return(mapping)
+        mapping[transport_edge_name],avg_distance = find_mapping(transport_edge_segment,network_edge_names,network_edge_segments)
+        avg_distances.append(avg_distance)
+    return(mapping,np.mean(avg_distance))
+
+def add_attribute(vid_edge_obj,network_edge_attribute,name_new_col,mapping):
+    new_attribute = network_edge_attribute(mapping[vid_edge_obj.edge_name])
+    vid_edge_obj.mean_data[name_new_col] = new_attribute
+    vid_edge_obj.mean_data.to_csv(vid_edge_obj.edge_dat_adr)
