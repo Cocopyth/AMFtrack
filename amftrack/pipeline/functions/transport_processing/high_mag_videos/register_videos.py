@@ -5,33 +5,36 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_all_edges,
 )
 from pathlib import Path
-
-
-def register_rot_trans(vid_obj,exp,t,dist= 100):
-    """Finds the rotation and translation to better align videos' edges on
-    network edges"""
-    positions = np.array(vid_obj.dataset[["xpos_network", "ypos_network"]])
-    shiftx = vid_obj.img_dim[0]*vid_obj.space_res/1.725/2
-    shifty = vid_obj.img_dim[1]*vid_obj.space_res/1.725/2
+def get_segments_ends(vid_obj,shiftx,shifty,thresh_length = 0,R = np.array([[1,0],[0,1]]),t=0):
     segments = []
     for i in range(len(vid_obj.edge_objs)):
         edge = vid_obj.edge_objs[i]
         x_pos_video = edge.mean_data['xpos_network']
         y_pos_video = edge.mean_data['ypos_network']
+
         x_pos1 = edge.edge_infos['edge_xpos_1']*edge.space_res/1.725+x_pos_video-shiftx
         x_pos2 = edge.edge_infos['edge_xpos_2']*edge.space_res/1.725+x_pos_video-shiftx
         y_pos1 = edge.edge_infos['edge_ypos_1']*edge.space_res/1.725+y_pos_video-shifty
         y_pos2 = edge.edge_infos['edge_ypos_2']*edge.space_res/1.725+y_pos_video-shifty
-        length = np.linalg.norm(np.array([x_pos1, y_pos1]) - np.array([x_pos2, y_pos2]))
+        begin = transform(np.array([x_pos1,y_pos1]),R,t).tolist()
+        end = transform(np.array([x_pos2,y_pos2]),R,t).tolist()
+        length = np.linalg.norm(np.array([x_pos1,y_pos1])-np.array([x_pos2,y_pos2]))
+        if length>thresh_length:
+            # print(length)
+            segments.append([begin,end])
+    return(segments)
 
-        if length > 40:
-            print(length)
-            segments.append([[x_pos1,y_pos1],[x_pos2,y_pos2]])
+def register_rot_trans(vid_obj,exp,t,dist= 100,R = np.array([[1,0],[0,1]]),trans = 0):
+    """Finds the rotation and translation to better align videos' edges on
+    network edges"""
+    positions = R@np.array(vid_obj.dataset[["xpos_network", "ypos_network"]])+trans
+    shiftx = vid_obj.img_dim[0]*vid_obj.space_res/1.725/2
+    shifty = vid_obj.img_dim[1]*vid_obj.space_res/1.725/2
+    segments = get_segments_ends(vid_obj,shiftx,shifty,40,R,trans)
     edges = get_all_edges(exp, t)
-
     edges = [edge for edge in edges if dist_edge(edge,positions,t)<=dist]
     pixels = [pixel for edge in edges for pixel in edge.pixel_list(t)]
-    pixels = [pixel for pixel in pixels if np.linalg.norm(pixel-positions)<=dist]
+    pixels = [pixel for pixel in pixels if np.linalg.norm(pixel-positions)<=1.5*dist]
     segment_points = []
     for begin, end in segments:
         # Include the start point, interpolated points, and the end point
@@ -42,6 +45,22 @@ def register_rot_trans(vid_obj,exp,t,dist= 100):
     segment_points = np.array(segment_points)
     Y = np.array(pixels)
     X = np.array(segment_points)
+    transformation = find_rot_o3d(X,Y)
+    Rfound = transformation[0:2, 0:2]
+    tfound = transformation[0:2, 3]
+    if np.linalg.det(Rfound)>0:
+        return(Rfound,tfound)
+    else:
+        # print("negative det")
+        transformation = find_rot_o3d(Y, X)
+        Rfound = transformation[0:2, 0:2]
+        tfound = transformation[0:2, 3]
+        Rfound, tfound = np.linalg.inv(Rfound), np.dot(
+            np.linalg.inv(Rfound), -tfound
+        )
+        return (Rfound, tfound)
+
+def find_rot_o3d(X,Y):
     X = np.transpose(X)
     Y = np.transpose(Y)
     X = np.insert(X, 2, values=0, axis=0)
@@ -59,7 +78,7 @@ def register_rot_trans(vid_obj,exp,t,dist= 100):
             [0.0, 0.0, 0.0, 1.0],
         ]
     )
-    print('registering')
+    # print('registering')
     reg_p2p = o3d.pipelines.registration.registration_icp(
         source,
         target,
@@ -67,15 +86,11 @@ def register_rot_trans(vid_obj,exp,t,dist= 100):
         trans_init,
         o3d.pipelines.registration.TransformationEstimationPointToPoint(),
     )
-    Rfound = reg_p2p.transformation[0:2, 0:2]
-    tfound = reg_p2p.transformation[0:2, 3]
-    return(Rfound,tfound)
-
+    return(reg_p2p.transformation)
 
 def dist_edge(edge, pos, t):
     pos = pos.astype(float)
 
-    list_pixels = np.array(edge.pixel_list(t), dtype=float)
     dists = np.linalg.norm(np.array(edge.pixel_list(t)) - pos, axis=1)
 
     return (np.min(dists))
@@ -96,221 +111,107 @@ def interpolate_points(start, end, step=1):
 
     return points
 
-#to be deleted but practical for development
-from amftrack.pipeline.functions.image_processing.experiment_util import *
-from PIL import Image
-def plot_full_video(
-    exp: Experiment,
-    t: int,
-    region=None,
-    edges: List[Edge] = [],
-    points: List[coord_int] = [],
-    video_num: List[int] = [],
-    segments: List[List[coord_int]] = [],
-    nodes: List[Node] = [],
-    downsizing=5,
-    dilation=1,
-    save_path="",
-    prettify=False,
-    with_point_label=False,
-    figsize=(6, 3),
-    dpi=None,
-    node_size=5,
-) -> None:
-    """
-    This is the general purpose function to plot the full image or a region `region` of the image at
-    any given timestep t. The region being specified in the GENERAL coordinates.
-    The image can be downsized by a chosen factor `downsized` with additionnal features such as: edges, nodes, points, segments.
-    The coordinates for all the objects are provided in the GENERAL referential.
+def euclidean_distance(p1, p2):
+    return np.linalg.norm(p1-p2)
 
-    :param region: choosen region in the full image, such as [[100, 100], [2000,2000]], if None the full image is shown
-    :param edges: list of edges to plot, it is the pixel list that is plotted, not a straight line
-    :param nodes: list of nodes to plot (only nodes in the `region` will be shown)
-    :param points: points such as [123, 234] to plot with a red cross on the image
-    :param segments: plot lines between two points that are provided
-    :param downsizing: factor by which we reduce the image resolution (5 -> image 25 times lighter)
-    :param dilation: only for edges: thickness of the edges (dilation applied to the pixel list)
-    :param save_path: full path to the location where the plot will be saved
-    :param prettify: if True, the image will be enhanced by smoothing the intersections between images
-    :param with_point_label: if True, the index of the point is ploted on top of it
+def average_min_distance_to_set(A, B_set):
+    """Calculate the average minimum distance from each point in A to the closest point in a B set."""
+    total_distance = 0
+    for a in A:
+        min_distance = min([euclidean_distance(a, b) for b in B_set])
+        total_distance += min_distance
+    return total_distance / len(A)
 
-    NB: the full region of a full image is typically [[0, 0], [26000, 52000]]
-    NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
-    NB: the colors are chosen randomly for edges
-    NB: giving a smaller region greatly increase computation time
-    """
+def transform(pos,R,t):
+    return(R @ pos + t)
 
-    # TODO(FK): fetch image size from experiment object here, and use it in reconstruct image
-    # TODO(FK): colors for edges are not consistent
-    # NB: possible other parameters that could be added: alpha between layers, colors for object, figure_size
-    DIM_X, DIM_Y = get_dimX_dimY(exp)
+def find_index_min(A, B):
+    avg_distances = [average_min_distance_to_set(A, B_set) for B_set in B]
+    return (np.argmin(avg_distances),np.min(avg_distances))
 
-    if region == None:
-        # Full image
-        image_coodinates = exp.image_coordinates[t]
-        region = get_bounding_box(image_coodinates)
-        region[1][0] += DIM_X  # TODO(FK): Shouldn't be hardcoded
-        region[1][1] += DIM_Y
+def find_mapping(transport_edge_segment,network_edge_names,network_edge_segments):
+    index,avg_distances = find_index_min(transport_edge_segment,network_edge_segments)
+    return(network_edge_names[index],avg_distances)
 
-    # 1/ Image layer
-    im, f = reconstruct_image_from_general(
-        exp,
-        t,
-        downsizing=downsizing,
-        region=region,
-        prettify=prettify,
-        white_background=False,  # TODO(FK): add image dimention here dimx = ..
-    )
-    f_int = lambda c: f(c).astype(int)
-    new_region = [
-        f_int(region[0]),
-        f_int(region[1]),
-    ]  # should be [[0, 0], [d_x/downsized, d_y/downsized]]
+def make_whole_mapping(vid_obj,exp,t,dist = 100,R = np.array([[1,0],[0,1]]),trans = 0):
+    positions = np.array(vid_obj.dataset[["xpos_network", "ypos_network"]])
+    shiftx = vid_obj.img_dim[0]*vid_obj.space_res/1.725/2
+    shifty = vid_obj.img_dim[1]*vid_obj.space_res/1.725/2
+    Rfound,tfound = register_rot_trans(vid_obj,exp,t,dist= dist,R=R,trans=trans)
+    segments_final = get_segments_ends(vid_obj,shiftx,shifty,0,R,trans)
+    edge_names = [edge.edge_name for edge in vid_obj.edge_objs]
+    segments_final_interp = []
+    for begin, end in segments_final:
+        # Include the start point, interpolated points, and the end point
+        interpolated_points = interpolate_points(begin, end)
+        segments_final_interp.append(interpolated_points)
+    edges = get_all_edges(exp, t)
 
-    # 2/ Edges layer
-    skel_im, _ = reconstruct_skeletton(
-        [edge.pixel_list(t) for edge in edges],
-        region=region,
-        color_seeds=[(edge.begin.label + edge.end.label) % 255 for edge in edges],
-        downsizing=downsizing,
-        dilation=dilation,
-    )
+    edges = [edge for edge in edges if dist_edge(edge,transform(positions,Rfound,tfound),t)<=100]
+    network_edge_segments = [edge.pixel_list(t) for edge in edges]
+    network_edge_names = edges
+    mapping = {}
+    avg_distances = []
+    for transport_edge_name,transport_edge_segment in  zip(edge_names,segments_final_interp):
+        mapping[transport_edge_name],avg_distance = find_mapping(transport_edge_segment,network_edge_names,network_edge_segments)
+        avg_distances.append(avg_distance)
+    return(mapping,np.mean(avg_distance),Rfound,tfound)
 
-    # 3/ Fusing layers
-    fig = plt.figure(
-        figsize=figsize
-    )  # width: 30 cm height: 20 cm # TODO(FK): change dpi
-    ax = fig.add_subplot(111)
-    ax.imshow(im, cmap="gray", interpolation="none")
-    ax.imshow(skel_im, alpha=0.5, interpolation="none")
+def add_attribute(edge_data_csv,vid_edge_obj,network_edge_attribute,name_new_col,mapping):
+    new_attribute = network_edge_attribute(mapping[vid_edge_obj.edge_name])
+    edge_data_csv.loc[edge_data_csv['edge_name'] == vid_edge_obj.edge_name, name_new_col] = new_attribute
 
-    # 3/ Plotting the Nodes
-    size = node_size
-    for node in nodes:
-        c = f(list(node.pos(t)))
-        color = make_random_color(node.label)[:3]
-        reciprocal_color = 255 - color
-        color = tuple(color / 255)
-        reciprocal_color = tuple(reciprocal_color / 255)
-        bbox_props = dict(boxstyle="circle", fc=color, edgecolor="none")
-        if is_in_bounding_box(c, new_region):
-            node_text = ax.text(
-                c[1],
-                c[0],
-                str(node.label),
-                ha="center",
-                va="center",
-                bbox=bbox_props,
-                font=fpath,
-                fontdict={"color": reciprocal_color},
-                size=size,
-                # alpha = 0.5
-            )
-    # 4/ Plotting coordinates
-    points = [f(c) for c in points]
-    for i, c in enumerate(points):
-        if is_in_bounding_box(c, new_region):
-            color = make_random_color(video_num[i])[:3]
-            color = tuple(color / 255)
-            plt.text(c[1], c[0], video_num[i], color="black", fontsize=20, alpha=1)
-            plt.plot(c[1], c[0], marker="x", color="black", markersize=10, alpha=0.5)
+def check_hasedges(vid_obj):
+    shiftx = vid_obj.img_dim[0]*vid_obj.space_res/1.725/2
+    shifty = vid_obj.img_dim[1]*vid_obj.space_res/1.725/2
+    segments = get_segments_ends(vid_obj,shiftx,shifty,40)
+    return(len(segments)>0)
 
-            if with_point_label:
-                plt.text(c[1], c[0], f"{i}")
+def initialize_transformation():
+    return np.array([[1,0],[0,1]]), np.array([0,0])
 
-    # 5/ Plotting segments
-    segments = [[f(segment[0]), f(segment[1])] for segment in segments]
-    for s in segments:
-        plt.plot(
-            [s[0][1], s[1][1]],  # x1, x2
-            [s[0][0], s[1][0]],  # y1, y2
-            color="white",
-            linewidth=2,
-        )
+def update_transformation(Rcurrent, tcurrent, Rfound, tfound):
+    Rcurrent = Rfound @ Rcurrent
+    tcurrent = Rfound @ tcurrent + tfound
+    return Rcurrent, tcurrent
 
-    if save_path:
-        plt.savefig(save_path, dpi=dpi)
+def should_reset(Rfound):
+    return np.linalg.det(Rfound) <= 0 or Rfound[0][0] <= 0.99
+
+def attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent):
+    try:
+        mapping, dist, Rfound, tfound = make_whole_mapping(vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent)
+    except IndexError:
+        Rcurrent, tcurrent = initialize_transformation()
+        mapping, dist, Rfound, tfound = make_whole_mapping(vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent)
+    return mapping, dist, Rfound, tfound
+
+def process_video_object(vid_obj, exp, t, Rcurrent, tcurrent):
+    mapping, dist, Rfound, tfound = attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent)
+    if np.linalg.det(Rfound) > 0 and Rfound[0][0] > 0.99:
+        Rcurrent, tcurrent = update_transformation(Rcurrent, tcurrent, Rfound, tfound)
+        if dist > 20:
+            mapping, dist, Rfound, tfound = attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent)
+            if should_reset(Rfound):
+                Rcurrent, tcurrent = initialize_transformation()
     else:
-        plt.show()
-    return ax
+        Rcurrent, tcurrent = initialize_transformation()
+    return Rcurrent, tcurrent, mapping, dist
 
+def register_dataset(data_obj, exp, t):
+    Rcurrent, tcurrent = initialize_transformation()
 
+    for index, vid_obj in enumerate(data_obj.video_objs[35:]):
+        if check_hasedges(vid_obj):
+            Rcurrent, tcurrent, mapping, dist = process_video_object(vid_obj, exp, t, Rcurrent, tcurrent)
+            print(index, dist, Rcurrent, tcurrent)
+            update_edge_attributes(vid_obj, mapping, dist, t)
 
-
-def make_full_image(
-    exp: Experiment,
-    t: int,
-    region=None,
-    edges: List[Edge] = [],
-    points: List[coord_int] = [],
-    video_num: List[int] = [],
-    segments: List[List[coord_int]] = [],
-    nodes: List[Node] = [],
-    downsizing=5,
-    dilation=1,
-    save_path="",
-    prettify=False,
-    with_point_label=False,
-    figsize=(12, 8),
-    dpi=None,
-    node_size=5,
-) -> None:
-    """
-    This is the general purpose function to plot the full image or a region `region` of the image at
-    any given timestep t. The region being specified in the GENERAL coordinates.
-    The image can be downsized by a chosen factor `downsized` with additionnal features such as: edges, nodes, points, segments.
-    The coordinates for all the objects are provided in the GENERAL referential.
-
-    :param region: choosen region in the full image, such as [[100, 100], [2000,2000]], if None the full image is shown
-    :param edges: list of edges to plot, it is the pixel list that is plotted, not a straight line
-    :param nodes: list of nodes to plot (only nodes in the `region` will be shown)
-    :param points: points such as [123, 234] to plot with a red cross on the image
-    :param segments: plot lines between two points that are provided
-    :param downsizing: factor by which we reduce the image resolution (5 -> image 25 times lighter)
-    :param dilation: only for edges: thickness of the edges (dilation applied to the pixel list)
-    :param save_path: full path to the location where the plot will be saved
-    :param prettify: if True, the image will be enhanced by smoothing the intersections between images
-    :param with_point_label: if True, the index of the point is ploted on top of it
-
-    NB: the full region of a full image is typically [[0, 0], [26000, 52000]]
-    NB: the interesting region of a full image is typically [[12000, 15000], [26000, 35000]]
-    NB: the colors are chosen randomly for edges
-    NB: giving a smaller region greatly increase computation time
-    """
-
-    # TODO(FK): fetch image size from experiment object here, and use it in reconstruct image
-    # TODO(FK): colors for edges are not consistent
-    # NB: possible other parameters that could be added: alpha between layers, colors for object, figure_size
-    DIM_X, DIM_Y = get_dimX_dimY(exp)
-
-    if region == None:
-        # Full image
-        image_coodinates = exp.image_coordinates[t]
-        region = get_bounding_box(image_coodinates)
-        region[1][0] += DIM_X  # TODO(FK): Shouldn't be hardcoded
-        region[1][1] += DIM_Y
-
-    # 1/ Image layer
-    im, f = reconstruct_image_from_general(
-        exp,
-        t,
-        downsizing=downsizing,
-        region=region,
-        prettify=prettify,
-        white_background=False,  # TODO(FK): add image dimention here dimx = ..
-    )
-    f_int = lambda c: f(c).astype(int)
-    new_region = [
-        f_int(region[0]),
-        f_int(region[1]),
-    ]  # should be [[0, 0], [d_x/downsized, d_y/downsized]]
-
-    # 2/ Edges layer
-    skel_im, _ = reconstruct_skeletton(
-        [edge.pixel_list(t) for edge in edges],
-        region=region,
-        color_seeds=[(edge.begin.label + edge.end.label) % 255 for edge in edges],
-        downsizing=downsizing,
-        dilation=dilation,
-    )
-    return (im, skel_im)
+def update_edge_attributes(vid_obj, mapping, dist, t):
+    edge_data_csv = pd.read_csv(vid_obj.edge_adr)
+    for edge in vid_obj.edge_objs:
+        add_attribute(edge_data_csv, edge, lambda edge: edge.width(t), "width", mapping)
+        add_attribute(edge_data_csv, edge, lambda edge: edge.end.label, "network_end", mapping)
+        add_attribute(edge_data_csv, edge, lambda edge: edge.begin.label, "network_begin", mapping)
+        add_attribute(edge_data_csv, edge, lambda edge: dist, "mapping_quality", mapping)
+    edge_data_csv.to_csv(vid_obj.edge_adr)

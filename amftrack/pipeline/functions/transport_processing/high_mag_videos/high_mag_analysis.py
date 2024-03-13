@@ -993,6 +993,7 @@ class VideoDataset(object):
         self.time_res = 1 / self.dataset["fps"]
         self.vid_analysis_folder = Path(f"{analysis_folder}{self.dataset['folder']}")
         edge_adr = Path(f"{analysis_folder}{self.dataset['folder']}") / "edges_data.csv"
+        self.edge_adr = edge_adr
         self.imshow_extent = [
             0,
             self.space_res * self.img_dim[0],
@@ -1339,7 +1340,7 @@ class EdgeDataset(object):
                 Path(f"{analysis_folder}{self.mean_data['folder']}")
                 / f"edges_data.csv"
         )
-        self.edges_dat_adr = edge_dat_adr2
+        # self.edges_dat_adr = edge_dat_adr2
         edges_data = pd.read_csv(edge_dat_adr2)
         self.edge_infos = edges_data[edges_data['edge_name'] == self.edge_name].iloc[0]
         self.xpos1 = edges_data['edge_xpos_1']
