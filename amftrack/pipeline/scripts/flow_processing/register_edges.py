@@ -10,7 +10,7 @@ videos_folder = "/projects/0/einf914/videos/"
 analysis_folder = "/projects/0/einf914/analysis_videos/CocoTransport/"
 analysis_folder_root = "/projects/0/einf914/analysis_videos/"
 
-data_obj = load_video_dataset(plate_id_video,analysis_folder,analysis_folder_root)
+data_obj = load_video_dataset(plate_id_video,videos_folder,analysis_folder,analysis_folder_root)
 
 # directory_targ = os.path.join(directory_scratch, "stitch_temp2") + "/"
 directory_targ = '/projects/0/einf914/transport/'

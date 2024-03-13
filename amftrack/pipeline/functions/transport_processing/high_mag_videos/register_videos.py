@@ -28,8 +28,7 @@ def register_rot_trans(vid_obj,exp,t,dist= 100,R = np.array([[1,0],[0,1]]),trans
     """Finds the rotation and translation to better align videos' edges on
     network edges"""
     positions = R@np.array(vid_obj.dataset[["xpos_network", "ypos_network"]])+trans
-    shiftx = vid_obj.img_dim[0]*vid_obj.space_res/1.725/2
-    shifty = vid_obj.img_dim[1]*vid_obj.space_res/1.725/2
+    shiftx, shifty = get_shifts(vid_obj)
     segments = get_segments_ends(vid_obj,shiftx,shifty,40,R,trans)
     edges = get_all_edges(exp, t)
     edges = [edge for edge in edges if dist_edge(edge,positions,t)<=dist]
@@ -133,10 +132,22 @@ def find_mapping(transport_edge_segment,network_edge_names,network_edge_segments
     index,avg_distances = find_index_min(transport_edge_segment,network_edge_segments)
     return(network_edge_names[index],avg_distances)
 
-def make_whole_mapping(vid_obj,exp,t,dist = 100,R = np.array([[1,0],[0,1]]),trans = 0):
-    positions = np.array(vid_obj.dataset[["xpos_network", "ypos_network"]])
+def get_shifts(vid_obj):
     shiftx = vid_obj.img_dim[0]*vid_obj.space_res/1.725/2
     shifty = vid_obj.img_dim[1]*vid_obj.space_res/1.725/2
+    return (shiftx,shifty)
+
+def get_position(vid_obj):
+    return(np.array(vid_obj.dataset[["xpos_network", "ypos_network"]]))
+
+def get_close_edges(vid_obj,exp,t,R,trans):
+    positions = get_position(vid_obj)
+    edges = get_all_edges(exp, t)
+    edges = [edge for edge in edges if dist_edge(edge,transform(positions,R,trans),t)<=100]
+    return(edges)
+
+def make_whole_mapping(vid_obj,exp,t,dist = 100,R = np.array([[1,0],[0,1]]),trans = 0):
+    shiftx, shifty = get_shifts(vid_obj)
     Rfound,tfound = register_rot_trans(vid_obj,exp,t,dist= dist,R=R,trans=trans)
     segments_final = get_segments_ends(vid_obj,shiftx,shifty,0,R,trans)
     edge_names = [edge.edge_name for edge in vid_obj.edge_objs]
@@ -145,9 +156,9 @@ def make_whole_mapping(vid_obj,exp,t,dist = 100,R = np.array([[1,0],[0,1]]),tran
         # Include the start point, interpolated points, and the end point
         interpolated_points = interpolate_points(begin, end)
         segments_final_interp.append(interpolated_points)
-    edges = get_all_edges(exp, t)
-
-    edges = [edge for edge in edges if dist_edge(edge,transform(positions,Rfound,tfound),t)<=100]
+    Rcurrent = Rfound @ R
+    tcurrent = Rfound @ trans + tfound
+    edges = get_close_edges(vid_obj,exp,t,Rcurrent,tcurrent)
     network_edge_segments = [edge.pixel_list(t) for edge in edges]
     network_edge_names = edges
     mapping = {}
@@ -162,8 +173,7 @@ def add_attribute(edge_data_csv,vid_edge_obj,network_edge_attribute,name_new_col
     edge_data_csv.loc[edge_data_csv['edge_name'] == vid_edge_obj.edge_name, name_new_col] = new_attribute
 
 def check_hasedges(vid_obj):
-    shiftx = vid_obj.img_dim[0]*vid_obj.space_res/1.725/2
-    shifty = vid_obj.img_dim[1]*vid_obj.space_res/1.725/2
+    shiftx,shifty = get_shifts(vid_obj)
     segments = get_segments_ends(vid_obj,shiftx,shifty,40)
     return(len(segments)>0)
 
@@ -201,17 +211,47 @@ def process_video_object(vid_obj, exp, t, Rcurrent, tcurrent):
 def register_dataset(data_obj, exp, t):
     Rcurrent, tcurrent = initialize_transformation()
 
-    for index, vid_obj in enumerate(data_obj.video_objs[35:]):
+    for index, vid_obj in enumerate(data_obj.video_objs):
         if check_hasedges(vid_obj):
+            shiftx, shifty = get_shifts(vid_obj)
+            positions = get_position(vid_obj)
             Rcurrent, tcurrent, mapping, dist = process_video_object(vid_obj, exp, t, Rcurrent, tcurrent)
             print(index, dist, Rcurrent, tcurrent)
-            update_edge_attributes(vid_obj, mapping, dist, t)
 
-def update_edge_attributes(vid_obj, mapping, dist, t):
+            edges = get_close_edges(vid_obj,exp,t,Rcurrent,tcurrent)
+            positions = Rcurrent @ positions + tcurrent
+
+            segments_final = get_segments_ends(vid_obj, shiftx, shifty, 0, Rcurrent, tcurrent)
+            aligned_bools = []
+            for edge,segment_final in zip(vid_obj.edge_objs,segments_final):
+                aligned_bools.append(is_aligned(edge.edge_name, segment_final,
+                                                mapping, edges, positions,t))
+            update_edge_attributes(vid_obj, mapping, dist, aligned_bools)
+
+def update_edge_attributes(vid_obj, mapping, dist, aligned_bools):
     edge_data_csv = pd.read_csv(vid_obj.edge_adr)
-    for edge in vid_obj.edge_objs:
-        add_attribute(edge_data_csv, edge, lambda edge: edge.width(t), "width", mapping)
-        add_attribute(edge_data_csv, edge, lambda edge: edge.end.label, "network_end", mapping)
-        add_attribute(edge_data_csv, edge, lambda edge: edge.begin.label, "network_begin", mapping)
+    for edge,aligned in zip(vid_obj.edge_objs,aligned_bools):
+        if aligned:
+            add_attribute(edge_data_csv, edge, lambda edge: edge.end.label, "network_end", mapping)
+            add_attribute(edge_data_csv, edge, lambda edge: edge.begin.label, "network_begin", mapping)
+        else:
+            add_attribute(edge_data_csv, edge, lambda edge: edge.begin.label, "network_end", mapping)
+            add_attribute(edge_data_csv, edge, lambda edge: edge.end.label, "network_begin", mapping)
         add_attribute(edge_data_csv, edge, lambda edge: dist, "mapping_quality", mapping)
     edge_data_csv.to_csv(vid_obj.edge_adr)
+
+def get_network_edge_segment_straight(edges, positions,t, dist = 100):
+    network_edge_segments = [edge.pixel_list(t) for edge in edges]
+    network_edge_segments = [[pixel for pixel in pixels if np.linalg.norm(pixel - positions) <= 1.5 * dist] for pixels
+                             in network_edge_segments]
+    network_edge_segments = [[pixels[0], pixels[-1]] for pixels in network_edge_segments]
+    return(network_edge_segments)
+
+def is_aligned(transport_edge_name,transport_edge_segment,mapping,edges,positions,t):
+    network_edge_segments = get_network_edge_segment_straight(edges, positions,t, dist = 100)
+    index = edges.index(mapping[transport_edge_name])
+    segment_network = np.array(network_edge_segments[index])
+    vector_network = segment_network[0]-segment_network[1]
+    segment_video = np.array(transport_edge_segment)
+    vector_video = segment_video[0]-segment_video[1]
+    return(np.dot(vector_network,vector_video)>0)
