@@ -17,6 +17,7 @@ def plot_full_video(
     figsize=(6, 3),
     dpi=None,
     node_size=5,
+    arrows = None,
 ) -> None:
     """
     This is the general purpose function to plot the full image or a region `region` of the image at
@@ -83,7 +84,7 @@ def plot_full_video(
     )  # width: 30 cm height: 20 cm # TODO(FK): change dpi
     ax = fig.add_subplot(111)
     ax.imshow(im, cmap="gray", interpolation="none")
-    ax.imshow(skel_im, alpha=0.5, interpolation="none")
+    ax.imshow(skel_im, alpha=1, interpolation="none")
 
     # 3/ Plotting the Nodes
     size = node_size
@@ -133,7 +134,7 @@ def plot_full_video(
         plt.savefig(save_path, dpi=dpi)
     else:
         plt.show()
-    return ax
+    return ax,f
 
 
 

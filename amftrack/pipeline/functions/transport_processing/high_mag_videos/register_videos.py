@@ -149,16 +149,17 @@ def get_close_edges(vid_obj,exp,t,R,trans):
 def make_whole_mapping(vid_obj,exp,t,dist = 100,R = np.array([[1,0],[0,1]]),trans = 0):
     shiftx, shifty = get_shifts(vid_obj)
     Rfound,tfound = register_rot_trans(vid_obj,exp,t,dist= dist,R=R,trans=trans)
-    segments_final = get_segments_ends(vid_obj,shiftx,shifty,0,R,trans)
+    Rcurrent = Rfound @ R
+    tcurrent = Rfound @ trans + tfound
+    segments_final = get_segments_ends(vid_obj,shiftx,shifty,0,Rcurrent,tcurrent)
     edge_names = [edge.edge_name for edge in vid_obj.edge_objs]
     segments_final_interp = []
     for begin, end in segments_final:
         # Include the start point, interpolated points, and the end point
         interpolated_points = interpolate_points(begin, end)
         segments_final_interp.append(interpolated_points)
-    Rcurrent = Rfound @ R
-    tcurrent = Rfound @ trans + tfound
     edges = get_close_edges(vid_obj,exp,t,Rcurrent,tcurrent)
+    # print(Rcurrent[0],edges,"in make whole mapping")
     network_edge_segments = [edge.pixel_list(t) for edge in edges]
     network_edge_names = edges
     mapping = {}
@@ -191,21 +192,27 @@ def should_reset(Rfound):
 def attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent):
     try:
         mapping, dist, Rfound, tfound = make_whole_mapping(vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent)
+        reinitialize = False
     except IndexError:
         Rcurrent, tcurrent = initialize_transformation()
         mapping, dist, Rfound, tfound = make_whole_mapping(vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent)
-    return mapping, dist, Rfound, tfound
+        reinitialize = True
+    return mapping, dist, Rfound, tfound,reinitialize
 
 def process_video_object(vid_obj, exp, t, Rcurrent, tcurrent):
-    mapping, dist, Rfound, tfound = attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent)
-    if np.linalg.det(Rfound) > 0 and Rfound[0][0] > 0.99:
-        Rcurrent, tcurrent = update_transformation(Rcurrent, tcurrent, Rfound, tfound)
-        if dist > 20:
-            mapping, dist, Rfound, tfound = attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent)
-            if should_reset(Rfound):
-                Rcurrent, tcurrent = initialize_transformation()
-    else:
+    mapping, dist, Rfound, tfound,reinitialize = attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent)
+    if np.linalg.det(Rfound) < 0 or Rfound[0][0] <= 0.99:
         Rcurrent, tcurrent = initialize_transformation()
+        mapping, dist, Rfound, tfound,reinitialize = attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent)
+    if reinitialize:
+        Rcurrent, tcurrent = initialize_transformation()
+    Rcurrent, tcurrent = update_transformation(Rcurrent, tcurrent, Rfound, tfound)
+    if dist > 20:
+        mapping, dist, Rfound, tfound,reinitialize = attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent)
+        if reinitialize:
+            Rcurrent, tcurrent = initialize_transformation()
+        Rcurrent, tcurrent = update_transformation(Rcurrent, tcurrent, Rfound, tfound)
+
     return Rcurrent, tcurrent, mapping, dist
 
 def register_dataset(data_obj, exp, t):
@@ -216,9 +223,10 @@ def register_dataset(data_obj, exp, t):
             shiftx, shifty = get_shifts(vid_obj)
             positions = get_position(vid_obj)
             Rcurrent, tcurrent, mapping, dist = process_video_object(vid_obj, exp, t, Rcurrent, tcurrent)
-            print(index, dist, Rcurrent, tcurrent)
 
             edges = get_close_edges(vid_obj,exp,t,Rcurrent,tcurrent)
+            print(index,Rcurrent[0], edges, "in register_dataset")
+
             positions = Rcurrent @ positions + tcurrent
 
             segments_final = get_segments_ends(vid_obj, shiftx, shifty, 0, Rcurrent, tcurrent)
@@ -238,6 +246,7 @@ def update_edge_attributes(vid_obj, mapping, dist, aligned_bools):
             add_attribute(edge_data_csv, edge, lambda edge: edge.begin.label, "network_end", mapping)
             add_attribute(edge_data_csv, edge, lambda edge: edge.end.label, "network_begin", mapping)
         add_attribute(edge_data_csv, edge, lambda edge: dist, "mapping_quality", mapping)
+    print(edge_data_csv["network_begin"])
     edge_data_csv.to_csv(vid_obj.edge_adr)
 
 def get_network_edge_segment_straight(edges, positions,t, dist = 100):
