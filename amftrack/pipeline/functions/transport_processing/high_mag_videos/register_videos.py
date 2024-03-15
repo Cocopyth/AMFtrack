@@ -194,9 +194,13 @@ def attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent):
         mapping, dist, Rfound, tfound = make_whole_mapping(vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent)
         reinitialize = False
     except IndexError:
-        Rcurrent, tcurrent = initialize_transformation()
-        mapping, dist, Rfound, tfound = make_whole_mapping(vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent)
-        reinitialize = True
+        try:
+            Rcurrent, tcurrent = initialize_transformation()
+            mapping, dist, Rfound, tfound = make_whole_mapping(vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent)
+            reinitialize = True
+        except IndexError:
+            Rcurrent, tcurrent = initialize_transformation()
+            return({},-1,Rcurrent,tcurrent,True)
     return mapping, dist, Rfound, tfound,reinitialize
 
 def process_video_object(vid_obj, exp, t, Rcurrent, tcurrent):
@@ -223,18 +227,18 @@ def register_dataset(data_obj, exp, t):
             shiftx, shifty = get_shifts(vid_obj)
             positions = get_position(vid_obj)
             Rcurrent, tcurrent, mapping, dist = process_video_object(vid_obj, exp, t, Rcurrent, tcurrent)
+            if len(mapping)>0:
+                edges = get_close_edges(vid_obj,exp,t,Rcurrent,tcurrent)
+                print(index,Rcurrent[0], edges, "in register_dataset")
 
-            edges = get_close_edges(vid_obj,exp,t,Rcurrent,tcurrent)
-            print(index,Rcurrent[0], edges, "in register_dataset")
+                positions = Rcurrent @ positions + tcurrent
 
-            positions = Rcurrent @ positions + tcurrent
-
-            segments_final = get_segments_ends(vid_obj, shiftx, shifty, 0, Rcurrent, tcurrent)
-            aligned_bools = []
-            for edge,segment_final in zip(vid_obj.edge_objs,segments_final):
-                aligned_bools.append(is_aligned(edge.edge_name, segment_final,
-                                                mapping, edges, positions,t))
-            update_edge_attributes(vid_obj, mapping, dist, aligned_bools)
+                segments_final = get_segments_ends(vid_obj, shiftx, shifty, 0, Rcurrent, tcurrent)
+                aligned_bools = []
+                for edge,segment_final in zip(vid_obj.edge_objs,segments_final):
+                    aligned_bools.append(is_aligned(edge.edge_name, segment_final,
+                                                    mapping, edges, positions,t))
+                update_edge_attributes(vid_obj, mapping, dist, aligned_bools)
 
 def update_edge_attributes(vid_obj, mapping, dist, aligned_bools):
     edge_data_csv = pd.read_csv(vid_obj.edge_adr)
