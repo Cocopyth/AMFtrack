@@ -5,6 +5,7 @@ from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_all_edges,
 )
 from pathlib import Path
+lim_length_edge = 20
 def get_segments_ends(vid_obj,shiftx,shifty,thresh_length = 0,R = np.array([[1,0],[0,1]]),t=0):
     segments = []
     for i in range(len(vid_obj.edge_objs)):
@@ -29,7 +30,7 @@ def register_rot_trans(vid_obj,exp,t,dist= 100,R = np.array([[1,0],[0,1]]),trans
     network edges"""
     positions = R@np.array(vid_obj.dataset[["xpos_network", "ypos_network"]])+trans
     shiftx, shifty = get_shifts(vid_obj)
-    segments = get_segments_ends(vid_obj,shiftx,shifty,40,R,trans)
+    segments = get_segments_ends(vid_obj,shiftx,shifty,lim_length_edge,R,trans)
     edges = get_all_edges(exp, t)
     edges = [edge for edge in edges if dist_edge(edge,positions,t)<=dist]
     pixels = [pixel for edge in edges for pixel in edge.pixel_list(t)]
@@ -175,7 +176,7 @@ def add_attribute(edge_data_csv,vid_edge_obj,network_edge_attribute,name_new_col
 
 def check_hasedges(vid_obj):
     shiftx,shifty = get_shifts(vid_obj)
-    segments = get_segments_ends(vid_obj,shiftx,shifty,40)
+    segments = get_segments_ends(vid_obj,shiftx,shifty,lim_length_edge)
     return(len(segments)>0)
 
 def initialize_transformation():
@@ -251,7 +252,7 @@ def update_edge_attributes(vid_obj, mapping, dist, aligned_bools):
             add_attribute(edge_data_csv, edge, lambda edge: edge.end.label, "network_begin", mapping)
         add_attribute(edge_data_csv, edge, lambda edge: dist, "mapping_quality", mapping)
     print(edge_data_csv["network_begin"])
-    edge_data_csv.to_csv(vid_obj.edge_adr)
+    edge_data_csv.to_csv(vid_obj.edge_adr,index=False)
 
 def get_network_edge_segment_straight(edges, positions,t, dist = 100):
     network_edge_segments = [edge.pixel_list(t) for edge in edges]

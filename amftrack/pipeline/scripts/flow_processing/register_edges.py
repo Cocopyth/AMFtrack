@@ -26,6 +26,7 @@ folders = all_folders.loc[all_folders["unique_id"] == plate_id]
 folders = folders.loc[folders["/Analysis/nx_graph_pruned_labeled.p"] == True]
 folders = folders.sort_values(by="datetime")
 for plate_id_video in list(indexes.keys()):
+    print(plate_id_video)
     data_obj = load_video_dataset(plate_id_video, videos_folder, analysis_folder, analysis_folder_root)
 
     exp = Experiment(directory_targ)
