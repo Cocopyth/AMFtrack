@@ -17,6 +17,12 @@ def load_video_dataset(plate_id_video,videos_folder,analysis_folder,analysis_fol
 
     vid_anls_frame = vid_anls_frame.sort_values("unique_id").reset_index(drop=True)
     vid_anls_frame_select = vid_anls_frame.loc[vid_anls_frame["plate_id"] == plate_id_video]
+    columns_to_drop = ['xpos_network', 'ypos_network']
+
+    # Dropping columns from vid_anls_frame_select_network if they exist
+    for column in columns_to_drop:
+        if column in vid_anls_frame_select.columns:
+            vid_anls_frame_select = vid_anls_frame_select.drop(column, axis=1)
     analysis_folder = "/projects/0/einf914/analysis_videos/CocoTransport/"
     analysis_folder = f"{analysis_folder}{plate_id_video}/"
 
@@ -26,7 +32,7 @@ def load_video_dataset(plate_id_video,videos_folder,analysis_folder,analysis_fol
     for address in img_infos:
         add_infos.append(pd.read_json(address, orient="index").T)
     vid_anls_frame = pd.concat([vid_anls_frame] + add_infos, ignore_index=True)
-    print(vid_anls_frame)
+    # print(vid_anls_frame)
 
     vid_anls_frame = vid_anls_frame.sort_values("unique_id").reset_index(drop=True)
     vid_anls_frame_select_network = vid_anls_frame.loc[vid_anls_frame["plate_id"] == plate_id_video]
