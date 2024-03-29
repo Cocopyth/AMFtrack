@@ -16,6 +16,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 from amftrack.util.geometry import get_section_segment, generate_index_along_sequence
 from amftrack.util.image_analysis import is_in_image, find_image_indexes
 from tensorflow import keras
+from tqdm import tqdm
 
 logger = logging.getLogger(os.path.basename(__file__))
 
@@ -28,7 +29,9 @@ a = 2.3196552
 TARGET_LENGTH = 120
 # MODEL = keras.models.load_model(os.path.join(path_code[:-1], "ml", "models", "default_model"))
 MODEL = keras.models.load_model(
-    os.path.join(path_code[:-1], "ml", "models", "default_CNN_model.h5")
+    # os.path.join(path_code[:-1], "ml", "models", "default_CNN_model.h5")
+    os.path.join(path_code[:-1], "ml", "models", "model_quadratic.h5")
+
 )
 # MODEL = ""
 # TARGET_LENGTH = 80
@@ -456,7 +459,7 @@ def get_width_info(experiment, t, resolution=50, skip=False):
 def get_width_info_new(experiment, t, resolution=50, skip=False) -> Dict:
     edge_width = {}
     graph = experiment.nx_graph[t]
-    for edge in graph.edges:
+    for edge in tqdm(graph.edges):
         if not skip:
             edge_exp = Edge(
                 Node(edge[0], experiment), Node(edge[1], experiment), experiment
@@ -472,7 +475,13 @@ def get_width_info_new(experiment, t, resolution=50, skip=False) -> Dict:
                     target_length=TARGET_LENGTH,
                 )
                 median = np.median(prediction)
-                edge_width[edge] = median
+                if median>0:
+                    edge_width[edge] = np.sqrt(median) #new model trained on quadratic radius
+                #should be updated depending on which ML model is used
+                # This change of ML model was done on 29/03/2024
+                #
+                else:
+                    edge_width[edge] = 0
             else:
                 edge_width[edge] = 0
         else:

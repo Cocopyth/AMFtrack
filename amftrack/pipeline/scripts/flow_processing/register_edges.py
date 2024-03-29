@@ -2,7 +2,6 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import E
 from amftrack.pipeline.functions.transport_processing.high_mag_videos.loading import load_video_dataset
 from amftrack.pipeline.functions.transport_processing.high_mag_videos.register_videos import register_dataset
 from amftrack.util.sys import update_plate_info, get_current_folders
-
 plate_id = "310_20230830"
 indexes = {
 "20230901_Plate310" : 20,
@@ -11,6 +10,13 @@ indexes = {
 "20230904_Plate310" : 52,
 "20230905_Plate310" : 64,
 "20230906_Plate310" : 73,
+}
+plate_id = "441_20230807"
+indexes = {
+# "20230810_Plate441" : 29,
+# "20230811_Plate441" : 41,
+# "20230812_Plate441" : 47,
+"20230813_Plate441" : 60,
 }
 videos_folder = "/projects/0/einf914/videos/"
 

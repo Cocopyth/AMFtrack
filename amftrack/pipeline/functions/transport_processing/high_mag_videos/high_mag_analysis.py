@@ -1225,8 +1225,10 @@ class VideoDataset(object):
                     ax.arrow(
                         edge_ends[0] + plate_offset[0],
                         edge_ends[1] + plate_offset[1],
-                        edge_dir[0] * speed_f / 100,
-                        edge_dir[1] * speed_f / 100,
+                        # edge_dir[0] * speed_f / 100,
+                        # edge_dir[1] * speed_f / 100,
+                        edge_dir[0]*np.sign(speed_f),
+                        edge_dir[1]*np.sign(speed_f),
                         width=arr_width,
                         linewidth=line_size,
                         facecolor="black",
@@ -1242,7 +1244,7 @@ class VideoDataset(object):
             if plot_text:
                 if plot_both:
                     ax.annotate(
-                        f"{speed_r:.3}",
+                        f"{speed_r:.2}",
                         edge_starts + edge_offset,
                         xytext=edge_starts
                         + edge_offset
@@ -1259,7 +1261,7 @@ class VideoDataset(object):
                         ],
                     )
                     ax.annotate(
-                        f"{-speed_l:.3}",
+                        f"{-speed_l:.2}",
                         edge_ends - edge_offset,
                         xytext=edge_ends
                         - edge_offset
@@ -1277,7 +1279,7 @@ class VideoDataset(object):
                     )
                 if plot_mean:
                     ax.annotate(
-                        f"{speed_m:.3}",
+                        f"{speed_m:.2}",
                         edge_starts + edge_offset,
                         xytext=edge_starts
                         + edge_offset
@@ -1295,7 +1297,7 @@ class VideoDataset(object):
                     )
                 if plot_flux:
                     ax.annotate(
-                        f"{speed_f / 100:.3}",
+                        f"{speed_f / 100:.2}",
                         edge_starts + edge_offset,
                         xytext=edge_starts
                         + edge_offset
@@ -1328,6 +1330,8 @@ class VideoDataset(object):
 class EdgeDataset(object):
     def __init__(self, dataframe, analysis_folder, videos_folder):
         self.mean_data = dataframe
+        self.mean_data['analysis_folder'] = analysis_folder
+
         self.edge_name = self.mean_data["edge_name"]
         edge_dat_adr = (
             Path(f"{analysis_folder}{self.mean_data['folder']}")

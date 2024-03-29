@@ -4,6 +4,9 @@ import open3d as o3d
 from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_all_edges,
 )
+# import probreg as pr
+from scipy.optimize import minimize
+
 from pathlib import Path
 lim_length_edge = 20
 def get_segments_ends(vid_obj,shiftx,shifty,thresh_length = 0,R = np.array([[1,0],[0,1]]),t=0):
@@ -45,20 +48,21 @@ def register_rot_trans(vid_obj,exp,t,dist= 100,R = np.array([[1,0],[0,1]]),trans
     segment_points = np.array(segment_points)
     Y = np.array(pixels)
     X = np.array(segment_points)
-    transformation = find_rot_o3d(X,Y)
-    Rfound = transformation[0:2, 0:2]
-    tfound = transformation[0:2, 3]
-    if np.linalg.det(Rfound)>0:
-        return(Rfound,tfound)
+    if len(X)>0 and len(Y)>0:
+        Rfound,tfound = find_optimal_R_and_t(X,Y)
+        # Rfound = transformation[0:2, 0:2]
+        # tfound = transformation[0:2, 3]
+        if np.linalg.det(Rfound)>0:
+            return(Rfound,tfound)
+        else:
+            # print("negative det")
+            Rfound, tfound = find_optimal_R_and_t(X, Y)
+            Rfound, tfound = np.linalg.inv(Rfound), np.dot(
+                np.linalg.inv(Rfound), -tfound
+            )
+            return (Rfound, tfound)
     else:
-        # print("negative det")
-        transformation = find_rot_o3d(Y, X)
-        Rfound = transformation[0:2, 0:2]
-        tfound = transformation[0:2, 3]
-        Rfound, tfound = np.linalg.inv(Rfound), np.dot(
-            np.linalg.inv(Rfound), -tfound
-        )
-        return (Rfound, tfound)
+        return(initialize_transformation())
 
 def find_rot_o3d(X,Y):
     X = np.transpose(X)
@@ -87,6 +91,27 @@ def find_rot_o3d(X,Y):
         o3d.pipelines.registration.TransformationEstimationPointToPoint(),
     )
     return(reg_p2p.transformation)
+
+
+# def find_rot_cpd(X, Y):
+#     # Assuming X and Y are 2D arrays of shape (n_points, dimensions),
+#     # and we're adding a z-axis with zeros to convert them into 3D for compatibility with CPD.
+#     X = np.insert(X, 2, values=0, axis=1)  # Inserting a Z-axis with zero values
+#     Y = np.insert(Y, 2, values=0, axis=1)  # Inserting a Z-axis with zero values
+#
+#     # Convert numpy arrays to point clouds.
+#     # In probreg, point clouds can be represented directly as numpy arrays.
+#     source = X
+#     target = Y
+#
+#     # Perform Coherent Point Drift registration.
+#     # cpd returns an object that contains the transformation model among other details.
+#     # Using the 'rigid' transformation model for rotation and translation.
+#     cpd = pr.cpd.registration_cpd(source, target, tf_type_name='rigid')
+#     transformation_matrix = np.eye(4)
+#     transformation_matrix[:3, :3] = cpd.transformation.rot  # Rotation
+#     transformation_matrix[:3, 3] = cpd.transformation.t  # Translation
+#     return transformation_matrix
 
 def dist_edge(edge, pos, t):
     pos = pos.astype(float)
@@ -122,11 +147,81 @@ def average_min_distance_to_set(A, B_set):
         total_distance += min_distance
     return total_distance / len(A)
 
+
+def average_min_distance_to_set_fast(A, B_set):
+    # Expand dimensions of A and B_set to enable broadcasting
+    A_expanded = np.expand_dims(A, axis=1)  # Shape becomes (len(A), 1, dim)
+    B_set_expanded = np.expand_dims(B_set, axis=0)  # Shape becomes (1, len(B_set), dim)
+
+    # Calculate squared Euclidean distances (avoiding square root for efficiency)
+    # as the square root is a monotonic transformation and doesn't affect argmin.
+    distances_squared = np.sum((A_expanded - B_set_expanded) ** 2, axis=2)
+
+    # Find the minimum squared distance for each point in A
+    min_distances_squared = np.min(distances_squared, axis=1)
+
+    # Compute the average of the square root of these minimum distances
+    average_min_distance = np.mean(min_distances_squared)
+
+    return average_min_distance
+
+
+# Assuming the objective_function is defined elsewhere in your code
+def objective_function(params, source, target):
+    # Convert params (first 3 are translation, next 4 are quaternion for rotation) to R and t
+    t = params[:2]
+    theta = params[2]
+    rotation = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+
+    # Transform the source points
+    transformed_source = np.dot(rotation, source.T).T + t
+
+    # Compute distances to the nearest target points
+    dist = average_min_distance_to_set_fast(transformed_source, target)
+
+    # Return the average of these distances
+    return dist
+
+def callback_function(xk, source, target):
+    # xk contains the current parameter values
+    # Optionally, evaluate the current objective function value (if needed)
+    current_value = objective_function(xk, source, target)
+    print(f"Current parameters: {xk}, Objective Function Value: {current_value}")
+
+def find_optimal_R_and_t(source, target):
+    initial_guess = np.array([0, 0, 0])
+    deltas = np.array([600, 600, np.pi/8])
+    init_params = [-300, -300, -np.pi/16]
+
+    simplex = [init_params]
+    for i in range(len(init_params)):
+        new_point = np.copy(init_params)
+        new_point[i] += deltas[i]
+        simplex.append(new_point)
+
+    # Define a wrapper for the callback to include additional arguments
+    def callback_with_args(xk):
+        callback_function(xk, source, target)
+
+    # Run the optimization
+    result = minimize(objective_function, initial_guess, args=(source, target), method='Nelder-Mead',
+                      options={"initial_simplex": simplex, "fatol": 0.1})
+
+    # Extract optimized parameters
+    optimized_params = result.x
+    t_optimized = optimized_params[:2]  # Assuming this was meant to be [:2] for x and y translation
+    theta = optimized_params[2]
+    R_optimized = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+
+    return R_optimized, t_optimized
+
+
+
 def transform(pos,R,t):
     return(R @ pos + t)
 
 def find_index_min(A, B):
-    avg_distances = [average_min_distance_to_set(A, B_set) for B_set in B]
+    avg_distances = [average_min_distance_to_set_fast(A, B_set) for B_set in B]
     return (np.argmin(avg_distances),np.min(avg_distances))
 
 def find_mapping(transport_edge_segment,network_edge_names,network_edge_segments):
@@ -194,12 +289,12 @@ def attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent):
     try:
         mapping, dist, Rfound, tfound = make_whole_mapping(vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent)
         reinitialize = False
-    except IndexError:
+    except (ValueError, IndexError) as e:
         try:
             Rcurrent, tcurrent = initialize_transformation()
             mapping, dist, Rfound, tfound = make_whole_mapping(vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent)
             reinitialize = True
-        except IndexError:
+        except (ValueError, IndexError) as e:
             Rcurrent, tcurrent = initialize_transformation()
             return({},-1,Rcurrent,tcurrent,True)
     return mapping, dist, Rfound, tfound,reinitialize
@@ -224,13 +319,13 @@ def register_dataset(data_obj, exp, t):
     Rcurrent, tcurrent = initialize_transformation()
 
     for index, vid_obj in enumerate(data_obj.video_objs):
-        if check_hasedges(vid_obj):
+        if check_hasedges(vid_obj) and vid_obj.dataset['magnification']!=4:
             shiftx, shifty = get_shifts(vid_obj)
             positions = get_position(vid_obj)
             Rcurrent, tcurrent, mapping, dist = process_video_object(vid_obj, exp, t, Rcurrent, tcurrent)
             if len(mapping)>0:
                 edges = get_close_edges(vid_obj,exp,t,Rcurrent,tcurrent)
-                print(index,Rcurrent[0], edges, "in register_dataset")
+                print(vid_obj.dataset['video_int'],"R=",Rcurrent[0], "\n dist=",dist, edges,)
 
                 positions = Rcurrent @ positions + tcurrent
 
@@ -251,7 +346,7 @@ def update_edge_attributes(vid_obj, mapping, dist, aligned_bools):
             add_attribute(edge_data_csv, edge, lambda edge: edge.begin.label, "network_end", mapping)
             add_attribute(edge_data_csv, edge, lambda edge: edge.end.label, "network_begin", mapping)
         add_attribute(edge_data_csv, edge, lambda edge: dist, "mapping_quality", mapping)
-    print(edge_data_csv["network_begin"])
+    # print(edge_data_csv["network_begin"])
     edge_data_csv.to_csv(vid_obj.edge_adr,index=False)
 
 def get_network_edge_segment_straight(edges, positions,t, dist = 100):

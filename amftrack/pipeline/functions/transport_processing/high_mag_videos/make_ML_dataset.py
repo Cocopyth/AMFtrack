@@ -47,22 +47,23 @@ def make_profile(data_obj,exp,t):
     for index, vid_obj in enumerate(data_obj.video_objs):
         if check_hasedges(vid_obj) and vid_obj.dataset['mode'] == "BF":
             for edge in vid_obj.edge_objs:
-                edge_begin = int(edge.mean_data["network_begin"])
-                edge_end = int(edge.mean_data["network_end"])
-                network_edge = Edge(Node(edge_begin, exp), Node(edge_end, exp), exp)
-                profiles, transects, new_section_coord_list = extract_section_profiles_for_edge_exp(
-                    exp,
-                    t,
-                    network_edge,
-                    resolution=5,
-                    offset=10,
-                    step=3,
-                    target_length=120,
-                )
-                unique_id = vid_obj.dataset['unique_id']
+                if "network_begin" in edge.mean_data.keys():
+                    edge_begin = int(edge.mean_data["network_begin"])
+                    edge_end = int(edge.mean_data["network_end"])
+                    network_edge = Edge(Node(edge_begin, exp), Node(edge_end, exp), exp)
+                    profiles, transects, new_section_coord_list = extract_section_profiles_for_edge_exp(
+                        exp,
+                        t,
+                        network_edge,
+                        resolution=5,
+                        offset=10,
+                        step=3,
+                        target_length=120,
+                    )
+                    unique_id = vid_obj.dataset['unique_id']
 
-                os.makedirs(f'/scratch-shared/amftrack/ML_dataset/{unique_id}/', exist_ok=True)
-                for index in [5, 10, 15]:
-                    if index < len(profiles):
-                        path = f'/scratch-shared/amftrack/ML_dataset/{unique_id}/{edge.edge_name}_{index}.npy'
-                        np.save(path, profiles[index])
+                    os.makedirs(f'/scratch-shared/amftrack/ML_dataset/{unique_id}/', exist_ok=True)
+                    for index in [5, 10, 15]:
+                        if index < len(profiles):
+                            path = f'/scratch-shared/amftrack/ML_dataset/{unique_id}/{edge.edge_name}_{index}.npy'
+                            np.save(path, profiles[index])
