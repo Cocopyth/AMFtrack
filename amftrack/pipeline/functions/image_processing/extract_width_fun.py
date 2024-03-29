@@ -69,7 +69,9 @@ def compute_edge_width_profile(
     )
 
     predicted_widths = MODEL.predict(profile, verbose=0)
-    return predicted_widths
+    return np.sqrt(predicted_widths) #new model trained on quadratic radius
+                #should be updated depending on which ML model is used
+                # This change of ML model was done on 29/03/2024
 
 
 def compute_section_coordinates(
@@ -97,79 +99,6 @@ def compute_section_coordinates(
         orientation = np.array(before) - np.array(after)
         list_of_segments.append(get_section_segment(orientation, pivot, target_length))
     return list_of_segments
-
-
-# def find_source_images_(
-#     section_coord_list: List[Tuple[coord_int]],
-#     image_coord_list: List[Tuple[coord_int]],
-#     mode=1,
-# ):
-#     """
-#     In this function we determine (and chose) an image for each section.
-#     This image will then be used to extract the profile section.
-#     There are two modes:
-#     - mode 1: segments that aren't fully contained in an image are removed
-#     - mode 2: no segment is removed, thus some segment will have so part out of the image
-#     :return
-#     - List of image indexes for each section
-#     - List of coordinates of the segment in their respective image
-#     NB: This implementation suppose that the section are close to one another
-#     and that there are often in the same image as the previous one
-#     """
-#     image_indexes = []  # image index for each segment
-#     new_section_coord_list = []  # segment list filtered and converted to the image ref
-
-#     current_image = [np.inf, np.inf]
-#     current_index = 0
-#     for sec in section_coord_list:
-#         (point1, point2) = sec
-#         # check if the current image contains the segment
-#         if is_in_image(
-#             current_image[0], current_image[1], point1[0], point1[1]
-#         ) and is_in_image(current_image[0], current_image[1], point2[0], point2[1]):
-#             # Case 1: same image as previous section
-#             image_indexes.append(current_index)
-#             new_sec = [
-#                 [point[0] - current_image[0], [point[1] - current_image[1]]]
-#                 for point in sec
-#             ]
-#             new_section_coord_list.append(new_sec)
-#         else:
-#             logging.debug("New image needed")
-#             images1 = find_image_indexes(image_coord_list, point1[0], point1[1])
-#             images2 = find_image_indexes(image_coord_list, point2[0], point2[1])
-#             possible_choices = list(set(images1) & set(images2))
-#             if possible_choices == []:
-#                 logger.debug(
-#                     "This section is not contained in a single original image."
-#                 )
-#                 if mode == 1:
-#                     logger.debug("Removing the section..")
-#                     continue
-#                 elif mode == 2:
-#                     logger.debug("Choosing an image anyway")
-#                     possible_choices = list(set(images1) | set(images2))
-#                     if possible_choices == []:
-#                         logger.debug("No image containing the extremity of the segment")
-#                         logger.debug("Choosing a random image")
-#                         image_indexes.append(current_index)
-#                         new_sec = [
-#                             [point[0] - current_image[0], [point[1] - current_image[1]]]
-#                             for point in sec
-#                         ]
-#                         # TODO(FK): still a small problem with case where first section is failing
-#                         new_section_coord_list.append(new_sec)
-#             else:
-#                 index = possible_choices[0]  # NB(FK): we choose randomly
-#                 current_image = image_coord_list[index]
-#                 current_index = index
-#                 image_indexes.append(index)
-#                 new_sec = [
-#                     [point[0] - current_image[0], [point[1] - current_image[1]]]
-#                     for point in sec
-#                 ]
-#                 new_section_coord_list.append(new_sec)
-#     return image_indexes, new_section_coord_list
 
 
 def find_source_images_filtered(
@@ -313,147 +242,147 @@ def get_source_image(
         j = np.argmin(dist_last)
     logger.info("Getting images")
     return (ims[j], (posimg[1][j], posimg[0][j]))
-
-
-def get_width_pixel(
-    edge: Edge,
-    index,
-    im,
-    pivot,
-    before: coord,
-    after: coord,
-    t,
-    size=20,
-    width_factor=60,
-    averaging_size=100,
-    threshold_averaging=10,
-):
-    """
-    Get a width value for a given pixel on the hypha
-    :param index: TO REMOVE
-    :param im:
-    :param pivot:
-    :param before, after: coordinates of point after and before to compute the tangent
-    :param size:
-    :param width_factor:
-    :param averaging_size:
-    :param threshold_averaging:
-    :return: the width computed
-    """
-    # TODO(FK): remove this line
-    imtab = im
-    #     print(imtab.shape)
-    #     print(int(max(0,pivot[0]-averaging_size)),int(pivot[0]+averaging_size))
-    orientation = np.array(before) - np.array(after)
-    # TODO(FK): all this into another function
-    perpendicular = (
-        [1, -orientation[0] / orientation[1]] if orientation[1] != 0 else [0, 1]
-    )
-    perpendicular_norm = np.array(perpendicular) / np.sqrt(
-        perpendicular[0] ** 2 + perpendicular[1] ** 2
-    )
-    point1 = np.around(np.array(pivot) + width_factor * perpendicular_norm)
-    point2 = np.around(np.array(pivot) - width_factor * perpendicular_norm)
-    point1 = point1.astype(int)
-    point2 = point2.astype(int)
-    p = profile_line(imtab, point1, point2, mode="constant")  # TODO(FK): solve error
-    xdata = np.array(range(len(p)))
-    ydata = np.array(p)
-
-    background = np.mean(
-        (np.mean(p[: width_factor // 6]), np.mean(p[-width_factor // 6 :]))
-    )
-    width_pix = -np.sum(
-        (np.log10(np.array(p) / background) <= 0) * np.log10(np.array(p) / background)
-    )
-
-    return a * np.sqrt(max(0, np.linalg.norm(point1 - point2) * (width_pix) / len(p)))
-
-
-def get_width_edge(
-    edge: Edge, resolution: int, t: int, local=False, threshold_averaging=10
-) -> Dict[coord, float]:
-    """
-    Compute the width of the given edge for each point that is chosen on the hypha.
-    :param resolution: if resolution = 3 the width is computed every 3 pixel on the edge
-    :return: a dictionnary with the width for each point chosen on the hypha
-    """
-    pixel_conversion_factor = 1.725  # TODO(FK): use the designated function instead
-    pixel_list = edge.pixel_list(t)
-    pixels = []
-    indexes = []
-    source_images = []
-    poss = []
-    widths = {}
-    # Long edges
-    if len(pixel_list) > 3 * resolution:
-        for i in range(0, len(pixel_list) // resolution):
-            index = i * resolution
-            indexes.append(index)
-            pixel = pixel_list[index]
-            pixels.append(pixel)
-            source_img, pos = get_source_image(
-                edge.experiment, pixel, t, local
-            )  # TODO(FK): very not efficient
-            source_images.append(source_img)
-            poss.append(pos)
-    # Small edges
-    else:
-        indexes = [0, len(pixel_list) // 2, len(pixel_list) - 1]
-        for index in indexes:
-            pixel = pixel_list[index]
-            pixels.append(pixel)
-            source_img, pos = get_source_image(edge.experiment, pixel, t, local)
-            source_images.append(source_img)
-            poss.append(pos)
-    #     print(indexes)
-    for i, index in enumerate(indexes[1:-1]):
-        source_img = source_images[i + 1]
-        pivot = poss[i + 1]
-        _, before = get_source_image(edge.experiment, pixels[i], t, local, pivot)
-        _, after = get_source_image(edge.experiment, pixels[i + 2], t, local, pivot)
-        #         plot_t_tp1([0,1,2],[],{0 : pivot,1 : before, 2 : after},None,source_img,source_img)
-        width = get_width_pixel(
-            edge,
-            index,
-            source_img,
-            pivot,
-            before,
-            after,
-            t,
-            threshold_averaging=threshold_averaging,
-        )
-        #         print(width*pixel_conversion_factor)
-        widths[pixel_list[index]] = width * pixel_conversion_factor
-    #         if i>=1:
-    #             break
-    edge.experiment.nx_graph[t].get_edge_data(edge.begin.label, edge.end.label)[
-        "width"
-    ] = widths
-    return widths
-
-
-def get_width_info(experiment, t, resolution=50, skip=False):
-    print(not skip)
-    edge_width = {}
-    graph = experiment.nx_graph[t]
-    #     print(len(list(graph.edges)))
-    # print(len(graph.edges))
-    for edge in graph.edges:
-        if not skip:
-            #         print(edge)
-            edge_exp = Edge(
-                Node(edge[0], experiment), Node(edge[1], experiment), experiment
-            )
-            mean = np.mean(list(get_width_edge(edge_exp, resolution, t).values()))
-            #         print(np.mean(list(get_width_edge(edge_exp,resolution,t).values())))
-            edge_width[edge] = mean
-            # print(mean)
-
-        else:
-            # Maybe change to Nan if it doesnt break the rest
-            edge_width[edge] = 40
-    return edge_width
+#
+#
+# def get_width_pixel(
+#     edge: Edge,
+#     index,
+#     im,
+#     pivot,
+#     before: coord,
+#     after: coord,
+#     t,
+#     size=20,
+#     width_factor=60,
+#     averaging_size=100,
+#     threshold_averaging=10,
+# ):
+#     """
+#     Get a width value for a given pixel on the hypha
+#     :param index: TO REMOVE
+#     :param im:
+#     :param pivot:
+#     :param before, after: coordinates of point after and before to compute the tangent
+#     :param size:
+#     :param width_factor:
+#     :param averaging_size:
+#     :param threshold_averaging:
+#     :return: the width computed
+#     """
+#     # TODO(FK): remove this line
+#     imtab = im
+#     #     print(imtab.shape)
+#     #     print(int(max(0,pivot[0]-averaging_size)),int(pivot[0]+averaging_size))
+#     orientation = np.array(before) - np.array(after)
+#     # TODO(FK): all this into another function
+#     perpendicular = (
+#         [1, -orientation[0] / orientation[1]] if orientation[1] != 0 else [0, 1]
+#     )
+#     perpendicular_norm = np.array(perpendicular) / np.sqrt(
+#         perpendicular[0] ** 2 + perpendicular[1] ** 2
+#     )
+#     point1 = np.around(np.array(pivot) + width_factor * perpendicular_norm)
+#     point2 = np.around(np.array(pivot) - width_factor * perpendicular_norm)
+#     point1 = point1.astype(int)
+#     point2 = point2.astype(int)
+#     p = profile_line(imtab, point1, point2, mode="constant")  # TODO(FK): solve error
+#     xdata = np.array(range(len(p)))
+#     ydata = np.array(p)
+#
+#     background = np.mean(
+#         (np.mean(p[: width_factor // 6]), np.mean(p[-width_factor // 6 :]))
+#     )
+#     width_pix = -np.sum(
+#         (np.log10(np.array(p) / background) <= 0) * np.log10(np.array(p) / background)
+#     )
+#
+#     return a * np.sqrt(max(0, np.linalg.norm(point1 - point2) * (width_pix) / len(p)))
+#
+#
+# def get_width_edge(
+#     edge: Edge, resolution: int, t: int, local=False, threshold_averaging=10
+# ) -> Dict[coord, float]:
+#     """
+#     Compute the width of the given edge for each point that is chosen on the hypha.
+#     :param resolution: if resolution = 3 the width is computed every 3 pixel on the edge
+#     :return: a dictionnary with the width for each point chosen on the hypha
+#     """
+#     pixel_conversion_factor = 1.725  # TODO(FK): use the designated function instead
+#     pixel_list = edge.pixel_list(t)
+#     pixels = []
+#     indexes = []
+#     source_images = []
+#     poss = []
+#     widths = {}
+#     # Long edges
+#     if len(pixel_list) > 3 * resolution:
+#         for i in range(0, len(pixel_list) // resolution):
+#             index = i * resolution
+#             indexes.append(index)
+#             pixel = pixel_list[index]
+#             pixels.append(pixel)
+#             source_img, pos = get_source_image(
+#                 edge.experiment, pixel, t, local
+#             )  # TODO(FK): very not efficient
+#             source_images.append(source_img)
+#             poss.append(pos)
+#     # Small edges
+#     else:
+#         indexes = [0, len(pixel_list) // 2, len(pixel_list) - 1]
+#         for index in indexes:
+#             pixel = pixel_list[index]
+#             pixels.append(pixel)
+#             source_img, pos = get_source_image(edge.experiment, pixel, t, local)
+#             source_images.append(source_img)
+#             poss.append(pos)
+#     #     print(indexes)
+#     for i, index in enumerate(indexes[1:-1]):
+#         source_img = source_images[i + 1]
+#         pivot = poss[i + 1]
+#         _, before = get_source_image(edge.experiment, pixels[i], t, local, pivot)
+#         _, after = get_source_image(edge.experiment, pixels[i + 2], t, local, pivot)
+#         #         plot_t_tp1([0,1,2],[],{0 : pivot,1 : before, 2 : after},None,source_img,source_img)
+#         width = get_width_pixel(
+#             edge,
+#             index,
+#             source_img,
+#             pivot,
+#             before,
+#             after,
+#             t,
+#             threshold_averaging=threshold_averaging,
+#         )
+#         #         print(width*pixel_conversion_factor)
+#         widths[pixel_list[index]] = width * pixel_conversion_factor
+#     #         if i>=1:
+#     #             break
+#     edge.experiment.nx_graph[t].get_edge_data(edge.begin.label, edge.end.label)[
+#         "width"
+#     ] = widths
+#     return widths
+#
+#
+# def get_width_info(experiment, t, resolution=50, skip=False):
+#     print(not skip)
+#     edge_width = {}
+#     graph = experiment.nx_graph[t]
+#     #     print(len(list(graph.edges)))
+#     # print(len(graph.edges))
+#     for edge in graph.edges:
+#         if not skip:
+#             #         print(edge)
+#             edge_exp = Edge(
+#                 Node(edge[0], experiment), Node(edge[1], experiment), experiment
+#             )
+#             mean = np.mean(list(get_width_edge(edge_exp, resolution, t).values()))
+#             #         print(np.mean(list(get_width_edge(edge_exp,resolution,t).values())))
+#             edge_width[edge] = mean
+#             # print(mean)
+#
+#         else:
+#             # Maybe change to Nan if it doesnt break the rest
+#             edge_width[edge] = 40
+#     return edge_width
 
 
 def get_width_info_new(experiment, t, resolution=50, skip=False) -> Dict:
@@ -475,13 +404,9 @@ def get_width_info_new(experiment, t, resolution=50, skip=False) -> Dict:
                     target_length=TARGET_LENGTH,
                 )
                 median = np.median(prediction)
-                if median>0:
-                    edge_width[edge] = np.sqrt(median) #new model trained on quadratic radius
-                #should be updated depending on which ML model is used
-                # This change of ML model was done on 29/03/2024
+                edge_width[edge] = median
                 #
-                else:
-                    edge_width[edge] = 0
+
             else:
                 edge_width[edge] = 0
         else:
