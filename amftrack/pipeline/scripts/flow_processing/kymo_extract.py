@@ -2,11 +2,6 @@ import sys
 from amftrack.pipeline.functions.transport_processing.high_mag_videos.kymo_class import *
 
 
-# from amftrack.pipeline.functions.image_processing.extract_width_fun import (
-#     get_width_info,
-#     get_width_info_new,
-# )
-
 
 from amftrack.util.sys import temp_path
 import pandas as pd
