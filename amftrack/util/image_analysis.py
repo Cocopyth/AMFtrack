@@ -100,14 +100,15 @@ def find_transformation(old_coord_list: List, new_coord_list: List):
     return R, t
 
 
-def find_similarity(old_coord_list: List, new_coord_list: List):
+def find_similarity(old_coord_list: List, new_coord_list: List,ratio = None):
     """
     Find the transformation to go from old_coord_list to new_coord_list,
     provided that the transformation is a similitude (transformation that
     conserves distances or multiply them by a fixed factor).
     """
     # Finding the similarity ratio
-    ratio = find_scaling_factor(old_coord_list, new_coord_list)
+    if ratio is None:
+        ratio = find_scaling_factor(old_coord_list, new_coord_list)
     f1 = lambda c: np.array(c) * ratio
     print(f"Similarity ratio: {ratio}")
 

@@ -136,14 +136,14 @@ def generate_dash_leaflet_app(vid_frame):
     @app.server.route("/images/<plate_id>/<image_name>")
     def serve_image(plate_id, image_name):
         return send_file(
-            os.path.join(analysis_folder, plate_id, image_name), mimetype="image/png"
+            os.path.join(analysis_folder, plate_id, image_name), mimetype="image.png"
         )
 
     @app.server.route("/images_edges/<plate_id>/<video_name>")
     def serve_image_edge(plate_id, video_name):
         return send_file(
             os.path.join(
-                analysis_folder, plate_id, video_name.split("_")[-2], "Img", "speed.png"
+                analysis_folder, plate_id, video_name.split("_")[-2], "Img", "arrows.png"
             ),
             mimetype="image/png",
         )
