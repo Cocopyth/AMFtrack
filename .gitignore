@@ -30,3 +30,5 @@ amftrack/notebooks/HFSP_paper/figures/
 amftrack/notebooks/HFSP_paper/video/
 *.pdf
 *.csv
+*.png
+
