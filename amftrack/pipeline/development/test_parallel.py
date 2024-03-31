@@ -298,7 +298,7 @@ def get_width_info(experiment, t, resolution=50, skip=False):
         if not skip:
             #         print(edge)
             # edge_exp = Edge(Node(edge[0],experiment),Node(edge[1],experiment),experiment)
-            mean = np.mean(
+            mean = np.nanmean(
                 list(get_width_edge(edge, experiment, resolution, t).values())
             )
             #         print(np.mean(list(get_width_edge(edge_exp,resolution,t).values())))
