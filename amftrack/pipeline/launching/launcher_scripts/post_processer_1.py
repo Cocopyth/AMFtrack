@@ -152,7 +152,7 @@ run_parallel_post(
     name_job=name_job,
     node="fat_rome",
 )
-#
+
 time = "12:00:00"
 list_f = [plot_get_hull_nodes]
 

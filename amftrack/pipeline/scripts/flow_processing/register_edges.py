@@ -2,6 +2,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import E
 from amftrack.pipeline.functions.transport_processing.high_mag_videos.loading import load_video_dataset
 from amftrack.pipeline.functions.transport_processing.high_mag_videos.register_videos import register_dataset
 from amftrack.util.sys import update_plate_info, get_current_folders
+import numpy as np
 plate_id = "310_20230830"
 indexes = {
 "20230901_Plate310" : 20,
@@ -11,13 +12,13 @@ indexes = {
 "20230905_Plate310" : 64,
 "20230906_Plate310" : 73,
 }
-# plate_id = "441_20230807"
-# indexes = {
-# # "20230810_Plate441" : 29,
-# # "20230811_Plate441" : 41,
-# # "20230812_Plate441" : 47,
-# "20230813_Plate441" : 60,
-# }
+plate_id = "441_20230807"
+indexes = {
+"20230810_Plate441" : "20230810_1005_Plate14",
+"20230811_Plate441" : "20230811_1605_Plate14",
+"20230812_Plate441" : "20230812_1006_Plate14",
+"20230813_Plate441" : "20230813_1618_Plate14",
+}
 videos_folder = "/projects/0/einf914/videos/"
 
 analysis_folder = "/projects/0/einf914/analysis_videos/CocoTransport/"
@@ -36,7 +37,9 @@ for plate_id_video in list(indexes.keys()):
     data_obj = load_video_dataset(plate_id_video, videos_folder, analysis_folder, analysis_folder_root)
 
     exp = Experiment(directory_targ)
-    i = indexes[plate_id_video]
+    # i = indexes[plate_id_video]
+    i = np.where(folders['folder'] == indexes[plate_id_video])[0][0]
+
     exp.load(folders.iloc[i : i + 1], suffix="_labeled")
     for t in range(exp.ts):
         exp.load_tile_information(t)

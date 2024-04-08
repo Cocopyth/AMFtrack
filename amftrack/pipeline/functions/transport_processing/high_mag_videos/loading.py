@@ -8,12 +8,12 @@ import os
 def load_video_dataset(plate_id_video,videos_folder,analysis_folder,analysis_folder_root):
     analysis_folder = os.path.join(analysis_folder,plate_id_video)
     img_infos = glob.glob(f"{analysis_folder}/**/video_data.json", recursive=True)
-
     vid_anls_frame = pd.DataFrame()
     add_infos = []
     for address in img_infos:
         add_infos.append(pd.read_json(address, orient="index").T)
     vid_anls_frame = pd.concat([vid_anls_frame] + add_infos, ignore_index=True)
+    # print(vid_anls_frame['unique_id'])
 
     vid_anls_frame = vid_anls_frame.sort_values("unique_id").reset_index(drop=True)
     vid_anls_frame_select = vid_anls_frame.loc[vid_anls_frame["plate_id"] == plate_id_video]

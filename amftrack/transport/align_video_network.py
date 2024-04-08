@@ -114,8 +114,8 @@ def identify_nodes(exp, t):
         plot_cmap=True,
         show_background=True,
         dilation=10,
-        figsize=(8, 6),
-        alpha=0.3,
+        figsize=(14, 12),
+        alpha=1,
         downsizing=downsizing,
     )
     # fig,ax = plt.subplots()
@@ -123,7 +123,7 @@ def identify_nodes(exp, t):
         [(node.pos(t)[1] / downsizing, node.pos(t)[0] / downsizing) for node in nodes]
     )
 
-    scatter_plot = ax.scatter(points[0], points[1], s=5)
+    scatter_plot = ax.scatter(points[0], points[1], s=5,alpha =0.3)
 
     # Variable to store the selected point information
     selected_point_info = {}

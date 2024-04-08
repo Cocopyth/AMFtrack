@@ -101,5 +101,5 @@ print(f"Iteration {i}: {db_address}")
 print(f"Iteration {i}: {img_address}")
 
 #uploading to dropbox is severely limiting the throughput, so I will skip it this week. Also dropbox is alomst full
-upload_folder(img_address, db_address, delete=True)
+# upload_folder(img_address, db_address, delete=True)
 print(f"{img_address} should be empty now!")

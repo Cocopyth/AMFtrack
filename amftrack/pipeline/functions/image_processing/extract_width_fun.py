@@ -404,7 +404,10 @@ def get_width_info_new(experiment, t, resolution=50, skip=False) -> Dict:
                     target_length=TARGET_LENGTH,
                 )
                 median = np.nanmedian(prediction)
-                edge_width[edge] = median
+                if np.isnan(median):
+                    edge_width[edge] = 0
+                else:
+                    edge_width[edge] = median
                 #
 
             else:

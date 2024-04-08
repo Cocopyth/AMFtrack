@@ -1,9 +1,10 @@
 import networkx as nx
 
+from amftrack.pipeline.functions.image_processing.experiment_class_surf import Node, Edge
 from amftrack.pipeline.functions.image_processing.experiment_util import get_all_edges, get_all_nodes
 from amftrack.pipeline.functions.post_processing.extract_study_zone import load_study_zone
 from amftrack.pipeline.functions.post_processing.util import is_in_study_zone
-
+import numpy as np
 
 def add_betweenness(exp,t):
     exp.save_location = ""
@@ -69,3 +70,17 @@ def add_betweenness(exp,t):
         ):
             final_betweeness[edge] = 0
     nx.set_edge_attributes(exp.nx_graph[t], final_betweeness, "betweenness")
+
+def get_abcisse(edge,begin,end,t,exp):
+    begin = Node(begin,exp).get_pseudo_identity(t).label
+
+    nodes = nx.shortest_path(exp.nx_graph[t],begin,end,weight = "weight")
+    nodes = [Node(node,exp) for node in nodes]
+    edges = [Edge(nodes[i],nodes[i+1],exp) for i in range(len(nodes)-1)]
+    lengths = [edge.length_um(t) for edge in edges]
+    abciss = np.cumsum(lengths)
+    if edge in edges:
+        i = edges.index(edge)
+        return(abciss[i])
+    else:
+        return(-1)

@@ -322,6 +322,8 @@ def register_dataset(data_obj, exp, t):
         if check_hasedges(vid_obj) and vid_obj.dataset['magnification']!=4:
             shiftx, shifty = get_shifts(vid_obj)
             positions = get_position(vid_obj)
+            Rcurrent, tcurrent = np.array([[1, 0], [0, 1]]), np.array([0, 0])
+
             Rcurrent, tcurrent, mapping, dist = process_video_object(vid_obj, exp, t, Rcurrent, tcurrent)
             if len(mapping)>0:
                 edges = get_close_edges(vid_obj,exp,t,Rcurrent,tcurrent)
