@@ -11,13 +11,13 @@ indexes = {
 "20230905_Plate310" : 64,
 "20230906_Plate310" : 73,
 }
-plate_id = "441_20230807"
-indexes = {
-# "20230810_Plate441" : 29,
-# "20230811_Plate441" : 41,
-# "20230812_Plate441" : 47,
-"20230813_Plate441" : 60,
-}
+# plate_id = "441_20230807"
+# indexes = {
+# # "20230810_Plate441" : 29,
+# # "20230811_Plate441" : 41,
+# # "20230812_Plate441" : 47,
+# "20230813_Plate441" : 60,
+# }
 videos_folder = "/projects/0/einf914/videos/"
 
 analysis_folder = "/projects/0/einf914/analysis_videos/CocoTransport/"
