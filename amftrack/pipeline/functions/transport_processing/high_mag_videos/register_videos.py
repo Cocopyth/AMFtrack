@@ -180,6 +180,7 @@ def objective_function(params, source, target):
     dist = average_min_distance_to_set_fast(transformed_source, target)
 
     # Return the average of these distances
+    # print(dist)
     return dist
 
 def callback_function(xk, source, target):
@@ -190,8 +191,8 @@ def callback_function(xk, source, target):
 
 def find_optimal_R_and_t(source, target):
     initial_guess = np.array([0, 0, 0])
-    deltas = np.array([600, 600, np.pi/8])
-    init_params = [-300, -300, -np.pi/16]
+    deltas = np.array([7000, 7000, np.pi/16])
+    init_params = [-3500, -3500, -np.pi/32]
 
     simplex = [init_params]
     for i in range(len(init_params)):
@@ -322,7 +323,7 @@ def register_dataset(data_obj, exp, t):
         if check_hasedges(vid_obj) and vid_obj.dataset['magnification']!=4:
             shiftx, shifty = get_shifts(vid_obj)
             positions = get_position(vid_obj)
-            Rcurrent, tcurrent = np.array([[1, 0], [0, 1]]), np.array([0, 0])
+            Rcurrent, tcurrent = initialize_transformation()
 
             Rcurrent, tcurrent, mapping, dist = process_video_object(vid_obj, exp, t, Rcurrent, tcurrent)
             if len(mapping)>0:
@@ -336,9 +337,9 @@ def register_dataset(data_obj, exp, t):
                 for edge,segment_final in zip(vid_obj.edge_objs,segments_final):
                     aligned_bools.append(is_aligned(edge.edge_name, segment_final,
                                                     mapping, edges, positions,t))
-                update_edge_attributes(vid_obj, mapping, dist, aligned_bools)
+                update_edge_attributes(vid_obj, mapping, dist, aligned_bools,Rcurrent)
 
-def update_edge_attributes(vid_obj, mapping, dist, aligned_bools):
+def update_edge_attributes(vid_obj, mapping, dist, aligned_bools,Rcurrent):
     edge_data_csv = pd.read_csv(vid_obj.edge_adr)
     for edge,aligned in zip(vid_obj.edge_objs,aligned_bools):
         if aligned:
@@ -348,6 +349,8 @@ def update_edge_attributes(vid_obj, mapping, dist, aligned_bools):
             add_attribute(edge_data_csv, edge, lambda edge: edge.begin.label, "network_end", mapping)
             add_attribute(edge_data_csv, edge, lambda edge: edge.end.label, "network_begin", mapping)
         add_attribute(edge_data_csv, edge, lambda edge: dist, "mapping_quality", mapping)
+        add_attribute(edge_data_csv, edge, lambda edge: Rcurrent[0][0], "rotation", mapping)
+
     # print(edge_data_csv["network_begin"])
     edge_data_csv.to_csv(vid_obj.edge_adr,index=False)
 

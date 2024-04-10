@@ -895,6 +895,14 @@ class Edge:
             self.begin.label, self.end.label
         )["betweenness"]
 
+    def get_attribute(self,attribute, t: int) -> List[coord_int]:
+        """
+        Return the betweenness, will only work if it has been previously computed
+
+        """
+        return self.experiment.nx_graph[t].get_edge_data(
+            self.begin.label, self.end.label
+        )[attribute]
     def length_um(self, t):
         pixel_conversion_factor = 1.725
         length_edge = 0
