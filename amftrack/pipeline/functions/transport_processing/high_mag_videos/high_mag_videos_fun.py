@@ -287,7 +287,7 @@ def filter_kymo_left(
 
     filtered_fourrier[LT_quadrant] = 0
     filtered_fourrier[RB_quadrant] = 0
-    filtered_fourrier *= (1 - stat_array)
+    filtered_fourrier *= 1 - stat_array
     # filtered_fourrier[coordinates_middle[0], coordinates_middle[1]] = 0
 
     # stat_array[coordinates_middle[0], coordinates_middle[1]] = 0
@@ -340,7 +340,7 @@ def filter_kymo_left(
     # out_dim_value = np.mean(img_out[out_dim_pixls].flatten())
     # DC_value = dim_val - out_dim_value
 
-    return (np.abs(img_out))
+    return np.abs(img_out)
 
     """
     Simple function that filters the kymograph and outputs the forward and backward filters.
@@ -432,7 +432,8 @@ def get_width(slices, avearing_window=50, num_std=2):
             continue
     return np.median(widths)
 
-def find_histogram_edge(image,plot=False):
+
+def find_histogram_edge(image, plot=False):
     # Calculate the histogram
     hist, bins = np.histogram(image.flatten(), 40)
     hist = hist.astype(float) / hist.max()  # Normalize the histogram
@@ -453,7 +454,7 @@ def find_histogram_edge(image,plot=False):
         # Plot the original histogram
         plt.subplot(1, 2, 1)
         plt.plot(hist)
-        plt.axvline(x=threshold, color='r', linestyle='--')
+        plt.axvline(x=threshold, color="r", linestyle="--")
 
         plt.title("Histogram")
 
@@ -461,16 +462,19 @@ def find_histogram_edge(image,plot=False):
         plt.subplot(1, 2, 2)
         plt.plot(sobel_hist)
         plt.title("Sobel Histogram")
-        plt.axvline(x=threshold, color='r', linestyle='--')
+        plt.axvline(x=threshold, color="r", linestyle="--")
 
         plt.show()
 
     return bins[threshold]
 
+
 def calculate_renyi_entropy(threshold, pixels):
     # Calculate probabilities and entropies
     Ps = np.mean(pixels <= threshold)
-    Hs = -np.sum(pixels[pixels <= threshold] * np.log(pixels[pixels <= threshold] + 1e-10))
+    Hs = -np.sum(
+        pixels[pixels <= threshold] * np.log(pixels[pixels <= threshold] + 1e-10)
+    )
     Hn = -np.sum(pixels * np.log(pixels + 1e-10))
 
     # Calculate phi(s)
@@ -478,25 +482,27 @@ def calculate_renyi_entropy(threshold, pixels):
 
     return -phi_s
 
+
 def RenyiEntropy_thresholding(image):
     # Flatten the image
     pixels = image.flatten()
 
     # Find the optimal threshold
     initial_threshold = np.mean(pixels)
-    result = minimize_scalar(calculate_renyi_entropy, bounds=(0, 255), args=(pixels,), method='bounded')
-    
-    #The image is rescaled to [0,255] and thresholded
+    result = minimize_scalar(
+        calculate_renyi_entropy, bounds=(0, 255), args=(pixels,), method="bounded"
+    )
+
+    # The image is rescaled to [0,255] and thresholded
     optimal_threshold = result.x
-    _, thresholded = cv2.threshold(image/np.max(image)*255, optimal_threshold, 255, cv2.THRESH_BINARY)
+    _, thresholded = cv2.threshold(
+        image / np.max(image) * 255, optimal_threshold, 255, cv2.THRESH_BINARY
+    )
 
     return thresholded
 
-def segment_brightfield_std(
-    images,
-    seg_thresh=1.10,
-    threshtype='hist_edge'
-):
+
+def segment_brightfield_std(images, seg_thresh=1.10, threshtype="hist_edge"):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
     image:          Input image
@@ -504,22 +510,22 @@ def segment_brightfield_std(
     threshtype:     Type of threshold to apply to segmentation. Can be hist_edge, Renyi or Yen
 
     """
-    std_image = np.std(images,axis=0)/np.mean(images,axis=0)
+    std_image = np.std(images, axis=0) / np.mean(images, axis=0)
     smooth_im_blur = cv2.blur(std_image, (100, 100))
-    if threshtype == 'hist_edge':
-        #the biggest derivative in the hist is calculated and we multiply with a small number to sit just right of that.
+    if threshtype == "hist_edge":
+        # the biggest derivative in the hist is calculated and we multiply with a small number to sit just right of that.
         thresh = find_histogram_edge(smooth_im_blur)
         segmented = (smooth_im_blur >= thresh * seg_thresh).astype(np.uint8) * 255
-    
-    elif threshtype == 'Renyi':
-        #this version minimizes a secific entropy (phi)
+
+    elif threshtype == "Renyi":
+        # this version minimizes a secific entropy (phi)
         segmented = RenyiEntropy_thresholding(smooth_im_blur)
-    
-    elif threshtype == 'Yen':
-        #This maximizes the distance between the two means and probabilities, sigma^2 = p(1-p)(mu1-mu2)^2 
+
+    elif threshtype == "Yen":
+        # This maximizes the distance between the two means and probabilities, sigma^2 = p(1-p)(mu1-mu2)^2
         thresh = threshold_yen(smooth_im_blur)
         segmented = (smooth_im_blur >= thresh).astype(np.uint8) * 255
-        
+
     else:
         print("threshold type has a typo! rito pls fix.")
     skeletonized = skeletonize(segmented > 0)
@@ -532,8 +538,8 @@ def segment_brightfield_std(
 
 
 def segment_brightfield_ultimate(
-        images,
-        seg_thresh=1.05,
+    images,
+    seg_thresh=1.05,
 ):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
@@ -560,11 +566,8 @@ def segment_brightfield_ultimate(
 
     return (segmented, nx_graph_pruned, pos)
 
-def segment_fluo_new(
-        images,
-        seg_thresh=1.10,
-        threshtype='hist_edge'
-):
+
+def segment_fluo_new(images, seg_thresh=1.10, threshtype="hist_edge"):
     """
     Segmentation method for brightfield video, uses vesselness filters to get result.
     image:          Input image
@@ -574,16 +577,16 @@ def segment_fluo_new(
     """
     std_image = np.mean(images, axis=0)
     smooth_im_blur = cv2.blur(std_image, (20, 20))
-    if threshtype == 'hist_edge':
+    if threshtype == "hist_edge":
         # the biggest derivative in the hist is calculated and we multiply with a small number to sit just right of that.
         thresh = find_histogram_edge(smooth_im_blur)
         segmented = (smooth_im_blur >= thresh * seg_thresh).astype(np.uint8) * 255
 
-    elif threshtype == 'Renyi':
+    elif threshtype == "Renyi":
         # this version minimizes a secific entropy (phi)
         segmented = RenyiEntropy_thresholding(smooth_im_blur)
 
-    elif threshtype == 'Yen':
+    elif threshtype == "Yen":
         # This maximizes the distance between the two means and probabilities, sigma^2 = p(1-p)(mu1-mu2)^2
         thresh = threshold_yen(smooth_im_blur)
         segmented = (smooth_im_blur >= thresh).astype(np.uint8) * 255
@@ -598,6 +601,7 @@ def segment_fluo_new(
     nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
 
     return (segmented, nx_graph_pruned, pos)
+
 
 def segment_brightfield(
     image,
@@ -697,7 +701,7 @@ def get_kymo_new(
         point2 = np.array([sect[1][0], sect[1][1]])
         perp_lines.append(extract_perp_lines(point1, point2))
 
-    if len(images_adress)<500:
+    if len(images_adress) < 500:
         for image_adress in images_adress:
             im = imageio.imread(image_adress)
             order = validate_interpolation_order(im.dtype, order)
@@ -974,26 +978,37 @@ def segment_fluo(
     nx_graph_pruned, pos = remove_spurs(nx_graph, pos, threshold=200)
     return (segmented > thresh, nx_graph, pos)
 
-def segment_std(frames, thresh=0.5e-7, seg_thresh=4.5, k_size=40, magnif = 50, binning=2, test_plot=False):
-#     imgs = sorted([path for path in img_address.glob("*/*.ti*")])
-#     frames = []
-#     for i, address in enumerate(img_address):
-#     for i, frame in enumerate(imgs):
-#         if i<framenr:
-#             frame = imageio.imread(self.selection_file[address])
-#             frames.append(frame)
+
+def segment_std(
+    frames,
+    thresh=0.5e-7,
+    seg_thresh=4.5,
+    k_size=40,
+    magnif=50,
+    binning=2,
+    test_plot=False,
+):
+    #     imgs = sorted([path for path in img_address.glob("*/*.ti*")])
+    #     frames = []
+    #     for i, address in enumerate(img_address):
+    #     for i, frame in enumerate(imgs):
+    #         if i<framenr:
+    #             frame = imageio.imread(self.selection_file[address])
+    #             frames.append(frame)
     video_matrix = np.stack(frames, axis=0)
     smooth_im = np.std(video_matrix, axis=0)
-    #it seems to be a 64bit image but it has to be 8 or 16 for thresholding (maybe it is in color, but Simon didnt do something with that either)
+    # it seems to be a 64bit image but it has to be 8 or 16 for thresholding (maybe it is in color, but Simon didnt do something with that either)
     smooth_im = cv2.cvtColor(smooth_im, cv2.COLOR_BGR2GRAY)
-    smooth_im = cv2.normalize(smooth_im, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_16U)
-#     print(magnif)
+    smooth_im = cv2.normalize(
+        smooth_im, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_16U
+    )
+    #     print(magnif)
     if magnif < 30:
         im_canny = cv2.Canny(smooth_im, 0, 20)
         smooth_im = cv2.morphologyEx(im_canny, cv2.MORPH_DILATE, kernel)
-    _, segmented = cv2.threshold(smooth_im, 0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    _, segmented = cv2.threshold(smooth_im, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     if magnif > 30:
-        segmented = cv2.morphologyEx(segmented, cv2.MORPH_CLOSE, np.ones((9,9)))
+        segmented = cv2.morphologyEx(segmented, cv2.MORPH_CLOSE, np.ones((9, 9)))
 
     skeletonized = skeletonize(segmented > thresh)
     skeleton = scipy.sparse.dok_matrix(skeletonized)

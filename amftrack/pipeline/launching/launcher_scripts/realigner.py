@@ -1,4 +1,3 @@
-
 import sys
 from amftrack.util.sys import (
     update_plate_info,

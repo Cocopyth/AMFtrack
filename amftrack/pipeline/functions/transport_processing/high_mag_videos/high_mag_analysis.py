@@ -135,7 +135,7 @@ def index_videos_dropbox_new(
                 for entry in excel_drop
             ]
         )
-        print("adresses",excel_addresses)
+        print("adresses", excel_addresses)
         if len(excel_addresses) > 0:
             excel_addresses = [i for i in excel_addresses if i is not None]
             print(excel_addresses)
@@ -170,8 +170,8 @@ def index_videos_dropbox_new(
     merge_frame["videos_folder"] = [np.nan for i in range(len(merge_frame))]
 
     for index, row in merge_frame.iterrows():
-        #the Img part at the end was taken out, but running bulk analysis prefers them in an Img folder
-        target_anals_file = analysis_folder / row["folder"]#[:-4]
+        # the Img part at the end was taken out, but running bulk analysis prefers them in an Img folder
+        target_anals_file = analysis_folder / row["folder"]  # [:-4]
         target_video_file = videos_folder / row["folder"]
 
         row.loc["analysis_folder"] = target_anals_file.as_posix()
@@ -211,7 +211,9 @@ def read_video_data_new(address_array, analysis_folder):
                 if "Unnamed: 0" in raw_data:
                     raw_data["Binned (Y/N)"] = ["N" for entry in raw_data["Unnamed: 0"]]
                 elif "Binned" in raw_data:
-                    raw_data["Binned (Y/N)"] = ["Y" if entry == 2 else "N" for entry in raw_data["Binned"]]
+                    raw_data["Binned (Y/N)"] = [
+                        "Y" if entry == 2 else "N" for entry in raw_data["Binned"]
+                    ]
                 else:
                     raw_data["Binned (Y/N)"] = "N"
             raw_data["Binned (Y/N)"] = raw_data["Binned (Y/N)"].astype(str)
@@ -401,7 +403,7 @@ def read_video_data_new(address_array, analysis_folder):
         txt_frame["Gain"] = [float(entry) for entry in txt_frame["Gain"]]
         txt_frame["Gamma"] = [float(entry) for entry in txt_frame["Gamma"]]
         # if there is no root this doesn't work. Needs to be updated
-#         txt_frame["Root"] = [entry.split(" ")[-1] for entry in txt_frame["Root"]]
+        #         txt_frame["Root"] = [entry.split(" ")[-1] for entry in txt_frame["Root"]]
         txt_frame["Strain"] = [entry.split(" ")[-1] for entry in txt_frame["Strain"]]
         txt_frame["StoragePath"] = [
             entry.split(" ")[-1] for entry in txt_frame["StoragePath"]
@@ -1227,8 +1229,8 @@ class VideoDataset(object):
                         edge_ends[1] + plate_offset[1],
                         # edge_dir[0] * speed_f / 100,
                         # edge_dir[1] * speed_f / 100,
-                        edge_dir[0]*np.sign(speed_f),
-                        edge_dir[1]*np.sign(speed_f),
+                        edge_dir[0] * np.sign(speed_f),
+                        edge_dir[1] * np.sign(speed_f),
                         width=arr_width,
                         linewidth=line_size,
                         facecolor="black",
@@ -1330,7 +1332,7 @@ class VideoDataset(object):
 class EdgeDataset(object):
     def __init__(self, dataframe, analysis_folder, videos_folder):
         self.mean_data = dataframe
-        self.mean_data['analysis_folder'] = analysis_folder
+        self.mean_data["analysis_folder"] = analysis_folder
 
         self.edge_name = self.mean_data["edge_name"]
         edge_dat_adr = (
@@ -1341,16 +1343,15 @@ class EdgeDataset(object):
         self.edge_dat_adr = edge_dat_adr
         self.time_data = pd.read_csv(edge_dat_adr)
         edge_dat_adr2 = (
-                Path(f"{analysis_folder}{self.mean_data['folder']}")
-                / f"edges_data.csv"
+            Path(f"{analysis_folder}{self.mean_data['folder']}") / f"edges_data.csv"
         )
         # self.edges_dat_adr = edge_dat_adr2
         edges_data = pd.read_csv(edge_dat_adr2)
-        self.edge_infos = edges_data[edges_data['edge_name'] == self.edge_name].iloc[0]
-        self.xpos1 = edges_data['edge_xpos_1']
-        self.xpos2 = edges_data['edge_xpos_2']
-        self.ypos1 = edges_data['edge_ypos_1']
-        self.ypos2 = edges_data['edge_ypos_2']
+        self.edge_infos = edges_data[edges_data["edge_name"] == self.edge_name].iloc[0]
+        self.xpos1 = edges_data["edge_xpos_1"]
+        self.xpos2 = edges_data["edge_xpos_2"]
+        self.ypos1 = edges_data["edge_ypos_1"]
+        self.ypos2 = edges_data["edge_ypos_2"]
         self.space_res = (
             2 * 1.725 / self.mean_data["magnification"] * self.mean_data["binning"]
         )

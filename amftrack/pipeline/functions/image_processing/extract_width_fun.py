@@ -31,7 +31,6 @@ TARGET_LENGTH = 120
 MODEL = keras.models.load_model(
     # os.path.join(path_code[:-1], "ml", "models", "default_CNN_model.h5")
     os.path.join(path_code[:-1], "ml", "models", "model_quadratic.h5")
-
 )
 # MODEL = ""
 # TARGET_LENGTH = 80
@@ -69,9 +68,9 @@ def compute_edge_width_profile(
     )
 
     predicted_widths = MODEL.predict(profile, verbose=0)
-    return np.sqrt(predicted_widths) #new model trained on quadratic radius
-                #should be updated depending on which ML model is used
-                # This change of ML model was done on 29/03/2024
+    return np.sqrt(predicted_widths)  # new model trained on quadratic radius
+    # should be updated depending on which ML model is used
+    # This change of ML model was done on 29/03/2024
 
 
 def compute_section_coordinates(
@@ -242,6 +241,8 @@ def get_source_image(
         j = np.argmin(dist_last)
     logger.info("Getting images")
     return (ims[j], (posimg[1][j], posimg[0][j]))
+
+
 #
 #
 # def get_width_pixel(

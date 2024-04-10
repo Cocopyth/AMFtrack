@@ -358,7 +358,7 @@ def dropbox_videos_iter(
             continue_bool = response.has_more
             if response.has_more:
                 response = dbx.files_list_folder_continue(response.cursor)
-#     print("plate_list",plate_list)
+    #     print("plate_list",plate_list)
     # raise "cd"
     return plate_list, excel_list, txt_list, other_folder_list
 
@@ -556,7 +556,11 @@ def read_saved_dropbox_state(dir_drop: str):
 
 
 def upload_folders(
-    folders: pd.DataFrame, dir_drop="DATA", catch_exception=True, delete=False, upload_imgs = True,
+    folders: pd.DataFrame,
+    dir_drop="DATA",
+    catch_exception=True,
+    delete=False,
+    upload_imgs=True,
 ):
     """
     Upload all the folders in the dataframe to a location on dropbox
@@ -577,12 +581,17 @@ def upload_folders(
                 id_unique = "faulty_param_files"
             path_snap = line["total_path"].iloc[0]
             for subfolder in os.listdir(path_snap):
-                if upload_imgs or subfolder!="Img":
+                if upload_imgs or subfolder != "Img":
                     path_total = os.path.join(path_snap, subfolder)
                     suffix = ".zip" if os.path.isdir(path_total) else ""
-                    target = f"/{dir_drop}/{id_unique}/{directory_name}/{subfolder}{suffix}"
+                    target = (
+                        f"/{dir_drop}/{id_unique}/{directory_name}/{subfolder}{suffix}"
+                    )
                     upload_zip(
-                        path_total, target, catch_exception=catch_exception, delete=delete
+                        path_total,
+                        target,
+                        catch_exception=catch_exception,
+                        delete=delete,
                     )
             pbar.update(1)
             if delete:
@@ -636,12 +645,15 @@ def download_video_folders_drop(folders_drop: pd.DataFrame, directory_target):
     dbx = load_dbx()
     directory_target = Path(directory_target)
     for index, row in folders_drop.iterrows():
-#         path = row["tot_path_drop"]
+        #         path = row["tot_path_drop"]
         path = "/" + row["tot_path_drop"]
         if not os.path.exists(path):
             print("oh no, this path is not correct!")
-            if path=="//DATA/FLUORESCENCE/DATA_NileRed/20221109_Plate462/DATA/20221109_plate462_17":
-                path="/DATA/FLUORESCENCE/DATA_NileRed/20221109_Plate462/DATA/20221109_Plate462_017"
+            if (
+                path
+                == "//DATA/FLUORESCENCE/DATA_NileRed/20221109_Plate462/DATA/20221109_plate462_17"
+            ):
+                path = "/DATA/FLUORESCENCE/DATA_NileRed/20221109_Plate462/DATA/20221109_Plate462_017"
         print(path)
         response = dbx.files_list_folder(path, recursive=True)
         listfiles = []
@@ -681,7 +693,9 @@ def download_analysis_folders_drop(analysis_folder, dropbox_folder):
     dbx = load_dbx()
     listfiles = []
 
-    response = dbx.files_list_folder(dropbox_folder + 'KymoSpeeDExtract/', recursive=True)
+    response = dbx.files_list_folder(
+        dropbox_folder + "KymoSpeeDExtract/", recursive=True
+    )
 
     while response.has_more:
         listfiles += [
@@ -691,13 +705,16 @@ def download_analysis_folders_drop(analysis_folder, dropbox_folder):
         ]
         response = dbx.files_list_folder_continue(response.cursor)
     listfiles += [Path(file.path_display) for file in response.entries]
-    
+
     print(listfiles[:5])
     print(f"we will try to download {len(listfiles)} files! w0w that is a lot!")
 
     for file in listfiles:
-        local_path = analysis_folder / Path(dropbox_folder).relative_to('/DATA/') / file.relative_to(
-            Path(dropbox_folder) / 'KymoSpeeDExtract')
+        local_path = (
+            analysis_folder
+            / Path(dropbox_folder).relative_to("/DATA/")
+            / file.relative_to(Path(dropbox_folder) / "KymoSpeeDExtract")
+        )
 
         if not local_path.parent.exists():
             local_path.parent.mkdir(parents=True)

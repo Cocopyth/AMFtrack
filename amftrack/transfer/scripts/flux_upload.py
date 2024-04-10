@@ -22,7 +22,7 @@ dataframe = pd.read_json(f"{temp_path}/{op_id}.json")
 dataframe = dataframe.iloc[i]
 drop_targ = os.path.relpath(f"/{dataframe['tot_path_drop']}", upl_targ)
 
-img_address = dataframe['analysis_folder']
+img_address = dataframe["analysis_folder"]
 db_address = f"{upl_targ}KymoSpeeDExtract/{drop_targ}"
 
 upload_folder(img_address, db_address, delete=False)

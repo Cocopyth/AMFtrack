@@ -100,7 +100,7 @@ def find_transformation(old_coord_list: List, new_coord_list: List):
     return R, t
 
 
-def find_similarity(old_coord_list: List, new_coord_list: List,ratio = None):
+def find_similarity(old_coord_list: List, new_coord_list: List, ratio=None):
     """
     Find the transformation to go from old_coord_list to new_coord_list,
     provided that the transformation is a similitude (transformation that

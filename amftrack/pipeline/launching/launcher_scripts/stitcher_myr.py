@@ -30,8 +30,8 @@ if len(folders) > 0:
         cpus=128,
         node="fat_rome",
         name_job=name_job,
-        size_x = 9,
-        size_y = 13
+        size_x=9,
+        size_y=13,
     )
 if stage > 0:
     run_launcher(

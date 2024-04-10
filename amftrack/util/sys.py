@@ -301,7 +301,11 @@ def get_data_info(local=False, suffix_data_info=""):
         data_info.reset_index(inplace=True)
         data_info["Plate"] = data_info["Plate"].fillna(0)
         data_info["unique_id"] = (
-            data_info["Plate"].astype(str).str.replace(r'\D', '', regex=True).astype(int).astype(str)
+            data_info["Plate"]
+            .astype(str)
+            .str.replace(r"\D", "", regex=True)
+            .astype(int)
+            .astype(str)
             + "_"
             + data_info["CrossDate"].str.replace("'", "").astype(str)
         )

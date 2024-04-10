@@ -18,23 +18,27 @@ print(upl_targ)
 
 dataframe = pd.read_json(f"{temp_path}/{op_id}.json")
 
-#the selection frame is used to segment fluorescence videos based on a brightfield image of the same position
-selection_frame = dataframe[dataframe['ypos']==dataframe['ypos'].iloc[i]]
-selection_frame = selection_frame[selection_frame['xpos']==dataframe['xpos'].iloc[i]]
-selection_frame = selection_frame[selection_frame['mode']=='BF']
-selection_frame = selection_frame[selection_frame['binning']==dataframe['binning'].iloc[i]]
+# the selection frame is used to segment fluorescence videos based on a brightfield image of the same position
+selection_frame = dataframe[dataframe["ypos"] == dataframe["ypos"].iloc[i]]
+selection_frame = selection_frame[selection_frame["xpos"] == dataframe["xpos"].iloc[i]]
+selection_frame = selection_frame[selection_frame["mode"] == "BF"]
+selection_frame = selection_frame[
+    selection_frame["binning"] == dataframe["binning"].iloc[i]
+]
 
-#when analysing older data (Hannah or Rachael) we don't need to give BF segmentation for fluorescence videos
+# when analysing older data (Hannah or Rachael) we don't need to give BF segmentation for fluorescence videos
 # selection_frame = pd.DataFrame()
 
 dataframe = dataframe.iloc[i]
 
 
-if 'unique_id' in dataframe:
+if "unique_id" in dataframe:
     drop_targ = os.path.relpath(f"/{dataframe['tot_path_drop']}", upl_targ)
-    
-    test_video = KymoVideoAnalysis(input_frame = dataframe, samepos_frame = selection_frame, logging=True)
-    img_address = dataframe['analysis_folder']
+
+    test_video = KymoVideoAnalysis(
+        input_frame=dataframe, samepos_frame=selection_frame, logging=True
+    )
+    img_address = dataframe["analysis_folder"]
     db_address = f"{upl_targ}KymoSpeeDExtract/{drop_targ}"
     print(f"HELLLO!!! {db_address}")
 
@@ -53,7 +57,6 @@ else:
         close_size=200,
         thresh_adjust=-2,
         # frangi_range=[1000,1500],
-
     )
     db_address = f"{upl_targ}KymoSpeeDExtract/{dataframe['parent_folder']}/"
 
@@ -61,8 +64,8 @@ target_length = int(2.4 * test_video.magnification)
 
 
 edge_objs = test_video.edge_objects
-    #these two lines don't work for videos with too many frames(>1000)
-    #that is why one is commented out and the other capped at 300
+# these two lines don't work for videos with too many frames(>1000)
+# that is why one is commented out and the other capped at 300
 test_video.makeVideo()
 img_seq = np.arange(len(edge_objs[0].video_analysis.selection_file))
 
@@ -71,10 +74,22 @@ bin_nr = 1
 
 for edge in edge_objs:
     edge.view_edge(img_frame=0, save_im=True, target_length=target_length)
-    edge.view_edge(img_frame=img_seq, save_im=True, quality=6, target_length=target_length)
-    edge.extract_multi_kymo(bin_nr, target_length=target_length, kymo_adj=False, kymo_normalize=True)
+    edge.view_edge(
+        img_frame=img_seq, save_im=True, quality=6, target_length=target_length
+    )
+    edge.extract_multi_kymo(
+        bin_nr, target_length=target_length, kymo_adj=False, kymo_normalize=True
+    )
     edge.fourier_kymo(return_self=False)
-    edge.extract_speeds(int(GST_params[0]), w_start=3, C_thresh=float(GST_params[1]), C_thresh_falloff=float(GST_params[2]), blur_size=3, preblur=True, speed_thresh=int(GST_params[3]))
+    edge.extract_speeds(
+        int(GST_params[0]),
+        w_start=3,
+        C_thresh=float(GST_params[1]),
+        C_thresh_falloff=float(GST_params[2]),
+        blur_size=3,
+        preblur=True,
+        speed_thresh=int(GST_params[3]),
+    )
     edge.extract_transport()
 
 #     edge.video_analysis.plot_speed_arrows(plot_flux=True, save_im=True, video_txt_size=40)
@@ -96,10 +111,9 @@ print(db_address)
 # dataplot.delete_dropbox_folders(db_address)
 
 
-
 print(f"Iteration {i}: {db_address}")
 print(f"Iteration {i}: {img_address}")
 
-#uploading to dropbox is severely limiting the throughput, so I will skip it this week. Also dropbox is alomst full
+# uploading to dropbox is severely limiting the throughput, so I will skip it this week. Also dropbox is alomst full
 # upload_folder(img_address, db_address, delete=True)
 print(f"{img_address} should be empty now!")

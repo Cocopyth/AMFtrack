@@ -150,6 +150,7 @@ def get_area_separate_connected_components(exp, t, args=None):
             area += poly.area * 1.725**2 / (1000**2)
     return ("area_sep_comp", area)
 
+
 def get_num_connected_components(exp, t, args=None):
     nx_graph = exp.nx_graph[t]
     threshold = 10

@@ -2,7 +2,6 @@ import sys
 from amftrack.pipeline.functions.transport_processing.high_mag_videos.kymo_class import *
 
 
-
 from amftrack.util.sys import temp_path
 import pandas as pd
 

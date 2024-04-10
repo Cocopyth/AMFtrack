@@ -555,7 +555,7 @@ def load_graphs(
         if index in indexes:
             nx_graph_poss.append((g, pos))
         else:
-            print(index,indexes)
+            print(index, indexes)
             edge_empty = {edge: None for edge in g.edges}
             nx.set_edge_attributes(g, edge_empty, "pixel_list")
             nx_graph_poss.append((g, pos))
@@ -895,7 +895,7 @@ class Edge:
             self.begin.label, self.end.label
         )["betweenness"]
 
-    def get_attribute(self,attribute, t: int) -> List[coord_int]:
+    def get_attribute(self, attribute, t: int) -> List[coord_int]:
         """
         Return the betweenness, will only work if it has been previously computed
 
@@ -903,6 +903,7 @@ class Edge:
         return self.experiment.nx_graph[t].get_edge_data(
             self.begin.label, self.end.label
         )[attribute]
+
     def length_um(self, t):
         pixel_conversion_factor = 1.725
         length_edge = 0

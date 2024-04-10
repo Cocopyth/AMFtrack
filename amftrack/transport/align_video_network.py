@@ -123,7 +123,7 @@ def identify_nodes(exp, t):
         [(node.pos(t)[1] / downsizing, node.pos(t)[0] / downsizing) for node in nodes]
     )
 
-    scatter_plot = ax.scatter(points[0], points[1], s=5,alpha =0.3)
+    scatter_plot = ax.scatter(points[0], points[1], s=5, alpha=0.3)
 
     # Variable to store the selected point information
     selected_point_info = {}
@@ -173,6 +173,7 @@ def identify_nodes(exp, t):
     # Connect the click event with the callback function
     cid = fig.canvas.mpl_connect("button_press_event", onclick)
     return cid, dicopoint
+
 
 def plot_full_video(
     exp: Experiment,
@@ -308,6 +309,7 @@ def plot_full_video(
     else:
         plt.show()
     return ax
+
 
 from amftrack.pipeline.functions.image_processing.experiment_util import *
 from PIL import Image

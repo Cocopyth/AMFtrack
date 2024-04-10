@@ -1,5 +1,7 @@
 from amftrack.pipeline.functions.image_processing.experiment_util import *
 from PIL import Image
+
+
 def plot_full_video(
     exp: Experiment,
     t: int,
@@ -17,7 +19,7 @@ def plot_full_video(
     figsize=(6, 3),
     dpi=None,
     node_size=5,
-    arrows = None,
+    arrows=None,
 ) -> None:
     """
     This is the general purpose function to plot the full image or a region `region` of the image at
@@ -134,9 +136,7 @@ def plot_full_video(
         plt.savefig(save_path, dpi=dpi)
     else:
         plt.show()
-    return ax,f
-
-
+    return ax, f
 
 
 def make_full_image(

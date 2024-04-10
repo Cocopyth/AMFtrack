@@ -144,7 +144,6 @@ def run_parallel_flows(
             my_file.write(f"module load 2021 \n")
             my_file.write(f"module load Python/3.9.5-GCCcore-10.3.0 \n")
 
-
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
             f"\t python {path_code}pipeline/scripts/flow_processing/{code} {arg_str} {op_id} $i &\n"
@@ -247,7 +246,7 @@ def run_parallel_post(
         call_code(path_job, dependency)
 
 
-def make_stitching_loop(directory, dirname, op_id, size_x,size_y):
+def make_stitching_loop(directory, dirname, op_id, size_x, size_y):
 
     a_file = open(
         f"{path_code}pipeline/scripts/stitching_loops/stitching_loop.ijm", "r"
@@ -277,8 +276,8 @@ def run_parallel_stitch(
     node="rome",
     name_job="stitch",
     dependency=False,
-    size_x = 15,
-    size_y = 10
+    size_x=15,
+    size_y=10,
 ):
     folder_list = list(folders["folder"])
     folder_list.sort()
@@ -293,8 +292,8 @@ def run_parallel_stitch(
         path_im_copy = f"{directory}/{folder}/Img/Img_r03_c05.tif"
         if os.path.isfile(path_im_copy) and os.path.getsize(path_im_copy) >= 1e6:
             # im = imageio.imread(path_im_copy)
-            for x in range(1, size_y+1):
-                for y in range(1, size_x+1):
+            for x in range(1, size_y + 1):
+                for y in range(1, size_x + 1):
                     strix = str(x) if x >= 10 else f"0{x}"
                     striy = str(y) if y >= 10 else f"0{y}"
                     path = f"{directory}/{folder}/Img/Img_r{strix}_c{striy}.tif"
@@ -309,12 +308,12 @@ def run_parallel_stitch(
         start = num_parallel * j
         stop = num_parallel * j + num_parallel
         for k in range(start, min(stop, len(folder_list))):
-            print(k,start)
+            print(k, start)
             op_id = time_ns()
-            make_stitching_loop(directory, folder_list[k], op_id, size_x,size_y)
+            make_stitching_loop(directory, folder_list[k], op_id, size_x, size_y)
             op_ids.append(op_id)
         ide = time_ns()
-        if start<min(stop, len(folder_list)):
+        if start < min(stop, len(folder_list)):
             my_file = open(path_job, "w")
             my_file.write(
                 f"#!/bin/bash \n#Set job requirements \n#SBATCH --nodes=1 \n#SBATCH -t {time}\n #SBATCH --ntask=1 \n#SBATCH --cpus-per-task={cpus}\n#SBATCH -p {node} \n"

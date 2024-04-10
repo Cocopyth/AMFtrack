@@ -47,4 +47,3 @@ run_launcher(
     dependency=True,
     name_job=name_job,
 )
-
