@@ -331,7 +331,11 @@ def make_whole_mapping(
 def add_attribute(
     edge_data_csv, vid_edge_obj, network_edge_attribute, name_new_col, mapping
 ):
+    # try:
     new_attribute = network_edge_attribute(mapping[vid_edge_obj.edge_name])
+    # except KeyError:
+    #     print(name_new_col,"edge not in network",mapping[vid_edge_obj.edge_name])
+    #     new_attribute = None
     edge_data_csv.loc[
         edge_data_csv["edge_name"] == vid_edge_obj.edge_name, name_new_col
     ] = new_attribute

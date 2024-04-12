@@ -900,6 +900,9 @@ class Edge:
         Return the betweenness, will only work if it has been previously computed
 
         """
+        # print(attribute,self.experiment.nx_graph[t].get_edge_data(
+        #     self.begin.label, self.end.label
+        # )[attribute])
         return self.experiment.nx_graph[t].get_edge_data(
             self.begin.label, self.end.label
         )[attribute]

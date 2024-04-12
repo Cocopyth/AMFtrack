@@ -68,12 +68,17 @@ def get_weight(node, t):
     weight = 0
     for edge in node.edges(t):
         weight += Vmax * np.pi * edge.width(t) / 2
+        # weight += Vmax * np.pi / 2
+
     return weight
 
 
 def get_shortest_path_edges(node2, shortest):
     exp = node2.experiment
-    nodes = shortest[node2.label]
+    if node2.label in shortest.keys():
+        nodes = shortest[node2.label]
+    else:
+        nodes = []
     edges = []
     for i in range(len(nodes) - 1):
         nodea = Node(nodes[i], exp)
@@ -87,37 +92,39 @@ def get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source):
     edge_flux = {edge: 0 for edge in edges}
     for node1 in nodes_sink:
         shortest = nx.single_source_dijkstra_path(
-            exp.nx_graph[t], node1.label, weight="weight"
+            exp.nx_graph[t], node1.label, weight="length"
         )
         for node2 in nodes_source:
-            w = get_weight(node2)
+            w = get_weight(node2,t)
+            # print("here",w)
             path = get_shortest_path_edges(node2, shortest)
+            # print(path)
             for edge in path:
+                # print("here",w)
                 edge_flux[edge] += w / len(nodes_sink)
+    edge_flux_final = {(edge.begin.label,edge.end.label) : edge_flux[edge] for edge in edges}
+    return(edge_flux_final)
 
 
 def add_betweenness_QP(exp, t):
     exp.save_location = ""
 
     load_study_zone(exp)
-    edges = get_all_edges(exp, t)
     nodes = get_all_nodes(exp, t)
     nodes_source = [node for node in nodes if is_in_ROI_node(node, t)]
-    nodes_sink = [node for node in nodes if not is_in_ROI_node(node, t)]
+    nodes_sink = [node for node in nodes if is_in_ROI_node(node, t)]
     nodes_sink = find_lowest_nodes(nodes_sink, t)
+    print("len sourcesink",len(nodes_sink),len(nodes_source))
     fluxes = get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source)
+    # print("fluxes",fluxes)
     for edge in exp.nx_graph[t].edges:
-        # if (
-        #     edge not in final_current_flow_betweeness.keys()
-        #     and (edge[1], edge[0]) not in final_current_flow_betweeness.keys()
-        # ):
-        #     final_current_flow_betweeness[edge] = 0
         if edge not in fluxes.keys() and (edge[1], edge[0]) not in fluxes.keys():
             fluxes[edge] = 0
     nx.set_edge_attributes(exp.nx_graph[t], fluxes, "betweenness_QP")
 
 
 def add_betweenness(exp, t):
+    print(f"compute BC{t}")
     exp.save_location = ""
 
     load_study_zone(exp)
@@ -147,44 +154,28 @@ def add_betweenness(exp, t):
         (edge.begin.label, edge.end.label): 1 / edge.length_um(t) for edge in edges
     }
     nx.set_edge_attributes(exp.nx_graph[t], weights, "1/length")
-    t = 0
     G = exp.nx_graph[t]
     S = [G.subgraph(c).copy() for c in nx.connected_components(G)]
-    len_connected = [len(nx_graph.nodes) for nx_graph in S]
-    final_current_flow_betweeness = {}
     final_betweeness = {}
 
     for g in S:
         source = [node.label for node in nodes_source if node.label in g]
         sink = [node.label for node in nodes_sink if node.label in g]
-        # current_flow_betweeness = nx.edge_current_flow_betweenness_centrality_subset(
-        #     g, source, sink, weight="1/length"
-        # )
-        # betweeness = nx.edge_current_flow_betweenness_centrality_subset(
-        #     g, sink, source, weight="length"
-        # )
 
         betweeness = nx.edge_betweenness_centrality_subset(
             g, source, sink, normalized=True, weight="length"
         )
-        # for edge in current_flow_betweeness.keys():
-        #     final_current_flow_betweeness[edge] = current_flow_betweeness[edge]
         for edge in betweeness.keys():
             final_betweeness[edge] = betweeness[edge]
 
     for edge in exp.nx_graph[t].edges:
-        # if (
-        #     edge not in final_current_flow_betweeness.keys()
-        #     and (edge[1], edge[0]) not in final_current_flow_betweeness.keys()
-        # ):
-        #     final_current_flow_betweeness[edge] = 0
         if (
             edge not in final_betweeness.keys()
             and (edge[1], edge[0]) not in final_betweeness.keys()
         ):
             final_betweeness[edge] = 0
+    print("adding BC",t)
     nx.set_edge_attributes(exp.nx_graph[t], final_betweeness, "betweenness")
-
 
 def get_abcisse(edge, begin, end, t, exp):
     begin = Node(begin, exp).get_pseudo_identity(t).label

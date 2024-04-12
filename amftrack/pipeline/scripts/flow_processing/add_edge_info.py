@@ -73,6 +73,7 @@ for plate_id in refs.keys():
         add_betweenness_QP(exp, t)
 
     for t, plate_id_video in enumerate(list(indexes.keys())):
+        # print("time",t)
         data_obj = load_video_dataset(
             plate_id_video, videos_folder, analysis_folder, analysis_folder_root
         )
