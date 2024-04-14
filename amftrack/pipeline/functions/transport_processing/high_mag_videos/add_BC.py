@@ -22,6 +22,7 @@ from scipy import sparse
 from amftrack.pipeline.functions.transport_processing.high_mag_videos.register_videos import (
     add_attribute,
 )
+
 hyphae = pd.read_excel(
     "/home/cbisot/pycode/AMFtrack/amftrack/notebooks/transport/hyphae.xlsx"
 )
@@ -411,7 +412,7 @@ def get_nodes_source_C(exp):
     nodes_source = list(nodes_exp.keys())
     return(nodes_source,nodes_exp)
 
-def get_weight_C(node,nodes_exp):
+def get_weight_C(node,t,nodes_exp):
     if node in nodes_exp.keys():
         return(nodes_exp[node])
     else:
@@ -431,7 +432,7 @@ def add_betweenness_QC(exp, t):
         if is_in_study_zone(node, t, 1000, 150)[1]
     ]
     nodes_sink = find_lowest_nodes(nodes_sink, t)
-    fluxes = get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source,lambda node : get_weight_C(node,nodes_exp))
+    fluxes = get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source,lambda node,t : get_weight_C(node,t,nodes_exp))
     # print("fluxes",fluxes)
     for edge in exp.nx_graph[t].edges:
         if edge not in fluxes.keys() and (edge[1], edge[0]) not in fluxes.keys():
