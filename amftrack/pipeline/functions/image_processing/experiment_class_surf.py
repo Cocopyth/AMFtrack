@@ -133,7 +133,10 @@ class Experiment:
         ypos = [pos[1] for poss in self.positions for pos in poss.values()]
         self.ts = len(self.dates)
         self.labeled = suffix == "_labeled"
-        self.dimX_dimY = self.get_image(0, 0).shape
+        try:
+            self.dimX_dimY = self.get_image(0, 0).shape
+        except FileNotFoundError:
+            self.dimX_dimY = (3000,4096)
 
     def save_graphs(self, suffix):
         for i, date in enumerate(self.dates):
