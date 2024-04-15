@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import open3d as o3d
+# import open3d as o3d
 from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_all_edges,
 )
@@ -92,33 +92,33 @@ def register_rot_trans(
         return initialize_transformation()
 
 
-def find_rot_o3d(X, Y):
-    X = np.transpose(X)
-    Y = np.transpose(Y)
-    X = np.insert(X, 2, values=0, axis=0)
-    Y = np.insert(Y, 2, values=0, axis=0)
-    vectorX = o3d.utility.Vector3dVector(np.transpose(X))
-    vectorY = o3d.utility.Vector3dVector(np.transpose(Y))
-    source = o3d.geometry.PointCloud(vectorX)
-    target = o3d.geometry.PointCloud(vectorY)
-    threshold = 200
-    trans_init = np.asarray(
-        [
-            [1, 0, 0, 0],
-            [0, 1, 0, 0],
-            [0, 0, 1, 0],
-            [0.0, 0.0, 0.0, 1.0],
-        ]
-    )
-    # print('registering')
-    reg_p2p = o3d.pipelines.registration.registration_icp(
-        source,
-        target,
-        threshold,
-        trans_init,
-        o3d.pipelines.registration.TransformationEstimationPointToPoint(),
-    )
-    return reg_p2p.transformation
+# def find_rot_o3d(X, Y):
+#     X = np.transpose(X)
+#     Y = np.transpose(Y)
+#     X = np.insert(X, 2, values=0, axis=0)
+#     Y = np.insert(Y, 2, values=0, axis=0)
+#     vectorX = o3d.utility.Vector3dVector(np.transpose(X))
+#     vectorY = o3d.utility.Vector3dVector(np.transpose(Y))
+#     source = o3d.geometry.PointCloud(vectorX)
+#     target = o3d.geometry.PointCloud(vectorY)
+#     threshold = 200
+#     trans_init = np.asarray(
+#         [
+#             [1, 0, 0, 0],
+#             [0, 1, 0, 0],
+#             [0, 0, 1, 0],
+#             [0.0, 0.0, 0.0, 1.0],
+#         ]
+#     )
+#     # print('registering')
+#     reg_p2p = o3d.pipelines.registration.registration_icp(
+#         source,
+#         target,
+#         threshold,
+#         trans_init,
+#         o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+#     )
+#     return reg_p2p.transformation
 
 
 # def find_rot_cpd(X, Y):
@@ -331,7 +331,11 @@ def make_whole_mapping(
 def add_attribute(
     edge_data_csv, vid_edge_obj, network_edge_attribute, name_new_col, mapping
 ):
+    # try:
     new_attribute = network_edge_attribute(mapping[vid_edge_obj.edge_name])
+    # except KeyError:
+    #     print(name_new_col,"edge not in network",mapping[vid_edge_obj.edge_name])
+    #     new_attribute = None
     edge_data_csv.loc[
         edge_data_csv["edge_name"] == vid_edge_obj.edge_name, name_new_col
     ] = new_attribute

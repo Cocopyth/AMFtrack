@@ -133,7 +133,10 @@ class Experiment:
         ypos = [pos[1] for poss in self.positions for pos in poss.values()]
         self.ts = len(self.dates)
         self.labeled = suffix == "_labeled"
-        self.dimX_dimY = self.get_image(0, 0).shape
+        try:
+            self.dimX_dimY = self.get_image(0, 0).shape
+        except FileNotFoundError:
+            self.dimX_dimY = (3000,4096)
 
     def save_graphs(self, suffix):
         for i, date in enumerate(self.dates):
@@ -900,6 +903,9 @@ class Edge:
         Return the betweenness, will only work if it has been previously computed
 
         """
+        # print(attribute,self.experiment.nx_graph[t].get_edge_data(
+        #     self.begin.label, self.end.label
+        # )[attribute])
         return self.experiment.nx_graph[t].get_edge_data(
             self.begin.label, self.end.label
         )[attribute]
