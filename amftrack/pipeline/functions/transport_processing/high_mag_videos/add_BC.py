@@ -363,16 +363,21 @@ def get_exp2(exp):
     exp2.nx_graph = [graph_segemented_final]
     exp2.positions = [nodes_pos]
     pixel_lists = {}
+    lengths = {}
+
     t = 0
     for key, edge in enumerate(graph_segemented_final.edges):
         begin, end = edge
         (y1, x1), (y2, x2) = nodes_pos[begin], nodes_pos[end]
         pixel_lists[edge] = [(y1, x1), (y2, x2)]
+        pixel_conversion_factor = 1.725
+        lengths[edge] = np.sqrt((y1-y2)**2+(x1-x2)**2)*pixel_conversion_factor
+
     nx.set_edge_attributes(exp2.nx_graph[t], pixel_lists, "pixel_list")
     edges = get_all_edges(exp2, 0)
     ages = {(edge.begin.label, edge.end.label): get_age(edge,segments_time,segments_index) for edge in edges}
     nx.set_edge_attributes(exp2.nx_graph[t], ages, "age")
-
+    nx.set_edge_attributes(exp2.nx_graph[t], lengths, "length")
     return(exp2)
 
 def get_age(edge,segments_time,segments_index):
@@ -402,13 +407,14 @@ def get_nodes_source_C(exp):
                     if node in subgraph_age_0:
                         connected_nodes.add(node)
                         #to fix, should be quantitative (include radius etc...)
-                    for node in connected_nodes:
-                        weights[Node(node, exp2)] += 1/len(connected_nodes)
+                for node in connected_nodes:
+                    weights[Node(node, exp2)] += edge[2]["length"]/len(connected_nodes)
     nodes = get_all_nodes(exp2, 0)
 
     nodes_exp2 = [node for node in nodes if weights[node] >= 1]
     t = 0
     nodes_exp = {find_pseudo_identity(node_exp2, t, exp): weights[node_exp2] for node_exp2 in nodes_exp2[:1000]}
+    print("tot_growth",np.sum(list(nodes_exp.values())))
     nodes_source = list(nodes_exp.keys())
     return(nodes_source,nodes_exp)
 
@@ -420,8 +426,6 @@ def get_weight_C(node,t,nodes_exp):
 
 
 def add_betweenness_QC(exp, t):
-    exp.save_location = ""
-
     load_study_zone(exp)
     nodes = get_all_nodes(exp, t)
     nodes_source,nodes_exp = get_nodes_source_C(exp)
