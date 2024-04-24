@@ -6,7 +6,7 @@ from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
 )
 from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_all_edges,
-    get_all_nodes,
+    get_all_nodes, get_timedelta_second,
 )
 from amftrack.pipeline.functions.post_processing.extract_study_zone import (
     load_study_zone,
@@ -23,9 +23,9 @@ from amftrack.pipeline.functions.transport_processing.high_mag_videos.register_v
     add_attribute,
 )
 
-hyphae = pd.read_excel(
-    "/home/cbisot/pycode/AMFtrack/amftrack/notebooks/transport/hyphae.xlsx"
-)
+# hyphae = pd.read_excel(
+#     "/home/cbisot/pycode/AMFtrack/amftrack/notebooks/transport/hyphae.xlsx"
+# )
 
 
 def add_hyphal_attributes(edge_data_csv, edge, mapping, t, exp, unique_id):
@@ -390,6 +390,7 @@ def get_age(edge,segments_time,segments_index):
 
 def get_nodes_source_C(exp):
     assert len(exp.folders)==2
+    time_delta = get_timedelta_second(exp,0,1)
     exp2 = get_exp2(exp)
     G = exp2.nx_graph[0]
     subgraph_age_0 = nx.Graph([e for e in G.edges(data=True) if e[2]['age'] == 0])
@@ -406,14 +407,14 @@ def get_nodes_source_C(exp):
                 for node in component:
                     if node in subgraph_age_0:
                         connected_nodes.add(node)
-                        #to fix, should be quantitative (include radius etc...)
+                        #to fix, should be quantitative (include radius and time etc...)
                 for node in connected_nodes:
-                    weights[Node(node, exp2)] += edge[2]["length"]/len(connected_nodes)
+                    weights[Node(node, exp2)] += edge[2]["length"]/len(connected_nodes)/time_delta
     nodes = get_all_nodes(exp2, 0)
 
     nodes_exp2 = [node for node in nodes if weights[node] >= 1]
     t = 0
-    nodes_exp = {find_pseudo_identity(node_exp2, t, exp): weights[node_exp2] for node_exp2 in nodes_exp2[:1000]}
+    nodes_exp = {find_pseudo_identity(node_exp2, t, exp): weights[node_exp2] for node_exp2 in nodes_exp2}
     print("tot_growth",np.sum(list(nodes_exp.values())))
     nodes_source = list(nodes_exp.keys())
     return(nodes_source,nodes_exp)
@@ -429,12 +430,12 @@ def add_betweenness_QC(exp, t):
     load_study_zone(exp)
     nodes = get_all_nodes(exp, t)
     nodes_source,nodes_exp = get_nodes_source_C(exp)
-    # nodes_sink = [node for node in nodes if is_in_ROI_node(node, t)]
-    nodes_sink = [
-        node
-        for node in nodes
-        if is_in_study_zone(node, t, 1000, 150)[1]
-    ]
+    nodes_sink = [node for node in nodes if is_in_ROI_node(node, t)]
+    # nodes_sink = [
+    #     node
+    #     for node in nodes
+    #     if is_in_study_zone(node, t, 1000, 150)[1]
+    # ]
     nodes_sink = find_lowest_nodes(nodes_sink, t)
     fluxes = get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source,lambda node,t : get_weight_C(node,t,nodes_exp))
     # print("fluxes",fluxes)

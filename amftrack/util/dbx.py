@@ -40,7 +40,7 @@ def load_dbx():
     dbx = dropbox.DropboxTeam(
         app_key=app_key, app_secret=app_secret, oauth2_refresh_token=refresh_token
     )
-    p = dropbox.common.PathRoot.namespace_id(folder_id)
+    p = dropbox.common.PathRoot.root(folder_id)
     dbx = dbx.with_path_root(p)
     dbx = dbx.as_user(user_id)
     return dbx

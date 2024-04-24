@@ -1,8 +1,11 @@
+import networkx as nx
+
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Experiment,
     Node,
     Edge,
 )
+from amftrack.pipeline.functions.image_processing.experiment_util import get_all_edges
 from amftrack.pipeline.functions.transport_processing.high_mag_videos.loading import (
     load_video_dataset,
 )
@@ -175,6 +178,12 @@ for plate_id in refs.keys():
         selection = folders.iloc[i:i+2]
         exp.load(selection, suffix="_labeled")
         exp.save_location = ""
+        for t in range(exp.ts):
+
+            edges = get_all_edges(exp, t)
+
+            weights = {(edge.begin.label, edge.end.label): edge.length_um(t) for edge in edges}
+            nx.set_edge_attributes(exp.nx_graph[t], weights, "length")
         t = 0
         add_betweenness_QC(exp, t)
         # print("time",t)
@@ -212,6 +221,14 @@ for plate_id in refs.keys():
                             edge,
                             lambda edge: edge.get_attribute("betweenness_QC", t),
                             "betweenness_QC",
+                            mapping,
+                        )
+                        fun = lambda edge: edge.get_attribute("betweenness_QC", t)
+                        add_attribute(
+                            edge_data_csv,
+                            edge,
+                            lambda edge: get_derivative(edge, t, fun),
+                            "betweenness_QC_derivative",
                             mapping,
                         )
                 edge_data_csv.to_csv(vid_obj.edge_adr, index=False)
