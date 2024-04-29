@@ -1,3 +1,4 @@
+import networkx as nx
 import numpy as np
 
 from amftrack.pipeline.functions.image_processing.experiment_util import get_all_edges, get_all_nodes
