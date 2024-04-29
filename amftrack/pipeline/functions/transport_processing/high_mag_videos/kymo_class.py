@@ -892,7 +892,7 @@ class KymoEdgeAnalysis(object):
             im.save(save_path_temp)
         return self.kymo
 
-    def fourier_kymo(self, return_self=True, test_plots=False):
+    def fourier_kymo(self, return_self=True):
         """
         Separates forward and backward moving lines in kymographs
         :param return_self: Whether to return separation as a list of arrays
@@ -903,12 +903,12 @@ class KymoEdgeAnalysis(object):
 
         if len(self.kymos) > 0:
             self.filtered_left = np.array(
-                [filter_kymo_left(kymo, plots=test_plots) for kymo in self.kymos]
+                [filter_kymo_left(kymo) for kymo in self.kymos]
             )
             self.filtered_right = np.array(
                 [
                     np.flip(
-                        filter_kymo_left(np.flip(kymo, axis=1), plots=test_plots),
+                        filter_kymo_left(np.flip(kymo, axis=1)),
                         axis=1,
                     )
                     for kymo in self.kymos

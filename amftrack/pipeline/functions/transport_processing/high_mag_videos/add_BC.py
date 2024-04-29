@@ -278,13 +278,13 @@ def closest_point(point, points):
     min_index = np.argmin(dist_square)
     return points[min_index], dist_square[min_index]
 
-def get_exp2(exp):
+def get_exp2(exp,segment_length = 5):
     last_index = 1
-    segments_length = 5
+    segments_length = segment_length
     #From Amin code, to update when new functions are available
     array_segments_center_final, shape_segments_center,\
     final_graph,edges_indexes,graph_segemented_final,nodes_pos,segments_index = get_segment_centers(exp)
-    threshold = 10 ** 2
+    threshold = (2*segment_length) ** 2
 
     segments_centers = []
     segments_min_distances = []
