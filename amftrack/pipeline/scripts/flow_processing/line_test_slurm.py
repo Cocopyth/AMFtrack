@@ -253,7 +253,7 @@ def do_line_test(pd, noise_thresh=0.01, speed_thresh=10, display_figs=False):
     img_max = np.max(abs(tot_img.flatten()))
     flux_max = np.max(abs(tot_flux.flatten()))
     kymo_anal = KymoEdgeAnalysis(kymo=tot_img)
-    forw_thresh, back_thresh = kymo_anal.fourier_kymo(1, test_plots=False)
+    forw_thresh, back_thresh = kymo_anal.fourier_kymo(1)
     #     forw_back = np.add(forw, back)
     #     forw_thresh = forw
     #     back_thresh = back

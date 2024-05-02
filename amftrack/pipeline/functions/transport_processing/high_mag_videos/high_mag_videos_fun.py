@@ -228,119 +228,56 @@ def tile_image(img):
     return tiling_for_fourrier
 
 
-def filter_kymo_left(
-    kymo, nr_tiles=1, static_offset=1, static_angle=1000, plots=False, perc_dim=6
-):
-    """
-    This is a complicated function, with a lot of considerations. The idea is to make a fourier transform of a
-    kymograph, then remove certain parts of it to end up with a spectrum where only forward or backward moving
-    particles are shown. Preferably, the DC term of the fourier transform is also removed. Intensity is recovered by
-    comparing the dimmest particles of the resulting filtered kymos and the original image.
-    kymo:           The input kymograph
-    nr_tiles:       The number of tilings that is done to avoid Fourier ringing. Currently only set to one
-    static_offset:  How many horizontal bands in the fourier spectrum are removed from the middle. These correspond to vertical lines in real-space.
-    static_angle:   The angle of the two triangles that flare from the middle of the spectrum. This to remove static particles from the kymograph that have negligible movement.
-    """
-    if plots:
-        fig, ax = plt.subplots(4, 2, figsize=(9, 18))
-        img_max = np.max(kymo.flatten())
+def create_paved_kymograph(kymo):
+    height, width = kymo.shape
 
-    # Final shifting of the filtered kymo is based on the 3% of dimmest pixels. The mean of these have to match up.
-    dim_pixls = kymo < np.percentile(kymo, perc_dim)
-    dim_val = np.mean(kymo[dim_pixls].flatten())
+    # Duplicate and manipulate images
+    subFourier1 = kymo.copy()
+    subFourier2 = cv2.flip(kymo, 1)  # Flip horizontally
+    subFourier3 = cv2.flip(subFourier2, 0)  # Flip vertically after horizontal
+    subFourier4 = cv2.flip(kymo, 0)  # Flip vertically
 
-    # The kymograph is tiled to prevent ringing. This creates a 3x3 tile
+    # Create a larger image and place manipulated images accordingly
+    filter_forward = np.zeros((3 * height, 3 * width), dtype=kymo.dtype)
+    filter_forward[height:2 * height, width:2 * width] = subFourier1
+    filter_forward[height:2 * height, 0:width] = subFourier2
+    filter_forward[height:2 * height, 2 * width:3 * width] = subFourier2
+    filter_forward[0:height, 0:width] = subFourier3
+    filter_forward[0:height, 2 * width:3 * width] = subFourier3
+    filter_forward[2 * height:3 * height, 0:width] = subFourier3
+    filter_forward[2 * height:3 * height, 2 * width:3 * width] = subFourier3
+    filter_forward[0:height, width:2 * width] = subFourier4
+    filter_forward[2 * height:3 * height, width:2 * width] = subFourier4
+    return filter_forward
 
-    img = kymo.copy()
-    for i in range(nr_tiles):
-        A = img[:, :]
-        B = np.flip(A, axis=0)
-        C = np.flip(A, axis=1)
-        D = np.flip(B, axis=1)
-        tiles = [[D, B, D], [C, A, C], [D, B, D]]
-        tiles = [cv2.hconcat(imgs) for imgs in tiles]
-        fourrier = cv2.vconcat(tiles)
-        img = fourrier
-    tiling_for_fourrier = img
-    shape_v, shape_h = tiling_for_fourrier.shape
 
-    # We use orthogonal normalization in the fourier transforms to try and get proper intensities back
-    dark_image_grey_fourier = np.fft.fftshift(
-        np.fft.fft2(tiling_for_fourrier, norm="ortho")
-    )
-    coordinates_middle = np.array(dark_image_grey_fourier.shape) // 2
+def apply_fourier_operations(tiled_image):
+    dft = np.fft.fftshift(np.fft.fft2(tiled_image))  # Apply FFT and shift zero frequency to center
+    # Zero out specific regions in the Fourier transform
+    h, w = dft.shape
+    # Horizontal line across the middle
+    dft[h // 2 - 1:h // 2 + 1, :] = 0
+    # Top-left quadrant
+    dft[:h // 2, :w // 2] = 0
+    # botom-right quadrant
+    dft[h // 2:, w // 2:] = 0
 
-    # Within the fourier transform, we have four quadrants, where we remove two of them. This in addition to the DC term
-    LT_quadrant = np.s_[: coordinates_middle[0] + 0, : coordinates_middle[1]]
-    LB_quadrant = np.s_[coordinates_middle[0] - 1 :, : coordinates_middle[1]]
-    RB_quadrant = np.s_[coordinates_middle[0] + 1 :, coordinates_middle[1] + 1 :]
-    RT_quadrant = np.s_[: coordinates_middle[0], coordinates_middle[1] :]
+    # Inverse Fourier Transform
+    inverse_dft = np.fft.ifft2(np.fft.ifftshift(dft)).real
 
-    filtered_fourrier = dark_image_grey_fourier.copy()
+    return inverse_dft
 
-    # Calculation of the static part of the fourier spectrum. Looks like a horizontal band with vertically flared ends.
-    v_axis = np.arange(0, shape_v) - (shape_v // 2)
-    h_axis = np.arange(0, shape_h) - (shape_h // 2)
-    v_array = np.array([v_axis for i in range(shape_h)]).transpose()
-    h_array = np.array([h_axis for i in range(shape_v)])
-    stat_array = 1 * (abs(v_array) <= (static_offset + abs(h_array) / static_angle))
 
-    filtered_fourrier[LT_quadrant] = 0
-    filtered_fourrier[RB_quadrant] = 0
-    filtered_fourrier *= 1 - stat_array
-    # filtered_fourrier[coordinates_middle[0], coordinates_middle[1]] = 0
+def filter_kymo_left(kymo):
+    height, width = kymo.shape
+    paved_kymo = create_paved_kymograph(kymo)
+    paved_kymo_filter = apply_fourier_operations(paved_kymo)
+    paved_kymo = create_paved_kymograph(kymo)
+    filtered_kymo = paved_kymo_filter[height:2 * height, width:2 * width]
+    filtered_kymo -= np.percentile(filtered_kymo, 10)
+    # filtered_kymo[np.where(filtered_kymo<0)] =0
 
-    # stat_array[coordinates_middle[0], coordinates_middle[1]] = 0
-    stat_filt = np.fft.ifft2(
-        np.fft.ifftshift(dark_image_grey_fourier * stat_array), norm="ortho"
-    )
-    filtered = np.fft.ifft2(np.fft.ifftshift(filtered_fourrier), norm="ortho")
-
-    shape_v, shape_h = shape_v // 3, shape_h // 3
-    middle_slice = np.s_[shape_v : 2 * shape_v, shape_h : 2 * shape_h]
-    middle_square = np.s_[
-        coordinates_middle[0] - 10 : coordinates_middle[0] + 50,
-        coordinates_middle[1] - 50 : coordinates_middle[1] + 10,
-    ]
-    middle = filtered[middle_slice]
-    filtered_left = kymo - middle.real
-
-    if plots:
-        col = [None] * 6
-        col[0] = ax[0][0].imshow(tiling_for_fourrier)
-        ax[0][0].set_title("tiled image")
-        col[1] = ax[0][1].imshow(stat_array[middle_square], vmin=0)
-        ax[0][1].set_title("Fourier filter")
-        col[2] = ax[1][0].imshow(filtered[middle_slice].real, vmin=0, vmax=img_max)
-        ax[1][0].set_title("forw + stat")
-        col[3] = ax[1][1].imshow(filtered_left, vmin=0, vmax=img_max)
-        ax[1][1].set_title("back")
-        col[4] = ax[2][0].imshow(
-            filtered[middle_slice].real + filtered_left, vmin=0, vmax=img_max
-        )
-        ax[2][0].set_title("forw + back + stat")
-        col[5] = ax[2][1].imshow(abs(stat_filt[middle_slice]), vmin=0, vmax=img_max)
-        ax[2][1].set_title("stat")
-        ax[3][0].imshow(np.log(abs(dark_image_grey_fourier))[middle_square])
-        ax[3][0].set_title("Full 2D Fourier transform")
-        ax[3][1].imshow(np.log(abs(filtered_fourrier))[middle_square])
-        ax[3][1].set_title("Filtered Transform")
-        for i in range(6):
-            plt.colorbar(col[i], fraction=0.056, pad=0.02)
-        fig.tight_layout()
-
-    # print(np.sum(abs(stat_filt[middle_slice]).flatten()))
-
-    # img_out = np.abs(middle) - abs(stat_filt[middle_slice])
-
-    # Here the intensity of the image is restored by setting equal the 3 percentile dimmest particles in the image.
-    # This works best when there is a decent chunk of video where no particles are present.
-    img_out = middle
-    # out_dim_pixls = img_out < np.percentile(img_out, perc_dim)
-    # out_dim_value = np.mean(img_out[out_dim_pixls].flatten())
-    # DC_value = dim_val - out_dim_value
-
-    return np.abs(img_out)
+    return (filtered_kymo)
 
     """
     Simple function that filters the kymograph and outputs the forward and backward filters.

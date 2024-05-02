@@ -237,6 +237,8 @@ class Experiment:
         )
         R = skel["R"]
         t = skel["t"]
+        # R = np.array([[1,0],[0,1]])
+        # t = np.array([0,0])
         return R, t
 
     def compress_skeleton(self, t: int, factor: int) -> binary_image:
@@ -842,15 +844,19 @@ def find_node_equ(node, t) -> Node:
 class Edge:
     """Edge object through time in an experiment."""
 
-    def __init__(self, begin: Node, end: Node, experiment: Experiment):
+    def __init__(self, begin: Node, end: Node, experiment: Experiment, oriented = False):
         self.begin = begin  # Starting Node
         self.end = end  # Ending Node
         self.experiment = experiment
+        self.oriented = oriented
 
     def __eq__(self, other):
-        return (self.begin == other.begin and self.end == other.end) or (
-            self.end == other.begin and self.begin == other.end
-        )
+        if self.oriented:
+            return(self.begin == other.begin and self.end == other.end)
+        else:
+            return (self.begin == other.begin and self.end == other.end) or (
+                self.end == other.begin and self.begin == other.end
+            )
 
     def __repr__(self):
         return f"Edge({self.begin},{self.end})"

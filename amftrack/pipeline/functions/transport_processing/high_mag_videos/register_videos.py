@@ -248,6 +248,7 @@ def find_optimal_R_and_t(source, target):
         args=(source, target),
         method="Nelder-Mead",
         options={"initial_simplex": simplex, "fatol": 0.1},
+        # callback = callback_with_args
     )
 
     # Extract optimized parameters
