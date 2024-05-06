@@ -226,10 +226,10 @@ def callback_function(xk, source, target):
     print(f"Current parameters: {xk}, Objective Function Value: {current_value}")
 
 
-def find_optimal_R_and_t(source, target):
+def find_optimal_R_and_t(source, target,theta_divide = 16,delta_space=7000):
     initial_guess = np.array([0, 0, 0])
-    deltas = np.array([7000, 7000, np.pi / 16])
-    init_params = [-3500, -3500, -np.pi / 32]
+    deltas = np.array([delta_space, delta_space, np.pi / theta_divide])
+    init_params = [-delta_space/2, -delta_space/2, -np.pi / (2*theta_divide)]
 
     simplex = [init_params]
     for i in range(len(init_params)):

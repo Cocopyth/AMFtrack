@@ -43,6 +43,8 @@ from amftrack.pipeline.scripts.image_processing import (
     track_nodes,
     make_labeled_graphs,
     extract_skel_no_external,
+    final_alignment_new,
+    realign_new
 )
 
 
@@ -92,23 +94,22 @@ class TestImageAnalysis(unittest.TestCase):
         args = [None, threshold, skip, self.directory]
         run_function(prune_skel.process, args, self.folders[:1])
 
-    # def test_realign(self):
-    #     thresh = 10000  # For R. irregularis, thresh 10000 is good. For Aggregatum, higher may be necessary
-    #     args = [None, thresh, self.directory]
-    #     run_function(
-    #         final_alignment.process,
-    #         args,
-    #         self.folders[:1]
-    #     )
-    # def test_create_realign(self):
-    #     args = [None, self.directory]
-    #     run_function(
-    #         realign.process,
-    #         args,
-    #         self.folders[:1]
-    #         per_unique_id = True
-
-    #     )
+    def test_realign(self):
+        args = [None, self.directory]
+        run_function(
+            final_alignment_new.process,
+            args,
+            self.folders[:4],
+            sequential_process = True
+        )
+    def test_create_realign(self):
+        args = [None, self.directory]
+        run_function(
+            realign_new.process,
+            args,
+            self.folders[:4],
+            per_unique_id = True
+        )
     def test_graph_extract(self):
         args = [None, self.directory]
         run_function(extract_nx_graph.process, args, self.folders[:1])

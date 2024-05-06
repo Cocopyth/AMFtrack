@@ -27,6 +27,8 @@ from amftrack.pipeline.functions.transport_processing.high_mag_videos.register_v
 #     "/home/cbisot/pycode/AMFtrack/amftrack/notebooks/transport/hyphae.xlsx"
 # )
 
+segments_length = 5
+
 
 def add_hyphal_attributes(edge_data_csv, edge, mapping, t, exp, unique_id):
     hyphae_plate = hyphae[hyphae["plate"] == unique_id]
@@ -36,7 +38,7 @@ def add_hyphal_attributes(edge_data_csv, edge, mapping, t, exp, unique_id):
         add_attribute(edge_data_csv, edge, fun, f"abcisse_{begin}_{end}", mapping)
 
 
-def find_lowest_nodes(nodes, t):
+def find_lowest_nodes(nodes, t,num = 10):
     positions = [node.pos(t) for node in nodes]
 
     # 1. Find the range of x positions
@@ -44,11 +46,11 @@ def find_lowest_nodes(nodes, t):
     max_x = max(positions, key=lambda p: p[1])[1]
 
     # 2. Calculate the size of each part
-    part_size = (max_x - min_x) / 10
+    part_size = (max_x - min_x) / num
 
     # 3. Group nodes by x range and select the node with the lowest y in each group
     selected_nodes = []
-    for i in range(10):
+    for i in range(num):
         start_x = min_x + i * part_size
         end_x = start_x + part_size
 
@@ -105,6 +107,24 @@ def get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source,weight_fun = get_we
                 edge_flux[edge] += w / len(nodes_sink)
     edge_flux_final = {(edge.begin.label,edge.end.label) : edge_flux[edge] for edge in edges}
     return(edge_flux_final)
+
+def get_quantitative_BC_dic2(exp, t, nodes_sink, nodes_source,weight_fun = get_weight):
+    edges = get_all_edges(exp, t)
+    edge_flux = {edge: 0 for edge in edges}
+    for node1 in nodes_sink:
+        shortest = nx.single_source_dijkstra_path(
+            exp.nx_graph[t], node1.label, weight="length"
+        )
+        for node2 in nodes_source:
+            w = weight_fun(node2,t)
+            # print("here",w)
+            path = get_shortest_path_edges(node2, shortest)
+            # print(path)
+            for edge in path:
+                # print("here",w)
+                edge_flux[(edge.begin.label, edge.end.label)] += w / len(nodes_sink)
+    return(edge_flux)
+
 
 
 def add_betweenness_QP(exp, t):
@@ -205,12 +225,8 @@ def get_derivative(edge_d, t, fun):
     return weight_end - weight_begin
 
 def get_segment_centers(exp):
-    #From Amin code, to update when new functions are available
     last_index = 1
-    # Size of the segment in pixels
-    segments_length = 5
-
-    final_graph = exp.nx_graph[last_index]
+    final_graph = exp.nx_graph[last_index].copy()
     node_not_in_ROI = []
     for node in final_graph:
         if not is_in_ROI_node(Node(node, exp), last_index):
@@ -265,7 +281,6 @@ def get_segment_centers(exp):
                 segments_center_final.append(central_point)
                 nodes_pos[label] = sub_list[-1]
                 label += 1
-
     array_segments_center_final = np.array(segments_center_final)
     shape_segments_center = array_segments_center_final.shape
     return(array_segments_center_final,shape_segments_center,
@@ -274,18 +289,16 @@ def get_segment_centers(exp):
 
 
 def closest_point(point, points):
-    dist_square = np.sum((points - point) ** 2, axis=1)
+    dist_square = np.sum((points-point)**2, axis=1)
     min_index = np.argmin(dist_square)
     return points[min_index], dist_square[min_index]
 
-def get_exp2(exp,segment_length = 5):
-    last_index = 1
-    segments_length = segment_length
-    #From Amin code, to update when new functions are available
-    array_segments_center_final, shape_segments_center,\
-    final_graph,edges_indexes,graph_segemented_final,nodes_pos,segments_index = get_segment_centers(exp)
-    threshold = (2*segment_length) ** 2
-
+def get_exp2(exp,last_index = 1):
+    # When there is a point at a distance of segment under the threshold, the segment is activated (distance in pixel)
+    # A good distance is (2*segments_length)**2
+    # Don't forget to square because closest_point give the distance squared
+    threshold = 10 ** 2
+    array_segments_center_final, shape_segments_center,final_graph, edges_indexes,graph_segemented_final, nodes_pos, segments_index = get_segment_centers(exp)
     segments_centers = []
     segments_min_distances = []
     array_segments_center = array_segments_center_final.copy()
@@ -295,7 +308,7 @@ def get_exp2(exp,segment_length = 5):
         cols = []
         previous_edges = get_all_edges(exp, time)
         for edge in previous_edges:
-            p_list = edge.pixel_list(time)
+            p_list = [(round(pixel[0]), round(pixel[1])) for pixel in edge.pixel_list(time)]
             row, col = zip(*p_list)
             rows.extend(row)
             cols.extend(col)
@@ -334,6 +347,8 @@ def get_exp2(exp,segment_length = 5):
     segments_centers.reverse()
     # Amount of segment to look for at in an edge to get the date at which the edge encounter the node
     # Depends of how big segments are and what threshold you use
+    # Amount of segment to look for at in an edge to get the date at which the edge encounter the node
+    # Depends of how big segments are and what threshold you use
     amount_of_border_segment = 7
 
     segments_min_distances_array = np.array(segments_min_distances)
@@ -358,8 +373,7 @@ def get_exp2(exp,segment_length = 5):
     # i = indexes[plate_id_video]
     # i = np.where(folders['folder'] == indexes[plate_id_video])[0][0]
     # selection = folders[folders['folder'].isin(indexes.values())]
-    i = 0
-    exp2.load(exp.folders.iloc[1: 2], suffix="_labeled2")
+    exp2.load(exp.folders.iloc[last_index: last_index+1], suffix="_labeled2")
     exp2.nx_graph = [graph_segemented_final]
     exp2.positions = [nodes_pos]
     pixel_lists = {}
@@ -388,6 +402,10 @@ def get_age(edge,segments_time,segments_index):
     time = segments_time[index]
     return(time)
 
+# def get_age2(edge):
+#     time_interval = edges_time_interval.get(f"{edge.begin.label},{edge.end.label}")
+#     time = (time_interval[0]+time_interval[1])/2 # type: ignore
+#     return(round(time))
 def get_nodes_source_C(exp):
     assert len(exp.folders)==2
     time_delta = get_timedelta_second(exp,0,1)
@@ -443,6 +461,36 @@ def add_betweenness_QC(exp, t):
         if edge not in fluxes.keys() and (edge[1], edge[0]) not in fluxes.keys():
             fluxes[edge] = 0
     nx.set_edge_attributes(exp.nx_graph[t], fluxes, "betweenness_QC")
+
+def keep_main_component(exp,t):
+    G = exp.nx_graph[t]
+    components = nx.connected_components(G)
+
+    # Find the largest connected component
+    largest_component = max(components, key=len)
+
+    # Create a new graph representing the largest connected component
+    largest_component_graph = G.subgraph(largest_component)
+    exp.nx_graph[t] = largest_component_graph
+
+def add_betweenness_QC2(exp, t):
+    keep_main_component(exp, t)
+    load_study_zone(exp)
+    nodes = get_all_nodes(exp, t)
+    nodes_source,nodes_exp = get_nodes_source_C(exp)
+    nodes_sink = [node for node in nodes if is_in_ROI_node(node, t)]
+    nodes_sink = find_lowest_nodes(nodes_sink, t)
+    fluxes = get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source,lambda node,t : get_weight_C(node,t,nodes_exp))
+    # print("fluxes",fluxes)
+    G = exp.nx_graph[t]
+    for edge in fluxes.keys():
+        if edge[0] > edge[1]:
+            G[edge[0]][edge[1]]["QBC_p"] = fluxes[edge]  # Attribute for edge from A to B
+        else:
+            G[edge[0]][edge[1]]["QBC_m"] = fluxes[edge]  # Attribute for edge from A to B
+    for edge in G.edges:
+        G[edge[0]][edge[1]]["QBC_net"] = G[edge[0]][edge[1]]["QBC_p"]-G[edge[0]][edge[1]]["QBC_m"]
+        G[edge[0]][edge[1]]["QBC_tot"] = G[edge[0]][edge[1]]["QBC_p"]+G[edge[0]][edge[1]]["QBC_m"]
 
 def find_pseudo_identity(node_exp2,t,exp):
     identifier = 0
