@@ -834,7 +834,7 @@ def reconstruct_skeletton_from_edges(
 
 def get_timedelta_second(exp, t, tp1):
     seconds = (exp.dates[tp1] - exp.dates[t]).total_seconds()
-    return seconds / 3600
+    return seconds
 
 
 def plot_edge_color_value(
