@@ -19,7 +19,7 @@ import scipy.sparse
 import pandas as pd
 
 def transform_pixel_list(pixel_list,R,trans):
-    return([R@np.array(pixel)+trans for pixel in pixel_list])
+    return([(R@np.array(pixel)+trans)[0] for pixel in pixel_list])
 
 def process(args):
     j = int(args[-1])
@@ -32,37 +32,39 @@ def process(args):
     folder_list.sort()
     folders = run_info.sort_values("datetime")
 
-    select = folders.iloc[j+1 : j + 2]
-    directory_name = folder_list[j+1]
-    path_snap = directory + directory_name
+    select = folders.iloc[j : j + 1]
     exp = Experiment(directory)
     exp.load(select, suffix="_width")
     Rs = [np.array([[1, 0], [0, 1]])]
-    ts = [np.array([0, 0])]
-    for i, directory_name in enumerate(folder_list[1 : j + 1]):
+    ts = [np.array([[0, 0]])]
+    for i, directory_name in enumerate(folder_list[1: j + 1]):
+        path_snap = directory + directory_name
         transform = sio.loadmat(path_snap + "/Analysis/transform_new.mat")
         R, t = transform["R"], transform["t"]
         Rs.append(R)
         ts.append(t)
 
     R0 = np.array([[1, 0], [0, 1]])
-    t0 = np.array([0, 0])
+    t0 = np.array([[0, 0]])
     for i in range(len(Rs)):
-        index = len(Rs)-1-i
+        index = len(Rs) - 1 - i
         R0 = np.dot(Rs[index], R0)
-        t0 = np.dot(ts[index], Rs[index]) + np.dot(t0, Rs[index])
+        t0 = (Rs[index] @ ts[index].transpose()).transpose() + (Rs[index] @ t0.transpose()).transpose()
     time = 0
+    print(R0)
     edges = get_all_edges(exp, time)
 
     new_pixel_list = {(edge.begin.label, edge.end.label): transform_pixel_list(edge.pixel_list(time),R0,t0) for edge in edges}
 
     nx.set_edge_attributes(exp.nx_graph[time], new_pixel_list, "pixel_list")
     pos = exp.positions[time]
-    pos = {node: R0 @ pos[node] + t0 for node in pos.keys()}
+    pos = {node: (R0 @ pos[node] + t0)[0] for node in pos.keys()}
     directory_name = exp.folders['folder'].iloc[time]
     path_snap = directory + directory_name
     path_save = path_snap + "/Analysis/nx_graph_pruned_realigned.p"
     pickle.dump((exp.nx_graph[time], pos), open(path_save, "wb"))
+    sio.savemat(path_snap + "/Analysis/transform_final.mat", {"R": R0, "t": t0})
+
 
 if __name__ == "__main__":
     process(sys.argv)

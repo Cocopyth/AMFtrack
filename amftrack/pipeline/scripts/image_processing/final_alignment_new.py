@@ -60,8 +60,8 @@ def process(args):
     dists = []
     rottrans = []
     for order in [(0, 1), (1, 0)]:
-        pixels1 = [node.pos(0) for node in get_all_nodes(exp, 0) if node.degree(0) == 3]
-        pixels2 = [node.pos(1) for node in get_all_nodes(exp, 1) if node.degree(1) == 3]
+        pixels1 = [node.pos(order[0]) for node in get_all_nodes(exp, order[0]) if node.degree(order[0]) == 3]
+        pixels2 = [node.pos(order[1]) for node in get_all_nodes(exp, order[1]) if node.degree(order[1]) == 3]
         X = np.array(pixels1)
         Y = np.array(pixels2)
         Rfound, tfound = find_optimal_R_and_t(X, Y)
@@ -73,6 +73,7 @@ def process(args):
         rottrans.append((Rfound,tfound))
     index = np.argmin(dists)
     Rfound,tfound = rottrans[index]
+    order = [(0, 1), (1, 0)][index]
     if order == (1, 0):
         t_init = tfound
         Rot_init = Rfound
