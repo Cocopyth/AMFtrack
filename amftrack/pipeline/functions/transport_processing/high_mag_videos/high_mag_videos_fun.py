@@ -476,10 +476,10 @@ def segment_brightfield_std(images, seg_thresh=1.10, threshtype="hist_edge"):
 
 def segment_brightfield_ultimate(
     images,
-    seg_thresh=1.05,
+    seg_thresh=1.30,
 ):
     """
-    Segmentation method for brightfield video, uses vesselness filters to get result.
+    Segmentation method for brightfield video.
     image:          Input image
     thresh:         Value close to zero such that the function will output a boolean array
     threshtype:     Type of threshold to apply to segmentation. Can be hist_edge, Renyi or Yen

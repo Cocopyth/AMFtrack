@@ -1055,7 +1055,13 @@ class KymoEdgeAnalysis(object):
             speeds = self.speeds_tot
             spds_back = speeds[k][0]
             spds_forw = speeds[k][1]
+            speed_right = np.nanmean(speeds[k][0])
+            speed_left = np.nanmean(speeds[k][1])
+            print("sjapes",speed_right.shape)
             flux_non_nan = ~(np.isnan(spds_back) * np.isnan(spds_forw))
+            flux_right = np.nanmean(back_thresh) * speed_right
+            flux_left = np.nanmean(forw_thresh) * speed_left
+
             flux_tot = np.nansum(
                 (
                     np.prod((spds_forw, forw_thresh), 0),
@@ -1065,6 +1071,10 @@ class KymoEdgeAnalysis(object):
             )
             flux_tot = np.where(flux_non_nan, flux_tot, np.nan)
             self.flux_tot = flux_tot
+            self.flux_left = np.nanmean(flux_left)
+            self.flux_right = np.nanmean(flux_right)
+
+
             flux_arrays.append(flux_tot)
         if len(kymo) == 1:
             return flux_tot

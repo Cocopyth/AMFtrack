@@ -16,7 +16,6 @@ from amftrack.pipeline.functions.post_processing.util import (
     is_in_ROI_node,
 )
 import numpy as np
-import pandas as pd
 from scipy import sparse
 
 from amftrack.pipeline.functions.transport_processing.high_mag_videos.register_videos import (
@@ -26,6 +25,7 @@ from amftrack.pipeline.functions.transport_processing.high_mag_videos.register_v
 # hyphae = pd.read_excel(
 #     "/home/cbisot/pycode/AMFtrack/amftrack/notebooks/transport/hyphae.xlsx"
 # )
+from amftrack.pipeline.functions.transport_processing.high_mag_videos.temporal_graph_util import get_shortest_path_edges
 
 segments_length = 5
 
@@ -74,20 +74,6 @@ def get_weight(node, t):
         # weight += Vmax * np.pi / 2
 
     return weight
-
-
-def get_shortest_path_edges(node2, shortest):
-    exp = node2.experiment
-    if node2.label in shortest.keys():
-        nodes = shortest[node2.label]
-    else:
-        nodes = []
-    edges = []
-    for i in range(len(nodes) - 1):
-        nodea = Node(nodes[i], exp)
-        nodeb = Node(nodes[i + 1], exp)
-        edges.append(Edge(nodea, nodeb, exp))
-    return edges
 
 
 def get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source,weight_fun = get_weight):
