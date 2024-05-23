@@ -1,6 +1,9 @@
 import pickle
 import os
 
+from shapely import LineString
+
+from amftrack.pipeline.functions.transport_processing.high_mag_videos.add_BC import find_lowest_nodes
 from amftrack.util.sys import (
 
     update_plate_info,
@@ -24,7 +27,7 @@ import scipy.io as sio
 import networkx as nx
 import numpy as np
 from sthype import SpatialGraph, HyperGraph
-from sthype.hypergraph.hypergraph_from_spatial_graphs import spatial_temporal_graph_from_spatial_graphs
+from sthype.graph_functions import spatial_temporal_graph_from_spatial_graphs
 import matplotlib.pyplot as plt
 import os
 import pickle
@@ -44,7 +47,10 @@ downsizing = 5
 #     y2, x2 = p2
 #     interpolated_points = [(y1 + i / num_points * (y2 - y1), x1 + i / num_points * (x2 - x1)) for i in range(num_points + 1)]
 #     return interpolated_points
-
+pdry = 0.21
+pcarbon = 0.5
+CUE = 0.5
+density = 1.1 #g.cm-3
 def interpolate_points(p1, p2, spacing=1.0):
     y1, x1 = p1
     y2, x2 = p2
@@ -95,17 +101,19 @@ def make_exp(spatial_temporal_graph,folders,make_pixel_list = False,spacing = 1)
 
 def activation_continuity(G,node):
     edges = tuple(G.edges(node,data=True))
-    return(edges[0][2]['activation']==edges[1][2]['activation'])
+    bool1 = edges[0][2]['post_hyperedge_activation']==edges[1][2]['post_hyperedge_activation']
+    bool1*= edges[0][2]['hyperedge']==edges[1][2]['hyperedge']
+    return(bool1)
 
 def get_min_activation(G,node):
     edges = list(G.edges(node,data=True))
-    return(min([edge[2]['activation'] for edge in edges]))
+    return(min([edge[2]['post_hyperedge_activation'] for edge in edges]))
 
 def simplify(nx_graph):
     pos = nx.get_node_attributes(nx_graph, 'position')
     degree_2_nodes = [node for node in nx_graph.nodes if
                       nx_graph.degree(node) == 2 and activation_continuity(nx_graph, node)]
-    list_attributes = ["width","activation"]
+    list_attributes = ["post_hyperedge_activation","hyperedge"]
     while len(degree_2_nodes) > 0:
         print(len(degree_2_nodes))
         for node in degree_2_nodes:
@@ -126,14 +134,33 @@ def simplify(nx_graph):
                 for attribute in list_attributes:
                     right_edge_attribute = nx_graph.get_edge_data(node, right_n)[attribute]
                     left_edge_attribute = nx_graph.get_edge_data(node, left_n)[attribute]
+                    info[attribute] = right_edge_attribute
 
-                    attribute_new = (
-                                            right_edge_attribute * len(right_edge) + left_edge_attribute * len(left_edge)
-                                    ) / (len(right_edge) + len(left_edge))
-                    if attribute == "activation":
-                        attribute_new = int(attribute_new)
-                        # print(right_edge_attribute,left_edge_attribute,attribute_new)
-                    info[attribute] = attribute_new
+                    assert right_edge_attribute==left_edge_attribute
+                for i in range(nx_graph.max_age+1):
+                    info[str(i)] = {}
+                    # info[folder] = {}
+                    if 'width' in nx_graph.get_edge_data(node, right_n)[str(i)].keys():
+                        right_edge_attribute = nx_graph.get_edge_data(node, right_n)[str(i)]["width"]
+                        weight_right = len(right_edge)
+                    else:
+                        right_edge_attribute = 1
+                        weight_right = 0
+                    if 'width' in nx_graph.get_edge_data(node, left_n)[str(i)].keys():
+                        left_edge_attribute = nx_graph.get_edge_data(node, left_n)[str(i)]["width"]
+                        weight_left = len(left_edge)
+                    else:
+                        left_edge_attribute = 1
+                        weight_left = 0
+                    if (weight_left + weight_right)>0:
+                        attribute_new = (
+                                                right_edge_attribute * weight_right + left_edge_attribute * weight_left
+                                        ) / (weight_left + weight_right)
+                        # attribute_new = int(attribute_new)
+                            # print(right_edge_attribute,left_edge_attribute,attribute_new)
+                        info[str(i)]["width"] = attribute_new
+                        # info[folder]["width"] = attribute_new
+
 
                 nx_graph.add_edges_from([(right_n, left_n, info)])
                 nx_graph.remove_node(node)
@@ -143,21 +170,20 @@ def simplify(nx_graph):
                       nx_graph.degree(node) <= 1]
     for node in degree_0_nodes:
         nx_graph.remove_node(node)
+
     return(nx_graph)
 
 def get_growing_nodes(exp,index0,index1):
     exp.dates = list(exp.folders["datetime"])
-    k = 0
-    edges = get_all_edges(exp, k)
-
-    weights = {(edge.begin.label, edge.end.label): edge.length_um(k) for edge in edges}
-    nx.set_edge_attributes(exp.nx_graph[k], weights, "length")
+    G = exp.nx_graph[0]
+    weights = {(begin, end): LineString(data['pixel_list']).length * 1.725 for begin, end, data in
+               G.edges(data=True)}
+    nx.set_edge_attributes(G, weights, "length")
     r0 = 3
     time_delta = get_timedelta_second(exp, index0, index1)
-    G = exp.nx_graph[0]
-    subgraph_age_0 = nx.Graph([e for e in G.edges(data=True) if e[2]['activation'] <= index0])
+    subgraph_age_0 = nx.Graph([e for e in G.edges(data=True) if e[2]['post_hyperedge_activation'] <= index0])
     subgraph_age_1 = nx.Graph(
-        [e for e in G.edges(data=True) if e[2]['activation'] <= index1 and e[2]['activation'] > index0])
+        [e for e in G.edges(data=True) if e[2]['post_hyperedge_activation'] <= index1 and e[2]['post_hyperedge_activation'] > index0])
     components_age_1 = list(nx.connected_components(subgraph_age_1))
     nodes = get_all_nodes(exp, 0)
     weights = {node: 0 for node in nodes}
@@ -170,12 +196,23 @@ def get_growing_nodes(exp,index0,index1):
                 for node in component:
                     if node in subgraph_age_0:
                         connected_nodes.add(node)
-                        # to fix, should be quantitative (include radius and time etc...)
+                radius = edge[2][str(index1)]["width"]/2
                 for node in connected_nodes:
-                    weights[Node(node, exp)] += np.pi * r0 ** 2 * edge[2]["length"] / len(connected_nodes) / time_delta
-    nodes = get_all_nodes(exp, 0)
+                    weights[Node(node,exp)] += np.pi * radius ** 2 * edge[2]["length"] / len(connected_nodes) / time_delta
+    nodes = get_all_nodes(exp,0)
     nodes_exp = [node for node in nodes if weights[node] / (np.pi * r0 ** 2) * 3600 > 0]
     return(weights, nodes_exp)
+
+def fix_attributes(nx_graph):
+    for u, v,data in nx_graph.edges(data=True):
+        empty_indexes = [i for i in range(nx_graph.max_age) if len(data[str(i)])==0]
+        if len(empty_indexes)>0:
+            init_index = np.max(empty_indexes)+1
+            activation_index = int(data["post_hyperedge_activation"])
+            for index in range(activation_index,init_index):
+                nx_graph[u][v][str(index)] = data[str(init_index)]
+        # break
+
 
 def create_subgraph_by_attribute(G, attribute, threshold):
     """
@@ -243,7 +280,9 @@ def convert_to_directed(undirected_graph):
     directed_graph = nx.DiGraph()
 
     # Define constant values for dynamic viscosity (mu)
-    mu = 0.1  # Assumed for example purposes
+    mu = 1e-3  #kg.m-1.s-1
+    mu = mu * 1e-6 #kg.um-1.s-1 (but doesn't really have consequences
+    # until compared with aquaporin porosity)
 
     # Add edges to the directed graph with direction based on node label ordering
     for u, v, attr in undirected_graph.edges(data=True):
@@ -254,11 +293,10 @@ def convert_to_directed(undirected_graph):
 
     # Calculate the resistance and potential for each edge in the directed graph
     for u, v, attr in directed_graph.edges(data=True):
-        attr['radius'] = max(attr['width'] / 2, 0.5)
-        attr['v0'] = 0
-
+        # attr['radius'] = max(attr['width'] / 2, 0.5)
+        # attr['v0'] = np.sign(attr['QBC_net'])*3 if abs(attr['QBC_net'])>0 else 0
         attr['Res'] = 8 * mu * attr["length"] / (np.pi * attr['radius'] ** 4)
-        attr['pot'] = -8 * mu * attr["length"] * attr['v0'] / (np.pi * attr['radius'] ** 2)
+        attr['pot'] = 8 * mu * attr["length"] * attr['v0'] / (np.pi * attr['radius'] ** 2)
 
     return directed_graph
 
@@ -269,7 +307,6 @@ def build_matrix_system(G, ext_flows):
 
     num_nodes = len(node_index)
     num_edges = len(edge_index)
-    print(len(num_nodes,num_edges))
     A = np.zeros((num_nodes, num_edges))
     b = np.zeros(num_nodes)
 
@@ -311,7 +348,12 @@ def build_matrix_system(G, ext_flows):
 def solve_flows(A, b):
     return np.linalg.solve(A, b)
 
-def add_flows(G,nodes_source,nodes_sink,weights):
+def add_flows_heaton(G,nodes_source,nodes_sink,weights,index):
+    for edge in G.edges:
+        G[edge[0]][edge[1]]["radius"] = max(G[edge[0]][edge[1]][str(index)]['width']/2,1)
+
+        G[edge[0]][edge[1]]['v0'] = 0
+
     DG = convert_to_directed(G)
     ext_flows_in = {node_source.label: -weights[node_source] for node_source in
                     nodes_source}  # external flows: positive into the network, negative out
@@ -325,12 +367,31 @@ def add_flows(G,nodes_source,nodes_sink,weights):
     A, b = build_matrix_system(DG, ext_flows)
     flows = solve_flows(A, b)
     edge_flows = {edge: flow for edge, flow in zip(DG.edges(), flows)}
+    nx.set_edge_attributes(G, edge_flows, "water_flux_heaton")
+    for edge in G.edges:
+        G[edge[0]][edge[1]]["water_flux_heaton_abs"] = abs(G[edge[0]][edge[1]]["water_flux_heaton"])
+        G[edge[0]][edge[1]]["speed_heaton"] = G[edge[0]][edge[1]]["water_flux_heaton"] / (np.pi * G[edge[0]][edge[1]]["radius"] ** 2)
+
+backflow_factor = 0.1
+def add_backflows(G, nodes_source, nodes_sink,index):
+    for edge in G.edges:
+        G[edge[0]][edge[1]]["radius"] = max(G[edge[0]][edge[1]][str(index)]['width']/2,1)
+        G[edge[0]][edge[1]]['v0'] = G[edge[0]][edge[1]]['QBC_net']/(np.pi*G[edge[0]][edge[1]]["radius"]**2)/backflow_factor
+    DG = convert_to_directed(G)
+    for node in (nodes_sink + nodes_source):
+        DG.add_edge(node.label, "ground", length=0, radius=2, v0=0, Res=0, pot=0)  # Add edge back to the root
+
+    ext_flows = {}
+    A, b = build_matrix_system(DG, ext_flows)
+    flows = solve_flows(A, b)
+    edge_flows = {edge: flow for edge, flow in zip(DG.edges(), flows)}
     nx.set_edge_attributes(G, edge_flows, "water_flux")
     for edge in G.edges:
         G[edge[0]][edge[1]]["water_flux_abs"] = abs(G[edge[0]][edge[1]]["water_flux"])
-        G[edge[0]][edge[1]]["radius"] = max(G[edge[0]][edge[1]]["width"] / 2, 1)
 
-        G[edge[0]][edge[1]]["speed"] = G[edge[0]][edge[1]]["water_flux"] / (np.pi * G[edge[0]][edge[1]]["radius"] ** 2)
+        G[edge[0]][edge[1]]["speed_backflow"] = 2 * G[edge[0]][edge[1]]["water_flux"] / (
+                    np.pi * G[edge[0]][edge[1]]["radius"] ** 2) - G[edge[0]][edge[1]]['v0']
+
 
 def add_lipid_flux(G,nodes_source,nodes_sink,weights):
     edge_flux1 = {edge: 0 for edge in G.edges}
@@ -345,7 +406,7 @@ def add_lipid_flux(G,nodes_source,nodes_sink,weights):
         shortests[node1] = shortest
 
     for node2 in nodes_source:
-        w = weights[node2]
+        w = weights[node2] * pdry * pcarbon/CUE*density
         len_path = []
         for node1 in nodes_sink:
             shortest = shortests[node1]
@@ -430,3 +491,24 @@ def plot_arrows_along_edge(ax, begin, end, color, spacing=60):
         point = begin + unit_vector * (i * spacing)
         ax.annotate('', xytext=(point[1], point[0]), xy=(point[1] + unit_vector[1], point[0] + unit_vector[0]),
                     arrowprops=dict(arrowstyle="->", color=color))
+
+r0 = 3
+def add_fluxes(exp,index0,index1,folders):
+    spatial_temporal_graph = exp.nx_graph[0]
+    weights, nodes_growing = get_growing_nodes(exp,index0,index1)
+    nodes_source = [node for node in nodes_growing if weights[node] / (np.pi * r0 ** 2) * 3600 > 10]
+    # nodes_source = [node for node in nodes_source if weights[node] / (np.pi * r0 ** 2) * 3600 <= 1000]
+    G0 = create_subgraph_by_attribute(spatial_temporal_graph, "post_hyperedge_activation", index0)
+    components = nx.connected_components(G0)
+    largest_component = max(components, key=len)
+    largest_component_graph = create_subgraph_from_nodelist(G0, largest_component)
+
+    exp1 = make_exp(largest_component_graph, folders)
+    nodes = get_all_nodes(exp1, 0)
+    nodes_sink = [node for node in nodes if get_min_activation(largest_component_graph, node.label) <= index0]
+    nodes_sink = find_lowest_nodes(nodes_sink, 0, 20)
+    nodes_source = [node for node in nodes if node in nodes_source]
+    add_lipid_flux(exp1.nx_graph[0], nodes_source, nodes_sink, weights)
+    add_flows_heaton(exp1.nx_graph[0], nodes_source, nodes_sink, weights, index0)
+    add_backflows(exp1.nx_graph[0], nodes_source, nodes_sink, index0)
+    return(exp1)

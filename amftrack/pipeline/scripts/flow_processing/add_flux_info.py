@@ -2,20 +2,19 @@
 from amftrack.pipeline.functions.transport_processing.high_mag_videos.temporal_graph_util import *
 from amftrack.pipeline.functions.transport_processing.high_mag_videos.add_BC import *
 
-path_root = f"/scratch-shared/amftrack/graph_stacks"
+path_root = f"/projects/0/einf914/graph_stacks"
 plates = [
     "441_20230807", "449_20230807", "310_20230830"
 ]
 plate_id = plates[0]
 path_tot = os.path.join(path_root,f"graph{plate_id}.pickle")
+print('loading_graph')
 spatial_temporal_graph,folders = load(path_tot)
 exp = make_exp(spatial_temporal_graph,folders,make_pixel_list=True)
 spatial_temporal_graph = simplify(spatial_temporal_graph)
+fix_attributes(spatial_temporal_graph)
 exp = make_exp(spatial_temporal_graph,folders)
-for edge in spatial_temporal_graph.edges:
-    spatial_temporal_graph[edge[0]][edge[1]]["QBC_net"] = {}
-    spatial_temporal_graph[edge[0]][edge[1]]["QBC_tot"] = {}
-    spatial_temporal_graph[edge[0]][edge[1]]["water_flux"] = {}
+
 
 refs = {
     "310_20230830": {
@@ -46,34 +45,11 @@ indexes = refs[plate_id]
 for plate_id_video in list(indexes.keys()):
     index0 = np.where(folders["folder"] == indexes[plate_id_video])[0][0]
     index1 = index0+1
-    print("folder length",len(folders),index0)
-
-    weights, nodes_exp = get_growing_nodes(exp,index0,index1)
-    nodes_source = [node for node in nodes_exp if weights[node] / (np.pi * r0 ** 2) * 3600 > 10]
-    nodes_source = [node for node in nodes_source if weights[node] / (np.pi * r0 ** 2) * 3600 <= 1000]
-    G0 = create_subgraph_by_attribute(spatial_temporal_graph, "activation", index0)
-    components = nx.connected_components(G0)
-    largest_component = max(components, key=len)
-    largest_component_graph = create_subgraph_from_nodelist(G0, largest_component)
-
-    exp1 = make_exp(largest_component_graph, folders)
-    nodes = get_all_nodes(exp1, 0)
-    nodes_sink = [node for node in nodes if get_min_activation(largest_component_graph, node.label) <= index0]
-    nodes_sink = find_lowest_nodes(nodes_sink, 0, 20)
-    nodes_source = [node for node in nodes_source if node in nodes]
-    print("adding_lipid")
-
-    add_lipid_flux(exp1.nx_graph[0], nodes_source, nodes_sink, weights)
+    exp1 = add_fluxes(exp,index0,index1,folders)
     for edge in exp1.nx_graph[0].edges:
-        spatial_temporal_graph[edge[0]][edge[1]]["QBC_net"][indexes[plate_id_video]] = \
-        exp1.nx_graph[0][edge[0]][edge[1]]["QBC_net"]
-        spatial_temporal_graph[edge[0]][edge[1]]["QBC_tot"][indexes[plate_id_video]] = \
-            exp1.nx_graph[0][edge[0]][edge[1]]["QBC_tot"]
-    print("adding_flows")
-    add_flows(exp1.nx_graph[0], nodes_source, nodes_sink, weights)
-    for edge in exp1.nx_graph[0].edges:
-        spatial_temporal_graph[edge[0]][edge[1]]["water_flux"][indexes[plate_id_video]] = \
-        exp1.nx_graph[0][edge[0]][edge[1]]["water_flux"]
+        for attribute in ["QBC_net","QBC_tot","speed_backflow","water_flux","speed_heaton","water_flux_heaton"]:
+            spatial_temporal_graph[edge[0]][edge[1]][str(index0)][attribute] = \
+                exp1.nx_graph[0][edge[0]][edge[1]][attribute]
     # break
 
 spatial_temporal_graph.folder_infos = [folders.transpose()]

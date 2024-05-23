@@ -25,7 +25,7 @@ from amftrack.pipeline.functions.transport_processing.high_mag_videos.register_v
 # hyphae = pd.read_excel(
 #     "/home/cbisot/pycode/AMFtrack/amftrack/notebooks/transport/hyphae.xlsx"
 # )
-from amftrack.pipeline.functions.transport_processing.high_mag_videos.temporal_graph_util import get_shortest_path_edges
+# from amftrack.pipeline.functions.transport_processing.high_mag_videos.temporal_graph_util import get_shortest_path_edges
 
 segments_length = 5
 
@@ -76,58 +76,58 @@ def get_weight(node, t):
     return weight
 
 
-def get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source,weight_fun = get_weight):
-    edges = get_all_edges(exp, t)
-    edge_flux = {edge: 0 for edge in edges}
-    for node1 in nodes_sink:
-        shortest = nx.single_source_dijkstra_path(
-            exp.nx_graph[t], node1.label, weight="length"
-        )
-        for node2 in nodes_source:
-            w = weight_fun(node2,t)
-            # print("here",w)
-            path = get_shortest_path_edges(node2, shortest)
-            # print(path)
-            for edge in path:
-                # print("here",w)
-                edge_flux[edge] += w / len(nodes_sink)
-    edge_flux_final = {(edge.begin.label,edge.end.label) : edge_flux[edge] for edge in edges}
-    return(edge_flux_final)
+# def get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source,weight_fun = get_weight):
+#     edges = get_all_edges(exp, t)
+#     edge_flux = {edge: 0 for edge in edges}
+#     for node1 in nodes_sink:
+#         shortest = nx.single_source_dijkstra_path(
+#             exp.nx_graph[t], node1.label, weight="length"
+#         )
+#         for node2 in nodes_source:
+#             w = weight_fun(node2,t)
+#             # print("here",w)
+#             path = get_shortest_path_edges(node2, shortest)
+#             # print(path)
+#             for edge in path:
+#                 # print("here",w)
+#                 edge_flux[edge] += w / len(nodes_sink)
+#     edge_flux_final = {(edge.begin.label,edge.end.label) : edge_flux[edge] for edge in edges}
+#     return(edge_flux_final)
+#
+# def get_quantitative_BC_dic2(exp, t, nodes_sink, nodes_source,weight_fun = get_weight):
+#     edges = get_all_edges(exp, t)
+#     edge_flux = {edge: 0 for edge in edges}
+#     for node1 in nodes_sink:
+#         shortest = nx.single_source_dijkstra_path(
+#             exp.nx_graph[t], node1.label, weight="length"
+#         )
+#         for node2 in nodes_source:
+#             w = weight_fun(node2,t)
+#             # print("here",w)
+#             path = get_shortest_path_edges(node2, shortest)
+#             # print(path)
+#             for edge in path:
+#                 # print("here",w)
+#                 edge_flux[(edge.begin.label, edge.end.label)] += w / len(nodes_sink)
+#     return(edge_flux)
 
-def get_quantitative_BC_dic2(exp, t, nodes_sink, nodes_source,weight_fun = get_weight):
-    edges = get_all_edges(exp, t)
-    edge_flux = {edge: 0 for edge in edges}
-    for node1 in nodes_sink:
-        shortest = nx.single_source_dijkstra_path(
-            exp.nx_graph[t], node1.label, weight="length"
-        )
-        for node2 in nodes_source:
-            w = weight_fun(node2,t)
-            # print("here",w)
-            path = get_shortest_path_edges(node2, shortest)
-            # print(path)
-            for edge in path:
-                # print("here",w)
-                edge_flux[(edge.begin.label, edge.end.label)] += w / len(nodes_sink)
-    return(edge_flux)
 
 
-
-def add_betweenness_QP(exp, t):
-    exp.save_location = ""
-
-    load_study_zone(exp)
-    nodes = get_all_nodes(exp, t)
-    nodes_source = [node for node in nodes if is_in_ROI_node(node, t)]
-    nodes_sink = [node for node in nodes if is_in_ROI_node(node, t)]
-    nodes_sink = find_lowest_nodes(nodes_sink, t)
-    print("len sourcesink",len(nodes_sink),len(nodes_source))
-    fluxes = get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source)
-    # print("fluxes",fluxes)
-    for edge in exp.nx_graph[t].edges:
-        if edge not in fluxes.keys() and (edge[1], edge[0]) not in fluxes.keys():
-            fluxes[edge] = 0
-    nx.set_edge_attributes(exp.nx_graph[t], fluxes, "betweenness_QP")
+# def add_betweenness_QP(exp, t):
+#     exp.save_location = ""
+#
+#     load_study_zone(exp)
+#     nodes = get_all_nodes(exp, t)
+#     nodes_source = [node for node in nodes if is_in_ROI_node(node, t)]
+#     nodes_sink = [node for node in nodes if is_in_ROI_node(node, t)]
+#     nodes_sink = find_lowest_nodes(nodes_sink, t)
+#     print("len sourcesink",len(nodes_sink),len(nodes_source))
+#     fluxes = get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source)
+#     # print("fluxes",fluxes)
+#     for edge in exp.nx_graph[t].edges:
+#         if edge not in fluxes.keys() and (edge[1], edge[0]) not in fluxes.keys():
+#             fluxes[edge] = 0
+#     nx.set_edge_attributes(exp.nx_graph[t], fluxes, "betweenness_QP")
 
 
 def add_betweenness(exp, t):
@@ -430,23 +430,23 @@ def get_weight_C(node,t,nodes_exp):
         return(0)
 
 
-def add_betweenness_QC(exp, t):
-    load_study_zone(exp)
-    nodes = get_all_nodes(exp, t)
-    nodes_source,nodes_exp = get_nodes_source_C(exp)
-    nodes_sink = [node for node in nodes if is_in_ROI_node(node, t)]
-    # nodes_sink = [
-    #     node
-    #     for node in nodes
-    #     if is_in_study_zone(node, t, 1000, 150)[1]
-    # ]
-    nodes_sink = find_lowest_nodes(nodes_sink, t)
-    fluxes = get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source,lambda node,t : get_weight_C(node,t,nodes_exp))
-    # print("fluxes",fluxes)
-    for edge in exp.nx_graph[t].edges:
-        if edge not in fluxes.keys() and (edge[1], edge[0]) not in fluxes.keys():
-            fluxes[edge] = 0
-    nx.set_edge_attributes(exp.nx_graph[t], fluxes, "betweenness_QC")
+# def add_betweenness_QC(exp, t):
+#     load_study_zone(exp)
+#     nodes = get_all_nodes(exp, t)
+#     nodes_source,nodes_exp = get_nodes_source_C(exp)
+#     nodes_sink = [node for node in nodes if is_in_ROI_node(node, t)]
+#     # nodes_sink = [
+#     #     node
+#     #     for node in nodes
+#     #     if is_in_study_zone(node, t, 1000, 150)[1]
+#     # ]
+#     nodes_sink = find_lowest_nodes(nodes_sink, t)
+#     fluxes = get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source,lambda node,t : get_weight_C(node,t,nodes_exp))
+#     # print("fluxes",fluxes)
+#     for edge in exp.nx_graph[t].edges:
+#         if edge not in fluxes.keys() and (edge[1], edge[0]) not in fluxes.keys():
+#             fluxes[edge] = 0
+#     nx.set_edge_attributes(exp.nx_graph[t], fluxes, "betweenness_QC")
 
 def keep_main_component(exp,t):
     G = exp.nx_graph[t]
@@ -459,24 +459,24 @@ def keep_main_component(exp,t):
     largest_component_graph = G.subgraph(largest_component)
     exp.nx_graph[t] = largest_component_graph
 
-def add_betweenness_QC2(exp, t):
-    keep_main_component(exp, t)
-    load_study_zone(exp)
-    nodes = get_all_nodes(exp, t)
-    nodes_source,nodes_exp = get_nodes_source_C(exp)
-    nodes_sink = [node for node in nodes if is_in_ROI_node(node, t)]
-    nodes_sink = find_lowest_nodes(nodes_sink, t)
-    fluxes = get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source,lambda node,t : get_weight_C(node,t,nodes_exp))
-    # print("fluxes",fluxes)
-    G = exp.nx_graph[t]
-    for edge in fluxes.keys():
-        if edge[0] > edge[1]:
-            G[edge[0]][edge[1]]["QBC_p"] = fluxes[edge]  # Attribute for edge from A to B
-        else:
-            G[edge[0]][edge[1]]["QBC_m"] = fluxes[edge]  # Attribute for edge from A to B
-    for edge in G.edges:
-        G[edge[0]][edge[1]]["QBC_net"] = G[edge[0]][edge[1]]["QBC_p"]-G[edge[0]][edge[1]]["QBC_m"]
-        G[edge[0]][edge[1]]["QBC_tot"] = G[edge[0]][edge[1]]["QBC_p"]+G[edge[0]][edge[1]]["QBC_m"]
+# def add_betweenness_QC2(exp, t):
+#     keep_main_component(exp, t)
+#     load_study_zone(exp)
+#     nodes = get_all_nodes(exp, t)
+#     nodes_source,nodes_exp = get_nodes_source_C(exp)
+#     nodes_sink = [node for node in nodes if is_in_ROI_node(node, t)]
+#     nodes_sink = find_lowest_nodes(nodes_sink, t)
+#     fluxes = get_quantitative_BC_dic(exp, t, nodes_sink, nodes_source,lambda node,t : get_weight_C(node,t,nodes_exp))
+#     # print("fluxes",fluxes)
+#     G = exp.nx_graph[t]
+#     for edge in fluxes.keys():
+#         if edge[0] > edge[1]:
+#             G[edge[0]][edge[1]]["QBC_p"] = fluxes[edge]  # Attribute for edge from A to B
+#         else:
+#             G[edge[0]][edge[1]]["QBC_m"] = fluxes[edge]  # Attribute for edge from A to B
+#     for edge in G.edges:
+#         G[edge[0]][edge[1]]["QBC_net"] = G[edge[0]][edge[1]]["QBC_p"]-G[edge[0]][edge[1]]["QBC_m"]
+#         G[edge[0]][edge[1]]["QBC_tot"] = G[edge[0]][edge[1]]["QBC_p"]+G[edge[0]][edge[1]]["QBC_m"]
 
 def find_pseudo_identity(node_exp2,t,exp):
     identifier = 0
