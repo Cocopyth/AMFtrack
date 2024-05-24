@@ -146,7 +146,7 @@ def index_videos_dropbox_new(
 
     # Once addresses have been found, all relevant index files will be downloaded to their respective position
 
-    for address in excel_drop:
+    for address in tqdm(excel_drop):
         address_local = Path(address).relative_to("/DATA/")
         if REDO_SCROUNGING:
             if not (analysis_folder / address_local.parent).exists():

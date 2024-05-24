@@ -403,6 +403,13 @@ def process_video_object(vid_obj, exp, t, Rcurrent, tcurrent):
 
     return Rcurrent, tcurrent, mapping, dist
 
+def process_video_object_new(vid_obj, exp, t, Rcurrent, tcurrent):
+    mapping, dist, Rfound, tfound, reinitialize = attempt_mapping(
+        vid_obj, exp, t, Rcurrent, tcurrent
+    )
+    Rcurrent, tcurrent = update_transformation(Rcurrent, tcurrent, Rfound, tfound)
+    return Rcurrent, tcurrent, mapping, dist
+
 
 def register_dataset(data_obj, exp, t):
     Rcurrent, tcurrent = initialize_transformation()

@@ -100,6 +100,9 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile=99.9):
             "speed_right_coverage": 1
             - np.count_nonzero(np.isnan(edge.speeds_tot[0][1]), axis=1)
             / len(edge.flux_tot[0]),
+            "flux_left": edge.flux_left,
+            "flux_right": edge.flux_right,
+
         }
         data_out = pd.DataFrame(data=data_table)
         data_out.to_csv(f"{edge.edge_path}/{edge.edge_name}_data.csv")
