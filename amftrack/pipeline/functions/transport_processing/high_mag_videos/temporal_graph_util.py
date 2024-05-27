@@ -567,7 +567,7 @@ def get_abcisse(graph,order = "post_hyperedge_activation"):
         lengths = [(graph[u][v]["length"]) for (u, v) in edges_new]
         ordering = [(graph[u][v][order]) for (u, v) in edges_new]
         if len(edges_new)>0:
-            if ordering[0] < ordering[-1]:
+            if ordering[0] > ordering[-1]:
                 lengths.reverse()
             abcisse = np.cumsum(lengths)
             for i, edge in enumerate(edges_new):
