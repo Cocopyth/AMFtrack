@@ -113,7 +113,7 @@ def simplify(nx_graph):
     pos = nx.get_node_attributes(nx_graph, 'position')
     degree_2_nodes = [node for node in nx_graph.nodes if
                       nx_graph.degree(node) == 2 and activation_continuity(nx_graph, node)]
-    list_attributes = ["post_hyperedge_activation","hyperedge"]
+    list_attributes = ["post_hyperedge_activation","hyperedge","activation","corrected_activation"]
     while len(degree_2_nodes) > 0:
         print(len(degree_2_nodes))
         for node in degree_2_nodes:
@@ -135,8 +135,8 @@ def simplify(nx_graph):
                     right_edge_attribute = nx_graph.get_edge_data(node, right_n)[attribute]
                     left_edge_attribute = nx_graph.get_edge_data(node, left_n)[attribute]
                     info[attribute] = right_edge_attribute
-
-                    assert right_edge_attribute==left_edge_attribute
+                    if attribute in ["post_hyperedge_activation","hyperedge"]:
+                        assert right_edge_attribute==left_edge_attribute
                 for i in range(nx_graph.max_age+1):
                     info[str(i)] = {}
                     # info[folder] = {}
@@ -176,9 +176,6 @@ def simplify(nx_graph):
 def get_growing_nodes(exp,index0,index1):
     exp.dates = list(exp.folders["datetime"])
     G = exp.nx_graph[0]
-    weights = {(begin, end): LineString(data['pixel_list']).length * 1.725 for begin, end, data in
-               G.edges(data=True)}
-    nx.set_edge_attributes(G, weights, "length")
     r0 = 3
     time_delta = get_timedelta_second(exp, index0, index1)
     subgraph_age_0 = nx.Graph([e for e in G.edges(data=True) if e[2]['post_hyperedge_activation'] <= index0])
@@ -373,12 +370,12 @@ def add_flows_heaton(G,nodes_source,nodes_sink,weights,index):
         G[edge[0]][edge[1]]["speed_heaton"] = G[edge[0]][edge[1]]["water_flux_heaton"] / (np.pi * G[edge[0]][edge[1]]["radius"] ** 2)
 
 backflow_factor = 0.1
-def add_backflows(G, nodes_source, nodes_sink,index):
+def add_backflows(G, nodes_sink,index):
     for edge in G.edges:
         G[edge[0]][edge[1]]["radius"] = max(G[edge[0]][edge[1]][str(index)]['width']/2,1)
         G[edge[0]][edge[1]]['v0'] = G[edge[0]][edge[1]]['QBC_net']/(np.pi*G[edge[0]][edge[1]]["radius"]**2)/backflow_factor
     DG = convert_to_directed(G)
-    for node in (nodes_sink + nodes_source):
+    for node in (nodes_sink):
         DG.add_edge(node.label, "ground", length=0, radius=2, v0=0, Res=0, pot=0)  # Add edge back to the root
 
     ext_flows = {}
@@ -390,6 +387,26 @@ def add_backflows(G, nodes_source, nodes_sink,index):
         G[edge[0]][edge[1]]["water_flux_abs"] = abs(G[edge[0]][edge[1]]["water_flux"])
 
         G[edge[0]][edge[1]]["speed_backflow"] = 2 * G[edge[0]][edge[1]]["water_flux"] / (
+                    np.pi * G[edge[0]][edge[1]]["radius"] ** 2) - G[edge[0]][edge[1]]['v0']
+
+backflow_factor = 0.1
+def add_backflows2(G, nodes_sink,index):
+    for edge in G.edges:
+        G[edge[0]][edge[1]]["radius"] = max(G[edge[0]][edge[1]][str(index)]['width']/2,1)
+        G[edge[0]][edge[1]]['v0'] = G[edge[0]][edge[1]]['speed_heaton']/backflow_factor
+    DG = convert_to_directed(G)
+    for node in (nodes_sink):
+        DG.add_edge(node.label, "ground", length=0, radius=2, v0=0, Res=0, pot=0)  # Add edge back to the root
+
+    ext_flows = {}
+    A, b = build_matrix_system(DG, ext_flows)
+    flows = solve_flows(A, b)
+    edge_flows = {edge: flow for edge, flow in zip(DG.edges(), flows)}
+    nx.set_edge_attributes(G, edge_flows, "water_flux2")
+    for edge in G.edges:
+        G[edge[0]][edge[1]]["water_flux2_abs"] = abs(G[edge[0]][edge[1]]["water_flux2"])
+
+        G[edge[0]][edge[1]]["speed_backflow2"] = 2 * G[edge[0]][edge[1]]["water_flux2"] / (
                     np.pi * G[edge[0]][edge[1]]["radius"] ** 2) - G[edge[0]][edge[1]]['v0']
 
 
@@ -465,7 +482,7 @@ def plot_region(exp0,region,attribute,vmax):
                 begin_arrow = np.array(f(pixels[20]))
                 end_arrow = np.array(f(pixels[-20]))
                 if abs(edge.get_attribute(attribute, 0))>0:
-                    relative_flux = edge.get_attribute(attribute, 0) / edge.get_attribute("QBC_tot", 0)
+                    relative_flux = edge.get_attribute(attribute, 0)
                     orientation = 1 - 2 * (relative_flux > 0)
                     orientation *= (1-2 * (edge.begin.label > edge.end.label))
                     color = 'red'
@@ -495,20 +512,67 @@ def plot_arrows_along_edge(ax, begin, end, color, spacing=60):
 r0 = 3
 def add_fluxes(exp,index0,index1,folders):
     spatial_temporal_graph = exp.nx_graph[0]
+    weights = {(begin, end): LineString(data['pixel_list']).length * 1.725 for begin, end, data in
+               spatial_temporal_graph.edges(data=True)}
+    nx.set_edge_attributes(spatial_temporal_graph, weights, "length")
     weights, nodes_growing = get_growing_nodes(exp,index0,index1)
     nodes_source = [node for node in nodes_growing if weights[node] / (np.pi * r0 ** 2) * 3600 > 10]
     # nodes_source = [node for node in nodes_source if weights[node] / (np.pi * r0 ** 2) * 3600 <= 1000]
     G0 = create_subgraph_by_attribute(spatial_temporal_graph, "post_hyperedge_activation", index0)
     components = nx.connected_components(G0)
-    largest_component = max(components, key=len)
-    largest_component_graph = create_subgraph_from_nodelist(G0, largest_component)
+    combined_graph = SpatialGraph(nx.Graph()) # Initialize an empty graph to combine all components
+    for component in components:
+        # Create subgraph from component nodelist
+        if len(component)>10:
+            component_graph = create_subgraph_from_nodelist(G0, component)
 
-    exp1 = make_exp(largest_component_graph, folders)
-    nodes = get_all_nodes(exp1, 0)
-    nodes_sink = [node for node in nodes if get_min_activation(largest_component_graph, node.label) <= index0]
-    nodes_sink = find_lowest_nodes(nodes_sink, 0, 20)
-    nodes_source = [node for node in nodes if node in nodes_source]
-    add_lipid_flux(exp1.nx_graph[0], nodes_source, nodes_sink, weights)
-    add_flows_heaton(exp1.nx_graph[0], nodes_source, nodes_sink, weights, index0)
-    add_backflows(exp1.nx_graph[0], nodes_source, nodes_sink, index0)
+            # Make experiment instance for the component
+            exp1 = make_exp(component_graph, folders)
+
+            # Get all nodes and identify sinks and sources within the component
+            nodes = get_all_nodes(exp1, 0)
+            nodes_sink = [node for node in nodes if get_min_activation(component_graph, node.label) <= index0]
+            nodes_sink = find_lowest_nodes(nodes_sink, 0, 20)
+            nodes_source_component = [node for node in nodes if node in nodes_source]
+
+            # Add fluxes and flows to the component graph
+            add_lipid_flux(exp1.nx_graph[0], nodes_source_component, nodes_sink, weights)
+            add_flows_heaton(exp1.nx_graph[0], nodes_source_component, nodes_sink, weights, index0)
+            add_backflows(exp1.nx_graph[0], nodes_sink, index0)
+            add_backflows2(exp1.nx_graph[0], nodes_sink, index0)
+
+            combined_graph = nx.compose(combined_graph, exp1.nx_graph[0])
+    exp1 = make_exp(combined_graph, folders)
+
     return(exp1)
+
+def merge(edges,graph):
+    new_list = []
+    for edge in edges:
+        if edge[0] in graph:
+            new_list.append(edge[0])
+    if edge[1] in graph:
+        new_list.append(edge[1])
+    edges_new = []
+    for i in range(len(new_list)-1):
+        if graph.has_edge(new_list[i],new_list[i+1]):
+            edges_new.append((new_list[i],new_list[i+1]))
+    return(edges_new)
+
+def get_abcisse(graph,order = "post_hyperedge_activation"):
+    hyperedges = graph.hyperedges_initial_edges.keys()
+    for hyperedge in hyperedges:
+        edges = graph.get_hyperedge_edges(hyperedge)
+        edges_new = merge(edges, graph)
+        lengths = [(graph[u][v]["length"]) for (u, v) in edges_new]
+        ordering = [(graph[u][v][order]) for (u, v) in edges_new]
+        if len(edges_new)>0:
+            if ordering[0] < ordering[-1]:
+                lengths.reverse()
+            abcisse = np.cumsum(lengths)
+            for i, edge in enumerate(edges_new):
+                u, v = edge
+                graph[u][v]["abcisse"] = abcisse[i]
+    for (u, v) in graph.edges:
+        if not "abcisse" in graph[u][v]:
+            graph[u][v]["abcisse"] = -1

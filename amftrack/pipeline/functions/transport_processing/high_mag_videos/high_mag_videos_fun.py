@@ -476,7 +476,7 @@ def segment_brightfield_std(images, seg_thresh=1.10, threshtype="hist_edge"):
 
 def segment_brightfield_ultimate(
     images,
-    seg_thresh=1.30,
+    seg_thresh=1.05,
 ):
     """
     Segmentation method for brightfield video.

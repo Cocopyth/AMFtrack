@@ -50,12 +50,19 @@ def process(args):
         nx.set_edge_attributes(exp.nx_graph[t], weights, "length")
         G = exp.nx_graph[t]
         components = nx.connected_components(G)
-
+        S = [G.subgraph(c).copy() for c in components]
+        selected = [g for g in S if g.size(weight="length") >= 1e3]
+        len_connected = [
+            (nx_graph.size(weight="weight") / 10 ** 6) for nx_graph in selected
+        ]
+        print(len_connected)
+        G = selected[0]
+        for g in selected[1:]:
+            G = nx.compose(G, g)
         # Find the largest connected component
-        largest_component = max(components, key=len)
 
         # Create a new graph representing the largest connected component
-        largest_component_graph = G.subgraph(largest_component)
+        largest_component_graph = G
         exp.nx_graph[t] = largest_component_graph
     dists = []
     rottrans = []

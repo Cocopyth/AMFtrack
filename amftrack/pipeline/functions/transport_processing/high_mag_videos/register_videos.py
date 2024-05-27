@@ -326,6 +326,7 @@ def make_whole_mapping(
             transport_edge_segment, network_edge_names, network_edge_segments
         )
         avg_distances.append(avg_distance)
+        # print(avg_distances)
     return (mapping, np.mean(avg_distance), Rfound, tfound)
 
 
