@@ -4,8 +4,8 @@ from amftrack.pipeline.functions.transport_processing.high_mag_videos.add_BC imp
 
 path_root = f"/projects/0/einf914/graph_stacks"
 plates = [
-    "441_20230807",
-    "449_20230807",
+    # "441_20230807",
+    # "449_20230807",
     "310_20230830"
 ]
 for plate_id in plates:

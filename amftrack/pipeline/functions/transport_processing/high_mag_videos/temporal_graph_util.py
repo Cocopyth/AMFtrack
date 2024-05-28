@@ -47,10 +47,16 @@ downsizing = 5
 #     y2, x2 = p2
 #     interpolated_points = [(y1 + i / num_points * (y2 - y1), x1 + i / num_points * (x2 - x1)) for i in range(num_points + 1)]
 #     return interpolated_points
+
 pdry = 0.21
 pcarbon = 0.5
 CUE = 0.5
 density = 1.1 #g.cm-3
+C_factor = pdry * pcarbon/CUE*density #g.cm-3
+C_factor_volume = C_factor /0.9 #cm3.cm-3
+v0 = 3 #um.s-1
+C_factor_flux = C_factor_volume/v0 #s.um-1
+
 def interpolate_points(p1, p2, spacing=1.0):
     y1, x1 = p1
     y2, x2 = p2
@@ -207,7 +213,7 @@ def fix_attributes(nx_graph):
             init_index = np.max(empty_indexes)+1
             activation_index = int(data["post_hyperedge_activation"])
             for index in range(activation_index,init_index):
-                nx_graph[u][v][str(index)] = data[str(init_index)]
+                nx_graph[u][v][str(index)] = {**data[str(init_index)]}
         # break
 
 
@@ -344,6 +350,30 @@ def build_matrix_system(G, ext_flows):
 
 def solve_flows(A, b):
     return np.linalg.solve(A, b)
+
+def add_flows_heaton(G,nodes_source,nodes_sink,weights,index):
+    for edge in G.edges:
+        G[edge[0]][edge[1]]["radius"] = max(G[edge[0]][edge[1]][str(index)]['width']/2,1)
+
+        G[edge[0]][edge[1]]['v0'] = 0
+
+    DG = convert_to_directed(G)
+    ext_flows_in = {node_source.label: -weights[node_source] for node_source in
+                    nodes_source}  # external flows: positive into the network, negative out
+    for node in nodes_sink:
+        ext_flows_in[node.label] = 0
+    tot_flow = np.sum(list(ext_flows_in.values()))
+    ext_flows_out = {node_sink.label: -tot_flow / len(nodes_sink) for node_sink in
+                     nodes_sink}  # external flows: positive into the network, negative out
+    ext_flows = {**ext_flows_in, **ext_flows_out}
+    print("net_flow",np.sum(list(ext_flows.values())))
+    A, b = build_matrix_system(DG, ext_flows)
+    flows = solve_flows(A, b)
+    edge_flows = {edge: flow for edge, flow in zip(DG.edges(), flows)}
+    nx.set_edge_attributes(G, edge_flows, "water_flux_heaton")
+    for edge in G.edges:
+        G[edge[0]][edge[1]]["water_flux_heaton_abs"] = abs(G[edge[0]][edge[1]]["water_flux_heaton"])
+        G[edge[0]][edge[1]]["speed_heaton"] = G[edge[0]][edge[1]]["water_flux_heaton"] / (np.pi * G[edge[0]][edge[1]]["radius"] ** 2)
 
 def add_flows_heaton(G,nodes_source,nodes_sink,weights,index):
     for edge in G.edges:
@@ -563,12 +593,15 @@ def get_abcisse(graph,order = "post_hyperedge_activation"):
     hyperedges = graph.hyperedges_initial_edges.keys()
     for hyperedge in hyperedges:
         edges = graph.get_hyperedge_edges(hyperedge)
-        edges_new = merge(edges, graph)
+        # edges_new = merge(edges, graph)
+        edges_new = edges
+
         lengths = [(graph[u][v]["length"]) for (u, v) in edges_new]
         ordering = [(graph[u][v][order]) for (u, v) in edges_new]
         if len(edges_new)>0:
             if ordering[0] > ordering[-1]:
                 lengths.reverse()
+                edges_new.reverse()
             abcisse = np.cumsum(lengths)
             for i, edge in enumerate(edges_new):
                 u, v = edge

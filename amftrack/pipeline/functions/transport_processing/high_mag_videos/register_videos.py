@@ -10,8 +10,6 @@ from scipy.optimize import minimize
 
 from pathlib import Path
 
-lim_length_edge = 20
-
 
 def get_segments_ends(
     vid_obj, shiftx, shifty, thresh_length=0, R=np.array([[1, 0], [0, 1]]), t=0
@@ -52,13 +50,13 @@ def get_segments_ends(
 
 
 def register_rot_trans(
-    vid_obj, exp, t, dist=100, R=np.array([[1, 0], [0, 1]]), trans=0
+    vid_obj, exp, t, dist=100, R=np.array([[1, 0], [0, 1]]), trans=0,thresh = 20
 ):
     """Finds the rotation and translation to better align videos' edges on
     network edges"""
     positions = R @ np.array(vid_obj.dataset[["xpos_network", "ypos_network"]]) + trans
     shiftx, shifty = get_shifts(vid_obj)
-    segments = get_segments_ends(vid_obj, shiftx, shifty, lim_length_edge, R, trans)
+    segments = get_segments_ends(vid_obj, shiftx, shifty, thresh, R, trans)
     edges = get_all_edges(exp, t)
     edges = [edge for edge in edges if dist_edge(edge, positions, t) <= dist]
     pixels = [pixel for edge in edges for pixel in edge.pixel_list(t)]
@@ -300,13 +298,13 @@ def get_close_edges(vid_obj, exp, t, R, trans):
 
 
 def make_whole_mapping(
-    vid_obj, exp, t, dist=100, R=np.array([[1, 0], [0, 1]]), trans=0
+    vid_obj, exp, t, dist=100, R=np.array([[1, 0], [0, 1]]), trans=0,thresh =20
 ):
     shiftx, shifty = get_shifts(vid_obj)
-    Rfound, tfound = register_rot_trans(vid_obj, exp, t, dist=dist, R=R, trans=trans)
+    Rfound, tfound = register_rot_trans(vid_obj, exp, t, dist=dist, R=R, trans=trans,thresh = thresh)
     Rcurrent = Rfound @ R
     tcurrent = Rfound @ trans + tfound
-    segments_final = get_segments_ends(vid_obj, shiftx, shifty, 0, Rcurrent, tcurrent)
+    segments_final = get_segments_ends(vid_obj, shiftx, shifty, thresh, Rcurrent, tcurrent)
     edge_names = [edge.edge_name for edge in vid_obj.edge_objs]
     segments_final_interp = []
     for begin, end in segments_final:
@@ -363,17 +361,17 @@ def should_reset(Rfound):
     return np.linalg.det(Rfound) <= 0 or Rfound[0][0] <= 0.99
 
 
-def attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent):
+def attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent,thresh=20):
     try:
         mapping, dist, Rfound, tfound = make_whole_mapping(
-            vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent
+            vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent,thresh=thresh
         )
         reinitialize = False
     except (ValueError, IndexError) as e:
         try:
             Rcurrent, tcurrent = initialize_transformation()
             mapping, dist, Rfound, tfound = make_whole_mapping(
-                vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent
+                vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent,thresh=thresh
             )
             reinitialize = True
         except (ValueError, IndexError) as e:
@@ -404,9 +402,9 @@ def process_video_object(vid_obj, exp, t, Rcurrent, tcurrent):
 
     return Rcurrent, tcurrent, mapping, dist
 
-def process_video_object_new(vid_obj, exp, t, Rcurrent, tcurrent):
+def process_video_object_new(vid_obj, exp, t, Rcurrent, tcurrent,thresh = 20):
     mapping, dist, Rfound, tfound, reinitialize = attempt_mapping(
-        vid_obj, exp, t, Rcurrent, tcurrent
+        vid_obj, exp, t, Rcurrent, tcurrent,thresh
     )
     Rcurrent, tcurrent = update_transformation(Rcurrent, tcurrent, Rfound, tfound)
     return Rcurrent, tcurrent, mapping, dist

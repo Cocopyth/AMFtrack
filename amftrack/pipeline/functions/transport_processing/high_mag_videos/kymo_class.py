@@ -945,7 +945,7 @@ class KymoEdgeAnalysis(object):
         times = []
         speeds_tot = []
         if len(self.filtered_left) == 0:
-            self.fourier_kymo(1, return_self=False)
+            self.fourier_kymo(return_self=False)
 
         """Get the real pixel space and time sizes either from the video, or set them as one if testing"""
         if self.space_pixel_size is None:
