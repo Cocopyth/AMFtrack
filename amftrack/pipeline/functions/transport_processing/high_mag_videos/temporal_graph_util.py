@@ -375,7 +375,7 @@ def add_flows_heaton(G,nodes_source,nodes_sink,weights,index):
         G[edge[0]][edge[1]]["water_flux_heaton_abs"] = abs(G[edge[0]][edge[1]]["water_flux_heaton"])
         G[edge[0]][edge[1]]["speed_heaton"] = G[edge[0]][edge[1]]["water_flux_heaton"] / (np.pi * G[edge[0]][edge[1]]["radius"] ** 2)
 
-def add_flows_heaton(G,nodes_source,nodes_sink,weights,index):
+def add_flows_heaton2(G,nodes_source,nodes_sink,weights,index):
     for edge in G.edges:
         G[edge[0]][edge[1]]["radius"] = max(G[edge[0]][edge[1]][str(index)]['width']/2,1)
 
@@ -386,9 +386,11 @@ def add_flows_heaton(G,nodes_source,nodes_sink,weights,index):
                     nodes_source}  # external flows: positive into the network, negative out
     for node in nodes_sink:
         ext_flows_in[node.label] = 0
+    for node in nodes_sink:
+        DG.add_edge(node.label, "ground", length=0, radius=2, v0=0, Res=0, pot=0)  # Add edge back to the root
+
     tot_flow = np.sum(list(ext_flows_in.values()))
-    ext_flows_out = {node_sink.label: -tot_flow / len(nodes_sink) for node_sink in
-                     nodes_sink}  # external flows: positive into the network, negative out
+    ext_flows_out = {"ground" : tot_flow}  # external flows: positive into the network, negative out
     ext_flows = {**ext_flows_in, **ext_flows_out}
     print("net_flow",np.sum(list(ext_flows.values())))
     A, b = build_matrix_system(DG, ext_flows)

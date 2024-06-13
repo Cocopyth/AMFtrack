@@ -17,7 +17,6 @@ mpl.rcParams["figure.dpi"] = 200
 
 # TODO: Go through these functions to streamline them, and remove deprecated values. Outputting plots is also no longer necessary, as all outputs are created when called for.
 
-
 class KymoVideoAnalysis(object):
     """
     Master class for video processing. Will use nearby video parameters (from csv's, xslx's or the input frame)
@@ -183,13 +182,12 @@ class KymoVideoAnalysis(object):
 
         ### Skeleton creation, we segment the image using either brightfield or fluo segmentation methods.
         if self.vid_type == "BRIGHT":
+            print("segmenting")
             (
                 self.segmented,
                 self.nx_graph_pruned,
                 self.pos,
-            ) = segment_brightfield_ultimate(
-                [imageio.imread(addresses) for addresses in self.selection_file[:300]],
-            )
+            ) = segment_brightfield_ultimate(self.selection_file[:300])
             print("lenvideo", len(self.selection_file))
         elif self.vid_type == "FLUO":
             if not samepos_frame.empty:
@@ -201,7 +199,7 @@ class KymoVideoAnalysis(object):
                 alltiffs = [str(adr) for adr in bfimage_address.glob("*_*.ti*")]
                 #             print("the amount of tif(f) images in videos_folder: ", len(self.images_total_path))
                 alltiffs.sort()
-                sortedtiffs = alltiffs[self.im_range[0] : self.im_range[1]]
+                # sortedtiffs = alltiffs[self.im_range[0] : self.im_range[1]]
                 #             print("this is one tiff: ", onetiff)
                 # print(len(self.selection_file))4
                 # DOING THE std segmentation
@@ -210,8 +208,7 @@ class KymoVideoAnalysis(object):
                     self.segmented,
                     self.nx_graph_pruned,
                     self.pos,
-                ) = segment_brightfield_ultimate(
-                    [imageio.imread(addresses) for addresses in alltiffs[:300]],
+                ) = segment_brightfield_ultimate(alltiffs[:300]
                 )
                 # self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
                 #     imageio.imread(sortedtiffs[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
