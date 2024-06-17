@@ -234,7 +234,7 @@ class KymoVideoAnalysis(object):
                 "I don't have a valid flow_processing type!!! Using fluo thresholding."
             )
             self.segmented, self.nx_graph_pruned, self.pos = segment_fluo_new(
-                [imageio.imread(addresses) for addresses in self.selection_file[:300]]
+                [imageio.imread(addresses) for addresses in self.selection_file[:30]]
             )
         self.edges = list(self.nx_graph_pruned.edges)
         for i, edge in enumerate(self.edges):

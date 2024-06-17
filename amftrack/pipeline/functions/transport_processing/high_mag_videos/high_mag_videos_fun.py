@@ -510,16 +510,16 @@ def incremental_mean_std_address(image_addresses):
             sum_sq_diff = np.zeros_like(image, dtype=np.float32)
 
         sum_images += image
-        del image  # Suggest deletion of the image variable
-        gc.collect()
+        # del image  # Suggest deletion of the image variable
+        # gc.collect()
     mean_image = sum_images / n
 
     for address in image_addresses:
         image = imageio.imread(address)
         sq_diff = (image - mean_image) ** 2
         sum_sq_diff += sq_diff
-        del image  # Suggest deletion of the image variable
-        gc.collect()
+        # del image  # Suggest deletion of the image variable
+        # gc.collect()
 
     variance_image = sum_sq_diff / n
     std_dev_image = np.sqrt(variance_image)
