@@ -32,6 +32,8 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile=99.9):
         "flux_avg": [],
         "flux_min": [],
         "flux_max": [],
+        "flux_left": [],
+        "flux_right": [],
     }
     data_edge = pd.DataFrame(data=edge_table)
 
@@ -150,6 +152,8 @@ def save_raw_data(edge_objs, img_address, spd_max_percentile=99.9):
                         - np.count_nonzero(np.isnan(edge.flux_tot), axis=1)
                         / len(edge.flux_tot[0])
                     ),
+                    "flux_left": edge.flux_left,
+                    "flux_right": edge.flux_right,
                 }
             ]
         )

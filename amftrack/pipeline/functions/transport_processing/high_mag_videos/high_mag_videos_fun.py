@@ -26,7 +26,7 @@ from scipy.optimize import minimize_scalar
 from skimage.morphology import skeletonize
 import itertools, operator
 from scipy.ndimage.filters import generic_filter
-
+import gc
 
 def get_length_um_edge(edge, nx_graph, space_pixel_size):
     pixel_conversion_factor = space_pixel_size
@@ -474,9 +474,62 @@ def segment_brightfield_std(images, seg_thresh=1.10, threshtype="hist_edge"):
     return (segmented, nx_graph_pruned, pos)
 
 
+def incremental_mean_std(images):
+    n = len(images)
+    sum_images = None
+    sum_sq_diff = None
+
+    for image in images:
+        if sum_images is None:
+            sum_images = np.zeros_like(image, dtype=np.float64)
+            sum_sq_diff = np.zeros_like(image, dtype=np.float64)
+
+        sum_images += image
+
+    mean_image = sum_images / n
+
+    for image in images:
+        sq_diff = (image - mean_image) ** 2
+        sum_sq_diff += sq_diff
+
+    variance_image = sum_sq_diff / n
+    std_dev_image = np.sqrt(variance_image)
+
+    return mean_image, std_dev_image
+
+
+def incremental_mean_std_address(image_addresses):
+    n = len(image_addresses)
+    sum_images = None
+    sum_sq_diff = None
+
+    for address in image_addresses:
+        image = imageio.imread(address)
+        if sum_images is None:
+            sum_images = np.zeros_like(image, dtype=np.float32)
+            sum_sq_diff = np.zeros_like(image, dtype=np.float32)
+
+        sum_images += image
+        # del image  # Suggest deletion of the image variable
+        # gc.collect()
+    mean_image = sum_images / n
+
+    for address in image_addresses:
+        image = imageio.imread(address)
+        sq_diff = (image - mean_image) ** 2
+        sum_sq_diff += sq_diff
+        # del image  # Suggest deletion of the image variable
+        # gc.collect()
+
+    variance_image = sum_sq_diff / n
+    std_dev_image = np.sqrt(variance_image)
+
+    return mean_image, std_dev_image
+
+
 def segment_brightfield_ultimate(
-    images,
-    seg_thresh=1.30,
+    image_address,
+    seg_thresh=1.15,
 ):
     """
     Segmentation method for brightfield video.
@@ -485,9 +538,8 @@ def segment_brightfield_ultimate(
     threshtype:     Type of threshold to apply to segmentation. Can be hist_edge, Renyi or Yen
 
     """
-    std_image = np.std(images, axis=0)
+    mean_image,std_image = incremental_mean_std_address(image_address)
     smooth_im_blur = cv2.blur(std_image, (20, 20))
-    mean_image = np.mean(images, axis=0)
     smooth_im_blur_mean = cv2.blur(mean_image, (20, 20))
 
     CVs = smooth_im_blur / smooth_im_blur_mean

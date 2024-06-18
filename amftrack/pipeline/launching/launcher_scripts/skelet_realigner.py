@@ -24,7 +24,7 @@ for plate in plates:
     time = "12:00:00"
     args = [directory_targ]
     run_parallel(
-        "realign.py",
+        "realign_new.py",
         args,
         select,
         num_parallel,
@@ -37,7 +37,7 @@ for plate in plates:
 
 if stage > 0:
     run_launcher(
-        "graph_extracter.py",
+        "width_extracter.py",
         [directory_targ, name_job, stage - 1],
         plates,
         "3:00:00",

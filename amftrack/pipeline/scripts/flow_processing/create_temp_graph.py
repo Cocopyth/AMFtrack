@@ -29,9 +29,9 @@ import pickle
 from tqdm import tqdm
 
 plates = [
-    # "441_20230807",
+    "441_20230807",
     "449_20230807",
-    "310_20230830"
+    # "310_20230830"
 ]
 directory_targ = "/projects/0/einf914/transport/"
 update_plate_info(directory_targ, local=True)
@@ -42,51 +42,56 @@ folders = folders.loc[folders["/Analysis/nx_graph_pruned_width.p"] == True]
 
 
 path_root = f"/projects/0/einf914/graph_stacks"
+mins = {
+    "441_20230807" : 0,
+    "449_20230807" : 50,
+    "310_20230830" : 0
+}
 maxes = {
     "441_20230807" : 55,
-    "449_20230807" : 80,
-    "310_20230830" : 65
+    "449_20230807" : 85,
+    "310_20230830" : 60
 }
-# for plate_id in plates:
-#     # update_plate_info(directory_targ, local=True,strong_constraint=False)
-#     # all_folders = get_current_folders(directory_targ, local=True)
-#     folders = all_folders.loc[all_folders["unique_id"] == plate_id]
-#     folders = folders.loc[folders["/Analysis/nx_graph_pruned_width.p"] == True]
-#     folders = folders.sort_values(by="folder")
-#
-#     folders = folders.sort_values(by="datetime")
-#
-#     # i = indexes[plate_id_video]
-#     # i = np.where(folders['folder'] == indexes[plate_id_video])[0][0]
-#     # selection = folders[folders['folder'].isin(indexes.values())]
-#     for i in range(1, maxes[plate_id]+1):
-#         exp = Experiment(directory_targ)
-#
-#         selection = folders.iloc[i: i + 1]
-#         folder_list = list(selection["folder"])
-#         directory_name = folder_list[0]
-#         path_snap = directory_targ + directory_name
-#         transform = sio.loadmat(path_snap + "/Analysis/transform_new.mat")
-#         exp.load(selection, suffix="_realigned")
-#         for t in range(exp.ts):
-#             exp.load_tile_information(t)
-#             exp.save_location = ""
-#
-#             load_study_zone(exp)
-#         os.makedirs(os.path.join(path_root, plate_id, ), exist_ok=True)
-#         graph = exp.nx_graph[0]
-#         graph_to_save = graph.copy()
-#         for u, v, data in graph_to_save.edges(data=True):
-#             data["pixels"] = data.pop("pixel_list")
-#         node_not_in_ROI = []
-#         for node in graph_to_save:
-#             if not is_in_ROI_node(Node(node, exp), 0):
-#                 node_not_in_ROI.append(node)
-#         graph_to_save.remove_nodes_from(node_not_in_ROI)
-#         nx.set_node_attributes(graph_to_save, exp.positions[0], 'position')
-#         path_tot = os.path.join(path_root, plate_id, f"graph{i:03d}.pickle")
-#         pickle.dump((graph_to_save, transform, selection.iloc[0]), open(path_tot, 'wb'))
-#         # break
+for plate_id in plates:
+    # update_plate_info(directory_targ, local=True,strong_constraint=False)
+    # all_folders = get_current_folders(directory_targ, local=True)
+    folders = all_folders.loc[all_folders["unique_id"] == plate_id]
+    folders = folders.loc[folders["/Analysis/nx_graph_pruned_width.p"] == True]
+    folders = folders.sort_values(by="folder")
+
+    folders = folders.sort_values(by="datetime")
+
+    # i = indexes[plate_id_video]
+    # i = np.where(folders['folder'] == indexes[plate_id_video])[0][0]
+    # selection = folders[folders['folder'].isin(indexes.values())]
+    for i in range(mins[plate_id]+1,maxes[plate_id]+1):
+        exp = Experiment(directory_targ)
+
+        selection = folders.iloc[i: i + 1]
+        folder_list = list(selection["folder"])
+        directory_name = folder_list[0]
+        path_snap = directory_targ + directory_name
+        transform = sio.loadmat(path_snap + "/Analysis/transform_final.mat")
+        exp.load(selection, suffix="_realigned")
+        for t in range(exp.ts):
+            exp.load_tile_information(t)
+            exp.save_location = ""
+
+            load_study_zone(exp)
+        os.makedirs(os.path.join(path_root, plate_id, ), exist_ok=True)
+        graph = exp.nx_graph[0]
+        graph_to_save = graph.copy()
+        for u, v, data in graph_to_save.edges(data=True):
+            data["pixels"] = data.pop("pixel_list")
+        node_not_in_ROI = []
+        for node in graph_to_save:
+            if not is_in_ROI_node(Node(node, exp), 0):
+                node_not_in_ROI.append(node)
+        graph_to_save.remove_nodes_from(node_not_in_ROI)
+        nx.set_node_attributes(graph_to_save, exp.positions[0], 'position')
+        path_tot = os.path.join(path_root, plate_id, f"graph{i:03d}.pickle")
+        pickle.dump((graph_to_save, transform, selection.iloc[0]), open(path_tot, 'wb'))
+        # break
 
 for plate_id in plates:
     saved_infos = []
@@ -95,7 +100,7 @@ for plate_id in plates:
     directory = os.fsencode(str_directory)
     files = os.listdir(directory)
     files.sort()
-    for file in tqdm(files[:maxes[plate_id]]):
+    for file in tqdm(files):
         filename = os.fsdecode(file)
         file_path = os.path.join(str_directory, filename)
         if filename.endswith('pickle'):

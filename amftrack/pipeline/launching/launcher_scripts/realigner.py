@@ -25,7 +25,7 @@ for plate in plates:
     thresh = 10000  # For R. irregularis, thresh 10000 is good. For Aggregatum, higher may be necessary
     args = [thresh, directory_targ]
     run_parallel(
-        "final_alignment.py",
+        "final_alignment_new.py",
         args,
         select,
         num_parallel,
