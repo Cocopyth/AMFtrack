@@ -1,4 +1,5 @@
 import os
+import pickle
 
 import numpy as np
 from scipy import sparse
@@ -47,6 +48,9 @@ def process(args):
         nx_graph, pos = remove_spurs(nx_graph, pos)
 
         nx_graph_pruned = clean_degree_4(prune_graph(nx_graph, threshold), pos)[0]
+        path_save = path_snap + "/Analysis/nx_graph_pruned.p"
+        pickle.dump((nx_graph_pruned, pos), open(path_save, "wb"))
+
         shape_skel = skel.shape
         skeleton = generate_skeleton(
             nx_graph_pruned, (max(30000, shape_skel[0]), max(60000, shape_skel[1]))
