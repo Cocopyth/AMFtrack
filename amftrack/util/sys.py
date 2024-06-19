@@ -181,7 +181,7 @@ def get_param(
         "/Analysis/skeleton_pruned.mat",
         "/Analysis/transform.mat",
         "/Analysis/transform_corrupt.mat",
-        "/Analysis/skeleton_realigned_compressed.mat",
+        "/Analysis/skeleton_pruned_realigned.mat",
         "/Analysis/nx_graph_pruned.p",
         "/Analysis/nx_graph_pruned_width.p",
         "/Analysis/nx_graph_pruned_labeled.p",

@@ -33,7 +33,6 @@ def process(args):
     exp = Experiment(directory)
     exp.load(run_info.loc[run_info["folder"] == directory_name], suffix="_realigned")
     path_snap = directory + directory_name
-    suffix = "/Analysis/nx_graph_pruned.p"
 
     (G, pos) = exp.nx_graph[0], exp.positions[0]
     edge_test = get_width_info_new(exp, 0, resolution=resolution, skip=skip)

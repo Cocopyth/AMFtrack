@@ -22,8 +22,10 @@ for plate in plates:
     select = folders.loc[folders["unique_id"] == plate]
     num_parallel = 128
     time = "12:00:00"
-    thresh = 10000  # For R. irregularis, thresh 10000 is good. For Aggregatum, higher may be necessary
-    args = [thresh, directory_targ]
+    # thresh = 10000  # For R. irregularis, thresh 10000 is good. For Aggregatum, higher may be necessary
+    # args = [thresh, directory_targ]
+    args = [directory_targ]
+
     run_parallel(
         "final_alignment_new.py",
         args,
