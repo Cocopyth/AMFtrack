@@ -27,7 +27,8 @@ def process(args):
     i = int(args[-1])
     op_id = int(args[-2])
     threshold = float(args[1])
-    skip = bool(args[2])
+    skip = eval(args[2])
+    print("skip?",skip,args[2])
 
     directory = str(args[3])
 
@@ -46,7 +47,7 @@ def process(args):
         # nx_graph_pruned=[clean_degree_4(prune_graph(nx_graph),poss_aligned[i])[0] for i,nx_graph in enumerate(nx_graphs_aligned)]
         nx_graph, pos = generate_nx_graph(from_sparse_to_graph(skeleton))
         nx_graph, pos = remove_spurs(nx_graph, pos)
-
+        print("saving_graph")
         nx_graph_pruned = clean_degree_4(prune_graph(nx_graph, threshold), pos)[0]
         path_save = path_snap + "/Analysis/nx_graph_pruned.p"
         pickle.dump((nx_graph_pruned, pos), open(path_save, "wb"))

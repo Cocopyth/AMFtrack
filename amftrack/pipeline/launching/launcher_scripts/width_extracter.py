@@ -17,7 +17,7 @@ all_folders = get_current_folders(
     directory_targ, local=True, suffix_data_info=suffix_data_info
 )
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
-folders = folders.loc[folders["/Analysis/skeleton_realigned_compressed.mat"] == True]
+folders = folders.loc[folders["/Analysis/skeleton_pruned_realigned.mat"] == True]
 num_parallel = 128
 time = "12:00:00"
 skip = False

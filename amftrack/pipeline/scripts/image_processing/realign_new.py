@@ -12,7 +12,7 @@ from pymatreader import read_mat
 import cv2
 import numpy as np
 from amftrack.pipeline.functions.image_processing.extract_graph import (
-    sparse_to_doc,
+    sparse_to_doc, generate_skeleton,
 )
 import scipy.sparse
 
@@ -34,7 +34,7 @@ def process(args):
 
     select = folders.iloc[j : j + 1]
     exp = Experiment(directory)
-    exp.load(select, suffix="_width")
+    exp.load(select, suffix="")
     Rs = [np.array([[1, 0], [0, 1]])]
     ts = [np.array([[0, 0]])]
     for i, directory_name in enumerate(folder_list[1: j + 1]):
@@ -64,7 +64,9 @@ def process(args):
     path_save = path_snap + "/Analysis/nx_graph_pruned_realigned.p"
     pickle.dump((exp.nx_graph[time], pos), open(path_save, "wb"))
     sio.savemat(path_snap + "/Analysis/transform_final.mat", {"R": R0, "t": t0})
-
+    skeleton = generate_skeleton(exp.nx_graph[time], (60000, 60000))
+    skel = scipy.sparse.csc_matrix(skeleton, dtype=np.uint8)
+    sio.savemat(path_snap + "/Analysis/skeleton_pruned_realigned.mat", {"skeleton": skel})
 
 if __name__ == "__main__":
     process(sys.argv)
