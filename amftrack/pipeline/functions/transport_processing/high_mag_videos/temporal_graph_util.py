@@ -278,7 +278,7 @@ def create_subgraph_from_nodelist(G, node_list):
     return new_graph
 
 
-def convert_to_directed(undirected_graph):
+def convert_to_directed(undirected_graph,radius_attribute = 'radius'):
     # Create a new directed graph
     directed_graph = nx.DiGraph()
 
@@ -298,8 +298,8 @@ def convert_to_directed(undirected_graph):
     for u, v, attr in directed_graph.edges(data=True):
         # attr['radius'] = max(attr['width'] / 2, 0.5)
         # attr['v0'] = np.sign(attr['QBC_net'])*3 if abs(attr['QBC_net'])>0 else 0
-        attr['Res'] = 8 * mu * attr["length"] / (np.pi * attr['radius'] ** 4)
-        attr['pot'] = 8 * mu * attr["length"] * attr['v0'] / (np.pi * attr['radius'] ** 2)
+        attr['Res'] = 8 * mu * attr["length"] / (np.pi * attr[radius_attribute] ** 4)
+        attr['pot'] = 8 * mu * attr["length"] * attr['v0'] / (np.pi * attr[radius_attribute] ** 2)
 
     return directed_graph
 
@@ -390,9 +390,9 @@ def add_flows_heaton2(G,nodes_source,nodes_sink,weights,index):
         DG.add_edge(node.label, "ground", length=0, radius=2, v0=0, Res=0, pot=0)  # Add edge back to the root
 
     tot_flow = np.sum(list(ext_flows_in.values()))
-    ext_flows_out = {"ground" : tot_flow}  # external flows: positive into the network, negative out
+    ext_flows_out = {"ground" : -tot_flow}  # external flows: positive into the network, negative out
     ext_flows = {**ext_flows_in, **ext_flows_out}
-    print("net_flow",np.sum(list(ext_flows.values())))
+    print("net_flow_heaton",np.sum(list(ext_flows.values())))
     A, b = build_matrix_system(DG, ext_flows)
     flows = solve_flows(A, b)
     edge_flows = {edge: flow for edge, flow in zip(DG.edges(), flows)}
@@ -441,6 +441,34 @@ def add_backflows2(G, nodes_sink,index):
         G[edge[0]][edge[1]]["speed_backflow2"] = 2 * G[edge[0]][edge[1]]["water_flux2"] / (
                     np.pi * G[edge[0]][edge[1]]["radius"] ** 2) - G[edge[0]][edge[1]]['v0']
 
+lipid_fraction = 0.1
+def add_backflows_phase(G, nodes_sink,index):
+    for edge in G.edges:
+        G[edge[0]][edge[1]]["radius"] = max(G[edge[0]][edge[1]][str(index)]['width']/2,1)
+        G[edge[0]][edge[1]]["tot_cross_section"] = np.pi * G[edge[0]][edge[1]]["radius"]**2
+        G[edge[0]][edge[1]]["lipid_phase_fraction"] = np.abs(G[edge[0]][edge[1]]["speed_heaton"]) * C_factor_flux / lipid_fraction
+        G[edge[0]][edge[1]]["lipid_cross_section"] = G[edge[0]][edge[1]]["lipid_phase_fraction"]*G[edge[0]][edge[1]]["tot_cross_section"]
+        assert(G[edge[0]][edge[1]]["lipid_phase_fraction"]<1)
+        assert(G[edge[0]][edge[1]]["lipid_phase_fraction"]>=0)
+        G[edge[0]][edge[1]]["water_cross_section"] = (1-G[edge[0]][edge[1]]["lipid_phase_fraction"])*G[edge[0]][edge[1]]["tot_cross_section"]
+        G[edge[0]][edge[1]]["water_phase_radius"] = np.sqrt((G[edge[0]][edge[1]]["water_cross_section"] /np.pi))
+
+        G[edge[0]][edge[1]]['v0'] = np.sign(G[edge[0]][edge[1]]['speed_heaton'])*v0
+        G[edge[0]][edge[1]]["net_water_flux_phase_lipid"] = G[edge[0]][edge[1]]["lipid_cross_section"]*G[edge[0]][edge[1]]['v0']*(1-lipid_fraction)
+
+    DG = convert_to_directed(G,"water_phase_radius")
+    for node in (nodes_sink):
+        DG.add_edge(node.label, "ground", length=0, radius=2, v0=0, Res=0, pot=0)  # Add edge back to the root
+
+    ext_flows = {}
+    A, b = build_matrix_system(DG, ext_flows)
+    flows = solve_flows(A, b)
+    edge_flows = {edge: flow for edge, flow in zip(DG.edges(), flows)}
+    nx.set_edge_attributes(G, edge_flows, "net_water_flux_phase")
+    for edge in G.edges:
+        G[edge[0]][edge[1]]["net_water_flux_phase_abs"] = abs(G[edge[0]][edge[1]]["net_water_flux_phase"])
+        G[edge[0]][edge[1]]["net_water_flux_phase_backflow"] = G[edge[0]][edge[1]]["net_water_flux_phase"]+G[edge[0]][edge[1]]["water_flux_heaton"]-G[edge[0]][edge[1]]["net_water_flux_phase_lipid"]
+        G[edge[0]][edge[1]]["speed_backflow_phase"] = 2*G[edge[0]][edge[1]]["net_water_flux_phase_backflow"] / G[edge[0]][edge[1]]["water_cross_section"]-G[edge[0]][edge[1]]['v0']
 
 def add_lipid_flux(G,nodes_source,nodes_sink,weights):
     edge_flux1 = {edge: 0 for edge in G.edges}
@@ -542,7 +570,7 @@ def plot_arrows_along_edge(ax, begin, end, color, spacing=60):
                     arrowprops=dict(arrowstyle="->", color=color))
 
 r0 = 3
-def add_fluxes(exp,index0,index1,folders):
+def add_fluxes(exp,index0,index1,folders,num_sinks = 20):
     spatial_temporal_graph = exp.nx_graph[0]
     weights = {(begin, end): LineString(data['pixel_list']).length * 1.725 for begin, end, data in
                spatial_temporal_graph.edges(data=True)}
@@ -564,15 +592,15 @@ def add_fluxes(exp,index0,index1,folders):
             # Get all nodes and identify sinks and sources within the component
             nodes = get_all_nodes(exp1, 0)
             nodes_sink = [node for node in nodes if get_min_activation(component_graph, node.label) <= index0]
-            nodes_sink = find_lowest_nodes(nodes_sink, 0, 20)
+            nodes_sink = find_lowest_nodes(nodes_sink, 0, num_sinks)
             nodes_source_component = [node for node in nodes if node in nodes_source]
 
             # Add fluxes and flows to the component graph
             add_lipid_flux(exp1.nx_graph[0], nodes_source_component, nodes_sink, weights)
-            add_flows_heaton(exp1.nx_graph[0], nodes_source_component, nodes_sink, weights, index0)
+            add_flows_heaton2(exp1.nx_graph[0], nodes_source_component, nodes_sink, weights, index0)
             add_backflows(exp1.nx_graph[0], nodes_sink, index0)
             add_backflows2(exp1.nx_graph[0], nodes_sink, index0)
-
+            add_backflows_phase(exp1.nx_graph[0], nodes_sink, index0)
             combined_graph = nx.compose(combined_graph, exp1.nx_graph[0])
     exp1 = make_exp(combined_graph, folders)
 

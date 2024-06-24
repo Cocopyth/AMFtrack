@@ -90,3 +90,6 @@ def make_profile(data_obj, exp, t):
                         if index < len(profiles):
                             path = f"/scratch-shared/amftrack/ML_dataset/{unique_id}/{edge.edge_name}_{index}.npy"
                             np.save(path, profiles[index])
+                            path = f"/scratch-shared/amftrack/ML_dataset/{unique_id}/{edge.edge_name}_transect_{index}.npy"
+                            np.save(path, transects[index])
+                            print(transects[index])
