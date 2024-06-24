@@ -66,7 +66,7 @@ def process(args):
     sio.savemat(path_snap + "/Analysis/transform_final.mat", {"R": R0, "t": t0})
     skeleton = generate_skeleton(exp.nx_graph[time], (60000, 60000))
     skel = scipy.sparse.csc_matrix(skeleton, dtype=np.uint8)
-    sio.savemat(path_snap + "/Analysis/skeleton_pruned_realigned.mat", {"skeleton": skel})
+    sio.savemat(path_snap + "/Analysis/skeleton_pruned_realigned.mat", {"skeleton": skel, "R": R0, "t": t0})
 
 if __name__ == "__main__":
     process(sys.argv)

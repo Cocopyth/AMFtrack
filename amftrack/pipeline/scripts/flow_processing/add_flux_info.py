@@ -4,8 +4,8 @@ from amftrack.pipeline.functions.transport_processing.high_mag_videos.add_BC imp
 
 path_root = f"/projects/0/einf914/graph_stacks"
 plates = [
-    # "441_20230807",
-    # "449_20230807",
+    "441_20230807",
+    "449_20230807",
     "310_20230830"
 ]
 for plate_id in plates:
@@ -49,7 +49,7 @@ for plate_id in plates:
         index1 = index0+1
         exp1 = add_fluxes(exp,index0,index1,folders)
         for edge in exp1.nx_graph[0].edges:
-            for attribute in ["QBC_net","QBC_tot","speed_backflow","water_flux","speed_heaton","water_flux_heaton","speed_backflow2","water_flux2"]:
+            for attribute in ["QBC_net","QBC_tot","speed_backflow","water_flux","speed_heaton","water_flux_heaton","speed_backflow2","water_flux2","speed_backflow_phase"]:
                 spatial_temporal_graph[edge[0]][edge[1]][str(index0)][attribute] = exp1.nx_graph[0][edge[0]][edge[1]][attribute]
         # break
 

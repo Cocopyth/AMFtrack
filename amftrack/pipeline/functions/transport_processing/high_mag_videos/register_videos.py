@@ -343,7 +343,7 @@ def add_attribute(
 
 def check_hasedges(vid_obj):
     shiftx, shifty = get_shifts(vid_obj)
-    segments = get_segments_ends(vid_obj, shiftx, shifty, lim_length_edge)
+    segments = get_segments_ends(vid_obj, shiftx, shifty)
     return len(segments) > 0
 
 
