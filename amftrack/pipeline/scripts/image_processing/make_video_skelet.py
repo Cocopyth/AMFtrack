@@ -35,7 +35,7 @@ id_unique = (
     + "_"
     + str(int(str(select["CrossDate"].iloc[0]).replace("'", "")))
 )
-for k,path in enumerate(select["total_path"]):
+for k, path in enumerate(select["total_path"]):
     print(path)
     # print(folder)
     path_snap = path
@@ -45,7 +45,7 @@ for k,path in enumerate(select["total_path"]):
     skel = skel_info["skeleton"]
     im = read_mat(path_snap + "/Analysis/raw_image.mat")["raw"]
     size_image = im.shape
-    if k==0:
+    if k == 0:
         resize = (2624, int(2624 * size_image[0] / size_image[1]))
     compressed = sparse.csr_matrix(
         (

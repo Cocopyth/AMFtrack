@@ -907,6 +907,7 @@ def plot_edge_color_value(
             colors.append(color)
     if plot_cmap:
         colors = [cmap((width - v_min) / (v_max - v_min)) for width in widths]
+
     # 0/ Make color legend
     def convert(c):
         c_ = c / 255
@@ -930,7 +931,9 @@ def plot_edge_color_value(
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])
         N = 5
-        plt.colorbar(sm, ticks=np.linspace(v_min, v_max, N), label=label_colorbar,ax=ax)
+        plt.colorbar(
+            sm, ticks=np.linspace(v_min, v_max, N), label=label_colorbar, ax=ax
+        )
     # 1/ Image layer
     if show_background:
         im, f = reconstruct_image_from_general(

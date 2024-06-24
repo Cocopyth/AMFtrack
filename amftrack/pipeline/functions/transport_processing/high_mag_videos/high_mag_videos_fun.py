@@ -28,6 +28,7 @@ import itertools, operator
 from scipy.ndimage.filters import generic_filter
 import gc
 
+
 def get_length_um_edge(edge, nx_graph, space_pixel_size):
     pixel_conversion_factor = space_pixel_size
     length_edge = 0
@@ -145,7 +146,7 @@ def extract_section_profiles_for_edge(
 
 
 def plot_segments_on_image(segments, ax, color="red", bounds=(0, 1), alpha=1, adj=1):
-    for (point1_pivot, point2_pivot) in segments:
+    for point1_pivot, point2_pivot in segments:
         point1 = (1 - bounds[0]) * point1_pivot + bounds[0] * point2_pivot
         point2 = (1 - bounds[1]) * point1_pivot + bounds[1] * point2_pivot
         ax.plot(
@@ -239,28 +240,30 @@ def create_paved_kymograph(kymo):
 
     # Create a larger image and place manipulated images accordingly
     filter_forward = np.zeros((3 * height, 3 * width), dtype=kymo.dtype)
-    filter_forward[height:2 * height, width:2 * width] = subFourier1
-    filter_forward[height:2 * height, 0:width] = subFourier2
-    filter_forward[height:2 * height, 2 * width:3 * width] = subFourier2
+    filter_forward[height : 2 * height, width : 2 * width] = subFourier1
+    filter_forward[height : 2 * height, 0:width] = subFourier2
+    filter_forward[height : 2 * height, 2 * width : 3 * width] = subFourier2
     filter_forward[0:height, 0:width] = subFourier3
-    filter_forward[0:height, 2 * width:3 * width] = subFourier3
-    filter_forward[2 * height:3 * height, 0:width] = subFourier3
-    filter_forward[2 * height:3 * height, 2 * width:3 * width] = subFourier3
-    filter_forward[0:height, width:2 * width] = subFourier4
-    filter_forward[2 * height:3 * height, width:2 * width] = subFourier4
+    filter_forward[0:height, 2 * width : 3 * width] = subFourier3
+    filter_forward[2 * height : 3 * height, 0:width] = subFourier3
+    filter_forward[2 * height : 3 * height, 2 * width : 3 * width] = subFourier3
+    filter_forward[0:height, width : 2 * width] = subFourier4
+    filter_forward[2 * height : 3 * height, width : 2 * width] = subFourier4
     return filter_forward
 
 
 def apply_fourier_operations(tiled_image):
-    dft = np.fft.fftshift(np.fft.fft2(tiled_image))  # Apply FFT and shift zero frequency to center
+    dft = np.fft.fftshift(
+        np.fft.fft2(tiled_image)
+    )  # Apply FFT and shift zero frequency to center
     # Zero out specific regions in the Fourier transform
     h, w = dft.shape
     # Horizontal line across the middle
-    dft[h // 2 - 1:h // 2 + 1, :] = 0
+    dft[h // 2 - 1 : h // 2 + 1, :] = 0
     # Top-left quadrant
-    dft[:h // 2, :w // 2] = 0
+    dft[: h // 2, : w // 2] = 0
     # botom-right quadrant
-    dft[h // 2:, w // 2:] = 0
+    dft[h // 2 :, w // 2 :] = 0
 
     # Inverse Fourier Transform
     inverse_dft = np.fft.ifft2(np.fft.ifftshift(dft)).real
@@ -273,11 +276,11 @@ def filter_kymo_left(kymo):
     paved_kymo = create_paved_kymograph(kymo)
     paved_kymo_filter = apply_fourier_operations(paved_kymo)
     paved_kymo = create_paved_kymograph(kymo)
-    filtered_kymo = paved_kymo_filter[height:2 * height, width:2 * width]
+    filtered_kymo = paved_kymo_filter[height : 2 * height, width : 2 * width]
     filtered_kymo -= np.percentile(filtered_kymo, 10)
     # filtered_kymo[np.where(filtered_kymo<0)] =0
 
-    return (filtered_kymo)
+    return filtered_kymo
 
     """
     Simple function that filters the kymograph and outputs the forward and backward filters.
@@ -538,7 +541,7 @@ def segment_brightfield_ultimate(
     threshtype:     Type of threshold to apply to segmentation. Can be hist_edge, Renyi or Yen
 
     """
-    mean_image,std_image = incremental_mean_std_address(image_address)
+    mean_image, std_image = incremental_mean_std_address(image_address)
     smooth_im_blur = cv2.blur(std_image, (20, 20))
     smooth_im_blur_mean = cv2.blur(mean_image, (20, 20))
 

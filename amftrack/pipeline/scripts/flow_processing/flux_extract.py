@@ -14,7 +14,6 @@ i = int(sys.argv[-1])
 op_id = int(sys.argv[-2])
 
 
-
 print(f"This is iteration {i}, with parameters {GST_params}")
 print(upl_targ)
 
@@ -79,7 +78,7 @@ for edge in edge_objs:
     # edge.view_edge(
     #     img_frame=img_seq, save_im=True, quality=6, target_length=target_length
     # ) #this lines consumes a lot of memory, so turning off the video extraction for now
-    #shoudl be rewritten to avoid loading all videos in memory
+    # shoudl be rewritten to avoid loading all videos in memory
     edge.extract_multi_kymo(
         bin_nr, target_length=target_length, kymo_adj=False, kymo_normalize=True
     )
@@ -120,4 +119,3 @@ print(f"Iteration {i}: {img_address}")
 # uploading to dropbox is severely limiting the throughput, so I will skip it this week. Also dropbox is alomst full
 # upload_folder(img_address, db_address, delete=True)
 print(f"{img_address} should be empty now!")
-

@@ -25,7 +25,7 @@ def find_image_index(im_coord_list, x: float, y: float, DIM_X: int, DIM_Y: int):
     """
     Find the first image that contains the coordinates (x, y)
     """
-    for (i, (x_im, y_im)) in enumerate(im_coord_list):
+    for i, (x_im, y_im) in enumerate(im_coord_list):
         if is_in_image(x_im, y_im, x, y, DIM_X, DIM_Y):
             return i
 
@@ -36,7 +36,7 @@ def find_image_indexes(im_coord_list, x: float, y: float, DIM_X: int, DIM_Y: int
     contained in the list of (x, y) coordinates.
     """
     l = []
-    for (i, (x_im, y_im)) in enumerate(im_coord_list):
+    for i, (x_im, y_im) in enumerate(im_coord_list):
         if is_in_image(x_im, y_im, x, y, DIM_X, DIM_Y):
             l.append(i)
     return l

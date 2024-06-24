@@ -136,7 +136,7 @@ class Experiment:
         try:
             self.dimX_dimY = self.get_image(0, 0).shape
         except FileNotFoundError:
-            self.dimX_dimY = (3000,4096)
+            self.dimX_dimY = (3000, 4096)
 
     def save_graphs(self, suffix):
         for i, date in enumerate(self.dates):
@@ -844,7 +844,7 @@ def find_node_equ(node, t) -> Node:
 class Edge:
     """Edge object through time in an experiment."""
 
-    def __init__(self, begin: Node, end: Node, experiment: Experiment, oriented = False):
+    def __init__(self, begin: Node, end: Node, experiment: Experiment, oriented=False):
         self.begin = begin  # Starting Node
         self.end = end  # Ending Node
         self.experiment = experiment
@@ -852,7 +852,7 @@ class Edge:
 
     def __eq__(self, other):
         if self.oriented:
-            return(self.begin == other.begin and self.end == other.end)
+            return self.begin == other.begin and self.end == other.end
         else:
             return (self.begin == other.begin and self.end == other.end) or (
                 self.end == other.begin and self.begin == other.end

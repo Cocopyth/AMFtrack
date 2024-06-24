@@ -500,7 +500,9 @@ def node_dist(
         #         print(list_pixel[0],pos_tm1[node1],list_pixel[-1])
         for pixel in list_pixel[:20]:
             sparse_cross1[
-                np.array(pixel).astype(int) - np.array(pos_tm1[node1]) + np.array((50, 50))
+                np.array(pixel).astype(int)
+                - np.array(pos_tm1[node1])
+                + np.array((50, 50))
             ] = 1
     for edge in nx_graph_t.edges(node2):
         list_pixel = nx_graph_t.get_edge_data(*edge)["pixel_list"]
@@ -511,7 +513,9 @@ def node_dist(
             #             if np.any(np.array(pixel)-np.array(pos_tm1[node1])+np.array((50,50))>=100):
             #                 print(list_pixel[0],pos_t[node2],list_pixel[-1])
             sparse_cross2[
-                np.array(pixel.astype(int)) - np.array(pos_tm1[node1]) + np.array((50, 50))
+                np.array(pixel.astype(int))
+                - np.array(pos_tm1[node1])
+                + np.array((50, 50))
             ] = 1
     kernel = np.ones((3, 3), np.uint8)
     dilation1 = cv2.dilate(

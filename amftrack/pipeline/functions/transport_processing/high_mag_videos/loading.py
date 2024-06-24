@@ -62,10 +62,12 @@ def load_video_dataset(
 
 
 def load_video_dataset_local(
-    plate_id_video, videos_folder, analysis_folder, analysis_folder_root,suffix = ""
+    plate_id_video, videos_folder, analysis_folder, analysis_folder_root, suffix=""
 ):
     analysis_folder = os.path.join(analysis_folder, plate_id_video)
-    img_infos = glob.glob(f"{analysis_folder}/**/video_data{suffix}.json", recursive=True)
+    img_infos = glob.glob(
+        f"{analysis_folder}/**/video_data{suffix}.json", recursive=True
+    )
 
     vid_anls_frame = pd.DataFrame()
     add_infos = []

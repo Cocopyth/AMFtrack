@@ -17,6 +17,7 @@ mpl.rcParams["figure.dpi"] = 200
 
 # TODO: Go through these functions to streamline them, and remove deprecated values. Outputting plots is also no longer necessary, as all outputs are created when called for.
 
+
 class KymoVideoAnalysis(object):
     """
     Master class for video processing. Will use nearby video parameters (from csv's, xslx's or the input frame)
@@ -208,8 +209,7 @@ class KymoVideoAnalysis(object):
                     self.segmented,
                     self.nx_graph_pruned,
                     self.pos,
-                ) = segment_brightfield_ultimate(alltiffs[:300]
-                )
+                ) = segment_brightfield_ultimate(alltiffs[:300])
                 # self.segmented, self.nx_graph_pruned, self.pos = segment_brightfield(
                 #     imageio.imread(sortedtiffs[self.im_range[0]]), frangi_range=frangi_range, thresh=thresh,
                 #     seg_thresh=seg_thresh,thresh_adjust=thresh_adjust, binning=self.binning, close_size=close_size)
@@ -1068,7 +1068,6 @@ class KymoEdgeAnalysis(object):
             self.flux_tot = flux_tot
             self.flux_left = np.nanmean(flux_left)
             self.flux_right = np.nanmean(flux_right)
-
 
             flux_arrays.append(flux_tot)
         if len(kymo) == 1:

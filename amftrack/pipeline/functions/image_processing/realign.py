@@ -1,13 +1,18 @@
 import networkx as nx
 import numpy as np
 
-from amftrack.pipeline.functions.image_processing.experiment_util import get_all_edges, get_all_nodes
+from amftrack.pipeline.functions.image_processing.experiment_util import (
+    get_all_edges,
+    get_all_nodes,
+)
 from amftrack.pipeline.functions.image_processing.extract_graph import (
     generate_nx_graph_from_skeleton,
 )
 from scipy import sparse
 
-from amftrack.pipeline.functions.transport_processing.high_mag_videos.register_videos import find_optimal_R_and_t
+from amftrack.pipeline.functions.transport_processing.high_mag_videos.register_videos import (
+    find_optimal_R_and_t,
+)
 from amftrack.sparse_util import dilate, zhangSuen
 from scipy.optimize import minimize
 from time import time
@@ -326,26 +331,33 @@ def transform_skeleton_final(skeleton_doc, Rot, trans):
         skeleton_transformed_sparse[(pixel[0], pixel[1])] = 1
     return skeleton_transformed_sparse
 
-def find_rot_trans2024(exp,t1,t2):
-    assert t2>t1 #t2 should be bigger and therefore include all nodes of t1
+
+def find_rot_trans2024(exp, t1, t2):
+    assert t2 > t1  # t2 should be bigger and therefore include all nodes of t1
     edges1 = get_all_edges(exp, t1)
     edges2 = get_all_edges(exp, t2)
     pixels1 = [node.pos(t1) for node in get_all_nodes(exp, t1)]
     pixels2 = [node.pos(t2) for node in get_all_nodes(exp, t2)]
     X = np.array(pixels1)
     Y = np.array(pixels2)
-    R,t = find_optimal_R_and_t(X, Y)
-    return(R,t)
+    R, t = find_optimal_R_and_t(X, Y)
+    return (R, t)
 
-def transform_pixel_list(pixel_list,R,t):
-    return([R@np.array(pixel)+t for pixel in pixel_list])
 
-def realign(exp,t1,t2):
-    assert t2>t1
-    R,t = find_rot_trans2024(exp,t1,t2)
+def transform_pixel_list(pixel_list, R, t):
+    return [R @ np.array(pixel) + t for pixel in pixel_list]
+
+
+def realign(exp, t1, t2):
+    assert t2 > t1
+    R, t = find_rot_trans2024(exp, t1, t2)
     edges = get_all_edges(exp, t1)
 
-    new_pixel_list = {(edge.begin.label, edge.end.label): transform_pixel_list(edge.pixel_list(t), R, t) for edge in
-                      edges}
+    new_pixel_list = {
+        (edge.begin.label, edge.end.label): transform_pixel_list(
+            edge.pixel_list(t), R, t
+        )
+        for edge in edges
+    }
 
     nx.set_edge_attributes(exp.nx_graph[t], new_pixel_list, "pixel_list")

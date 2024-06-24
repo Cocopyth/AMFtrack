@@ -28,7 +28,7 @@ def process(args):
     op_id = int(args[-2])
     threshold = float(args[1])
     skip = eval(args[2])
-    print("skip?",skip,args[2])
+    print("skip?", skip, args[2])
 
     directory = str(args[3])
 

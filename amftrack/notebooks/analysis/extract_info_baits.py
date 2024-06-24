@@ -262,15 +262,15 @@ def get_curvature_density_bait(window, path, kern_sizes=[]):
                                 new_line_dic[f"density{kern_size}"] = density_maps[t][
                                     kern_size
                                 ][0][pos_comp]
-                                new_line_dic[
-                                    f"grad_density_x{kern_size}"
-                                ] = density_maps[t][kern_size][1][pos_comp]
-                                new_line_dic[
-                                    f"grad_density_y{kern_size}"
-                                ] = density_maps[t][kern_size][2][pos_comp]
-                                new_line_dic[
-                                    f"grad_density_norm{kern_size}"
-                                ] = density_maps[t][kern_size][3][pos_comp]
+                                new_line_dic[f"grad_density_x{kern_size}"] = (
+                                    density_maps[t][kern_size][1][pos_comp]
+                                )
+                                new_line_dic[f"grad_density_y{kern_size}"] = (
+                                    density_maps[t][kern_size][2][pos_comp]
+                                )
+                                new_line_dic[f"grad_density_norm{kern_size}"] = (
+                                    density_maps[t][kern_size][3][pos_comp]
+                                )
                                 new_line_dic[f"area{kern_size}"] = (
                                     np.sum(density_maps[t][kern_size][0] >= 0.0005)
                                     * compress**2

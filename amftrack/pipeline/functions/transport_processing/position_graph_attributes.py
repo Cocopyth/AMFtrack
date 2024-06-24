@@ -157,9 +157,11 @@ def get_tip_lists(table, exp, t):
 def get_betweenness_loc(table, exp, t=0):
     poss, edges_lists = get_poss_edges_lists(table, exp, t)
     table[f"betweenness"] = [
-        get_betweenness(exp, pos, t, edges_lists[i])
-        if len(edges_lists[i]) > 0
-        else np.nan
+        (
+            get_betweenness(exp, pos, t, edges_lists[i])
+            if len(edges_lists[i]) > 0
+            else np.nan
+        )
         for i, pos in enumerate(poss)
     ]
     return table
@@ -168,9 +170,11 @@ def get_betweenness_loc(table, exp, t=0):
 def get_random_betweenness_loc(table, exp, t):
     poss, edges_lists = get_poss_edges_lists(table, exp, t)
     table[f"random_betweenness"] = [
-        get_random_betweenness(exp, pos, t, edges_lists[i])
-        if len(edges_lists[i]) > 0
-        else np.nan
+        (
+            get_random_betweenness(exp, pos, t, edges_lists[i])
+            if len(edges_lists[i]) > 0
+            else np.nan
+        )
         for i, pos in enumerate(poss)
     ]
     return table
@@ -180,9 +184,11 @@ def get_dist_tip(table, exp, t):
     poss, edges_lists = get_poss_edges_lists(table, exp, t)
     tip_lists = get_tip_lists(table, exp, t)
     table[f"dist_tip"] = [
-        get_dist_tip_loc(exp, pos, t, edges_lists[i], tip_lists[i])
-        if len(edges_lists[i]) > 0
-        else np.nan
+        (
+            get_dist_tip_loc(exp, pos, t, edges_lists[i], tip_lists[i])
+            if len(edges_lists[i]) > 0
+            else np.nan
+        )
         for i, pos in enumerate(poss)
     ]
     return table
@@ -192,9 +198,11 @@ def get_num_nodes_tip(table, exp, t):
     poss, edges_lists = get_poss_edges_lists(table, exp, t)
     tip_lists = get_tip_lists(table, exp, t)
     table[f"num_nodes_tip"] = [
-        get_num_nodes_tip_loc(exp, pos, t, edges_lists[i], tip_lists[i])
-        if len(edges_lists[i]) > 0
-        else np.nan
+        (
+            get_num_nodes_tip_loc(exp, pos, t, edges_lists[i], tip_lists[i])
+            if len(edges_lists[i]) > 0
+            else np.nan
+        )
         for i, pos in enumerate(poss)
     ]
     return table

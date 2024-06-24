@@ -30,5 +30,5 @@ upload_path = f"/{dir_drop}/{id_unique}/{id_unique}_stitched.mp4"
 image = imageio.imread(paths[0])
 size_image = image.shape
 
-resize = (2624, int(2624*size_image[0]/size_image[1]))
+resize = (2624, int(2624 * size_image[0] / size_image[1]))
 make_video(paths, texts, resize, save_path=None, upload_path=upload_path, fontScale=3)

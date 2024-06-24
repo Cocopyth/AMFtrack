@@ -21,7 +21,8 @@ from amftrack.pipeline.functions.transport_processing.high_mag_videos.add_BC imp
     add_betweenness,
     add_hyphal_attributes,
     add_betweenness_QP,
-    get_derivative, add_betweenness_QC,
+    get_derivative,
+    add_betweenness_QC,
 )
 import pandas as pd
 import numpy as np
@@ -149,10 +150,10 @@ refs = {
 #                 target = db_address + "/edges_data.csv"
 #                 # print(source,target)
 #                 upload(source, target)
-            # break
-    # break
+# break
+# break
 
-#compute q_BC_C
+# compute q_BC_C
 
 for plate_id in refs.keys():
     indexes = refs[plate_id]
@@ -173,16 +174,18 @@ for plate_id in refs.keys():
     upl_targ = dropbox_address
     for indexk, plate_id_video in enumerate(list(indexes.keys())):
         exp = Experiment(directory_targ)
-        i = np.where(folders['folder'] == indexes[plate_id_video])[0][0]
+        i = np.where(folders["folder"] == indexes[plate_id_video])[0][0]
 
-        selection = folders.iloc[i:i+2]
+        selection = folders.iloc[i : i + 2]
         exp.load(selection, suffix="_labeled")
         exp.save_location = ""
         for t in range(exp.ts):
 
             edges = get_all_edges(exp, t)
 
-            weights = {(edge.begin.label, edge.end.label): edge.length_um(t) for edge in edges}
+            weights = {
+                (edge.begin.label, edge.end.label): edge.length_um(t) for edge in edges
+            }
             nx.set_edge_attributes(exp.nx_graph[t], weights, "length")
         t = 0
         add_betweenness_QC(exp, t)

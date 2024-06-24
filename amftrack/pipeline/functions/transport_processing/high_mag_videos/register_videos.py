@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+
 # import open3d as o3d
 from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_all_edges,
@@ -50,7 +51,7 @@ def get_segments_ends(
 
 
 def register_rot_trans(
-    vid_obj, exp, t, dist=100, R=np.array([[1, 0], [0, 1]]), trans=0,thresh = 20
+    vid_obj, exp, t, dist=100, R=np.array([[1, 0], [0, 1]]), trans=0, thresh=20
 ):
     """Finds the rotation and translation to better align videos' edges on
     network edges"""
@@ -224,10 +225,10 @@ def callback_function(xk, source, target):
     print(f"Current parameters: {xk}, Objective Function Value: {current_value}")
 
 
-def find_optimal_R_and_t(source, target,theta_divide = 16,delta_space=7000):
+def find_optimal_R_and_t(source, target, theta_divide=16, delta_space=7000):
     initial_guess = np.array([0, 0, 0])
     deltas = np.array([delta_space, delta_space, np.pi / theta_divide])
-    init_params = [-delta_space/2, -delta_space/2, -np.pi / (2*theta_divide)]
+    init_params = [-delta_space / 2, -delta_space / 2, -np.pi / (2 * theta_divide)]
 
     simplex = [init_params]
     for i in range(len(init_params)):
@@ -298,13 +299,17 @@ def get_close_edges(vid_obj, exp, t, R, trans):
 
 
 def make_whole_mapping(
-    vid_obj, exp, t, dist=100, R=np.array([[1, 0], [0, 1]]), trans=0,thresh =20
+    vid_obj, exp, t, dist=100, R=np.array([[1, 0], [0, 1]]), trans=0, thresh=20
 ):
     shiftx, shifty = get_shifts(vid_obj)
-    Rfound, tfound = register_rot_trans(vid_obj, exp, t, dist=dist, R=R, trans=trans,thresh = thresh)
+    Rfound, tfound = register_rot_trans(
+        vid_obj, exp, t, dist=dist, R=R, trans=trans, thresh=thresh
+    )
     Rcurrent = Rfound @ R
     tcurrent = Rfound @ trans + tfound
-    segments_final = get_segments_ends(vid_obj, shiftx, shifty, thresh, Rcurrent, tcurrent)
+    segments_final = get_segments_ends(
+        vid_obj, shiftx, shifty, thresh, Rcurrent, tcurrent
+    )
     edge_names = [edge.edge_name for edge in vid_obj.edge_objs]
     segments_final_interp = []
     for begin, end in segments_final:
@@ -361,17 +366,17 @@ def should_reset(Rfound):
     return np.linalg.det(Rfound) <= 0 or Rfound[0][0] <= 0.99
 
 
-def attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent,thresh=20):
+def attempt_mapping(vid_obj, exp, t, Rcurrent, tcurrent, thresh=20):
     try:
         mapping, dist, Rfound, tfound = make_whole_mapping(
-            vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent,thresh=thresh
+            vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent, thresh=thresh
         )
         reinitialize = False
     except (ValueError, IndexError) as e:
         try:
             Rcurrent, tcurrent = initialize_transformation()
             mapping, dist, Rfound, tfound = make_whole_mapping(
-                vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent,thresh=thresh
+                vid_obj, exp, t, dist=100, R=Rcurrent, trans=tcurrent, thresh=thresh
             )
             reinitialize = True
         except (ValueError, IndexError) as e:
@@ -402,9 +407,10 @@ def process_video_object(vid_obj, exp, t, Rcurrent, tcurrent):
 
     return Rcurrent, tcurrent, mapping, dist
 
-def process_video_object_new(vid_obj, exp, t, Rcurrent, tcurrent,thresh = 20):
+
+def process_video_object_new(vid_obj, exp, t, Rcurrent, tcurrent, thresh=20):
     mapping, dist, Rfound, tfound, reinitialize = attempt_mapping(
-        vid_obj, exp, t, Rcurrent, tcurrent,thresh
+        vid_obj, exp, t, Rcurrent, tcurrent, thresh
     )
     Rcurrent, tcurrent = update_transformation(Rcurrent, tcurrent, Rfound, tfound)
     return Rcurrent, tcurrent, mapping, dist

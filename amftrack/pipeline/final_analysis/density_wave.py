@@ -39,7 +39,8 @@ def dwave(xt, c, lamb, K, x0):
 
     Returns:
 
-        ndarray: A 1D numpy array of the same length as xt[0] representing the amplitude of the wave at each spatiotemporal coordinate in xt."""
+        ndarray: A 1D numpy array of the same length as xt[0] representing the amplitude of the wave at each spatiotemporal coordinate in xt.
+    """
     x = xt[0, :]
     t = xt[1, :]
     return K * (

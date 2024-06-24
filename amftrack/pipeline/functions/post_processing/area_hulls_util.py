@@ -28,9 +28,7 @@ def get_hulls(exp, ts):
         threshold = 0.1
         S = [nx_graph.subgraph(c).copy() for c in nx.connected_components(nx_graph)]
         selected = [
-            g
-            for g in S
-            if g.size(weight="weight") * len(g.nodes) / 10**6 >= threshold
+            g for g in S if g.size(weight="weight") * len(g.nodes) / 10**6 >= threshold
         ]
         polys = Polygon()
         if len(selected) >= 0:

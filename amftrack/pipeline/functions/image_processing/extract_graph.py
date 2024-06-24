@@ -376,9 +376,7 @@ def prune_graph(nx_graph, threshold):
     # should implement threshold!
     S = [nx_graph.subgraph(c).copy() for c in nx.connected_components(nx_graph)]
     selected = [g for g in S if g.size(weight="weight") / 10**6 >= threshold]
-    len_connected = [
-        (nx_graph.size(weight="weight") / 10**6) for nx_graph in selected
-    ]
+    len_connected = [(nx_graph.size(weight="weight") / 10**6) for nx_graph in selected]
     print(len_connected)
     G = selected[0]
     for g in selected[1:]:
@@ -433,8 +431,10 @@ def generate_skeleton(nx_graph, dim=(30000, 60000), shift=(0, 0)) -> sparse.dok_
     skel = sparse.dok_matrix(dim, dtype=bool)
     for edge in nx_graph.edges.data("pixel_list"):
         for pixel in edge[2]:
-            #This line could cause disconnection issue if non integer values are used
-            skel[(math.floor(pixel[0]) - shift[0], math.floor(pixel[1]) - shift[1])] = True
+            # This line could cause disconnection issue if non integer values are used
+            skel[(math.floor(pixel[0]) - shift[0], math.floor(pixel[1]) - shift[1])] = (
+                True
+            )
     return skel
 
 

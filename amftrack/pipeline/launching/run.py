@@ -104,7 +104,11 @@ def run(
 
 
 def run_function(
-    process, args: List, folders: pd.DataFrame, per_unique_id=False,sequential_process = False
+    process,
+    args: List,
+    folders: pd.DataFrame,
+    per_unique_id=False,
+    sequential_process=False,
 ) -> None:
     """
     Run the chosen script `code` localy.
@@ -126,7 +130,7 @@ def run_function(
     else:
         with tqdm(total=len(folder_list), desc="folder_treated") as pbar:
             if sequential_process:
-                last_index = len(folder_list)-1
+                last_index = len(folder_list) - 1
             else:
                 last_index = len(folder_list)
             for index, folder in enumerate(folder_list[:last_index]):

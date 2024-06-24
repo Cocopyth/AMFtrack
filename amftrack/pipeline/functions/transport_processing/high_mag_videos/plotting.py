@@ -217,6 +217,7 @@ def make_full_image(
     )
     return (im, skel_im)
 
+
 def plot_edge_color_value_2(
     exp: Experiment,
     t: int,
@@ -287,6 +288,7 @@ def plot_edge_color_value_2(
             colors.append(color)
     if plot_cmap:
         colors = [cmap((width - v_min) / (v_max - v_min)) for width in widths]
+
     # 0/ Make color legend
     def convert(c):
         c_ = c / 255
@@ -370,7 +372,8 @@ def plot_edge_color_value_2(
         plt.savefig(save_path, dpi=dpi)
     else:
         plt.show()
-    return fig, ax,f
+    return fig, ax, f
+
 
 def plot_edge_color_value_3(
     exp: Experiment,
@@ -442,6 +445,7 @@ def plot_edge_color_value_3(
             colors.append(color)
     if plot_cmap:
         colors = [cmap((width - v_min) / (v_max - v_min)) for width in widths]
+
     # 0/ Make color legend
     def convert(c):
         c_ = c / 255
@@ -467,7 +471,10 @@ def plot_edge_color_value_3(
         N = 5
         # plt.colorbar(sm, ticks=np.linspace(v_min, v_max, N), label=label_colorbar,ax=ax)
     # 1/ Image layer
-    f = lambda x:((x[0]-region[0][0])/downsizing,(x[1]-region[0][1])/downsizing)
+    f = lambda x: (
+        (x[0] - region[0][0]) / downsizing,
+        (x[1] - region[0][1]) / downsizing,
+    )
     f_int = lambda c: f(c).astype(int)
 
     # 2/ Edges layer
@@ -514,4 +521,4 @@ def plot_edge_color_value_3(
         plt.savefig(save_path, dpi=dpi)
     else:
         plt.show()
-    return fig, ax,f
+    return fig, ax, f

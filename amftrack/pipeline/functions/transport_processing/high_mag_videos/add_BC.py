@@ -2,11 +2,13 @@ import networkx as nx
 
 from amftrack.pipeline.functions.image_processing.experiment_class_surf import (
     Node,
-    Edge, Experiment,
+    Edge,
+    Experiment,
 )
 from amftrack.pipeline.functions.image_processing.experiment_util import (
     get_all_edges,
-    get_all_nodes, get_timedelta_second,
+    get_all_nodes,
+    get_timedelta_second,
 )
 from amftrack.pipeline.functions.post_processing.extract_study_zone import (
     load_study_zone,
@@ -38,7 +40,7 @@ def add_hyphal_attributes(edge_data_csv, edge, mapping, t, exp, unique_id):
         add_attribute(edge_data_csv, edge, fun, f"abcisse_{begin}_{end}", mapping)
 
 
-def find_lowest_nodes(nodes, t,num = 10):
+def find_lowest_nodes(nodes, t, num=10):
     positions = [node.pos(t) for node in nodes]
 
     # 1. Find the range of x positions
@@ -112,7 +114,6 @@ def get_weight(node, t):
 #     return(edge_flux)
 
 
-
 # def add_betweenness_QP(exp, t):
 #     exp.save_location = ""
 #
@@ -181,8 +182,9 @@ def add_betweenness(exp, t):
             and (edge[1], edge[0]) not in final_betweeness.keys()
         ):
             final_betweeness[edge] = 0
-    print("adding BC",t)
+    print("adding BC", t)
     nx.set_edge_attributes(exp.nx_graph[t], final_betweeness, "betweenness")
+
 
 def get_abcisse(edge, begin, end, t, exp):
     begin = Node(begin, exp).get_pseudo_identity(t).label
@@ -209,6 +211,7 @@ def get_derivative(edge_d, t, fun):
     weight_begin = np.sum([fun(edge) for edge in edges_begin])
     weight_end = np.sum([fun(edge) for edge in edges_end])
     return weight_end - weight_begin
+
 
 def get_segment_centers(exp):
     last_index = 1
@@ -242,7 +245,7 @@ def get_segment_centers(exp):
             continue
 
         for i in range(0, length, segments_length):
-            sub_list = pixels[i:i + segments_length]
+            sub_list = pixels[i : i + segments_length]
             if i == 0:
                 graph_segemented_final.add_edge(edge[0], label)
                 segments_index[f"{edge[0]},{label}"] = len(segments_center_final)
@@ -269,22 +272,37 @@ def get_segment_centers(exp):
                 label += 1
     array_segments_center_final = np.array(segments_center_final)
     shape_segments_center = array_segments_center_final.shape
-    return(array_segments_center_final,shape_segments_center,
-           final_graph,edges_indexes,
-           graph_segemented_final,nodes_pos,segments_index)
+    return (
+        array_segments_center_final,
+        shape_segments_center,
+        final_graph,
+        edges_indexes,
+        graph_segemented_final,
+        nodes_pos,
+        segments_index,
+    )
 
 
 def closest_point(point, points):
-    dist_square = np.sum((points-point)**2, axis=1)
+    dist_square = np.sum((points - point) ** 2, axis=1)
     min_index = np.argmin(dist_square)
     return points[min_index], dist_square[min_index]
 
-def get_exp2(exp,last_index = 1):
+
+def get_exp2(exp, last_index=1):
     # When there is a point at a distance of segment under the threshold, the segment is activated (distance in pixel)
     # A good distance is (2*segments_length)**2
     # Don't forget to square because closest_point give the distance squared
-    threshold = 10 ** 2
-    array_segments_center_final, shape_segments_center,final_graph, edges_indexes,graph_segemented_final, nodes_pos, segments_index = get_segment_centers(exp)
+    threshold = 10**2
+    (
+        array_segments_center_final,
+        shape_segments_center,
+        final_graph,
+        edges_indexes,
+        graph_segemented_final,
+        nodes_pos,
+        segments_index,
+    ) = get_segment_centers(exp)
     segments_centers = []
     segments_min_distances = []
     array_segments_center = array_segments_center_final.copy()
@@ -294,7 +312,9 @@ def get_exp2(exp,last_index = 1):
         cols = []
         previous_edges = get_all_edges(exp, time)
         for edge in previous_edges:
-            p_list = [(round(pixel[0]), round(pixel[1])) for pixel in edge.pixel_list(time)]
+            p_list = [
+                (round(pixel[0]), round(pixel[1])) for pixel in edge.pixel_list(time)
+            ]
             row, col = zip(*p_list)
             rows.extend(row)
             cols.extend(col)
@@ -313,7 +333,7 @@ def get_exp2(exp,last_index = 1):
             coords = points_matrix[min_x:max_x, min_y:max_y].nonzero()
             coords = np.column_stack(coords)
             if not coords.shape[0]:
-                centers_distance.append(32 * (segments_length ** 2))
+                centers_distance.append(32 * (segments_length**2))
                 continue
 
             xc -= min_x
@@ -338,7 +358,9 @@ def get_exp2(exp,last_index = 1):
     amount_of_border_segment = 7
 
     segments_min_distances_array = np.array(segments_min_distances)
-    segments_min_distances_array = np.where(segments_min_distances_array < threshold, 1, 0)
+    segments_min_distances_array = np.where(
+        segments_min_distances_array < threshold, 1, 0
+    )
     segments_time = segments_min_distances_array.argmax(axis=0)
 
     edges_time_interval = {}
@@ -359,7 +381,7 @@ def get_exp2(exp,last_index = 1):
     # i = indexes[plate_id_video]
     # i = np.where(folders['folder'] == indexes[plate_id_video])[0][0]
     # selection = folders[folders['folder'].isin(indexes.values())]
-    exp2.load(exp.folders.iloc[last_index: last_index+1], suffix="_labeled2")
+    exp2.load(exp.folders.iloc[last_index : last_index + 1], suffix="_labeled2")
     exp2.nx_graph = [graph_segemented_final]
     exp2.positions = [nodes_pos]
     pixel_lists = {}
@@ -371,34 +393,41 @@ def get_exp2(exp,last_index = 1):
         (y1, x1), (y2, x2) = nodes_pos[begin], nodes_pos[end]
         pixel_lists[edge] = [(y1, x1), (y2, x2)]
         pixel_conversion_factor = 1.725
-        lengths[edge] = np.sqrt((y1-y2)**2+(x1-x2)**2)*pixel_conversion_factor
+        lengths[edge] = (
+            np.sqrt((y1 - y2) ** 2 + (x1 - x2) ** 2) * pixel_conversion_factor
+        )
 
     nx.set_edge_attributes(exp2.nx_graph[t], pixel_lists, "pixel_list")
     edges = get_all_edges(exp2, 0)
-    ages = {(edge.begin.label, edge.end.label): get_age(edge,segments_time,segments_index) for edge in edges}
+    ages = {
+        (edge.begin.label, edge.end.label): get_age(edge, segments_time, segments_index)
+        for edge in edges
+    }
     nx.set_edge_attributes(exp2.nx_graph[t], ages, "age")
     nx.set_edge_attributes(exp2.nx_graph[t], lengths, "length")
-    return(exp2)
+    return exp2
 
-def get_age(edge,segments_time,segments_index):
-    begin,end = edge.begin.label,edge.end.label
+
+def get_age(edge, segments_time, segments_index):
+    begin, end = edge.begin.label, edge.end.label
     index = segments_index.get(f"{begin},{end}")
     if index is None:
         index = segments_index[f"{end},{begin}"]
     time = segments_time[index]
-    return(time)
+    return time
+
 
 # def get_age2(edge):
 #     time_interval = edges_time_interval.get(f"{edge.begin.label},{edge.end.label}")
 #     time = (time_interval[0]+time_interval[1])/2 # type: ignore
 #     return(round(time))
 def get_nodes_source_C(exp):
-    assert len(exp.folders)==2
-    time_delta = get_timedelta_second(exp,0,1)
+    assert len(exp.folders) == 2
+    time_delta = get_timedelta_second(exp, 0, 1)
     exp2 = get_exp2(exp)
     G = exp2.nx_graph[0]
-    subgraph_age_0 = nx.Graph([e for e in G.edges(data=True) if e[2]['age'] == 0])
-    subgraph_age_1 = nx.Graph([e for e in G.edges(data=True) if e[2]['age'] == 1])
+    subgraph_age_0 = nx.Graph([e for e in G.edges(data=True) if e[2]["age"] == 0])
+    subgraph_age_1 = nx.Graph([e for e in G.edges(data=True) if e[2]["age"] == 1])
     components_age_1 = list(nx.connected_components(subgraph_age_1))
     nodes = get_all_nodes(exp2, 0)
     weights = {node: 0 for node in nodes}
@@ -411,23 +440,29 @@ def get_nodes_source_C(exp):
                 for node in component:
                     if node in subgraph_age_0:
                         connected_nodes.add(node)
-                        #to fix, should be quantitative (include radius and time etc...)
+                        # to fix, should be quantitative (include radius and time etc...)
                 for node in connected_nodes:
-                    weights[Node(node, exp2)] += edge[2]["length"]/len(connected_nodes)/time_delta
+                    weights[Node(node, exp2)] += (
+                        edge[2]["length"] / len(connected_nodes) / time_delta
+                    )
     nodes = get_all_nodes(exp2, 0)
 
     nodes_exp2 = [node for node in nodes if weights[node] >= 1]
     t = 0
-    nodes_exp = {find_pseudo_identity(node_exp2, t, exp): weights[node_exp2] for node_exp2 in nodes_exp2}
-    print("tot_growth",np.sum(list(nodes_exp.values())))
+    nodes_exp = {
+        find_pseudo_identity(node_exp2, t, exp): weights[node_exp2]
+        for node_exp2 in nodes_exp2
+    }
+    print("tot_growth", np.sum(list(nodes_exp.values())))
     nodes_source = list(nodes_exp.keys())
-    return(nodes_source,nodes_exp)
+    return (nodes_source, nodes_exp)
 
-def get_weight_C(node,t,nodes_exp):
+
+def get_weight_C(node, t, nodes_exp):
     if node in nodes_exp.keys():
-        return(nodes_exp[node])
+        return nodes_exp[node]
     else:
-        return(0)
+        return 0
 
 
 # def add_betweenness_QC(exp, t):
@@ -448,7 +483,8 @@ def get_weight_C(node,t,nodes_exp):
 #             fluxes[edge] = 0
 #     nx.set_edge_attributes(exp.nx_graph[t], fluxes, "betweenness_QC")
 
-def keep_main_component(exp,t):
+
+def keep_main_component(exp, t):
     G = exp.nx_graph[t]
     components = nx.connected_components(G)
 
@@ -458,6 +494,7 @@ def keep_main_component(exp,t):
     # Create a new graph representing the largest connected component
     largest_component_graph = G.subgraph(largest_component)
     exp.nx_graph[t] = largest_component_graph
+
 
 # def add_betweenness_QC2(exp, t):
 #     keep_main_component(exp, t)
@@ -478,7 +515,8 @@ def keep_main_component(exp,t):
 #         G[edge[0]][edge[1]]["QBC_net"] = G[edge[0]][edge[1]]["QBC_p"]-G[edge[0]][edge[1]]["QBC_m"]
 #         G[edge[0]][edge[1]]["QBC_tot"] = G[edge[0]][edge[1]]["QBC_p"]+G[edge[0]][edge[1]]["QBC_m"]
 
-def find_pseudo_identity(node_exp2,t,exp):
+
+def find_pseudo_identity(node_exp2, t, exp):
     identifier = 0
     mini = np.inf
     poss = exp.positions[t]

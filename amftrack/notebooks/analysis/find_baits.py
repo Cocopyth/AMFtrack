@@ -96,7 +96,7 @@ def get_pos_baits(exp, t):
     if circles is not None:
         # convert the (x, y) coordinates and radius of the circles to integers
         circles = np.round(circles[0, :]).astype("int")
-    for (x, y, r) in circles[:2]:
+    for x, y, r in circles[:2]:
         # draw the circle in the output image, then draw a rectangle
         # corresponding to the center of the circle
         cv2.circle(output, (x, y), r, (0, 255, 0), 4)

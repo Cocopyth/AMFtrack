@@ -44,7 +44,7 @@ from amftrack.pipeline.scripts.image_processing import (
     make_labeled_graphs,
     extract_skel_no_external,
     final_alignment_new,
-    realign_new
+    realign_new,
 )
 
 
@@ -97,19 +97,13 @@ class TestImageAnalysis(unittest.TestCase):
     def test_realign(self):
         args = [None, self.directory]
         run_function(
-            final_alignment_new.process,
-            args,
-            self.folders[:4],
-            sequential_process = True
+            final_alignment_new.process, args, self.folders[:4], sequential_process=True
         )
+
     def test_create_realign(self):
         args = [None, self.directory]
-        run_function(
-            realign_new.process,
-            args,
-            self.folders[:4],
-            per_unique_id = True
-        )
+        run_function(realign_new.process, args, self.folders[:4], per_unique_id=True)
+
     def test_graph_extract(self):
         args = [None, self.directory]
         run_function(extract_nx_graph.process, args, self.folders[:1])
