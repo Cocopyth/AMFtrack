@@ -69,7 +69,6 @@ def interpolate_points(p1, p2, spacing=1.0):
     distance = np.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2)
     # Calculate the number of intervals based on the spacing
     num_points = int(distance / spacing) + 1
-
     # Create interpolated points
     interpolated_points = [
         (y1 + i / num_points * (y2 - y1), x1 + i / num_points * (x2 - x1))

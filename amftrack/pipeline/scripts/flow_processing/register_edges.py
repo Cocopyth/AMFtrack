@@ -39,7 +39,6 @@ for plate_id in refs.keys():
     analysis_folder_root = "/projects/0/einf914/analysis_videos/"
     videos_folder = "/projects/0/einf914/videos/"
 
-    # directory_targ = os.path.join(directory_scratch, "stitch_temp2") + "/"
     directory_targ = "/projects/0/einf914/transport/"
     update_plate_info(directory_targ, local=True)
     all_folders = get_current_folders(directory_targ, local=True)

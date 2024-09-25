@@ -111,10 +111,7 @@ def extract_skel_new_prince(im, params, perc_low, perc_high, minlow=20, minhigh=
     )
     imname = foldname + f"/{foldname}it{args[4]}.tif"
     path_modif = place_save + "/" + imname
-    try:
-        im2 = imageio.imread(path_modif)
-    except:
-        im2 = to_smooth.astype(np.uint8)
+    im2 = imageio.imread(path_modif)
     print("image_reading")
     shutil.rmtree(os.path.join(place_save, foldname))
     low = max(minlow, np.percentile(im2, perc_low))
