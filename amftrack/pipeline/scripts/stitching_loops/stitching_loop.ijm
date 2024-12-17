@@ -1,5 +1,4 @@
 macro StitchingLoop40even{
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Asking for the directory where are the folders with the images to be stitched
 mainDirectory = "/projects/0/einf914/data/" ;
@@ -22,6 +21,7 @@ rth             = "0.1";
 mdt             = "6";
 adt             = "6";
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+BlackImagepath = "";
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -45,7 +45,18 @@ for (i=0; i<=list.length-1; i=i+1){
                 close();
             }
         }
-
+        //Filling with Black images
+        for (r=1; r<=gridSizeY; r++){
+            for(c=1; c<=gridSizeX; c++){
+                if(r<10   && c<10 ){I = "Img_r0" + r + "_c0" + c + ".tif";}
+                if(r>=10  && c<10 ){I = "Img_r"  + r + "_c0" + c + ".tif";}
+                if(r<10   && c>=10){I = "Img_r0" + r + "_c"  + c + ".tif";}
+                if(r>=10  && c>=10){I = "Img_r"  + r + "_c"  + c + ".tif";}
+                if(File.exists(inputDirectory + File.separator + I)==0){
+                    File.copy(BlackImagepath, inputDirectory2 + File.separator + I);
+                }
+            }
+        }
         run("Stitch Sequence of Grids of Images", "grid_size_x=" + gridSizeX + " grid_size_y=" + gridSizeY + " grid_size_z=" + gridSizeZ + " overlap=" + overlap + " input=" + inputDirectory2 + " file_names=" + fileNames + " rgb_order=rgb output_file_name=TileConfiguration.txt output=" + outputDirectory + " start_x=" + startX + " start_y=" + startY + " start_z=1 start_i=1 channels_for_registration=[Red, Green and Blue] fusion_method=[Linear Blending] fusion_alpha=" + fal + " regression_threshold=" + rth + " max/avg_displacement_threshold=" + mdt + " absolute_displacement_threshold=" + adt + " compute_overlap");			
         File.rename(outputDirectory + File.separator + "Stitched Image_1.tif" , outputDirectory + File.separator + "StitchedImage.tif");
         wait(1000);

@@ -25,34 +25,116 @@ import os
 import pickle
 from tqdm import tqdm
 
-plates = [
-    "441_20230807",
-    "449_20230807",
-    # "310_20230830"
-]
-directory_targ = "/projects/0/einf914/transport/"
+plates = ["792_20230324"]
+# plates = [
+# "50_20240703",
+# "59_20240615",
+# "60_20240625",
+# "69_20240625",
+# "72_20240722"
+# ]
+# directory_targ = '/scratch-shared/amftrack/redo_width_temp/'
+# directory_targ = "/projects/0/einf914/make_temp_graph/"
+# directory_targ = "/projects/0/einf914/NewAggC3/"
+directory_targ = "/scratch-shared/amftrack/make_temp_graph/"
+mins = {'772_20230317': '20230317_1710_Plate13',
+'777_20230328': '20230328_2010_Plate09',
+'784_20230324': '20230324_2009_Plate03',
+'771_20230411': '20230411_1419_Plate04',
+'782_20230406': '20230406_2216_Plate17',
+'935_20230620': '20230620_1844_Plate18',
+'74_20230601': '20230601_1621_Plate18',
+'418_20230626': '20230626_2020_Plate09',
+'928_20230707': '20230707_1553_Plate14',
+'429_20230822': '20230823_0947_Plate13',
+'805_20230311': '20230313_2237_Plate16',
+'796_20230419': '20230419_1213_Plate10',
+'792_20230324': '20230330_0137_Plate11',
+'894_20230516': '20230516_1438_Plate08',
+'797_20230421': '20230422_1230_Plate08',
+'947_20230706': '20230706_1933_Plate06',
+'868_20230504': '20230504_1624_Plate03',
+'954_20230717': '20230717_1525_Plate12',
+'828_20230330': '20230404_1752_Plate08',
+'822_20230327': '20230403_1537_Plate03',
+'926_20230510': '20230510_1429_Plate13',
+'905_20230525': '20230527_2017_Plate16',
+'910_202305016': '20230516_1429_Plate05',
+'969_20230801': '20230801_1541_Plate05',
+'914_20230522': '20230524_2021_Plate14',
+"513_20240531": "20240531_1853_Plate16",
+"393_20231129":"20231130_0045_Plate06",
+"366_20230921":"20230921_1421_Plate07",
+'3_20220426':'20220504_2136_Plate16',
+'1045_20220504':'20220505_0500_Plate02',
+'559_20230109':'20230109_1638_Plate18',
+'219_20230307':'20230307_1723_Plate11',
+'252_20230316':'20230316_2048_Plate12'
+
+
+        }
+
+maxes = {'772_20230317': '20230322_1030_Plate13',
+'777_20230328': '20230407_0752_Plate09',
+'784_20230324': '20230327_0809_Plate03',
+'771_20230411': '20230420_1201_Plate04',
+'782_20230406': '20230412_0837_Plate17',
+'935_20230620': '20230703_0841_Plate18',
+'74_20230601': '20230606_1035_Plate18',
+'418_20230626': '20230706_0942_Plate09',
+'928_20230707': '20230712_0600_Plate14',
+'429_20230822': '20230905_1202_Plate13',
+'805_20230311': '20230317_1516_Plate16',
+'796_20230419': '20230501_0829_Plate10',
+'792_20230324': '20230403_0757_Plate11',
+'894_20230516': '20230526_0801_Plate08',
+'797_20230421': '20230426_1217_Plate08',
+'947_20230706': '20230714_0739_Plate06',
+'868_20230504': '20230509_1012_Plate03',
+'954_20230717': '20230801_0947_Plate12',
+'828_20230330': '20230411_0752_Plate08',
+'822_20230327': '20230410_1737_Plate03',
+'926_20230510': '20230522_0616_Plate13',
+'905_20230525': '20230530_0817_Plate16',
+'910_202305016': '20230526_1351_Plate05',
+'969_20230801': '20230805_0544_Plate05',
+'914_20230522': '20230601_1205_Plate14',
+'907_20230525': '20230606_1041_Plate20',
+"513_20240531":"20240609_0138_Plate16",
+'393_20231129':'20231208_1225_Plate06',
+'366_20230921':'20230929_1421_Plate07',
+'3_20220426':'20220510_0808_Plate16',
+'1045_20220504':'20220510_2207_Plate02',
+'559_20230109':'20230118_0033_Plate18',
+'219_20230307':'20230312_1240_Plate11',
+'252_20230316':'20230324_0627_Plate12'
+         }
+
+
 update_plate_info(directory_targ, local=True)
 all_folders = get_current_folders(directory_targ, local=True)
-folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
-folders = folders.loc[folders["/Analysis/nx_graph_pruned_width.p"] == True]
-
-
 path_root = f"/projects/0/einf914/graph_stacks"
-mins = {"441_20230807": 0, "449_20230807": 50, "310_20230830": 0}
-maxes = {"441_20230807": 55, "449_20230807": 85, "310_20230830": 60}
+
 for plate_id in plates:
     # update_plate_info(directory_targ, local=True,strong_constraint=False)
     # all_folders = get_current_folders(directory_targ, local=True)
     folders = all_folders.loc[all_folders["unique_id"] == plate_id]
-    folders = folders.loc[folders["/Analysis/nx_graph_pruned_width.p"] == True]
-    folders = folders.sort_values(by="folder")
+    # folders = folders.sort_values(by="folder")
 
     folders = folders.sort_values(by="datetime")
+    init = mins[plate_id]
+    end = maxes[plate_id]
 
+    init_datetime = folders[folders['folder'] == init]['datetime'].values[0]
+    end_datetime = folders[folders['folder'] == end]['datetime'].values[0]
+
+    # Filter the DataFrame to include rows between "init" and "end" datetimes
+    folders = folders[(folders['datetime'] >= init_datetime) & (folders['datetime'] <= end_datetime)]
+    folders = folders.loc[folders["/Analysis/nx_graph_pruned_width.p"] == True]
     # i = indexes[plate_id_video]
     # i = np.where(folders['folder'] == indexes[plate_id_video])[0][0]
     # selection = folders[folders['folder'].isin(indexes.values())]
-    for i in range(mins[plate_id] + 1, maxes[plate_id] + 1):
+    for i in range(len(folders)):
         exp = Experiment(directory_targ)
 
         selection = folders.iloc[i : i + 1]
@@ -84,8 +166,9 @@ for plate_id in plates:
         graph_to_save.remove_nodes_from(node_not_in_ROI)
         nx.set_node_attributes(graph_to_save, exp.positions[0], "position")
         path_tot = os.path.join(path_root, plate_id, f"graph{i:03d}.pickle")
-        pickle.dump((graph_to_save, transform, selection.iloc[0]), open(path_tot, "wb"))
-        # break
+        with open(path_tot, "wb") as f:
+            pickle.dump((graph_to_save, transform, selection.iloc[0]), f)        # break
+    gc.collect()
 
 for plate_id in plates:
     saved_infos = []
@@ -127,7 +210,7 @@ for plate_id in plates:
     spatial_temporal_graph.folder_infos = folder_infos
     path_tot = os.path.join(path_root, f"graph{plate_id}.pickle")
     pickle.dump(spatial_temporal_graph, open(path_tot, "wb"))
-    target = f"/DATA/CocoTransport/graphs/graph{plate_id}.pickle"
+    target = f"/DATA/PRINCE_ANALYSIS/temp_graphs/graph{plate_id}.pickle"
     source = path_tot
     upload(source, target)
     # del graphs

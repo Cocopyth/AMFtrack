@@ -225,14 +225,16 @@ def upload_zip(path_total, target, catch_exception=True, delete=False):
         hash_drop = response.content_hash
         hash_local = compute_dropbox_hash(path_final)
         if hash_drop == hash_local:
+            os.remove(path_zip)
             if is_dir:
                 shutil.rmtree(path_total)
             else:
                 os.remove(path_total)
         else:
+            print('hash different \n \n \n \n \n \n',hash_drop,hash_local)
             raise (UploadError)
-    if is_dir:
-        os.remove(path_zip)
+    # print(path_zip,is_dir)
+
 
 
 def sync_fold(origin, target):
@@ -723,7 +725,7 @@ def download_analysis_folders_drop(analysis_folder, dropbox_folder):
 
 
 def compute_dropbox_hash(filename):
-    file_size = os.stat(filename).st_size
+    # file_size = os.stat(filename).st_size
     with open(filename, "rb") as f:
         block_hashes = b""
         while True:

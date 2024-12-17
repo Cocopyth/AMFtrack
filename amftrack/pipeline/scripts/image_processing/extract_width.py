@@ -31,7 +31,7 @@ def process(args):
     plate = int(directory_name.split("_")[-1][5:])
 
     exp = Experiment(directory)
-    exp.load(run_info.loc[run_info["folder"] == directory_name], suffix="_realigned")
+    exp.load(run_info.loc[run_info["folder"] == directory_name], suffix="")
     path_snap = directory + directory_name
 
     (G, pos) = exp.nx_graph[0], exp.positions[0]

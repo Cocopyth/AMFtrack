@@ -197,8 +197,6 @@ def from_sparse_to_graph(doc_skel):
             edges[right_branch]["pixel_list"][0].append(pixel)
     for branch in edges:
         if len(edges[branch]["origin"]) > 0 and len(edges[branch]["end"]) > 0:
-            # TODO(FK): Use pandas.concat instead (Frame.append soon deprecated)
-            # graph = graph.append(pd.DataFrame(edges[branch]), ignore_index=True)
             graph = pandas.concat([graph, pd.DataFrame(edges[branch])])
     for index, row in graph.iterrows():
         row["pixel_list"] = order_pixel(row["origin"], row["end"], row["pixel_list"])

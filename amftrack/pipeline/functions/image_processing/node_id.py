@@ -282,8 +282,8 @@ def second_identification(exp, t, tp1, length_id=200, tolerance=50, save=False):
     Sedge = sparse.csr_matrix((50000, 60000), dtype=int)
     for edge in nx_graph_t.edges:
         pixel_list = nx_graph_t.get_edge_data(*edge)["pixel_list"]
-        pixela = pixel_list[0].astype(int)
-        pixelb = pixel_list[-1].astype(int)
+        pixela = (int(pixel_list[0][0]),int(pixel_list[0][1]))
+        pixelb = (int(pixel_list[-1][0]),int(pixel_list[-1][1]))
         Sedge[pixela[0], pixela[1]] = edge[0]
         Sedge[pixelb[0], pixelb[1]] = edge[1]
     for i, tip in enumerate(tips):
@@ -495,7 +495,7 @@ def node_dist(
     sparse_cross2 = sparse.dok_matrix((4 * tolerance, 4 * tolerance), dtype=bool)
     for edge in nx_graph_tm1.edges(node1):
         list_pixel = nx_graph_tm1.get_edge_data(*edge)["pixel_list"]
-        if (pos_tm1[node1] != list_pixel[0].astype(int)).any():
+        if (pos_tm1[node1] != np.array(list_pixel[0]).astype(int)).any():
             list_pixel = list(reversed(list_pixel))
         #         print(list_pixel[0],pos_tm1[node1],list_pixel[-1])
         for pixel in list_pixel[:20]:
@@ -506,14 +506,14 @@ def node_dist(
             ] = 1
     for edge in nx_graph_t.edges(node2):
         list_pixel = nx_graph_t.get_edge_data(*edge)["pixel_list"]
-        if (pos_t[node2] != list_pixel[0].astype(int)).any():
+        if (pos_t[node2] != np.array(list_pixel[0]).astype(int)).any():
             list_pixel = list(reversed(list_pixel))
         #         print(list_pixel[0],pos_t[node2],list_pixel[-1])
         for pixel in list_pixel[:20]:
             #             if np.any(np.array(pixel)-np.array(pos_tm1[node1])+np.array((50,50))>=100):
             #                 print(list_pixel[0],pos_t[node2],list_pixel[-1])
             sparse_cross2[
-                np.array(pixel.astype(int))
+                np.array(pixel).astype(int)
                 - np.array(pos_tm1[node1])
                 + np.array((50, 50))
             ] = 1

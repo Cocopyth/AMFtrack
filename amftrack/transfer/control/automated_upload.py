@@ -16,7 +16,8 @@ from time import time_ns
 import concurrent.futures
 
 # directory_origin = r"/mnt/sun-temp/TEMP/PRINCE_syncing/"
-directory_origin = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$/Data/Prince2/Images/"
+# directory_origin = r"/run/user/357100554/gvfs/smb-share:server=prince.amolf.nl,share=d$/Data/Prince2/Images/"
+directory_origin = r"/mnt/prince/"
 
 dir_drop = "DATA/PRINCE"
 suffix_data_info = str(time_ns())
@@ -34,6 +35,8 @@ all_folders_origin["date_datetime"] = pd.to_datetime(
     all_folders_origin["date"].astype(str), format="%d.%m.%Y, %H:%M:"
 )
 selection = (datetime.now() - all_folders_origin["date_datetime"]) >= timedelta(days=1)
+# selection *= ((datetime.now() - all_folders_origin["date_datetime"])  <= timedelta(days=10))
+
 current_prince = all_folders_origin.loc[selection]
 plates_in_prince = current_prince["unique_id"].unique()
 # old_folders = all_folders_origin.loc[
@@ -47,7 +50,8 @@ old_folders["Plate"] = (
 
 # old_folders = all_folders_origin
 old_folders = old_folders.sort_values(by=["datetime"], ignore_index=True)
-print(len(old_folders), plates_in_prince)
+# old_folders = old_folders.iloc[:1]
+print(len(old_folders), old_folders.iloc[0],plates_in_prince)
 NUM_THREADS = 4
 
 
