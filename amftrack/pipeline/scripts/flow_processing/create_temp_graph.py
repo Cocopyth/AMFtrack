@@ -25,22 +25,18 @@ import os
 import pickle
 from tqdm import tqdm
 
-plates = [
-"772_20230317",
-"777_20230328",
-"784_20230324",
-"771_20230411",
-"782_20230406",
-"935_20230620",
-"74_20230601",
-"418_20230626",
-"928_20230707",
-"429_20230822",
-"805_20230311",
-"796_20230419",]
-
-directory_targ = "/projects/0/einf914/john/"
-
+plates = ["792_20230324"]
+# plates = [
+# "50_20240703",
+# "59_20240615",
+# "60_20240625",
+# "69_20240625",
+# "72_20240722"
+# ]
+# directory_targ = '/scratch-shared/amftrack/redo_width_temp/'
+# directory_targ = "/projects/0/einf914/make_temp_graph/"
+# directory_targ = "/projects/0/einf914/NewAggC3/"
+directory_targ = "/scratch-shared/amftrack/make_temp_graph/"
 mins = {'772_20230317': '20230317_1710_Plate13',
 '777_20230328': '20230328_2010_Plate09',
 '784_20230324': '20230324_2009_Plate03',
@@ -66,7 +62,17 @@ mins = {'772_20230317': '20230317_1710_Plate13',
 '910_202305016': '20230516_1429_Plate05',
 '969_20230801': '20230801_1541_Plate05',
 '914_20230522': '20230524_2021_Plate14',
-'907_20230525': '20230605_2041_Plate20'}
+"513_20240531": "20240531_1853_Plate16",
+"393_20231129":"20231130_0045_Plate06",
+"366_20230921":"20230921_1421_Plate07",
+'3_20220426':'20220504_2136_Plate16',
+'1045_20220504':'20220505_0500_Plate02',
+'559_20230109':'20230109_1638_Plate18',
+'219_20230307':'20230307_1723_Plate11',
+'252_20230316':'20230316_2048_Plate12'
+
+
+        }
 
 maxes = {'772_20230317': '20230322_1030_Plate13',
 '777_20230328': '20230407_0752_Plate09',
@@ -93,19 +99,26 @@ maxes = {'772_20230317': '20230322_1030_Plate13',
 '910_202305016': '20230526_1351_Plate05',
 '969_20230801': '20230805_0544_Plate05',
 '914_20230522': '20230601_1205_Plate14',
-'907_20230525': '20230606_1041_Plate20'}
+'907_20230525': '20230606_1041_Plate20',
+"513_20240531":"20240609_0138_Plate16",
+'393_20231129':'20231208_1225_Plate06',
+'366_20230921':'20230929_1421_Plate07',
+'3_20220426':'20220510_0808_Plate16',
+'1045_20220504':'20220510_2207_Plate02',
+'559_20230109':'20230118_0033_Plate18',
+'219_20230307':'20230312_1240_Plate11',
+'252_20230316':'20230324_0627_Plate12'
+         }
+
 
 update_plate_info(directory_targ, local=True)
 all_folders = get_current_folders(directory_targ, local=True)
-folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
-folders = folders.loc[folders["/Analysis/nx_graph_pruned_width.p"] == True]
 path_root = f"/projects/0/einf914/graph_stacks"
 
 for plate_id in plates:
     # update_plate_info(directory_targ, local=True,strong_constraint=False)
     # all_folders = get_current_folders(directory_targ, local=True)
     folders = all_folders.loc[all_folders["unique_id"] == plate_id]
-    folders = folders.loc[folders["/Analysis/nx_graph_pruned_width.p"] == True]
     # folders = folders.sort_values(by="folder")
 
     folders = folders.sort_values(by="datetime")
@@ -116,11 +129,12 @@ for plate_id in plates:
     end_datetime = folders[folders['folder'] == end]['datetime'].values[0]
 
     # Filter the DataFrame to include rows between "init" and "end" datetimes
-    filtered_folders = folders[(folders['datetime'] >= init_datetime) & (folders['datetime'] <= end_datetime)]
+    folders = folders[(folders['datetime'] >= init_datetime) & (folders['datetime'] <= end_datetime)]
+    folders = folders.loc[folders["/Analysis/nx_graph_pruned_width.p"] == True]
     # i = indexes[plate_id_video]
     # i = np.where(folders['folder'] == indexes[plate_id_video])[0][0]
     # selection = folders[folders['folder'].isin(indexes.values())]
-    for i in range(mins[plate_id] + 1, maxes[plate_id] + 1):
+    for i in range(len(folders)):
         exp = Experiment(directory_targ)
 
         selection = folders.iloc[i : i + 1]
@@ -152,8 +166,9 @@ for plate_id in plates:
         graph_to_save.remove_nodes_from(node_not_in_ROI)
         nx.set_node_attributes(graph_to_save, exp.positions[0], "position")
         path_tot = os.path.join(path_root, plate_id, f"graph{i:03d}.pickle")
-        pickle.dump((graph_to_save, transform, selection.iloc[0]), open(path_tot, "wb"))
-        # break
+        with open(path_tot, "wb") as f:
+            pickle.dump((graph_to_save, transform, selection.iloc[0]), f)        # break
+    gc.collect()
 
 for plate_id in plates:
     saved_infos = []
@@ -195,7 +210,7 @@ for plate_id in plates:
     spatial_temporal_graph.folder_infos = folder_infos
     path_tot = os.path.join(path_root, f"graph{plate_id}.pickle")
     pickle.dump(spatial_temporal_graph, open(path_tot, "wb"))
-    target = f"/DATA/CocoTransport/graphs/graph{plate_id}.pickle"
+    target = f"/DATA/PRINCE_ANALYSIS/temp_graphs/graph{plate_id}.pickle"
     source = path_tot
     upload(source, target)
     # del graphs

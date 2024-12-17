@@ -121,7 +121,7 @@ def extract_skel_new_prince(im, params, perc_low, perc_high, minlow=20, minhigh=
     dilated = remove_holes(hyst)
     dilated = dilated.astype(np.uint8)
     connected = remove_component(dilated)
-    # os.remove(imtransformed_path)
+    os.remove(imtransformed_path)
     return connected
 
 

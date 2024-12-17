@@ -11,7 +11,6 @@ for plate_id in plates:
     spatial_temporal_graph = simplify(spatial_temporal_graph)
     fix_attributes(spatial_temporal_graph)
     exp = make_exp(spatial_temporal_graph, folders)
-
     refs = {
         "310_20230830": {
             "20230901_Plate310": "20230901_0719_Plate06",

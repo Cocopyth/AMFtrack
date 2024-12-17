@@ -265,8 +265,9 @@ def plot_summary(edge_objs, spd_max_percentile=99.5):
             alpha=0.5,
             facecolor="tab:orange",
         )
+        mean = vel_adj_mean
         ax["speed_plot"].plot(
-            edge.times[0], vel_adj_mean, c="black", alpha=0.5, label="effMean"
+            edge.times[0], mean, c="black", alpha=0.5, label="effMean"
         )
         ax["speed_plot"].set_title("Speed plots")
         ax["speed_plot"].set_xlabel("time (s)")

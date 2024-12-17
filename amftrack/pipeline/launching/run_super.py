@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from subprocess import call, DEVNULL, check_output
 from typing import List
@@ -6,7 +7,7 @@ from amftrack.util.sys import (
     temp_path,
     slurm_path,
     slurm_path_transfer,
-    conda_path,
+    conda_path, fiji_path,
 )
 import os
 from copy import copy
@@ -84,6 +85,8 @@ def run_parallel(
             f'#SBATCH -o "{slurm_path}/{name}_{arg_str_out}_{start}_{stop}_{ide}.out" \n'
         )
         my_file.write(f"source {os.path.join(conda_path,'etc/profile.d/conda.sh')}\n")
+        my_file.write(f"module load 2023\n")
+        my_file.write(f"module load ImageMagick/7.1.1-15-GCCcore-12.3.0\n")
         my_file.write(f"conda activate amftrack\n")
         my_file.write(f"for i in `seq {start} {stop}`; do\n")
         my_file.write(
@@ -247,18 +250,25 @@ def run_parallel_post(
 
 
 def make_stitching_loop(directory, dirname, op_id, size_x, size_y):
-
     a_file = open(
         f"{path_code}pipeline/scripts/stitching_loops/stitching_loop.ijm", "r"
     )
-
+    BlackImagepath = f"{path_code}pipeline/scripts/stitching_loops/BlackImage.tif"
     list_of_lines = a_file.readlines()
 
-    list_of_lines[4] = f"mainDirectory = \u0022{directory}\u0022 ;\n"
-    list_of_lines[12] = f"gridSizeX = \u0022{size_x}\u0022 \n"
-    list_of_lines[13] = f"gridSizeY = \u0022{size_y}\u0022 \n"
+    list_of_lines[4 - 1] = f"mainDirectory = \u0022{directory}\u0022 ;\n"
+    list_of_lines[24 - 1] = f"BlackImagepath = \u0022{BlackImagepath}\u0022 ;\n"
 
-    list_of_lines[29] = f"\t if(startsWith(list[i],\u0022{dirname}\u0022)) \u007b\n"
+    list_of_lines[12 - 1] = f"gridSizeX = \u0022{size_x}\u0022 ; \n"
+    list_of_lines[13 - 1] = f"gridSizeY = \u0022{size_y}\u0022 ; \n"
+    date = dirname.split("_")[0]
+    if (date <= "20240718"):
+        overlap = 5
+    else:
+        overlap = 15
+    list_of_lines[10 - 1] = f"overlap = \u0022{overlap}\u0022 ; \n"
+
+    list_of_lines[30 - 1] = f"\t if(startsWith(list[i],\u0022{dirname}\u0022)) \u007b\n"
     file_name = f"{temp_path}/stitching_loops/stitching_loop{op_id}.ijm"
     a_file = open(file_name, "w")
 
@@ -266,18 +276,44 @@ def make_stitching_loop(directory, dirname, op_id, size_x, size_y):
 
     a_file.close()
 
+def find_max_row_col(directory):
+    """
+    Finds the maximum row (yy) and column (xx) values from filenames in the specified directory.
+
+    Parameters:
+    directory (str): The path to the directory containing the image files.
+
+    Returns:
+    tuple: A tuple containing the maximum xx and yy values.
+    """
+
+    # Initialize variables to store the maximum values of xx and yy
+    max_xx = 0
+    max_yy = 0
+
+    # Regular expression pattern to match filenames of the form Img_rxx_cyy.tif
+    pattern = r'Img_r(\d+)_c(\d+)\.tif'
+
+    # Iterate over all files in the directory
+    for filename in os.listdir(directory):
+        match = re.match(pattern, filename)
+        if match:
+            xx = int(match.group(1))
+            yy = int(match.group(2))
+            max_xx = max(max_xx, xx)
+            max_yy = max(max_yy, yy)
+
+    return max_xx, max_yy
 
 def run_parallel_stitch(
-    directory,
-    folders,
-    num_parallel,
-    time,
-    cpus=128,
-    node="rome",
-    name_job="stitch",
-    dependency=False,
-    size_x=15,
-    size_y=10,
+        directory,
+        folders,
+        num_parallel,
+        time,
+        cpus=128,
+        node="rome",
+        name_job="stitch",
+        dependency=False,
 ):
     folder_list = list(folders["folder"])
     folder_list.sort()
@@ -287,29 +323,13 @@ def run_parallel_stitch(
     folder_list = list(folders["folder"])
     folder_list.sort()
     path_job = f"{path_bash}{name_job}"
-
-    for folder in folder_list:
-        path_im_copy = f"{directory}/{folder}/Img/Img_r03_c05.tif"
-        if os.path.isfile(path_im_copy) and os.path.getsize(path_im_copy) >= 1e6:
-            # im = imageio.imread(path_im_copy)
-            for x in range(1, size_y + 1):
-                for y in range(1, size_x + 1):
-                    strix = str(x) if x >= 10 else f"0{x}"
-                    striy = str(y) if y >= 10 else f"0{y}"
-                    path = f"{directory}/{folder}/Img/Img_r{strix}_c{striy}.tif"
-                    if not os.path.isfile(path):
-                        f = open(path, "w")
-                    if os.path.getsize(path) == 0:
-                        im = imageio.imread(path_im_copy)
-                        imageio.imwrite(path, im * 0)
-                        print(path)
     for j in range(begin_skel, end_skel):
         op_ids = []
         start = num_parallel * j
         stop = num_parallel * j + num_parallel
         for k in range(start, min(stop, len(folder_list))):
-            print(k, start)
             op_id = time_ns()
+            size_y, size_x = find_max_row_col(os.path.join(directory, folder_list[k], "Img"))
             make_stitching_loop(directory, folder_list[k], op_id, size_x, size_y)
             op_ids.append(op_id)
         ide = time_ns()
@@ -324,7 +344,7 @@ def run_parallel_stitch(
             for k in range(0, min(stop, len(folder_list)) - start):
                 op_id = op_ids[k]
                 my_file.write(
-                    f"~/Fiji.app/ImageJ-linux64 --headless -macro  {temp_path}/stitching_loops/stitching_loop{op_id}.ijm &\n"
+                    f"{fiji_path} --headless -macro  {temp_path}/stitching_loops/stitching_loop{op_id}.ijm &\n"
                 )
             my_file.write("wait\n")
             my_file.close()
