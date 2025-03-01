@@ -45,6 +45,7 @@ from amftrack.pipeline.scripts.image_processing import (
     extract_skel_no_external,
     final_alignment_new,
     realign_new,
+    extract_skel_ML
 )
 
 
@@ -68,6 +69,9 @@ class TestImageAnalysis(unittest.TestCase):
 
         args = [None, hyph_width, perc_low, perc_high, minlow, minhigh, self.directory]
         run_function(extract_skel_2.process, args, self.folders)
+    def test_skeletonize_ML(self):
+        args = [None,self.directory]
+        run_function(extract_skel_ML.process, args, self.folders)
 
     def test_skeletonize_no_exeternal(self):
         hyph_width = 30

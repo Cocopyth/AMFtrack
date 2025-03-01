@@ -60,6 +60,11 @@ def load_video_dataset(
     )
     return data_obj
 
+def compare_plate_ids(plate_id, target):
+    prefix, plate_number = plate_id.split('_Plate')
+    target_prefix, target_plate_number = target.split('_Plate')
+    return prefix == target_prefix and int(plate_number) == int(target_plate_number)
+
 
 def load_video_dataset_local(
     plate_id_video, videos_folder, analysis_folder, analysis_folder_root, suffix=""
@@ -75,8 +80,9 @@ def load_video_dataset_local(
         add_infos.append(pd.read_json(address, orient="index").T)
     vid_anls_frame = pd.concat([vid_anls_frame] + add_infos, ignore_index=True)
     vid_anls_frame = vid_anls_frame.sort_values("unique_id").reset_index(drop=True)
+    vid_anls_frame['matches'] = vid_anls_frame['plate_id'].apply(lambda x: compare_plate_ids(x, plate_id_video))
     vid_anls_frame_select = vid_anls_frame.loc[
-        vid_anls_frame["plate_id"] == plate_id_video
+        vid_anls_frame["matches"]
     ]
     transform = lambda string: "/".join(string.split("/")[1:])
     vid_anls_frame_select["folder"] = vid_anls_frame_select["folder"].apply(transform)
