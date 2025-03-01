@@ -19,7 +19,7 @@ all_folders = get_current_folders(
 folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Analysis/skeleton_masked.mat"] == True]
 num_parallel = 128
-time = "1:00:00"
+time = "12:00:00"
 threshold = 0.01 / 1.725
 skip = False
 args = [threshold, skip, directory_targ]
