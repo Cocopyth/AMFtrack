@@ -1,6 +1,7 @@
 import ast
 import os
 from time import time
+import sys
 
 import imageio.v2 as imageio
 import numpy as np
@@ -19,7 +20,7 @@ def process(args):
     i = int(args[-1])
     op_id = int(args[-2])
     directory = str(args[1])
-
+    print(args)
     run_info = pd.read_json(f"{temp_path}/{op_id}.json", dtype={"unique_id": str})
     folder_list = list(run_info["folder"])
     folder_list.sort()
@@ -64,6 +65,7 @@ def process(args):
         int(np.max(xs) - np.min(xs)) + max(im.shape),
     )
     skel = np.zeros(dim, dtype=bool)
+    print(tileconfig)
     for index, name in enumerate(tileconfig[0]):
         print(directory)
 
@@ -102,3 +104,5 @@ def process(args):
     # im_fold = "Img3"
     # to_delete = os.path.join(directory_name, im_fold)
     # shutil.rmtree(to_delete)
+if __name__ == "__main__":
+    process(sys.argv)
