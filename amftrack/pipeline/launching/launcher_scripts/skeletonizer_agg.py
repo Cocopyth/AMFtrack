@@ -20,13 +20,8 @@ folders = all_folders.loc[all_folders["unique_id"].isin(plates)]
 folders = folders.loc[folders["/Img/TileConfiguration.txt.registered"] == True]
 num_parallel = 50
 time = "12:00:00"
-hyph_width = 30
-perc_low = 85
-perc_high = 99.5
-minlow = 10
-minhigh = 70
 
-args = [hyph_width, perc_low, perc_high, minlow, minhigh, directory_targ]
+args = [directory_targ]
 run_parallel(
     "extract_skel_ML.py",
     args,
