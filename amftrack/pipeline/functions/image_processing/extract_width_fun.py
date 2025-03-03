@@ -67,8 +67,12 @@ def compute_edge_width_profile(
         target_length=target_length,
     )
 
-    predicted_widths = MODEL.predict(profile, verbose=0)
-    return np.sqrt(predicted_widths)  # new model trained on quadratic radius
+    if len(profile) > 0:
+        predicted_widths = MODEL.predict(profile, verbose=0)
+        return np.sqrt(predicted_widths)
+    else:
+        return ([])
+    # new model trained on quadratic radius
     # should be updated depending on which ML model is used
     # This change of ML model was done on 29/03/2024
 
