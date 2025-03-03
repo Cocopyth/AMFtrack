@@ -206,8 +206,8 @@ def extract_section_profiles_for_edge_exp(
         profile = profile.reshape((1, len(profile)))
         # TODO(FK): Add thickness of the profile here
         l.append(profile)
-    return np.concatenate(l, axis=0), list_of_segments, new_section_coord_list
-
+    concatenation = np.concatenate(l, axis=0) if len(l) > 0 else []
+    return concatenation, list_of_segments, new_section_coord_list
 
 def get_source_image(
     experiment: Experiment, pos: coord, t: int, local: bool, force_selection=None
