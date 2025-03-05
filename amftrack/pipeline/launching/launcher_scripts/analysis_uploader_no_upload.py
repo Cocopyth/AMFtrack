@@ -14,6 +14,8 @@ update_analysis_info(directory_targ)
 analysis_info = get_analysis_info(directory_targ)
 print(analysis_info)
 analysis_folders = analysis_info.loc[analysis_info["unique_id"].isin(plates)]
+analysis_folders = analysis_info
+
 print(analysis_folders)
 
 dir_drop = "DATA/PRINCE_ANALYSIS"
